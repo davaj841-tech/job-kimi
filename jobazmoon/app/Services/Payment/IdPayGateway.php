@@ -1,0 +1,127 @@
+<?php
+
+namespace App\Services\Payment;
+
+use App\Models\PaymentGateway;
+use App\Models\Setting;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class IdPayGateway implements PaymentGatewayInterface
+{
+    public function getName(): string
+    {
+        return 'idpay';
+    }
+
+    public function getDisplayName(): string
+    {
+        return 'آیدی‌پی';
+    }
+
+    protected function apiKey(): string
+    {
+        return (string) (Setting::get('idpay_api_key')
+            ?: optional(PaymentGateway::query()->where('name', 'idpay')->first())->api_key
+            ?: '');
+    }
+
+    protected function sandbox(): bool
+    {
+        return filter_var(Setting::get('idpay_sandbox', 'true'), FILTER_VALIDATE_BOOLEAN);
+    }
+
+    public function request(int $amount, string $description, string $callbackUrl, array $meta = []): array
+    {
+        $apiKey = $this->apiKey();
+        if (blank($apiKey)) {
+            return ['authority' => null, 'payment_url' => null, 'error' => 'کلید API آیدی‌پی تنظیم نشده است.'];
+        }
+
+        $orderId = (string) ($meta['order_id'] ?? uniqid('idp_', true));
+
+        try {
+            $headers = [
+                'X-API-KEY' => $apiKey,
+                'Content-Type' => 'application/json',
+            ];
+            if ($this->sandbox()) {
+                $headers['X-SANDBOX'] = '1';
+            }
+
+            $response = Http::withHeaders($headers)->timeout(30)->post('https://api.idpay.ir/v1.1/payment', [
+                'order_id' => $orderId,
+                'amount' => $amount,
+                'callback' => $callbackUrl,
+                'desc' => $description,
+            ]);
+
+            $id = $response->json('id');
+            $link = $response->json('link');
+
+            if (! $response->successful() || blank($id) || blank($link)) {
+                Log::warning('IDPay request failed', ['body' => $response->body()]);
+
+                return [
+                    'authority' => null,
+                    'payment_url' => null,
+                    'error' => $response->json('error_message') ?? 'خطا در ایجاد درخواست آیدی‌پی.',
+                ];
+            }
+
+            return [
+                'authority' => (string) $id,
+                'payment_url' => (string) $link,
+                'error' => null,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('IDPay request exception', ['error' => $e->getMessage()]);
+
+            return ['authority' => null, 'payment_url' => null, 'error' => 'ارتباط با آیدی‌پی برقرار نشد.'];
+        }
+    }
+
+    public function verify(string $authority, int $amount, array $meta = []): array
+    {
+        $apiKey = $this->apiKey();
+        if (blank($apiKey)) {
+            return ['success' => false, 'ref_id' => null, 'error' => 'کلید API آیدی‌پی تنظیم نشده است.'];
+        }
+
+        $orderId = (string) ($meta['order_id'] ?? '');
+        if ($orderId === '') {
+            return ['success' => false, 'ref_id' => null, 'error' => 'order_id آیدی‌پی نامعتبر است.'];
+        }
+
+        try {
+            $headers = [
+                'X-API-KEY' => $apiKey,
+                'Content-Type' => 'application/json',
+            ];
+            if ($this->sandbox()) {
+                $headers['X-SANDBOX'] = '1';
+            }
+
+            $response = Http::withHeaders($headers)->timeout(30)->post('https://api.idpay.ir/v1.1/payment/verify', [
+                'id' => $authority,
+                'order_id' => $orderId,
+            ]);
+
+            if ($response->successful() && $response->json('status') == 100) {
+                return [
+                    'success' => true,
+                    'ref_id' => (string) ($response->json('track_id') ?? $response->json('payment.track_id') ?? $authority),
+                    'error' => null,
+                ];
+            }
+
+            Log::warning('IDPay verify failed', ['body' => $response->body()]);
+
+            return ['success' => false, 'ref_id' => null, 'error' => 'پرداخت آیدی‌پی ناموفق بود'];
+        } catch (\Throwable $e) {
+            Log::error('IDPay verify exception', ['error' => $e->getMessage()]);
+
+            return ['success' => false, 'ref_id' => null, 'error' => 'ارتباط با آیدی‌پی برقرار نشد.'];
+        }
+    }
+}
