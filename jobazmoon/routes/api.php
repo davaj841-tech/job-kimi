@@ -47,6 +47,7 @@ use App\Http\Controllers\Api\SearchSuggestionController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\TicketController;
 use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\Admin\SiteErrorAdminController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\WalletController;
@@ -54,8 +55,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/otp/send', [AuthController::class, 'sendOtp'])->middleware(['turnstile', 'throttle:otp']);
 Route::post('/auth/otp/verify', [AuthController::class, 'verifyOtp'])->middleware(['turnstile', 'throttle:login']);
-Route::post('/auth/forgot-password', [PasswordResetController::class, 'forgot']);
+Route::post('/auth/login', [AuthController::class, 'login'])->middleware(['turnstile', 'throttle:login']);
+Route::post('/auth/register', [AuthController::class, 'register'])->middleware(['turnstile', 'throttle:login']);
+Route::post('/auth/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:otp');
 Route::post('/auth/reset-password', [PasswordResetController::class, 'reset']);
+Route::post('/auth/forgot-password/verify-otp', [PasswordResetController::class, 'verifyOtpReset'])->middleware('throttle:login');
 
 Route::post('/admin/auth/login', [AdminAuthController::class, 'login'])->middleware('throttle:admin-login');
 Route::post('/admin/auth/forgot-password', [AdminAuthController::class, 'forgotPassword'])->middleware('throttle:admin-login');
@@ -66,6 +70,18 @@ Route::get('/search/suggestions', SearchSuggestionController::class);
 Route::get('/payment-gateways', [PaymentGatewayController::class, 'index']);
 
 // Public Job Posts
+Route::get('/exam-subjects', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'عملیات موفق',
+        'data' => \App\Models\ExamSubject::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name', 'slug', 'icon']),
+    ]);
+});
+
 Route::get('/job-posts', [JobPostController::class, 'index']);
 Route::get('/job-posts/filters', [JobPostController::class, 'filters']);
 Route::get('/job-posts/{id}', [JobPostController::class, 'show'])->whereNumber('id');
@@ -78,6 +94,10 @@ Route::get('/blog-posts/{slug}', [BlogPostController::class, 'show']);
 Route::get('/subscription-plans', [SubscriptionController::class, 'plans']);
 Route::get('/pdf-products', [PDFProductController::class, 'index']);
 Route::get('/pdf-products/{id}', [PDFProductController::class, 'show'])->whereNumber('id');
+
+// Public exams catalog (لیست/جزئیات؛ شروع آزمون نیاز به ورود دارد)
+Route::get('/exams', [ExamController::class, 'index']);
+Route::get('/exams/{slug}', [ExamController::class, 'show']);
 
 // Public contact form
 Route::post('/contact', [ContactController::class, 'store']);
@@ -141,8 +161,6 @@ Route::middleware(['auth:sanctum', 'subscription.check'])->group(function () {
     Route::post('/resumes/{id}/ai-suggest', [ResumeController::class, 'aiSuggest'])->whereNumber('id');
     Route::apiResource('/resumes', ResumeController::class)->parameters(['resumes' => 'id']);
 
-    Route::get('/exams', [ExamController::class, 'index']);
-    Route::get('/exams/{slug}', [ExamController::class, 'show']);
     Route::post('/exams', [ExamController::class, 'store'])->middleware('role:admin,operator');
     Route::put('/exams/{id}', [ExamController::class, 'update']);
     Route::delete('/exams/{id}', [ExamController::class, 'destroy'])->middleware('role:admin,operator');
@@ -166,11 +184,17 @@ Route::middleware(['auth:sanctum', 'subscription.check'])->group(function () {
         Route::get('/dashboard-stats', [AdminDashboardController::class, 'stats']);
 
         Route::get('/users', [AdminUserController::class, 'index']);
+        Route::post('/users', [AdminUserController::class, 'store']);
         Route::get('/users/{id}', [AdminUserController::class, 'show'])->whereNumber('id');
         Route::put('/users/{id}', [AdminUserController::class, 'update'])->whereNumber('id');
         Route::put('/users/{id}/role', [AdminUserController::class, 'updateRole'])->whereNumber('id');
         Route::put('/users/{id}/status', [AdminUserController::class, 'updateStatus'])->whereNumber('id');
         Route::delete('/users/{id}', [AdminUserController::class, 'destroy'])->whereNumber('id');
+
+        Route::get('/exam-subjects', [\App\Http\Controllers\Api\Admin\ExamSubjectAdminController::class, 'index']);
+        Route::post('/exam-subjects', [\App\Http\Controllers\Api\Admin\ExamSubjectAdminController::class, 'store']);
+        Route::put('/exam-subjects/{id}', [\App\Http\Controllers\Api\Admin\ExamSubjectAdminController::class, 'update'])->whereNumber('id');
+        Route::delete('/exam-subjects/{id}', [\App\Http\Controllers\Api\Admin\ExamSubjectAdminController::class, 'destroy'])->whereNumber('id');
 
         Route::get('/exam-categories', [AdminExamController::class, 'categories']);
         Route::get('/exam-job-posts', [AdminExamController::class, 'jobPosts']);
@@ -184,7 +208,9 @@ Route::middleware(['auth:sanctum', 'subscription.check'])->group(function () {
         Route::get('/questions', [QuestionController::class, 'index']);
         Route::post('/questions', [QuestionController::class, 'store']);
         Route::get('/questions/export', [QuestionController::class, 'export']);
+        Route::get('/questions/import-sample', [QuestionController::class, 'importSample']);
         Route::post('/questions/import', [QuestionController::class, 'import']);
+        Route::get('/exams/{id}/preview', [AdminExamController::class, 'preview'])->whereNumber('id');
         Route::get('/questions/{question}', [QuestionController::class, 'show'])->whereNumber('question');
         Route::put('/questions/{question}', [QuestionController::class, 'update'])->whereNumber('question');
         Route::delete('/questions/{question}', [QuestionController::class, 'destroy'])->whereNumber('question');
@@ -268,5 +294,10 @@ Route::middleware(['auth:sanctum', 'subscription.check'])->group(function () {
         Route::delete('/backups', [BackupAdminController::class, 'destroy']);
 
         Route::get('/audit-logs', [AuditLogAdminController::class, 'index']);
+        Route::get('/site-errors', [SiteErrorAdminController::class, 'index']);
+        Route::get('/site-errors/{id}', [SiteErrorAdminController::class, 'show'])->whereNumber('id');
+        Route::post('/site-errors/{id}/resolve', [SiteErrorAdminController::class, 'resolve'])->whereNumber('id');
+        Route::delete('/site-errors/{id}', [SiteErrorAdminController::class, 'destroy'])->whereNumber('id');
+        Route::delete('/site-errors', [SiteErrorAdminController::class, 'clearResolved']);
     });
 });

@@ -61,6 +61,7 @@
         </template>
         <template #actions="{ row }">
           <div class="flex flex-wrap justify-end gap-1">
+            <button class="act" @click="openPreview(row)">مشاهده آزمون</button>
             <button class="act" @click="openEdit(row)">ویرایش</button>
             <RouterLink class="act" :to="{ path: '/admin/questions', query: { exam_id: row.id } }">سوالات</RouterLink>
             <button class="act" @click="openStats(row)">آمار</button>
@@ -104,6 +105,11 @@
       @close="modalOpen = false"
       @saved="onSaved"
     />
+    <ExamPreviewModal
+      :open="previewOpen"
+      :exam-id="previewExamId"
+      @close="previewOpen = false"
+    />
     <ExamStatsModal :open="statsOpen" :loading="store.statsLoading" :stats="store.stats" @close="statsOpen = false" />
     <ConfirmDialog
       :open="confirm.open"
@@ -121,6 +127,7 @@ import AdminLayout from '../components/layout/AdminLayout.vue';
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import DataTable from '../components/ui/DataTable.vue';
 import ExamModal from '../components/exams/ExamModal.vue';
+import ExamPreviewModal from '../components/exams/ExamPreviewModal.vue';
 import ExamStatsModal from '../components/exams/ExamStatsModal.vue';
 import { useToast } from '../../composables/useToast';
 import { useExamsStore } from '../stores/exams';
@@ -130,6 +137,8 @@ const toast = useToast();
 
 const modalOpen = ref(false);
 const statsOpen = ref(false);
+const previewOpen = ref(false);
+const previewExamId = ref(null);
 const editing = ref(null);
 const confirm = reactive({ open: false, title: '', message: '', action: null });
 
@@ -187,6 +196,10 @@ async function go(p) {
 function openCreate() {
   editing.value = null;
   modalOpen.value = true;
+}
+function openPreview(row) {
+  previewExamId.value = row.id;
+  previewOpen.value = true;
 }
 async function openEdit(row) {
   try {

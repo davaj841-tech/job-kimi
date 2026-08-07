@@ -53,14 +53,20 @@ export const useQuestionsStore = defineStore('adminQuestions', {
       await this.fetchQuestions(this.meta.current_page || 1);
     },
 
-    async importQuestions(file) {
+    async importQuestions({ file, exam_id }) {
       const form = new FormData();
       form.append('file', file);
+      form.append('exam_id', String(exam_id));
       const { data } = await adminApi.post('/admin/questions/import', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       await this.fetchQuestions(1);
       return data.data;
+    },
+
+    /** @deprecated alias — use importQuestions({ file, exam_id }) */
+    async importFromExcel({ file, exam_id }) {
+      return this.importQuestions({ file, exam_id });
     },
 
     async exportQuestions() {

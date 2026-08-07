@@ -13,6 +13,7 @@ class DashboardResource extends JsonResource
             'user' => $this['user'],
             'stats' => $this['stats'],
             'progress_chart' => $this['progress_chart'],
+            'exam_chart' => $this['exam_chart'] ?? [],
             'recent_attempts' => $this['recent_attempts'],
             'available_exams' => $this['available_exams'],
         ];

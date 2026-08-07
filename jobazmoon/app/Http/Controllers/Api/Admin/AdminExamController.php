@@ -93,6 +93,31 @@ class AdminExamController extends BaseController
         return $this->successResponse($this->detailItem($exam));
     }
 
+    public function preview(int $id): JsonResponse
+    {
+        $exam = Exam::query()
+            ->with(['classification:id,name'])
+            ->find($id);
+
+        if (! $exam) {
+            return $this->errorResponse('آزمون یافت نشد.', 404);
+        }
+
+        $questions = Question::query()
+            ->where('exam_id', $id)
+            ->orderBy('id')
+            ->get([
+                'id', 'question_text', 'question_type',
+                'option_a', 'option_b', 'option_c', 'option_d',
+                'correct_answer', 'explanation', 'difficulty', 'subject',
+            ]);
+
+        return $this->successResponse([
+            'exam' => $this->detailItem($exam->loadCount(['questions', 'attempts'])),
+            'questions' => $questions,
+        ]);
+    }
+
     public function store(ExamStoreRequest $request): JsonResponse
     {
         $payload = $request->validated();

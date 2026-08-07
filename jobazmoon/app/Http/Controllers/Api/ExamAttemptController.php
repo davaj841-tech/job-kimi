@@ -174,15 +174,23 @@ class ExamAttemptController extends BaseController
             return $this->errorResponse('یک تلاش ناتمام برای این آزمون وجود دارد.', 422);
         }
 
-        $questions = $this->examService->getQuestionsForAttempt($exam, true, $onlyQuestionIds);
+        $subject = $request->input('subject');
+        if (is_string($subject)) {
+            $subject = trim($subject) ?: null;
+        } else {
+            $subject = null;
+        }
+
+        $questions = $this->examService->getQuestionsForAttempt($exam, true, $onlyQuestionIds, $subject);
 
         if ($questions->isEmpty()) {
-            return $this->errorResponse('سوالی برای این آزمون تعریف نشده است.', 422);
+            return $this->errorResponse($subject ? 'برای این درس سوالی تعریف نشده است.' : 'سوالی برای این آزمون تعریف نشده است.', 422);
         }
 
         $attempt = ExamAttempt::query()->create([
             'user_id' => $user->id,
             'exam_id' => $exam->id,
+            'subject' => $subject,
             'started_at' => now(),
             'finished_at' => null,
             'score' => 0,
@@ -199,10 +207,12 @@ class ExamAttemptController extends BaseController
 
         return $this->successResponse([
             'attempt_id' => $attempt->id,
+            'subject' => $subject,
             'questions' => $this->examService->formatQuestionsForTaking($questions),
             'end_time' => $endsAt->timestamp,
             'duration_minutes' => $exam->duration_minutes,
             'is_retry_wrong' => $isRetryWrong,
+            'per_page' => 5,
         ], 'آزمون آغاز شد.', 201);
     }
 

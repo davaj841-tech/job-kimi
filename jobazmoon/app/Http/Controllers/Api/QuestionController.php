@@ -112,11 +112,44 @@ class QuestionController extends BaseController
     {
         $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
+            'exam_id' => ['required', 'integer', 'exists:exams,id'],
+        ], [
+            'exam_id.required' => 'ابتدا آزمون مورد نظر را انتخاب کنید.',
         ]);
 
-        $summary = $this->questionService->importFromExcel($request->file('file'));
+        $summary = $this->questionService->importFromExcel(
+            $request->file('file'),
+            (int) $request->input('exam_id')
+        );
 
         return $this->successResponse($summary, 'ورود اکسل انجام شد.');
+    }
+
+    public function importSample()
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('سوالات');
+        $headers = [
+            'question_text', 'option_a', 'option_b', 'option_c', 'option_d',
+            'correct_answer', 'explanation', 'difficulty', 'subject',
+        ];
+        foreach ($headers as $i => $h) {
+            $sheet->setCellValue([$i + 1, 1], $h);
+        }
+        $sheet->fromArray([
+            ['نمونه سوال آسان؟', 'گزینه الف', 'گزینه ب', 'گزینه ج', 'گزینه د', 'الف', 'توضیح پاسخ آسان', 'آسان', 'general'],
+            ['نمونه سوال متوسط؟', 'گزینه الف', 'گزینه ب', 'گزینه ج', 'گزینه د', 'ب', 'توضیح پاسخ متوسط', 'متوسط', 'math'],
+            ['نمونه سوال سخت؟', 'گزینه الف', 'گزینه ب', 'گزینه ج', 'گزینه د', 'ج', 'توضیح پاسخ سخت', 'سخت', 'chemistry'],
+        ], null, 'A2');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, 'questions-import-sample.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     public function export(Request $request)

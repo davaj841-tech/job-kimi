@@ -47,23 +47,43 @@ class DashboardController extends BaseController
 
         $progressChart = $this->buildProgressChart($user->id);
 
-        $recent = $this->examRepository->getUserAttempts($user, 5)->map(function (ExamAttempt $attempt) {
+        $recent = $this->examRepository->getUserAttempts($user, 10)->map(function (ExamAttempt $attempt) {
             $totalMarks = (float) ($attempt->exam?->total_marks ?: 1);
 
             return [
+                'id' => $attempt->id,
+                'exam_id' => $attempt->exam_id,
                 'exam_title' => $attempt->exam?->title,
+                'exam_slug' => $attempt->exam?->slug,
+                'subject' => $attempt->subject,
                 'score' => $attempt->score,
+                'total_correct' => $attempt->total_correct,
+                'total_wrong' => $attempt->total_wrong,
                 'total_marks' => $attempt->exam?->total_marks,
                 'percentage' => round(((float) $attempt->score / $totalMarks) * 100, 2),
                 'created_at' => $attempt->created_at?->toIso8601String(),
+                'finished_at' => $attempt->finished_at?->toIso8601String(),
                 'status' => $attempt->status,
             ];
         })->values()->all();
+
+        $examChart = $completedAttempts->take(12)->reverse()->values()->map(function (ExamAttempt $a) {
+            $totalMarks = (float) ($a->exam?->total_marks ?: 1);
+
+            return [
+                'label' => \Illuminate\Support\Str::limit($a->exam?->title ?: 'آزمون', 18),
+                'percentage' => round(((float) $a->score / $totalMarks) * 100, 1),
+                'score' => (float) $a->score,
+            ];
+        })->all();
 
         $payload = [
             'user' => [
                 'name' => $user->name,
                 'mobile' => $user->mobile,
+                'email' => $user->email,
+                'username' => $user->username,
+                'province' => $user->province,
                 'wallet_balance' => $user->wallet_balance,
                 'subscription_name' => $user->subscriptionPlan?->name,
                 'subscription_expires_at' => $user->subscription_expires_at?->toIso8601String(),
@@ -77,6 +97,7 @@ class DashboardController extends BaseController
                 'total_wrong_answers' => $totalWrong,
             ],
             'progress_chart' => $progressChart,
+            'exam_chart' => $examChart,
             'recent_attempts' => $recent,
             'available_exams' => [
                 'free_count' => Exam::query()->where('status', 'published')->where('is_free', true)->count(),
@@ -122,8 +143,11 @@ class DashboardController extends BaseController
         }
 
         return collect($subjectStats)->map(function (array $stat, string $subject) {
+            $label = \App\Models\ExamSubject::query()->where('slug', $subject)->value('name') ?: $subject;
+
             return [
                 'subject' => $subject,
+                'subject_label' => $label,
                 'average_score' => $stat['total'] > 0 ? round(($stat['correct'] / $stat['total']) * 100, 2) : 0,
                 'exam_count' => count($stat['exam_ids']),
             ];

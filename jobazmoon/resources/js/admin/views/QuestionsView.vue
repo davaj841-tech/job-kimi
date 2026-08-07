@@ -5,11 +5,12 @@
         <div class="flex items-center gap-3">
           <h1 class="text-2xl font-bold text-gray-800">بانک سوالات</h1>
           <span class="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700">
-            {{ fa(store.meta.total || 0) }}
+            {{ fa(totalQuestions) }}
           </span>
         </div>
         <div class="flex flex-wrap gap-2">
           <button class="btn-dark" @click="openCreate">سوال جدید</button>
+          <button class="btn-muted" @click="subjectManagerOpen = true">📚 مدیریت دروس</button>
           <button class="btn-muted" @click="importOpen = true">ورود Excel</button>
           <button class="btn-muted" @click="onExport">خروجی Excel</button>
           <button class="btn-orange" @click="aiOpen = true">تولید با AI</button>
@@ -25,7 +26,9 @@
           </select>
           <select v-model="store.filters.subject" class="field">
             <option value="">همه دروس</option>
-            <option v-for="s in subjects" :key="s.value" :value="s.value">{{ s.label }}</option>
+            <option v-for="s in subjectsStore.subjects" :key="s.slug" :value="s.slug">
+              {{ s.icon || '📘' }} {{ s.name }}
+            </option>
           </select>
           <select v-model="store.filters.difficulty" class="field">
             <option value="">همه سطوح</option>
@@ -45,54 +48,91 @@
         </div>
       </div>
 
-      <DataTable :columns="columns" :rows="store.questions" :loading="store.loading" actions>
-        <template #cell-index="{ index }">{{ fa(rowNum(index)) }}</template>
-        <template #cell-question_text="{ row }">
-          <button class="max-w-md text-right hover:text-orange-600" @click="openEdit(row)" :title="row.question_text">
-            {{ truncate(row.question_text) }}
-          </button>
-        </template>
-        <template #cell-exam_title="{ row }">{{ row.exam_title || '—' }}</template>
-        <template #cell-subject="{ row }">{{ subjectLabel(row.subject) }}</template>
-        <template #cell-difficulty="{ row }">{{ diffLabel(row.difficulty) }}</template>
-        <template #cell-correct_answer="{ row }">
-          <span class="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
-            {{ String(row.correct_answer || '').toUpperCase() }}
-          </span>
-        </template>
-        <template #actions="{ row }">
-          <div class="flex justify-end gap-1">
-            <button class="act" @click="openEdit(row)">ویرایش</button>
-            <button class="act text-red-600" @click="askDelete(row)">حذف</button>
-          </div>
-        </template>
-        <template #empty>
-          <p class="py-6 text-slate-500">سوالی یافت نشد</p>
-        </template>
-      </DataTable>
+      <div v-if="loadingExams" class="rounded-xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
+        در حال بارگذاری آزمون‌ها...
+      </div>
 
-      <div v-if="store.meta.last_page" class="flex items-center justify-between rounded-xl bg-white px-4 py-3 text-sm shadow-sm">
-        <p class="text-slate-500">
-          نمایش {{ fa(store.meta.from || 0) }} تا {{ fa(store.meta.to || 0) }} از {{ fa(store.meta.total || 0) }}
-        </p>
-        <div class="flex gap-1">
-          <button :disabled="(store.meta.current_page || 1) <= 1" @click="go((store.meta.current_page || 1) - 1)">قبلی</button>
+      <div v-else class="space-y-3">
+        <div
+          v-for="exam in visibleExams"
+          :key="exam.id"
+          class="overflow-hidden rounded-xl bg-white shadow-sm"
+        >
           <button
-            v-for="p in pages"
-            :key="p"
-            class="min-w-8 rounded-lg px-2 py-1 text-xs font-bold"
-            :class="p === store.meta.current_page ? 'bg-orange-500 text-white' : 'bg-slate-100'"
-            @click="go(p)"
+            type="button"
+            class="flex w-full items-center justify-between gap-3 px-4 py-3 text-right hover:bg-slate-50"
+            @click="toggleExam(exam.id)"
           >
-            {{ fa(p) }}
+            <div class="min-w-0 flex-1">
+              <p class="truncate font-bold text-slate-800">{{ exam.title }}</p>
+              <p class="mt-0.5 text-xs text-slate-500">
+                {{ fa(exam.question_count ?? exam.total_questions ?? 0) }} سوال
+              </p>
+            </div>
+            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg font-bold text-slate-600">
+              {{ isExpanded(exam.id) ? '−' : '+' }}
+            </span>
           </button>
-          <button
-            :disabled="(store.meta.current_page || 1) >= (store.meta.last_page || 1)"
-            @click="go((store.meta.current_page || 1) + 1)"
-          >
-            بعدی
-          </button>
+
+          <div v-if="isExpanded(exam.id)" class="border-t border-slate-100">
+            <div v-if="bucket(exam.id).loading" class="p-6 text-center text-sm text-slate-500">
+              در حال بارگذاری سوالات...
+            </div>
+            <div v-else-if="!bucket(exam.id).questions.length" class="p-6 text-center text-sm text-slate-500">
+              سوالی یافت نشد
+            </div>
+            <div v-else class="overflow-x-auto">
+              <table class="min-w-full text-sm">
+                <thead class="bg-slate-50 text-xs text-slate-500">
+                  <tr>
+                    <th class="px-3 py-2 text-right font-medium">#</th>
+                    <th class="px-3 py-2 text-right font-medium">متن سوال</th>
+                    <th class="px-3 py-2 text-right font-medium">درس</th>
+                    <th class="px-3 py-2 text-right font-medium">سطح</th>
+                    <th class="px-3 py-2 text-right font-medium">پاسخ صحیح</th>
+                    <th class="px-3 py-2 text-right font-medium">عملیات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(row, index) in bucket(exam.id).questions"
+                    :key="row.id"
+                    class="border-t border-slate-100"
+                  >
+                    <td class="px-3 py-2 text-slate-500">{{ fa(index + 1) }}</td>
+                    <td class="px-3 py-2">
+                      <button
+                        type="button"
+                        class="max-w-md text-right hover:text-orange-600"
+                        :title="stripHtml(row.question_text)"
+                        @click="openEdit(row)"
+                      >
+                        {{ truncate(stripHtml(row.question_text)) }}
+                      </button>
+                    </td>
+                    <td class="px-3 py-2">{{ subjectLabel(row.subject) }}</td>
+                    <td class="px-3 py-2">{{ diffLabel(row.difficulty) }}</td>
+                    <td class="px-3 py-2">
+                      <span class="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                        {{ answerLabel(row.correct_answer) }}
+                      </span>
+                    </td>
+                    <td class="px-3 py-2">
+                      <div class="flex justify-end gap-1">
+                        <button type="button" class="act" @click="openEdit(row)">ویرایش</button>
+                        <button type="button" class="act text-red-600" @click="askDelete(row)">حذف</button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
+
+        <p v-if="!visibleExams.length" class="rounded-xl bg-white py-8 text-center text-slate-500 shadow-sm">
+          آزمونی یافت نشد
+        </p>
       </div>
     </div>
 
@@ -103,8 +143,15 @@
       @close="modalOpen = false"
       @saved="onSaved"
     />
-    <BulkImportModal ref="importRef" :open="importOpen" @close="importOpen = false" @imported="onImport" />
+    <BulkImportModal
+      ref="importRef"
+      :open="importOpen"
+      :exams="examsStore.exams"
+      @close="importOpen = false"
+      @imported="onImport"
+    />
     <AIGenerateModal ref="aiRef" :open="aiOpen" :exams="examsStore.exams" @close="aiOpen = false" @generate="onGenerate" />
+    <SubjectManagerModal :open="subjectManagerOpen" @close="subjectManagerOpen = false" />
     <ConfirmDialog
       :open="confirm.open"
       :title="confirm.title"
@@ -118,83 +165,127 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import adminApi from '../api/client';
 import AdminLayout from '../components/layout/AdminLayout.vue';
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
-import DataTable from '../components/ui/DataTable.vue';
 import AIGenerateModal from '../components/questions/AIGenerateModal.vue';
 import BulkImportModal from '../components/questions/BulkImportModal.vue';
 import QuestionModal from '../components/questions/QuestionModal.vue';
+import SubjectManagerModal from '../components/questions/SubjectManagerModal.vue';
 import { useToast } from '../../composables/useToast';
 import { useExamsStore } from '../stores/exams';
+import { useExamSubjectsStore } from '../stores/examSubjects';
 import { useQuestionsStore } from '../stores/questions';
 
 const route = useRoute();
 const store = useQuestionsStore();
 const examsStore = useExamsStore();
+const subjectsStore = useExamSubjectsStore();
 const toast = useToast();
 
 const modalOpen = ref(false);
 const importOpen = ref(false);
 const aiOpen = ref(false);
+const subjectManagerOpen = ref(false);
 const editing = ref(null);
 const importRef = ref(null);
 const aiRef = ref(null);
+const loadingExams = ref(true);
+const expanded = ref(new Set());
+const examBuckets = reactive({});
 const confirm = reactive({ open: false, title: '', message: '', action: null });
 
-const subjects = [
-  { value: 'islamic', label: 'معارف' },
-  { value: 'literature', label: 'ادبیات' },
-  { value: 'math', label: 'ریاضی' },
-  { value: 'chemistry', label: 'شیمی' },
-  { value: 'physics', label: 'فیزیک' },
-  { value: 'iq', label: 'هوش' },
-  { value: 'english', label: 'انگلیسی' },
-  { value: 'general', label: 'عمومی' },
-];
+const answerMap = { a: 'الف', b: 'ب', c: 'ج', d: 'د' };
 
-const columns = [
-  { key: 'index', label: '#' },
-  { key: 'question_text', label: 'متن سوال' },
-  { key: 'exam_title', label: 'آزمون' },
-  { key: 'subject', label: 'درس' },
-  { key: 'difficulty', label: 'سطح' },
-  { key: 'correct_answer', label: 'پاسخ صحیح' },
-];
-
-const pages = computed(() => {
-  const cur = store.meta.current_page || 1;
-  const last = store.meta.last_page || 1;
-  const out = [];
-  for (let i = Math.max(1, cur - 2); i <= Math.min(last, Math.max(1, cur - 2) + 4); i++) out.push(i);
-  return out;
+const visibleExams = computed(() => {
+  const list = examsStore.exams || [];
+  if (!store.filters.exam_id) return list;
+  return list.filter((e) => String(e.id) === String(store.filters.exam_id));
 });
+
+const totalQuestions = computed(() =>
+  visibleExams.value.reduce((sum, e) => sum + Number(e.question_count ?? e.total_questions ?? 0), 0)
+);
 
 function fa(n) {
   return new Intl.NumberFormat('fa-IR').format(Number(n || 0));
 }
-function rowNum(i) {
-  return (store.meta.from || 1) + i;
+function stripHtml(t) {
+  return String(t || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 function truncate(t) {
   const s = String(t || '');
   return s.length > 100 ? `${s.slice(0, 100)}…` : s;
 }
 function subjectLabel(v) {
-  return subjects.find((s) => s.value === v)?.label || v || '—';
+  return subjectsStore.subjects.find((s) => s.slug === v)?.name || v || '—';
 }
 function diffLabel(v) {
   return { easy: 'آسان', medium: 'متوسط', hard: 'سخت' }[v] || v;
 }
+function answerLabel(v) {
+  const key = String(v || '').toLowerCase();
+  return answerMap[key] || String(v || '—').toUpperCase();
+}
+function isExpanded(id) {
+  return expanded.value.has(Number(id));
+}
+function bucket(id) {
+  const key = Number(id);
+  if (!examBuckets[key]) {
+    examBuckets[key] = { loading: false, questions: [] };
+  }
+  return examBuckets[key];
+}
+
+async function loadExamQuestions(examId) {
+  const b = bucket(examId);
+  b.loading = true;
+  try {
+    const { data } = await adminApi.get('/admin/questions', {
+      params: {
+        search: store.filters.search || undefined,
+        subject: store.filters.subject || undefined,
+        difficulty: store.filters.difficulty || undefined,
+        question_type: store.filters.question_type || undefined,
+        exam_id: examId,
+        per_page: 200,
+        page: 1,
+      },
+    });
+    b.questions = data.data || [];
+  } catch (e) {
+    toast.error(e.response?.data?.message || 'بارگذاری سوالات ناموفق بود.');
+    b.questions = [];
+  } finally {
+    b.loading = false;
+  }
+}
+
+async function toggleExam(id) {
+  const key = Number(id);
+  const next = new Set(expanded.value);
+  if (next.has(key)) {
+    next.delete(key);
+    expanded.value = next;
+    return;
+  }
+  next.add(key);
+  expanded.value = next;
+  await loadExamQuestions(key);
+}
+
+async function refreshExpanded() {
+  const ids = [...expanded.value];
+  await Promise.all(ids.map((id) => loadExamQuestions(id)));
+}
 
 async function apply() {
-  await store.fetchQuestions(1);
+  await refreshExpanded();
 }
 async function clear() {
   store.resetFilters();
-  await store.fetchQuestions(1);
-}
-async function go(p) {
-  await store.fetchQuestions(p);
+  expanded.value = new Set();
 }
 
 function openCreate() {
@@ -217,6 +308,8 @@ function askDelete(row) {
     try {
       await store.deleteQuestion(row.id);
       toast.success('سوال حذف شد.');
+      await refreshExpanded();
+      await examsStore.fetchExamOptions().catch(() => {});
     } catch (e) {
       toast.error(e.response?.data?.message || 'حذف ناموفق بود.');
     }
@@ -233,15 +326,24 @@ async function onSaved({ id, payload }) {
     else await store.createQuestion(payload);
     modalOpen.value = false;
     toast.success('سوال ذخیره شد.');
+    await examsStore.fetchExamOptions().catch(() => {});
+    await refreshExpanded();
   } catch (e) {
     toast.error(e.response?.data?.message || 'ذخیره ناموفق بود.');
   }
 }
-async function onImport(file) {
+async function onImport({ file, exam_id }) {
   try {
-    const result = await store.importQuestions(file);
+    const result = await store.importQuestions({ file, exam_id });
     importRef.value?.setResult(result);
     toast.success('ورود اکسل انجام شد.');
+    await examsStore.fetchExamOptions().catch(() => {});
+    if (exam_id) {
+      const next = new Set(expanded.value);
+      next.add(Number(exam_id));
+      expanded.value = next;
+      await loadExamQuestions(exam_id);
+    }
   } catch (e) {
     importRef.value?.setError(e.response?.data?.message || 'ورود ناموفق بود.');
   }
@@ -271,10 +373,15 @@ onMounted(async () => {
   if (route.query.exam_id) {
     store.filters.exam_id = String(route.query.exam_id);
   }
-  await Promise.all([
-    examsStore.fetchExamOptions().catch(() => {}),
-    store.fetchQuestions(1),
-  ]);
+  loadingExams.value = true;
+  try {
+    await Promise.all([examsStore.fetchExamOptions(), subjectsStore.fetchSubjects()]);
+    if (route.query.exam_id) {
+      await toggleExam(Number(route.query.exam_id));
+    }
+  } finally {
+    loadingExams.value = false;
+  }
 });
 </script>
 

@@ -45,7 +45,15 @@
         <template #cell-location="{ row }">{{ locationText(row) }}</template>
         <template #cell-registration_deadline="{ row }">{{ formatDate(row.registration_deadline) }}</template>
         <template #cell-status="{ row }">
-          <span class="rounded-full px-2 py-0.5 text-xs font-bold" :class="statusClass(row.status)">{{ statusLabel(row.status) }}</span>
+          <span class="inline-flex flex-wrap items-center gap-1">
+            <span class="rounded-full px-2 py-0.5 text-xs font-bold" :class="statusClass(row.status)">{{ statusLabel(row.status) }}</span>
+            <span
+              v-if="isExpired(row.registration_deadline)"
+              class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700"
+            >
+              منقضی
+            </span>
+          </span>
         </template>
         <template #cell-view_count="{ row }">{{ fa(row.view_count) }}</template>
         <template #actions="{ row }">
@@ -135,6 +143,15 @@ function statusClass(s) {
     approved: 'bg-emerald-100 text-emerald-700',
     rejected: 'bg-red-100 text-red-700',
   }[s] || 'bg-slate-100';
+}
+
+function isExpired(deadline) {
+  if (!deadline) return false;
+  const d = new Date(deadline);
+  if (Number.isNaN(d.getTime())) return false;
+  const end = new Date(d);
+  end.setHours(23, 59, 59, 999);
+  return end.getTime() < Date.now();
 }
 
 async function apply() {

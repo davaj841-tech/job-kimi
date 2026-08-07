@@ -6,9 +6,12 @@ use App\Http\Controllers\Api\BaseController;
 use App\Http\Requests\Auth\SendOtpRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Resources\UserResource;
+use App\Models\User;
 use App\Services\Auth\OtpAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends BaseController
 {
@@ -16,17 +19,6 @@ class AuthController extends BaseController
         protected OtpAuthService $otpAuthService
     ) {}
 
-/**
- * @OA\Post(
- *   path="/auth/otp/send",
- *   tags={"Auth"},
- *   summary="Send OTP",
- *   @OA\RequestBody(required=true, @OA\JsonContent(required={"mobile"}, @OA\Property(property="mobile", type="string"))),
- *   @OA\Response(response=200, description="OTP sent"),
- *   @OA\Response(response=422, description="Validation error"),
- *   @OA\Response(response=429, description="Rate limited")
- * )
- */
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
         $result = $this->otpAuthService->sendOtp($request->validated('mobile'));
@@ -40,17 +32,6 @@ class AuthController extends BaseController
         ], $result['message']);
     }
 
-    /**
-     * @OA\Post(
-     *   path="/auth/otp/verify",
-     *   tags={"Auth"},
-     *   summary="Verify OTP",
-     *   @OA\RequestBody(required=true, @OA\JsonContent(required={"mobile","code"}, @OA\Property(property="mobile", type="string"), @OA\Property(property="code", type="string"))),
-     *   @OA\Response(response=200, description="Login success"),
-     *   @OA\Response(response=422, description="Invalid code"),
-     *   @OA\Response(response=401, description="Unauthorized")
-     * )
-     */
     public function verifyOtp(VerifyOtpRequest $request): JsonResponse
     {
         $result = $this->otpAuthService->verifyOtp(
@@ -66,6 +47,83 @@ class AuthController extends BaseController
             'token' => $result['token'],
             'user' => new UserResource($result['user']),
         ], $result['message']);
+    }
+
+    public function login(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'login' => ['required', 'string', 'max:100'],
+            'password' => ['required', 'string'],
+        ], [
+            'login.required' => 'نام کاربری یا ایمیل الزامی است.',
+            'password.required' => 'رمز عبور الزامی است.',
+        ]);
+
+        $login = trim($data['login']);
+        $user = User::query()
+            ->where(function ($q) use ($login) {
+                $q->where('username', $login)->orWhere('email', $login);
+            })
+            ->first();
+
+        if (! $user || blank($user->password) || ! Hash::check($data['password'], $user->password)) {
+            return $this->errorResponse('نام کاربری یا رمز عبور اشتباه است.', 401);
+        }
+
+        if (($user->status ?? 'active') !== 'active') {
+            return $this->errorResponse('حساب کاربری غیرفعال است.', 403);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+        $user->load('subscriptionPlan');
+
+        return $this->successResponse([
+            'token' => $token,
+            'user' => new UserResource($user),
+        ], 'ورود موفق.');
+    }
+
+    public function register(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'username' => ['required', 'string', 'regex:/^[a-zA-Z0-9_]{3,20}$/', 'unique:users,username'],
+            'password' => ['required', 'string', 'confirmed', Password::min(8)],
+            'mobile' => ['nullable', 'regex:/^09\d{9}$/', 'unique:users,mobile'],
+            'email' => ['nullable', 'email', 'max:191', 'unique:users,email'],
+            'province' => ['required', 'string', 'max:100'],
+        ], [
+            'username.regex' => 'نام کاربری فقط حروف انگلیسی، عدد و _ (۳ تا ۲۰ کاراکتر).',
+            'username.unique' => 'این نام کاربری قبلاً ثبت شده است.',
+            'mobile.regex' => 'شماره موبایل معتبر نیست (مثال: 09123456789).',
+            'mobile.unique' => 'این شماره موبایل قبلاً ثبت شده است.',
+            'email.unique' => 'این ایمیل قبلاً ثبت شده است.',
+            'password.confirmed' => 'تکرار رمز عبور مطابقت ندارد.',
+            'province.required' => 'انتخاب استان الزامی است.',
+        ]);
+
+        if (empty($data['mobile']) && empty($data['email'])) {
+            return $this->errorResponse('حداقل یکی از موبایل یا ایمیل الزامی است.', 422);
+        }
+
+        $user = User::query()->create([
+            'name' => $data['name'],
+            'username' => strtolower($data['username']),
+            'password' => $data['password'],
+            'mobile' => $data['mobile'] ?? null,
+            'email' => $data['email'] ?? null,
+            'province' => $data['province'],
+            'role' => 'jobseeker',
+            'status' => 'active',
+            'is_verified' => true,
+        ]);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return $this->successResponse([
+            'token' => $token,
+            'user' => new UserResource($user->load('subscriptionPlan')),
+        ], 'عضویت با موفقیت انجام شد.', 201);
     }
 
     public function logout(Request $request): JsonResponse

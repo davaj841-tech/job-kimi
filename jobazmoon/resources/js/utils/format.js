@@ -23,6 +23,7 @@ export function unwrapList(payload) {
     const data = payload?.data ?? payload;
     if (Array.isArray(data)) return data;
     if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.data?.data)) return data.data.data;
     if (Array.isArray(data?.items)) return data.items;
     return [];
 }

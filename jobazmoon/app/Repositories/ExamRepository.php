@@ -13,47 +13,41 @@ class ExamRepository
     public function getPublished(array $filters): LengthAwarePaginator
     {
         $query = Exam::query()
-            ->with('category')
-            ->withCount('questions')
+            ->with(['category', 'classification:id,name,icon,color,logo_path'])
+            ->withCount(['questions', 'attempts'])
             ->where('status', $filters['status'] ?? 'published');
 
         if (! empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
         }
 
+        if (! empty($filters['job_classification_id'])) {
+            $classId = (int) $filters['job_classification_id'];
+            $childIds = \App\Models\JobClassification::query()->where('parent_id', $classId)->pluck('id')->all();
+            $ids = array_merge([$classId], $childIds);
+            $query->whereIn('job_classification_id', $ids);
+        }
+
         if (isset($filters['is_free']) && $filters['is_free'] !== '') {
             $query->where('is_free', filter_var($filters['is_free'], FILTER_VALIDATE_BOOLEAN));
+        }
+
+        if (! empty($filters['access'])) {
+            match ($filters['access']) {
+                'free' => $query->where('is_free', true),
+                'paid' => $query->where('is_free', false)->where('price', '>', 0),
+                'subscription' => $query->where('subscription_required', 'paid'),
+                default => null,
+            };
         }
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('seo_tag', 'like', "%{$search}%");
             });
-        }
-
-        if (isset($filters['price_min']) && $filters['price_min'] !== '') {
-            $query->where('price', '>=', (int) $filters['price_min']);
-        }
-        if (isset($filters['price_max']) && $filters['price_max'] !== '') {
-            $query->where('price', '<=', (int) $filters['price_max']);
-        }
-        if (isset($filters['duration_min']) && $filters['duration_min'] !== '') {
-            $query->where('duration_minutes', '>=', (int) $filters['duration_min']);
-        }
-        if (isset($filters['duration_max']) && $filters['duration_max'] !== '') {
-            $query->where('duration_minutes', '<=', (int) $filters['duration_max']);
-        }
-        if (isset($filters['questions_min']) && $filters['questions_min'] !== '') {
-            $query->where('total_questions', '>=', (int) $filters['questions_min']);
-        }
-        if (isset($filters['questions_max']) && $filters['questions_max'] !== '') {
-            $query->where('total_questions', '<=', (int) $filters['questions_max']);
-        }
-        if (! empty($filters['subjects']) && is_array($filters['subjects'])) {
-            $subjects = $filters['subjects'];
-            $query->whereHas('questions', fn ($q) => $q->whereIn('subject', $subjects));
         }
 
         if (! empty($filters['user_id'])) {
@@ -65,8 +59,7 @@ class ExamRepository
 
         $sort = $filters['sort'] ?? 'latest';
         match ($sort) {
-            'popular' => $query->orderByDesc('attempts_count'),
-            'participants' => $query->orderByDesc('attempts_count'),
+            'popular', 'participants' => $query->orderByDesc('attempts_count'),
             'rating' => $query->orderByDesc('avg_rating'),
             default => $query->latest(),
         };
@@ -77,7 +70,7 @@ class ExamRepository
     public function findBySlug(string $slug): ?Exam
     {
         return Exam::query()
-            ->with('category')
+            ->with(['category', 'classification:id,name,icon,color'])
             ->withCount('questions')
             ->where('slug', $slug)
             ->first();

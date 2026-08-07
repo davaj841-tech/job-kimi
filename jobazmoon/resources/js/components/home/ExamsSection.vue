@@ -16,7 +16,8 @@
         <article
           v-for="exam in displayExams"
           :key="exam.id"
-          class="desk-card overflow-hidden"
+          class="desk-card cursor-pointer overflow-hidden"
+          @click="goExam(exam)"
         >
           <div class="flex aspect-video items-center justify-center bg-desk-blue">
             <DesktopIcon name="clipboard" :size="32" class="text-white" />
@@ -40,12 +41,13 @@
             <p class="mb-3 text-xs text-desk-muted">
               {{ exam.duration_minutes }} دقیقه · {{ exam.total_questions }} سوال
             </p>
-            <RouterLink
-              :to="exam.slug ? `/exams/${exam.slug}` : '/exams'"
+            <button
+              type="button"
               class="inline-flex w-full items-center justify-center rounded-lg bg-desk-dark px-3 py-2.5 text-sm font-bold text-white hover:bg-desk-blue"
+              @click.stop="goExam(exam)"
             >
               شروع آزمون
-            </RouterLink>
+            </button>
           </div>
         </article>
       </div>
@@ -54,8 +56,7 @@
         v-if="!loading && !displayExams.length"
         class="rounded-2xl border border-dashed border-desk-blue/30 bg-white p-8 text-center"
       >
-        <p class="mb-3 text-sm text-desk-muted">برای مشاهده آزمون‌ها وارد حساب شوید.</p>
-        <RouterLink to="/login" class="text-sm font-bold text-desk-orange hover:underline">ورود</RouterLink>
+        <p class="text-sm text-desk-muted">📭 هنوز آزمونی منتشر نشده است. به‌زودی آزمون‌های جدید اضافه می‌شود.</p>
       </div>
     </div>
   </section>
@@ -63,12 +64,31 @@
 
 <script setup>
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import DesktopIcon from '../DesktopIcon.vue';
+import { useAuthStore } from '../../stores/auth';
 
 const props = defineProps({
   exams: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
 });
 
+const auth = useAuthStore();
+const router = useRouter();
+
 const displayExams = computed(() => (props.exams || []).slice(0, 4));
+
+function examPath(exam) {
+  const slug = exam.slug || exam.id;
+  return `/exams/${slug}`;
+}
+
+function goExam(exam) {
+  const path = examPath(exam);
+  if (!auth.isAuthenticated) {
+    router.push({ path: '/login', query: { redirect: path } });
+    return;
+  }
+  router.push(path);
+}
 </script>

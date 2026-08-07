@@ -24,7 +24,7 @@ class QuestionUpdateRequest extends FormRequest
             'correct_answer' => ['sometimes', 'in:a,b,c,d'],
             'explanation' => ['nullable', 'string', 'max:5000'],
             'difficulty' => ['sometimes', 'in:easy,medium,hard'],
-            'subject' => ['sometimes', 'in:math,literature,islamic,english,chemistry,physics,iq,general'],
+            'subject' => ['sometimes', 'string', 'exists:exam_subjects,slug'],
         ];
     }
 }

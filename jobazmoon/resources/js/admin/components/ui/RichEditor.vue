@@ -43,6 +43,7 @@ const buttons = [
   { label: 'راست‌چین', cmd: 'justifyRight', title: 'راست‌چین' },
   { label: 'وسط', cmd: 'justifyCenter', title: 'وسط‌چین' },
   { label: 'لینک', action: 'link', title: 'درج لینک' },
+  { label: 'فرمول', action: 'formula', title: 'درج فرمول ریاضی' },
   { label: 'جدول', action: 'table', title: 'درج جدول' },
   { label: 'پاک‌سازی', cmd: 'removeFormat', title: 'حذف قالب' },
 ];
@@ -74,12 +75,22 @@ function run(btn) {
   if (btn.action === 'link') {
     const url = window.prompt('آدرس لینک:');
     if (url) document.execCommand('createLink', false, url);
+  } else if (btn.action === 'formula') {
+    insertFormula();
   } else if (btn.action === 'table') {
     insertTable();
   } else {
     document.execCommand(btn.cmd, false, btn.value || null);
   }
   onInput();
+}
+
+function insertFormula() {
+  const latex = window.prompt('فرمول LaTeX را وارد کنید:');
+  if (!latex) return;
+  const trimmed = latex.trim();
+  const html = `<span class="math">\\(${trimmed}\\)</span>&nbsp;`;
+  document.execCommand('insertHTML', false, html);
 }
 
 function insertTable() {

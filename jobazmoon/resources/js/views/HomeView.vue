@@ -90,12 +90,10 @@
             :subtitle="exam.is_free ? 'رایگان' : null"
             :meta="exam.duration_minutes ? `${exam.duration_minutes} دقیقه` : ''"
             :badge="exam.is_free ? 'رایگان' : ''"
-            @click="$router.push(`/exams/${exam.id}`)"
+            @click="goExam(exam)"
           />
           <p v-if="!exams.length" class="py-6 text-center text-sm text-desk-muted">
-            برای دیدن آزمون‌ها
-            <RouterLink to="/exams" class="font-bold text-desk-orange">اینجا</RouterLink>
-            کلیک کنید.
+            📭 هنوز آزمونی منتشر نشده است. به‌زودی آزمون‌های جدید اضافه می‌شود.
           </p>
         </div>
       </section>
@@ -150,6 +148,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { setPageMeta } from '../services/meta';
 import api from '../api/client';
 import BlogSection from '../components/home/BlogSection.vue';
@@ -172,6 +171,7 @@ import { toFaDigits, unwrapList } from '../utils/format';
 import { useAuthStore } from '../stores/auth';
 
 const auth = useAuthStore();
+const router = useRouter();
 
 const jobs = ref([]);
 const classifications = ref([]);
@@ -202,6 +202,16 @@ function jobLocation(job) {
     ? job.provinces.join('، ')
     : job.province;
   return [job.city, provinces].filter(Boolean).join('، ');
+}
+
+function goExam(exam) {
+  const slug = exam.slug || exam.id;
+  const path = `/exams/${slug}`;
+  if (!auth.isAuthenticated) {
+    router.push({ path: '/login', query: { redirect: path } });
+    return;
+  }
+  router.push(path);
 }
 
 const mobileStats = computed(() => [
@@ -242,21 +252,14 @@ onMounted(async () => {
     url: typeof window !== 'undefined' ? window.location.href : undefined,
     type: 'website',
   });
-  const requests = [
+  const [jobsRes, filtersRes, blogRes, plansRes, filesRes, examsRes] = await Promise.all([
     api.get('/job-posts', { params: { per_page: 12 } }).catch(() => null),
     api.get('/job-posts/filters').catch(() => null),
     api.get('/blog-posts', { params: { per_page: 4 } }).catch(() => null),
     api.get('/subscription-plans').catch(() => null),
     api.get('/pdf-products', { params: { per_page: 4 } }).catch(() => null),
-  ];
-
-  if (auth.isAuthenticated) {
-    requests.push(api.get('/exams', { params: { per_page: 4 } }).catch(() => null));
-  } else {
-    requests.push(Promise.resolve(null));
-  }
-
-  const [jobsRes, filtersRes, blogRes, plansRes, filesRes, examsRes] = await Promise.all(requests);
+    api.get('/exams', { params: { per_page: 4 } }).catch(() => null),
+  ]);
 
   jobs.value = unwrapList(jobsRes?.data);
   const filtersPayload = filtersRes?.data?.data || filtersRes?.data || {};
@@ -266,6 +269,9 @@ onMounted(async () => {
   plans.value = unwrapList(plansRes?.data);
   files.value = unwrapList(filesRes?.data);
   exams.value = unwrapList(examsRes?.data);
+  if (!exams.value.length && Array.isArray(examsRes?.data?.data?.data)) {
+    exams.value = examsRes.data.data.data;
+  }
 
   loadingJobs.value = false;
   loadingPlans.value = false;

@@ -17,45 +17,70 @@ class QuestionsImport implements ToCollection, WithHeadingRow
     /** @var array<int, string> */
     public array $errors = [];
 
+    public function __construct(protected ?int $forcedExamId = null) {}
+
     public function collection(Collection $rows): void
     {
-        $validAnswers = ['a', 'b', 'c', 'd'];
-        $validDifficulty = ['easy', 'medium', 'hard'];
+        $validAnswers = ['a', 'b', 'c', 'd', 'الف', 'ب', 'ج', 'د'];
+        $answerMap = [
+            'الف' => 'a', 'ب' => 'b', 'ج' => 'c', 'د' => 'd',
+            'a' => 'a', 'b' => 'b', 'c' => 'c', 'd' => 'd',
+        ];
+        $validDifficulty = ['easy', 'medium', 'hard', 'آسان', 'متوسط', 'سخت'];
+        $diffMap = [
+            'آسان' => 'easy', 'متوسط' => 'medium', 'سخت' => 'hard',
+            'easy' => 'easy', 'medium' => 'medium', 'hard' => 'hard',
+        ];
         $validSubjects = ['math', 'literature', 'islamic', 'english', 'chemistry', 'physics', 'iq', 'general'];
+
+        $forcedExam = $this->forcedExamId
+            ? Exam::query()->find($this->forcedExamId)
+            : null;
 
         foreach ($rows as $index => $row) {
             $rowNumber = $index + 2;
             $examSlug = trim((string) ($row['exam_slug'] ?? ''));
             $questionText = trim((string) ($row['question_text'] ?? ''));
-            $optionA = trim((string) ($row['option_a'] ?? ''));
-            $optionB = trim((string) ($row['option_b'] ?? ''));
-            $optionC = trim((string) ($row['option_c'] ?? ''));
-            $optionD = trim((string) ($row['option_d'] ?? ''));
-            $correct = strtolower(trim((string) ($row['correct_answer'] ?? '')));
-            $difficulty = strtolower(trim((string) ($row['difficulty'] ?? '')));
-            $subject = strtolower(trim((string) ($row['subject'] ?? '')));
-            $explanation = trim((string) ($row['explanation'] ?? ''));
+            $optionA = trim((string) ($row['option_a'] ?? $row['گزینه_الف'] ?? ''));
+            $optionB = trim((string) ($row['option_b'] ?? $row['گزینه_ب'] ?? ''));
+            $optionC = trim((string) ($row['option_c'] ?? $row['گزینه_ج'] ?? ''));
+            $optionD = trim((string) ($row['option_d'] ?? $row['گزینه_د'] ?? ''));
+            $correctRaw = trim((string) ($row['correct_answer'] ?? $row['پاسخ_صحیح'] ?? ''));
+            $correct = $answerMap[mb_strtolower($correctRaw)] ?? $answerMap[$correctRaw] ?? strtolower($correctRaw);
+            $difficultyRaw = trim((string) ($row['difficulty'] ?? $row['سطح'] ?? ''));
+            $difficulty = $diffMap[$difficultyRaw] ?? $diffMap[mb_strtolower($difficultyRaw)] ?? 'medium';
+            $subject = strtolower(trim((string) ($row['subject'] ?? $row['درس'] ?? 'general')));
+            $explanation = trim((string) ($row['explanation'] ?? $row['توضیحات'] ?? ''));
 
-            if ($examSlug === '' || $questionText === '' || $optionA === '' || $optionB === '' || $optionC === '' || $optionD === '' || $correct === '') {
+            if ($questionText === '' || $optionA === '' || $optionB === '' || $optionC === '' || $optionD === '' || $correct === '') {
                 $this->skipped++;
                 $this->errors[] = "ردیف {$rowNumber}: فیلدهای الزامی ناقص است.";
                 continue;
             }
 
-            if (! in_array($correct, $validAnswers, true)) {
+            if (! in_array($correct, ['a', 'b', 'c', 'd'], true)) {
                 $this->skipped++;
-                $this->errors[] = "ردیف {$rowNumber}: پاسخ صحیح نامعتبر است.";
+                $this->errors[] = "ردیف {$rowNumber}: پاسخ صحیح نامعتبر است (الف/ب/ج/د).";
                 continue;
             }
 
-            $exam = Exam::query()->where('slug', $examSlug)->first();
+            $exam = $forcedExam;
+            if (! $exam) {
+                if ($examSlug === '') {
+                    $this->skipped++;
+                    $this->errors[] = "ردیف {$rowNumber}: آزمون انتخاب نشده است.";
+                    continue;
+                }
+                $exam = Exam::query()->where('slug', $examSlug)->first();
+            }
+
             if (! $exam) {
                 $this->skipped++;
-                $this->errors[] = "ردیف {$rowNumber}: آزمون با اسلاگ {$examSlug} یافت نشد.";
+                $this->errors[] = "ردیف {$rowNumber}: آزمون یافت نشد.";
                 continue;
             }
 
-            if (! in_array($difficulty, $validDifficulty, true)) {
+            if (! in_array($difficulty, ['easy', 'medium', 'hard'], true)) {
                 $difficulty = 'medium';
             }
 

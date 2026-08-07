@@ -32,5 +32,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->report(function (\Throwable $e) {
+            try {
+                $request = request();
+                app(\App\Services\SiteErrorLogger::class)->report($e, [
+                    'url' => $request?->fullUrl(),
+                    'method' => $request?->method(),
+                    'user_id' => $request?->user()?->id,
+                ]);
+            } catch (\Throwable) {
+                // ignore
+            }
+        });
     })->create();

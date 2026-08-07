@@ -11,9 +11,9 @@
         <button
           type="button"
           class="rounded-xl bg-[#0f2744] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#1e3a5f]"
-          @click="toast.info('افزودن کاربر در فاز بعدی فعال می‌شود.')"
+          @click="createOpen = true"
         >
-          افزودن کاربر
+          ➕ افزودن کاربر
         </button>
       </div>
 
@@ -165,6 +165,13 @@
       @save="onSaveUser"
     />
 
+    <UserCreateModal
+      ref="createModal"
+      :open="createOpen"
+      @close="createOpen = false"
+      @created="onCreateUser"
+    />
+
     <ConfirmDialog
       :open="confirm.open"
       :title="confirm.title"
@@ -207,6 +214,7 @@ import DataTable from '../components/ui/DataTable.vue';
 import StatusBadge from '../components/ui/StatusBadge.vue';
 import UserRoleBadge from '../components/ui/UserRoleBadge.vue';
 import UserDetailModal from '../components/users/UserDetailModal.vue';
+import UserCreateModal from '../components/users/UserCreateModal.vue';
 import { useToast } from '../../composables/useToast';
 import { useUsersStore } from '../stores/users';
 
@@ -216,6 +224,8 @@ const toast = useToast();
 const detailOpen = ref(false);
 const detailStartEdit = ref(false);
 const detailModal = ref(null);
+const createOpen = ref(false);
+const createModal = ref(null);
 const rolePicker = reactive({ open: false, userId: null, role: 'jobseeker' });
 const confirm = reactive({
   open: false,
@@ -314,6 +324,19 @@ async function onSaveUser(payload) {
       : e.response?.data?.message;
     toast.error(msg || 'ذخیره ناموفق بود.');
     detailModal.value?.markFailed?.(msg || 'ذخیره ناموفق بود.');
+  }
+}
+
+async function onCreateUser(payload) {
+  try {
+    await store.createUser(payload);
+    toast.success('کاربر ایجاد شد.');
+    createOpen.value = false;
+  } catch (e) {
+    const msg = e.response?.data?.errors
+      ? Object.values(e.response.data.errors).flat()[0]
+      : e.response?.data?.message;
+    createModal.value?.markFailed?.(msg || 'ایجاد کاربر ناموفق بود.');
   }
 }
 

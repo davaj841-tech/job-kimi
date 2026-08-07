@@ -22,21 +22,14 @@ class ExamController extends BaseController
     public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
-            'category_id', 'is_free', 'search', 'status', 'per_page',
-            'price_min', 'price_max', 'duration_min', 'duration_max',
-            'questions_min', 'questions_max', 'sort',
+            'category_id', 'job_classification_id', 'is_free', 'access', 'search', 'status', 'per_page', 'sort',
         ]);
         $filters['status'] = $filters['status'] ?? 'published';
         $filters['user_id'] = $request->user()?->id;
-        if ($request->filled('subjects')) {
-            $filters['subjects'] = is_array($request->subjects)
-                ? $request->subjects
-                : explode(',', (string) $request->subjects);
-        }
 
         $exams = $this->examRepository->getPublished($filters);
 
-        return $this->successResponse(new ExamCollection($exams));
+        return $this->successResponse((new ExamCollection($exams))->resolve());
     }
 
     public function show(string $slug): JsonResponse
@@ -51,7 +44,42 @@ class ExamController extends BaseController
         $exam->user_best_score = $user ? $this->examRepository->userBestScore($user, $exam) : null;
         $exam->is_eligible = $user ? $this->examService->isEligible($user, $exam) : false;
 
-        return $this->successResponse(new ExamResource($exam));
+        // دروس موجود در این آزمون
+        $subjectSlugs = $exam->questions()->select('subject')->distinct()->pluck('subject')->filter()->values();
+        $subjects = \App\Models\ExamSubject::query()
+            ->whereIn('slug', $subjectSlugs)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'slug', 'icon'])
+            ->map(function ($s) use ($exam) {
+                return [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'slug' => $s->slug,
+                    'icon' => $s->icon,
+                    'question_count' => $exam->questions()->where('subject', $s->slug)->count(),
+                ];
+            })
+            ->values();
+
+        // اگر درسی در جدول نبود ولی روی سوالات هست
+        foreach ($subjectSlugs as $slugVal) {
+            if ($subjects->firstWhere('slug', $slugVal)) {
+                continue;
+            }
+            $subjects->push([
+                'id' => null,
+                'name' => $slugVal,
+                'slug' => $slugVal,
+                'icon' => '📘',
+                'question_count' => $exam->questions()->where('subject', $slugVal)->count(),
+            ]);
+        }
+
+        $data = (new ExamResource($exam))->resolve();
+        $data['subjects'] = $subjects;
+
+        return $this->successResponse($data);
     }
 
     public function store(ExamStoreRequest $request): JsonResponse

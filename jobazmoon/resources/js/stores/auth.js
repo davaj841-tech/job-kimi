@@ -22,6 +22,12 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    function applyAuthPayload(data) {
+        token.value = data.data?.token || data.data?.access_token || '';
+        user.value = data.data?.user || null;
+        persist();
+    }
+
     async function sendOtp(mobile, turnstile_token) {
         loading.value = true;
         try {
@@ -40,9 +46,33 @@ export const useAuthStore = defineStore('auth', () => {
             const payload = { mobile, code };
             if (turnstile_token) payload.turnstile_token = turnstile_token;
             const { data } = await api.post('/auth/otp/verify', payload);
-            token.value = data.data?.token || data.data?.access_token || '';
-            user.value = data.data?.user || null;
-            persist();
+            applyAuthPayload(data);
+            return data;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function loginPassword(login, password, turnstile_token) {
+        loading.value = true;
+        try {
+            const payload = { login, password };
+            if (turnstile_token) payload.turnstile_token = turnstile_token;
+            const { data } = await api.post('/auth/login', payload);
+            applyAuthPayload(data);
+            return data;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    async function register(payload, turnstile_token) {
+        loading.value = true;
+        try {
+            const body = { ...payload };
+            if (turnstile_token) body.turnstile_token = turnstile_token;
+            const { data } = await api.post('/auth/register', body);
+            applyAuthPayload(data);
             return data;
         } finally {
             loading.value = false;
@@ -78,6 +108,8 @@ export const useAuthStore = defineStore('auth', () => {
         isAuthenticated,
         sendOtp,
         verifyOtp,
+        loginPassword,
+        register,
         fetchMe,
         logout,
     };

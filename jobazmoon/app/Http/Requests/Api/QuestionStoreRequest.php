@@ -24,7 +24,7 @@ class QuestionStoreRequest extends FormRequest
             'correct_answer' => ['required', 'in:a,b,c,d'],
             'explanation' => ['nullable', 'string', 'max:5000'],
             'difficulty' => ['required', 'in:easy,medium,hard'],
-            'subject' => ['required', 'in:math,literature,islamic,english,chemistry,physics,iq,general'],
+            'subject' => ['required', 'string', 'exists:exam_subjects,slug'],
         ];
     }
 }

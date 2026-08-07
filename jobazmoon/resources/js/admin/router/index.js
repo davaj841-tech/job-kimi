@@ -121,6 +121,12 @@ const routes = [
     meta: { title: 'حسابرسی', auth: true },
   },
   {
+    path: '/admin/site-errors',
+    name: 'admin-site-errors',
+    component: () => import('../views/SiteErrorsView.vue'),
+    meta: { title: 'خطاهای سایت', auth: true },
+  },
+  {
     path: '/admin/:pathMatch(.*)*',
     redirect: '/admin/dashboard',
   },

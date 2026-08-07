@@ -36,6 +36,10 @@ class JobPostRepository
         }
 
         return $query
+            ->where(function ($q) {
+                $q->whereNull('registration_deadline')
+                    ->orWhereDate('registration_deadline', '>=', now()->toDateString());
+            })
             ->orderByDesc('is_featured')
             ->orderByDesc('created_at')
             ->paginate($filters['per_page'] ?? 15);
@@ -51,6 +55,10 @@ class JobPostRepository
             ])
             ->withCount(['exams as related_exams_count', 'pdfProducts as related_pdfs_count'])
             ->where('status', 'approved')
+            ->where(function ($q) {
+                $q->whereNull('registration_deadline')
+                    ->orWhereDate('registration_deadline', '>=', now()->toDateString());
+            })
             ->find($id);
     }
 

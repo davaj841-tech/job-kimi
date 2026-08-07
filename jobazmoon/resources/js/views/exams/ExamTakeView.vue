@@ -2,55 +2,76 @@
   <div class="min-h-dvh bg-white pb-24">
     <div class="sticky top-0 z-20 border-b border-surface-line bg-white px-4 py-3">
       <div class="flex items-center justify-between">
-        <span class="text-sm font-bold">سوال {{ index + 1 }} / {{ questions.length }}</span>
-        <span class="rounded-md bg-brand-soft px-2 py-1 text-xs font-bold text-brand">{{ timerText }}</span>
+        <span class="text-sm font-bold">صفحه {{ toFaDigits(pageIndex + 1) }} از {{ toFaDigits(totalPages) }}</span>
+        <span class="rounded-md bg-brand-soft px-2 py-1 text-xs font-bold text-brand">⏱ {{ timerText }}</span>
       </div>
       <div class="mt-2 flex items-center justify-between text-[11px] text-ink-muted">
         <span v-if="examStore.offline" class="rounded bg-amber-50 px-2 py-0.5 text-amber-700">آفلاین — ذخیره محلی</span>
         <span v-else-if="syncing" class="text-ink-soft">در حال ذخیره‌سازی...</span>
         <span v-else-if="examStore.lastSyncedAt" class="text-emerald-600">ذخیره شد</span>
         <span v-else>آماده</span>
-        <span>{{ answeredCount }} پاسخ‌داده‌شده</span>
+        <span>{{ toFaDigits(answeredCount) }} از {{ toFaDigits(questions.length) }} پاسخ‌داده‌شده</span>
+      </div>
+      <div class="mt-2 h-1 overflow-hidden rounded-full bg-surface-page">
+        <div class="h-full rounded-full bg-brand transition-all" :style="{ width: `${((pageIndex + 1) / totalPages) * 100}%` }" />
       </div>
     </div>
 
-    <div v-if="current" class="px-4 py-5">
-      <p class="mb-5 text-sm leading-7 font-medium">{{ current.question_text }}</p>
-      <div class="space-y-2">
-        <button
-          v-for="opt in shuffledOptions"
-          :key="opt.key"
-          class="flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-right text-sm transition"
-          :class="selected === opt.key ? 'border-brand bg-brand-soft' : 'border-surface-line bg-white'"
-          @click="selectAnswer(opt.key)"
-        >
-          <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-page text-xs font-bold">
-            {{ opt.key.toUpperCase() }}
+    <div class="space-y-5 px-4 py-5">
+      <div v-for="(q, localIdx) in pageQuestions" :key="q.id" class="rounded-2xl border border-surface-line p-3">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-soft text-[11px] font-bold text-brand">
+            {{ toFaDigits(pageIndex * PER_PAGE + localIdx + 1) }}
           </span>
-          <span>{{ opt.label }}</span>
-        </button>
+          <span v-if="q.subject" class="rounded-md bg-surface-page px-2 py-0.5 text-[10px] text-ink-muted">{{ q.subject }}</span>
+        </div>
+        <div class="mb-4 text-base font-medium leading-8" v-html="q.question_text" />
+        <div class="space-y-2">
+          <button
+            v-for="(opt, optIdx) in optionsFor(q)"
+            :key="opt.key"
+            type="button"
+            class="flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-right text-sm transition"
+            :class="examStore.answers[q.id] === opt.key ? 'border-brand bg-brand-soft' : 'border-surface-line bg-white'"
+            @click="selectAnswer(q.id, opt.key)"
+          >
+            <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-page text-xs font-bold">
+              {{ PERSIAN_LETTERS[optIdx] }}
+            </span>
+            <span class="text-sm leading-7" v-html="opt.label" />
+          </button>
+        </div>
       </div>
     </div>
 
     <div class="fixed inset-x-0 bottom-0 mx-auto flex max-w-app gap-2 border-t border-surface-line bg-white p-3">
-      <button class="btn-ghost flex-1 border border-surface-line" :disabled="index === 0" @click="index--">قبلی</button>
-      <button v-if="index < questions.length - 1" class="btn-primary flex-1" @click="index++">بعدی</button>
-      <button v-else class="btn-primary flex-1" :disabled="submitting" @click="submit">ثبت آزمون</button>
+      <button class="btn-ghost flex-1 border border-surface-line" :disabled="pageIndex === 0" @click="goPage(pageIndex - 1)">
+        ← قبلی
+      </button>
+      <button v-if="pageIndex < totalPages - 1" class="btn-primary flex-1" @click="goPage(pageIndex + 1)">
+        بعدی →
+      </button>
+      <button v-else class="btn-primary flex-1" :disabled="submitting" @click="submit">
+        {{ submitting ? '...' : '✅ ثبت آزمون' }}
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import api from '../../api/client';
 import { useExamStore } from '../../stores/exam';
+import { toFaDigits } from '../../utils/format';
 
-const route = useRoute();
 const router = useRouter();
 const examStore = useExamStore();
 
-const index = ref(0);
+const PER_PAGE = 5;
+const PERSIAN_LETTERS = ['الف', 'ب', 'ج', 'د'];
+
+const pageIndex = ref(0);
 const submitting = ref(false);
 const syncing = ref(false);
 const now = ref(Date.now());
@@ -60,8 +81,10 @@ let intervalTimer;
 let pendingSync = false;
 
 const questions = computed(() => examStore.current?.questions || []);
-const current = computed(() => questions.value[index.value]);
-const selected = computed(() => examStore.answers[current.value?.id]);
+const totalPages = computed(() => Math.max(1, Math.ceil(questions.value.length / PER_PAGE)));
+const pageQuestions = computed(() =>
+  questions.value.slice(pageIndex.value * PER_PAGE, pageIndex.value * PER_PAGE + PER_PAGE)
+);
 const answeredCount = computed(() =>
   Object.values(examStore.answers || {}).filter((v) => v !== null && v !== undefined && v !== '').length
 );
@@ -77,19 +100,21 @@ function seededShuffle(items, seed) {
   return arr;
 }
 
-const shuffledOptions = computed(() => {
-  const q = current.value;
-  if (!q) return [];
-  const o = q.options || {};
+const optionsCache = new Map();
+function optionsFor(question) {
+  if (optionsCache.has(question.id)) return optionsCache.get(question.id);
+  const o = question.options || {};
   const base = [
-    { key: 'a', label: o.a || q.option_a },
-    { key: 'b', label: o.b || q.option_b },
-    { key: 'c', label: o.c || q.option_c },
-    { key: 'd', label: o.d || q.option_d },
+    { key: 'a', label: o.a || question.option_a },
+    { key: 'b', label: o.b || question.option_b },
+    { key: 'c', label: o.c || question.option_c },
+    { key: 'd', label: o.d || question.option_d },
   ].filter((opt) => opt.label);
-  const seed = `${examStore.current?.attemptId || 0}-${q.id}`;
-  return seededShuffle(base, seed);
-});
+  const seed = `${examStore.current?.attemptId || 0}-${question.id}`;
+  const shuffled = seededShuffle(base, seed);
+  optionsCache.set(question.id, shuffled);
+  return shuffled;
+}
 
 const timerText = computed(() => {
   const left = Math.max(0, (examStore.endsAt || 0) - now.value);
@@ -98,9 +123,14 @@ const timerText = computed(() => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 });
 
-function selectAnswer(key) {
-  if (!current.value) return;
-  examStore.setAnswer(current.value.id, key);
+function goPage(index) {
+  pageIndex.value = Math.max(0, Math.min(totalPages.value - 1, index));
+  examStore.setPage(pageIndex.value);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectAnswer(questionId, key) {
+  examStore.setAnswer(questionId, key);
   queueAutosave();
 }
 
@@ -154,6 +184,8 @@ onMounted(async () => {
     router.replace('/exams');
     return;
   }
+
+  pageIndex.value = examStore.pageIndex || 0;
 
   examStore.setOffline(!navigator.onLine);
   window.addEventListener('online', onOnline);

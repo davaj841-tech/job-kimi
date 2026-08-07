@@ -61,12 +61,16 @@ class ExamService
         return now()->greaterThan($endsAt);
     }
 
-    public function getQuestionsForAttempt(Exam $exam, bool $shuffle = true, ?array $onlyIds = null): Collection
+    public function getQuestionsForAttempt(Exam $exam, bool $shuffle = true, ?array $onlyIds = null, ?string $subject = null): Collection
     {
         $query = $exam->questions();
 
         if ($onlyIds !== null) {
             $query->whereIn('id', $onlyIds);
+        }
+
+        if ($subject) {
+            $query->where('subject', $subject);
         }
 
         $questions = $query->get();
@@ -244,9 +248,16 @@ class ExamService
                 'difficulty' => $question->difficulty,
             ];
 
-            $subject = $question->subject ?: 'عمومی';
+            $subject = $question->subject ?: 'general';
             if (! isset($bySubject[$subject])) {
-                $bySubject[$subject] = ['subject' => $subject, 'correct' => 0, 'wrong' => 0, 'blank' => 0, 'total' => 0];
+                $bySubject[$subject] = [
+                    'subject' => $subject,
+                    'subject_label' => $subject,
+                    'correct' => 0,
+                    'wrong' => 0,
+                    'blank' => 0,
+                    'total' => 0,
+                ];
             }
             $bySubject[$subject]['total']++;
             if ($isBlank) {
@@ -257,6 +268,18 @@ class ExamService
                 $bySubject[$subject]['wrong']++;
             }
         }
+
+        $labels = \App\Models\ExamSubject::query()
+            ->whereIn('slug', array_keys($bySubject))
+            ->pluck('name', 'slug');
+
+        foreach ($bySubject as $slug => &$row) {
+            $row['subject_label'] = $labels[$slug] ?? $slug;
+            $row['percentage'] = $row['total'] > 0
+                ? round(($row['correct'] / $row['total']) * 100, 1)
+                : 0;
+        }
+        unset($row);
 
         $totalMarks = (float) ($attempt->exam->total_marks ?: max($questions->count(), 1));
         $percentage = $totalMarks > 0

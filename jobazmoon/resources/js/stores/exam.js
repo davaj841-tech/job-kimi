@@ -10,6 +10,7 @@ export const useExamStore = defineStore('exam', () => {
     const dirty = ref(false);
     const lastSyncedAt = ref(null);
     const offline = ref(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+    const pageIndex = ref(0);
 
     function loadCache() {
         const raw = localStorage.getItem(KEY);
@@ -21,6 +22,7 @@ export const useExamStore = defineStore('exam', () => {
             endsAt.value = parsed.endsAt;
             dirty.value = Boolean(parsed.dirty);
             lastSyncedAt.value = parsed.lastSyncedAt || null;
+            pageIndex.value = parsed.pageIndex || 0;
             return parsed;
         } catch {
             return null;
@@ -36,6 +38,7 @@ export const useExamStore = defineStore('exam', () => {
                 endsAt: endsAt.value,
                 dirty: dirty.value,
                 lastSyncedAt: lastSyncedAt.value,
+                pageIndex: pageIndex.value,
             })
         );
     }
@@ -46,7 +49,13 @@ export const useExamStore = defineStore('exam', () => {
         endsAt.value = null;
         dirty.value = false;
         lastSyncedAt.value = null;
+        pageIndex.value = 0;
         localStorage.removeItem(KEY);
+    }
+
+    function setPage(index) {
+        pageIndex.value = index;
+        saveCache();
     }
 
     function setAnswer(questionId, value) {
@@ -72,11 +81,13 @@ export const useExamStore = defineStore('exam', () => {
         dirty,
         lastSyncedAt,
         offline,
+        pageIndex,
         loadCache,
         saveCache,
         clearCache,
         setAnswer,
         markSynced,
         setOffline,
+        setPage,
     };
 });

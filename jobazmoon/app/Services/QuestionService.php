@@ -18,9 +18,9 @@ class QuestionService
     /**
      * @return array{created: int, skipped: int, errors: array<int, string>}
      */
-    public function importFromExcel(UploadedFile $file): array
+    public function importFromExcel(UploadedFile $file, ?int $examId = null): array
     {
-        $import = new QuestionsImport;
+        $import = new QuestionsImport($examId);
         Excel::import($import, $file);
 
         return [

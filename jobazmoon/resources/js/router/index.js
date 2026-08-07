@@ -36,13 +36,13 @@ const routes = [
         path: '/exams',
         name: 'exams',
         component: () => import('../views/exams/ExamListView.vue'),
-        meta: { title: 'آزمون‌ها', auth: true },
+        meta: { title: 'آزمون‌ها' },
     },
     {
         path: '/exams/:slug',
         name: 'exam-detail',
         component: () => import('../views/exams/ExamDetailView.vue'),
-        meta: { title: 'جزئیات آزمون', auth: true },
+        meta: { title: 'جزئیات آزمون' },
     },
     {
         path: '/exams/:id/take',

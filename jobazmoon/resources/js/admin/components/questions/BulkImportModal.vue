@@ -1,13 +1,32 @@
 ﻿<template>
-  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" >
+  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
     <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
       <div class="mb-4 flex items-center justify-between">
         <h3 class="text-lg font-bold">ورود اکسل سوالات</h3>
-        <button @click="$emit('close')">✕</button>
+        <button type="button" @click="$emit('close')">✕</button>
+      </div>
+
+      <div class="mb-4">
+        <label class="mb-1 block text-xs font-medium text-slate-600">آزمون *</label>
+        <select v-model="examId" required class="field">
+          <option disabled value="">ابتدا آزمون را انتخاب کنید</option>
+          <option v-for="e in exams" :key="e.id" :value="e.id">{{ e.title }}</option>
+        </select>
+      </div>
+
+      <div class="mb-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700"
+          :disabled="downloading"
+          @click="downloadSample"
+        >
+          {{ downloading ? '...' : 'دانلود نمونه اکسل' }}
+        </button>
       </div>
 
       <p class="mb-3 text-sm text-slate-500">
-        ستون‌ها: exam_slug, question_text, option_a..d, correct_answer, explanation, difficulty, subject
+        ستون‌ها: question_text, option_a..d, correct_answer, explanation, difficulty, subject
       </p>
 
       <input type="file" accept=".xlsx,.xls,.csv" class="mb-4 block w-full text-sm" @change="onFile" />
@@ -38,10 +57,11 @@
       <p v-if="error" class="mb-3 text-sm text-red-500">{{ error }}</p>
 
       <div class="flex justify-end gap-2">
-        <button class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-bold" @click="$emit('close')">بستن</button>
+        <button type="button" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-bold" @click="$emit('close')">بستن</button>
         <button
+          type="button"
           class="rounded-xl bg-orange-500 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-          :disabled="!file || loading"
+          :disabled="!file || !examId || loading"
           @click="importFile"
         >
           {{ loading ? 'در حال ورود...' : 'شروع ورود' }}
@@ -52,24 +72,42 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import adminApi from '../../api/client';
 
-const props = defineProps({ open: Boolean });
+const props = defineProps({
+  open: Boolean,
+  exams: { type: Array, default: () => [] },
+});
 const emit = defineEmits(['close', 'imported']);
 
+const examId = ref('');
 const file = ref(null);
 const loading = ref(false);
+const downloading = ref(false);
 const error = ref('');
 const result = ref(null);
 const previewHeaders = ref([]);
 const previewRows = ref([]);
+
+watch(
+  () => props.open,
+  (v) => {
+    if (!v) return;
+    examId.value = '';
+    file.value = null;
+    error.value = '';
+    result.value = null;
+    previewHeaders.value = [];
+    previewRows.value = [];
+  }
+);
 
 function onFile(e) {
   file.value = e.target.files?.[0] || null;
   result.value = null;
   previewHeaders.value = [];
   previewRows.value = [];
-  // CSV quick preview only
   if (file.value?.name?.endsWith('.csv')) {
     const reader = new FileReader();
     reader.onload = () => {
@@ -90,12 +128,35 @@ function onFile(e) {
   }
 }
 
+async function downloadSample() {
+  downloading.value = true;
+  error.value = '';
+  try {
+    const response = await adminApi.get('/admin/questions/import-sample', {
+      responseType: 'blob',
+    });
+    const url = URL.createObjectURL(new Blob([response.data]));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'questions-import-sample.xlsx';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    error.value = e.response?.data?.message || 'دانلود نمونه ناموفق بود.';
+  } finally {
+    downloading.value = false;
+  }
+}
+
 async function importFile() {
-  if (!file.value) return;
+  if (!file.value || !examId.value) {
+    error.value = 'آزمون و فایل الزامی است.';
+    return;
+  }
   loading.value = true;
   error.value = '';
   try {
-    emit('imported', file.value);
+    emit('imported', { file: file.value, exam_id: Number(examId.value) });
   } catch (e) {
     error.value = e.response?.data?.message || 'ورود ناموفق بود.';
   } finally {
@@ -112,3 +173,9 @@ defineExpose({
   },
 });
 </script>
+
+<style scoped>
+.field {
+  @apply h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-orange-400;
+}
+</style>

@@ -1,94 +1,150 @@
 <template>
-  <div class="px-4 py-4 lg:desk-container lg:grid lg:grid-cols-[260px_1fr] lg:gap-6 lg:py-8">
-    <aside class="mb-4 hidden rounded-2xl border border-surface-line bg-white p-4 lg:block">
-      <h2 class="mb-3 text-sm font-bold">فیلتر پیشرفته</h2>
-      <label class="label">مرتب‌سازی</label>
-      <select v-model="filters.sort" class="field mb-3" @change="load">
-        <option value="latest">جدیدترین</option>
-        <option value="popular">محبوب‌ترین</option>
-        <option value="participants">بیشترین شرکت‌کننده</option>
-        <option value="rating">بالاترین امتیاز</option>
-      </select>
-      <label class="label">قیمت تا {{ fa(filters.price_max) }}</label>
-      <input v-model.number="filters.price_max" type="range" min="0" max="5000000" step="50000" class="mb-3 w-full" @change="load" />
-      <label class="label">مدت (دقیقه) {{ filters.duration_min }}–{{ filters.duration_max }}</label>
-      <div class="mb-3 flex gap-2">
-        <input v-model.number="filters.duration_min" type="number" min="15" max="180" class="field" @change="load" />
-        <input v-model.number="filters.duration_max" type="number" min="15" max="180" class="field" @change="load" />
-      </div>
-      <label class="label">تعداد سوال</label>
-      <div class="mb-3 flex gap-2">
-        <input v-model.number="filters.questions_min" type="number" min="0" class="field" placeholder="از" @change="load" />
-        <input v-model.number="filters.questions_max" type="number" min="0" class="field" placeholder="تا" @change="load" />
-      </div>
-      <p class="label mb-2">موضوعات</p>
-      <label v-for="s in subjects" :key="s" class="mb-1 flex items-center gap-2 text-xs">
-        <input v-model="filters.subjects" type="checkbox" :value="s" @change="load" />
-        {{ subjectLabel(s) }}
-      </label>
-      <div class="mt-4 lg:sticky lg:top-24">
-        <BannerSlider position="exam_sidebar" />
-      </div>
-    </aside>
+  <div class="px-4 py-4 lg:desk-container lg:py-8">
+    <h1 class="mb-4 section-title">📝 آزمون‌ها</h1>
 
-    <div>
-      <h1 class="mb-4 section-title">آزمون‌ها</h1>
-      <input v-model="filters.search" class="input-field mb-3" placeholder="جستجوی آزمون..." @keyup.enter="load" />
-      <select v-model="filters.sort" class="field mb-3 lg:hidden" @change="load">
+    <!-- Search + sort -->
+    <div class="mb-3 flex gap-2">
+      <input
+        v-model="filters.search"
+        class="input-field flex-1"
+        placeholder="🔎 جستجوی آزمون..."
+        @keyup.enter="load"
+      />
+      <select v-model="filters.sort" class="field w-32" @change="load">
         <option value="latest">جدیدترین</option>
         <option value="popular">محبوب‌ترین</option>
-        <option value="participants">بیشترین شرکت‌کننده</option>
+        <option value="participants">پرشرکت‌کننده</option>
         <option value="rating">بالاترین امتیاز</option>
       </select>
-      <SkeletonCard v-if="loading" :count="4" />
-      <div v-else class="space-y-2">
-        <ContentCard
+    </div>
+
+    <!-- Classification chips -->
+    <div v-if="classifications.length" class="mb-3 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <button
+        type="button"
+        class="chip"
+        :class="!filters.job_classification_id ? 'chip-active' : ''"
+        @click="setClassification(null)"
+      >
+        همه
+      </button>
+      <button
+        v-for="c in classifications"
+        :key="c.id"
+        type="button"
+        class="chip"
+        :class="String(filters.job_classification_id) === String(c.id) ? 'chip-active' : ''"
+        @click="setClassification(c.id)"
+      >
+        <span v-if="c.icon">{{ c.icon }}</span>
+        {{ c.name }}
+      </button>
+    </div>
+
+    <!-- Access chips -->
+    <div class="mb-4 flex gap-2">
+      <button
+        v-for="opt in accessOptions"
+        :key="opt.value"
+        type="button"
+        class="chip"
+        :class="filters.access === opt.value ? 'chip-active' : ''"
+        @click="setAccess(opt.value)"
+      >
+        {{ opt.label }}
+      </button>
+    </div>
+
+    <SkeletonCard v-if="loading" :count="5" />
+    <template v-else>
+      <div v-if="exams.length" class="grid gap-2 lg:grid-cols-3">
+        <article
           v-for="exam in exams"
           :key="exam.id"
-          :title="exam.title"
-          :subtitle="exam.category?.name || ''"
-          :meta="metaOf(exam)"
-          :price="exam.is_free ? 0 : exam.price"
-          :badge="exam.is_free ? 'رایگان' : ''"
-          @click="$router.push(`/exams/${exam.slug}`)"
-        />
-        <p v-if="!exams.length" class="py-10 text-center text-sm text-ink-muted">آزمونی موجود نیست.</p>
+          class="card-soft cursor-pointer overflow-hidden p-3.5"
+          @click="goExam(exam)"
+        >
+          <div class="mb-1.5 flex items-start justify-between gap-2">
+            <h3 class="mobile-card-title line-clamp-2">{{ exam.title }}</h3>
+            <span class="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold" :class="badgeClass(exam)">
+              {{ badgeLabel(exam) }}
+            </span>
+          </div>
+          <p v-if="exam.classification?.name" class="mb-2 line-clamp-1 text-xs text-ink-muted">
+            {{ exam.classification.name }}
+          </p>
+          <div class="flex items-center justify-between text-xs text-ink-muted">
+            <span>{{ metaOf(exam) }}</span>
+            <span v-if="!exam.is_free" class="font-bold tabular-nums text-brand">
+              {{ exam.subscription_required === 'paid' ? 'با اشتراک' : formatPrice(exam.price) }}
+            </span>
+          </div>
+        </article>
       </div>
-    </div>
+      <EmptyState
+        v-else
+        title="آزمونی موجود نیست"
+        description="با فیلترهای دیگر جستجو کنید یا بعداً دوباره سر بزنید."
+        icon="📭"
+      />
+    </template>
   </div>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import api from '../../api/client';
-import BannerSlider from '../../components/BannerSlider.vue';
-import ContentCard from '../../components/ContentCard.vue';
+import EmptyState from '../../components/EmptyState.vue';
 import SkeletonCard from '../../components/ui/SkeletonCard.vue';
-import { toFaDigits } from '../../utils/format';
+import { useAuthStore } from '../../stores/auth';
+import { formatPrice, unwrapList } from '../../utils/format';
 
 const route = useRoute();
+const router = useRouter();
+const auth = useAuthStore();
+
 const exams = ref([]);
+const classifications = ref([]);
 const loading = ref(true);
-const subjects = ['math', 'literature', 'islamic', 'english', 'chemistry', 'physics', 'iq', 'general'];
+
+const accessOptions = [
+  { value: '', label: 'همه' },
+  { value: 'free', label: '🎁 رایگان' },
+  { value: 'subscription', label: '⭐ اشتراک' },
+  { value: 'paid', label: '💳 فروشی' },
+];
+
 const filters = reactive({
   search: route.query.search || '',
   sort: 'latest',
-  price_max: 5000000,
-  duration_min: 15,
-  duration_max: 180,
-  questions_min: null,
-  questions_max: null,
-  subjects: [],
+  job_classification_id: null,
+  access: '',
 });
 
-function fa(n) { return toFaDigits(n); }
-function subjectLabel(s) {
-  return { math: 'ریاضی', literature: 'ادبیات', islamic: 'معارف', english: 'زبان', chemistry: 'شیمی', physics: 'فیزیک', iq: 'هوش', general: 'عمومی' }[s] || s;
+function setClassification(id) {
+  filters.job_classification_id = id;
+  load();
 }
+function setAccess(value) {
+  filters.access = value;
+  load();
+}
+
 function metaOf(exam) {
-  const rating = exam.avg_rating ? `★ ${toFaDigits(Number(exam.avg_rating).toFixed(1))} · ` : '';
+  const rating = exam.avg_rating ? `★ ${Number(exam.avg_rating).toFixed(1)} · ` : '';
   return `${rating}${exam.duration_minutes || '-'} دقیقه · ${exam.total_questions || 0} سوال`;
+}
+
+function badgeLabel(exam) {
+  if (exam.is_free) return 'رایگان';
+  if (exam.subscription_required === 'paid') return 'اشتراکی';
+  return 'فروشی';
+}
+function badgeClass(exam) {
+  if (exam.is_free) return 'bg-emerald-50 text-emerald-700';
+  if (exam.subscription_required === 'paid') return 'bg-amber-50 text-amber-700';
+  return 'bg-brand-soft text-brand';
 }
 
 async function load() {
@@ -98,15 +154,12 @@ async function load() {
       params: {
         search: filters.search || undefined,
         sort: filters.sort,
-        price_max: filters.price_max,
-        duration_min: filters.duration_min,
-        duration_max: filters.duration_max,
-        questions_min: filters.questions_min || undefined,
-        questions_max: filters.questions_max || undefined,
-        subjects: filters.subjects.length ? filters.subjects.join(',') : undefined,
+        job_classification_id: filters.job_classification_id || undefined,
+        access: filters.access || undefined,
+        per_page: 24,
       },
     });
-    exams.value = data.data?.data || data.data || [];
+    exams.value = unwrapList(data);
   } catch {
     exams.value = [];
   } finally {
@@ -114,12 +167,45 @@ async function load() {
   }
 }
 
+async function loadClassifications() {
+  try {
+    const { data } = await api.get('/job-posts/filters');
+    const payload = data?.data || data || {};
+    classifications.value = payload.home_classifications || [];
+  } catch {
+    classifications.value = [];
+  }
+}
+
+function goExam(exam) {
+  const path = `/exams/${exam.slug || exam.id}`;
+  if (!auth.isAuthenticated) {
+    router.push({ path: '/login', query: { redirect: path } });
+    return;
+  }
+  router.push(path);
+}
+
 let t;
-watch(() => filters.search, () => { clearTimeout(t); t = setTimeout(load, 350); });
-onMounted(load);
+watch(() => filters.search, () => {
+  clearTimeout(t);
+  t = setTimeout(load, 350);
+});
+
+onMounted(() => {
+  load();
+  loadClassifications();
+});
 </script>
 
 <style scoped>
-.label { @apply mb-1 block text-xs font-bold text-slate-500; }
-.field { @apply h-10 w-full rounded-xl border border-surface-line px-3 text-sm outline-none focus:border-brand; }
+.field {
+  @apply h-11 rounded-lg border border-surface-line bg-white px-3 text-sm outline-none focus:border-brand;
+}
+.chip {
+  @apply shrink-0 whitespace-nowrap rounded-full border border-surface-line bg-white px-3 py-1.5 text-xs font-bold text-ink-soft transition;
+}
+.chip-active {
+  @apply border-brand bg-brand text-white;
+}
 </style>

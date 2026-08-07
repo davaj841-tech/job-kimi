@@ -53,6 +53,7 @@ const items = [
   { to: '/admin/pages', label: 'صفحات', icon: '▤' },
   { to: '/admin/backups', label: 'بکاپ', icon: '💾' },
   { to: '/admin/audit-logs', label: 'حسابرسی', icon: '☰' },
+  { to: '/admin/site-errors', label: 'خطاهای سایت', icon: '⚠' },
   { to: '/admin/settings', label: 'تنظیمات', icon: '⚙' },
 ];
 

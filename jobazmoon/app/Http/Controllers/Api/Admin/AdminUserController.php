@@ -184,6 +184,42 @@ class AdminUserController extends BaseController
         return $this->successResponse($this->listItem($user->fresh('subscriptionPlan')), 'وضعیت کاربر به‌روزرسانی شد.');
     }
 
+    public function store(\Illuminate\Http\Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'username' => ['required', 'string', 'regex:/^[a-zA-Z0-9_]{3,20}$/', 'unique:users,username'],
+            'password' => ['required', 'string', 'min:8'],
+            'mobile' => ['nullable', 'regex:/^09\d{9}$/', 'unique:users,mobile'],
+            'email' => ['nullable', 'email', 'max:191', 'unique:users,email'],
+            'province' => ['nullable', 'string', 'max:100'],
+            'role' => ['required', 'in:jobseeker,employer,operator,admin'],
+            'status' => ['nullable', 'in:active,blocked'],
+        ], [
+            'username.unique' => 'نام کاربری تکراری است.',
+            'mobile.unique' => 'موبایل تکراری است.',
+            'email.unique' => 'ایمیل تکراری است.',
+        ]);
+
+        if (empty($data['mobile']) && empty($data['email'])) {
+            return $this->errorResponse('حداقل یکی از موبایل یا ایمیل الزامی است.', 422);
+        }
+
+        $user = User::query()->create([
+            'name' => $data['name'],
+            'username' => strtolower($data['username']),
+            'password' => $data['password'],
+            'mobile' => $data['mobile'] ?? null,
+            'email' => $data['email'] ?? null,
+            'province' => $data['province'] ?? null,
+            'role' => $data['role'],
+            'status' => $data['status'] ?? 'active',
+            'is_verified' => true,
+        ]);
+
+        return $this->successResponse($this->listItem($user->load('subscriptionPlan')), 'کاربر ایجاد شد.', 201);
+    }
+
     public function destroy(int $id): JsonResponse
     {
         $user = User::query()->find($id);
@@ -209,6 +245,7 @@ class AdminUserController extends BaseController
             'mobile' => $user->mobile,
             'email' => $user->email,
             'username' => $user->username,
+            'province' => $user->province,
             'role' => $user->role,
             'wallet_balance' => $user->wallet_balance,
             'subscription_plan' => $user->subscriptionPlan?->name,

@@ -41,6 +41,12 @@ export const useUsersStore = defineStore('users', {
       }
     },
 
+    async createUser(payload) {
+      const { data } = await adminApi.post('/admin/users', payload);
+      await this.fetchUsers(1);
+      return data.data;
+    },
+
     async updateUser(userId, payload) {
       const { data } = await adminApi.put(`/admin/users/${userId}`, payload);
       await this.fetchUsers(this.meta.current_page || 1);
