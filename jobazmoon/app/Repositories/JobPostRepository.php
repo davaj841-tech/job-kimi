@@ -73,12 +73,20 @@ class JobPostRepository
     public function getAdminList(array $filters): LengthAwarePaginator
     {
         $query = JobPost::query()
-            ->with(['creator:id,name,mobile', 'approver:id,name,mobile', 'classification'])
+            ->with(['creator:id,name,mobile', 'approver:id,name,mobile', 'classification', 'source:id,name,domain,slug,reliability_level'])
             ->withCount(['exams as related_exams_count', 'pdfProducts as related_pdfs_count']);
 
         $status = $filters['status'] ?? 'all';
         if ($status !== 'all' && $status !== '' && in_array($status, ['pending', 'approved', 'rejected'], true)) {
             $query->where('status', $status);
+        }
+
+        if (! empty($filters['aggregated_only'])) {
+            $query->whereNotNull('job_source_id');
+        }
+
+        if (! empty($filters['job_source_id'])) {
+            $query->where('job_source_id', (int) $filters['job_source_id']);
         }
 
         $this->applyLocationFilters($query, $filters);

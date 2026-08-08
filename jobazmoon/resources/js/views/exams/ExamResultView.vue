@@ -95,7 +95,7 @@
               {{ item.is_blank ? 'بدون پاسخ' : item.is_correct ? 'صحیح' : 'غلط' }}
             </span>
           </div>
-          <p class="mb-2 leading-6">{{ item.question_text }}</p>
+          <p class="mb-2 leading-6" v-html="item.question_text"></p>
           <p class="text-xs">
             پاسخ شما:
             <b>{{ item.user_answer ? String(item.user_answer).toUpperCase() : '—' }}</b>

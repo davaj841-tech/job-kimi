@@ -22,9 +22,10 @@ class ExamController extends BaseController
     public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
-            'category_id', 'job_classification_id', 'is_free', 'access', 'search', 'status', 'per_page', 'sort',
+            'category_id', 'job_classification_id', 'is_free', 'access', 'search', 'per_page', 'sort',
         ]);
-        $filters['status'] = $filters['status'] ?? 'published';
+        // کاتالوگ عمومی فقط آزمون‌های منتشرشده
+        $filters['status'] = 'published';
         $filters['user_id'] = $request->user()?->id;
 
         $exams = $this->examRepository->getPublished($filters);
@@ -36,7 +37,7 @@ class ExamController extends BaseController
     {
         $exam = $this->examRepository->findBySlug($slug);
 
-        if (! $exam || $exam->status === 'archived') {
+        if (! $exam || $exam->status !== 'published') {
             return $this->errorResponse('آزمون یافت نشد.', 404);
         }
 
@@ -86,9 +87,25 @@ class ExamController extends BaseController
     {
         $data = $request->validated();
         $data['created_by'] = $request->user()->id;
-        $data['status'] = $data['status'] ?? 'draft';
+        $data['status'] = $data['status'] ?? 'published';
         $data['total_questions'] = 0;
         $data['price'] = $data['price'] ?? 0;
+        $data['has_negative_marking'] = $data['has_negative_marking'] ?? false;
+        $data['negative_mark_ratio'] = $data['negative_mark_ratio'] ?? 0.3333;
+
+        if (blank($data['slug'] ?? null)) {
+            $data['slug'] = \Illuminate\Support\Str::slug($data['title']).'-'.\Illuminate\Support\Str::random(5);
+            if (blank($data['slug'])) {
+                $data['slug'] = 'exam-'.\Illuminate\Support\Str::random(8);
+            }
+        }
+
+        if (empty($data['category_id'])) {
+            $data['category_id'] = \App\Models\ExamCategory::query()->firstOrCreate(
+                ['slug' => 'general'],
+                ['name' => 'عمومی', 'icon' => 'book']
+            )->id;
+        }
 
         $exam = Exam::query()->create($data);
 

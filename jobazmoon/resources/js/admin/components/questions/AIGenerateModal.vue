@@ -1,9 +1,9 @@
 ﻿<template>
-  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" >
+  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
     <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
       <div class="mb-4 flex items-center justify-between">
         <h3 class="text-lg font-bold">تولید سوال با AI</h3>
-        <button @click="$emit('close')">✕</button>
+        <button type="button" @click="$emit('close')">✕</button>
       </div>
 
       <form class="space-y-3" @submit.prevent="generate">
@@ -17,14 +17,9 @@
         <div>
           <label class="mb-1 block text-xs text-slate-600">درس</label>
           <select v-model="form.subject" class="field">
-            <option value="math">ریاضی</option>
-            <option value="literature">ادبیات</option>
-            <option value="islamic">معارف</option>
-            <option value="chemistry">شیمی</option>
-            <option value="physics">فیزیک</option>
-            <option value="iq">هوش</option>
-            <option value="english">انگلیسی</option>
-            <option value="general">عمومی</option>
+            <option v-for="s in subjectOptions" :key="s.slug" :value="s.slug">
+              {{ s.icon ? s.icon + ' ' : '' }}{{ s.name }}
+            </option>
           </select>
         </div>
         <div>
@@ -59,7 +54,8 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { useExamSubjectsStore } from '../../stores/examSubjects';
 
 const props = defineProps({
   open: Boolean,
@@ -68,6 +64,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'generate']);
 
+const subjectsStore = useExamSubjectsStore();
 const loading = ref(false);
 const error = ref('');
 const message = ref('');
@@ -78,16 +75,49 @@ const form = reactive({
   count: 5,
 });
 
+const subjectOptions = computed(() => {
+  const list = (subjectsStore.subjects || []).filter((s) => s.is_active !== false);
+  if (list.length) return list;
+  return [
+    { slug: 'general', name: 'عمومی', icon: '📝' },
+    { slug: 'math', name: 'ریاضی', icon: '➗' },
+    { slug: 'literature', name: 'ادبیات', icon: '📖' },
+    { slug: 'islamic', name: 'معارف', icon: '🕌' },
+    { slug: 'chemistry', name: 'شیمی', icon: '🧪' },
+    { slug: 'physics', name: 'فیزیک', icon: '⚛️' },
+    { slug: 'iq', name: 'هوش', icon: '🧠' },
+    { slug: 'english', name: 'انگلیسی', icon: '🔤' },
+  ];
+});
+
 watch(
   () => props.open,
-  (v) => {
+  async (v) => {
     if (v) {
       error.value = '';
       message.value = '';
       loading.value = false;
+      if (!subjectsStore.subjects.length) {
+        try {
+          await subjectsStore.fetchSubjects();
+        } catch (_) {
+          // fallback options
+        }
+      }
+      if (!form.subject && subjectOptions.value[0]) {
+        form.subject = subjectOptions.value[0].slug;
+      }
     }
   }
 );
+
+onMounted(async () => {
+  try {
+    await subjectsStore.fetchSubjects();
+  } catch (_) {
+    // ignore
+  }
+});
 
 async function generate() {
   loading.value = true;
@@ -120,6 +150,6 @@ defineExpose({
 
 <style scoped>
 .field {
-  @apply h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-orange-400;
+  @apply w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-orange-400;
 }
 </style>

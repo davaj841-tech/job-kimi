@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             AdminUserSeeder::class,
             PaymentGatewaySeeder::class,
+            PilotJobSourceSeeder::class,
         ]);
     }
 }

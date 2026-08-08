@@ -196,6 +196,13 @@
               maxlength="6"
               placeholder="------"
             />
+            <div>
+              <label class="mb-1 block text-xs font-bold text-ink-soft">📍 استان (برای کاربران جدید)</label>
+              <select v-model="otpProvince" class="input-field">
+                <option value="">انتخاب استان</option>
+                <option v-for="p in IRAN_PROVINCES" :key="p" :value="p">{{ p }}</option>
+              </select>
+            </div>
             <div v-if="turnstileEnabled && turnstileSiteKey" class="flex justify-center">
               <div ref="turnstileElOtp2" class="cf-turnstile"></div>
             </div>
@@ -239,6 +246,7 @@ const tab = ref('login');
 const otpStep = ref(1);
 const mobile = ref('');
 const code = ref('');
+const otpProvince = ref('');
 const error = ref('');
 
 const loginForm = reactive({ login: '', password: '' });
@@ -402,10 +410,13 @@ async function onSendOtp() {
 async function onVerifyOtp() {
   error.value = '';
   try {
-    await auth.verifyOtp(mobile.value, code.value, turnstileToken.value || undefined);
+    await auth.verifyOtp(mobile.value, code.value, turnstileToken.value || undefined, otpProvince.value || undefined);
     redirectAfterAuth();
   } catch (e) {
     error.value = e.response?.data?.message || 'کد نامعتبر است.';
+    if (e.response?.data?.code === 'PROVINCE_REQUIRED' && !otpProvince.value) {
+      error.value = 'لطفاً استان خود را انتخاب کنید.';
+    }
   }
 }
 </script>

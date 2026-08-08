@@ -192,13 +192,14 @@ class AdminUserController extends BaseController
             'password' => ['required', 'string', 'min:8'],
             'mobile' => ['nullable', 'regex:/^09\d{9}$/', 'unique:users,mobile'],
             'email' => ['nullable', 'email', 'max:191', 'unique:users,email'],
-            'province' => ['nullable', 'string', 'max:100'],
+            'province' => ['required', 'string', 'max:100'],
             'role' => ['required', 'in:jobseeker,employer,operator,admin'],
             'status' => ['nullable', 'in:active,blocked'],
         ], [
             'username.unique' => 'نام کاربری تکراری است.',
             'mobile.unique' => 'موبایل تکراری است.',
             'email.unique' => 'ایمیل تکراری است.',
+            'province.required' => 'انتخاب استان الزامی است.',
         ]);
 
         if (empty($data['mobile']) && empty($data['email'])) {

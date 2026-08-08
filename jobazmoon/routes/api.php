@@ -12,6 +12,10 @@ use App\Http\Controllers\Api\Admin\BackupAdminController;
 use App\Http\Controllers\Api\Admin\BannerAdminController;
 use App\Http\Controllers\Api\Admin\BlogPostAdminController;
 use App\Http\Controllers\Api\Admin\CouponAdminController;
+use App\Http\Controllers\Api\Admin\AggregationQualityController;
+use App\Http\Controllers\Api\Admin\AggregationScheduleAdminController;
+use App\Http\Controllers\Api\Admin\CrawlerRunAdminController;
+use App\Http\Controllers\Api\Admin\JobSourceAdminController;
 use App\Http\Controllers\Api\Admin\JobClassificationAdminController;
 use App\Http\Controllers\Api\Admin\JobPostAdminController;
 use App\Http\Controllers\Api\Admin\PageAdminController;
@@ -114,6 +118,7 @@ Route::match(['get', 'post'], '/pdf-products/{id}/verify', [PDFProductController
 
 Route::middleware(['auth:sanctum', 'subscription.check'])->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/admin/auth/logout', [AdminAuthController::class, 'logout']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -211,6 +216,9 @@ Route::middleware(['auth:sanctum', 'subscription.check'])->group(function () {
         Route::get('/questions/import-sample', [QuestionController::class, 'importSample']);
         Route::post('/questions/import', [QuestionController::class, 'import']);
         Route::get('/exams/{id}/preview', [AdminExamController::class, 'preview'])->whereNumber('id');
+        Route::post('/exams/{id}/practice/start', [AdminExamController::class, 'practiceStart'])->whereNumber('id');
+        Route::post('/exams/{id}/practice/submit/{attemptId}', [AdminExamController::class, 'practiceSubmit'])->whereNumber('id')->whereNumber('attemptId');
+        Route::get('/exams/{id}/practice/result/{attemptId}', [AdminExamController::class, 'practiceResult'])->whereNumber('id')->whereNumber('attemptId');
         Route::get('/questions/{question}', [QuestionController::class, 'show'])->whereNumber('question');
         Route::put('/questions/{question}', [QuestionController::class, 'update'])->whereNumber('question');
         Route::delete('/questions/{question}', [QuestionController::class, 'destroy'])->whereNumber('question');
@@ -221,6 +229,40 @@ Route::middleware(['auth:sanctum', 'subscription.check'])->group(function () {
         Route::post('/job-posts/{id}/approve', [JobPostAdminController::class, 'approve'])->whereNumber('id');
         Route::post('/job-posts/{id}/reject', [JobPostAdminController::class, 'reject'])->whereNumber('id');
         Route::apiResource('/job-posts', JobPostAdminController::class)->parameters(['job-posts' => 'id']);
+
+        Route::get('/job-sources/options', [JobSourceAdminController::class, 'options']);
+        Route::post('/job-sources/{id}/approve', [JobSourceAdminController::class, 'approve'])->whereNumber('id');
+        Route::post('/job-sources/{id}/unapprove', [JobSourceAdminController::class, 'unapprove'])->whereNumber('id');
+        Route::post('/job-sources/{id}/enable', [JobSourceAdminController::class, 'enable'])->whereNumber('id');
+        Route::post('/job-sources/{id}/disable', [JobSourceAdminController::class, 'disable'])->whereNumber('id');
+        Route::post('/job-sources/{id}/test-crawl', [JobSourceAdminController::class, 'testCrawl'])->whereNumber('id');
+        Route::post('/job-sources/{id}/reset-health', [JobSourceAdminController::class, 'resetHealth'])->whereNumber('id');
+        Route::post('/job-sources/{id}/endpoints', [JobSourceAdminController::class, 'storeEndpoint'])->whereNumber('id');
+        Route::put('/job-sources/{id}/endpoints/{endpointId}', [JobSourceAdminController::class, 'updateEndpoint'])->whereNumber('id')->whereNumber('endpointId');
+        Route::delete('/job-sources/{id}/endpoints/{endpointId}', [JobSourceAdminController::class, 'destroyEndpoint'])->whereNumber('id')->whereNumber('endpointId');
+        Route::get('/job-sources', [JobSourceAdminController::class, 'index']);
+        Route::post('/job-sources', [JobSourceAdminController::class, 'store']);
+        Route::get('/job-sources/{id}', [JobSourceAdminController::class, 'show'])->whereNumber('id');
+        Route::put('/job-sources/{id}', [JobSourceAdminController::class, 'update'])->whereNumber('id');
+        Route::delete('/job-sources/{id}', [JobSourceAdminController::class, 'destroy'])->whereNumber('id');
+
+        Route::get('/crawler-runs', [CrawlerRunAdminController::class, 'index']);
+        Route::get('/crawler-runs/errors', [CrawlerRunAdminController::class, 'errors']);
+        Route::get('/crawler-runs/{id}', [CrawlerRunAdminController::class, 'show'])->whereNumber('id');
+
+        Route::get('/aggregation/quality-stats', [AggregationQualityController::class, 'stats']);
+        Route::get('/aggregation/pending-jobs', [AggregationQualityController::class, 'pendingJobs']);
+        Route::get('/aggregation/jobs/{id}', [AggregationQualityController::class, 'showJob'])->whereNumber('id');
+        Route::put('/aggregation/jobs/{id}', [AggregationQualityController::class, 'updateJob'])->whereNumber('id');
+        Route::post('/aggregation/jobs/{id}/approve', [AggregationQualityController::class, 'approveJob'])->whereNumber('id');
+        Route::post('/aggregation/jobs/{id}/reject', [AggregationQualityController::class, 'rejectJob'])->whereNumber('id');
+
+        Route::get('/aggregation-schedule', [AggregationScheduleAdminController::class, 'show']);
+        Route::put('/aggregation-schedule', [AggregationScheduleAdminController::class, 'update']);
+        Route::post('/aggregation-schedule/times', [AggregationScheduleAdminController::class, 'addTime']);
+        Route::put('/aggregation-schedule/times/{id}', [AggregationScheduleAdminController::class, 'updateTime']);
+        Route::delete('/aggregation-schedule/times/{id}', [AggregationScheduleAdminController::class, 'removeTime']);
+        Route::post('/aggregation-schedule/dispatch-now', [AggregationScheduleAdminController::class, 'dispatchNow']);
 
         Route::post('/job-classifications/reorder', [JobClassificationAdminController::class, 'reorder']);
         Route::apiResource('/job-classifications', JobClassificationAdminController::class)

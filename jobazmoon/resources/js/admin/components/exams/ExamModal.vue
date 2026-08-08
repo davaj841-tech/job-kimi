@@ -145,7 +145,7 @@ function emptyForm() {
     subscription_required: 'any',
     has_negative_marking: false,
     negative_mark_ratio: 0.3333,
-    status: 'draft',
+    status: 'published',
   };
 }
 
@@ -163,7 +163,7 @@ function mapExam(exam) {
     subscription_required: exam.subscription_required || 'any',
     has_negative_marking: Boolean(exam.has_negative_marking),
     negative_mark_ratio: Number(exam.negative_mark_ratio ?? 0.3333),
-    status: exam.status || 'draft',
+    status: exam.status || 'published',
   };
 }
 

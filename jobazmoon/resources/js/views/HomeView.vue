@@ -92,9 +92,10 @@
             :badge="exam.is_free ? 'رایگان' : ''"
             @click="goExam(exam)"
           />
-          <p v-if="!exams.length" class="py-6 text-center text-sm text-desk-muted">
+          <p v-if="!exams.length && !examsError" class="py-6 text-center text-sm text-desk-muted">
             📭 هنوز آزمونی منتشر نشده است. به‌زودی آزمون‌های جدید اضافه می‌شود.
           </p>
+          <p v-else-if="examsError" class="py-6 text-center text-sm text-red-500">{{ examsError }}</p>
         </div>
       </section>
 
@@ -135,7 +136,7 @@
         <BannerSlider position="home_middle" />
       </div>
       <PlansSection :plans="plans" :loading="loadingPlans" />
-      <ExamsSection :exams="exams" :loading="loadingExams" />
+      <ExamsSection :exams="exams" :loading="loadingExams" :error="examsError" />
       <FilesSection :files="files" :loading="loadingFiles" />
       <ResumeBanner />
       <TestimonialsSection />
@@ -180,6 +181,7 @@ const selectedClassification = ref(null);
 const posts = ref([]);
 const plans = ref([]);
 const exams = ref([]);
+const examsError = ref('');
 const files = ref([]);
 const loadingJobs = ref(true);
 const loadingPlans = ref(true);
@@ -258,7 +260,7 @@ onMounted(async () => {
     api.get('/blog-posts', { params: { per_page: 4 } }).catch(() => null),
     api.get('/subscription-plans').catch(() => null),
     api.get('/pdf-products', { params: { per_page: 4 } }).catch(() => null),
-    api.get('/exams', { params: { per_page: 4 } }).catch(() => null),
+    api.get('/exams', { params: { per_page: 4 } }).catch((e) => ({ __error: e })),
   ]);
 
   jobs.value = unwrapList(jobsRes?.data);
@@ -268,9 +270,15 @@ onMounted(async () => {
   posts.value = unwrapList(blogRes?.data);
   plans.value = unwrapList(plansRes?.data);
   files.value = unwrapList(filesRes?.data);
-  exams.value = unwrapList(examsRes?.data);
-  if (!exams.value.length && Array.isArray(examsRes?.data?.data?.data)) {
-    exams.value = examsRes.data.data.data;
+  if (examsRes?.__error) {
+    examsError.value = examsRes.__error?.response?.data?.message || 'بارگذاری آزمون‌ها ناموفق بود.';
+    exams.value = [];
+  } else {
+    examsError.value = '';
+    exams.value = unwrapList(examsRes?.data);
+    if (!exams.value.length && Array.isArray(examsRes?.data?.data?.data)) {
+      exams.value = examsRes.data.data.data;
+    }
   }
 
   loadingJobs.value = false;

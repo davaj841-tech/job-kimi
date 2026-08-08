@@ -110,11 +110,7 @@ class ExamService
             $userAnswer = $answers[(string) $question->id] ?? $answers[$question->id] ?? null;
 
             if ($userAnswer === null || $userAnswer === '') {
-                if ($hasNegative) {
-                    $unanswered++;
-                } else {
-                    $wrong++;
-                }
+                $unanswered++;
                 continue;
             }
 
@@ -134,8 +130,10 @@ class ExamService
             $score = round(max(0, $score), 2);
             $percentage = $totalMarks > 0 ? round(($score / $totalMarks) * 100, 2) : 0;
         } else {
-            $score = round(($correct / $totalQuestions) * $totalMarks, 2);
-            $percentage = round(($correct / $totalQuestions) * 100, 2);
+            // بی‌پاسخ نمره نمی‌گیرد ولی غلط هم حساب نمی‌شود
+            $answeredCorrectRatio = $totalQuestions > 0 ? ($correct / $totalQuestions) : 0;
+            $score = round($answeredCorrectRatio * $totalMarks, 2);
+            $percentage = round($answeredCorrectRatio * 100, 2);
         }
 
         return [

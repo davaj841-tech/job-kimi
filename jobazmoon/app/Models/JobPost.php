@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,18 +10,26 @@ use Illuminate\Support\Facades\Storage;
 
 class JobPost extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'title',
         'seo_tag',
         'company_name',
         'job_classification_id',
         'description',
+        'requirements',
+        'education',
+        'field_of_study',
+        'experience',
+        'employment_type',
         'province',
         'provinces',
         'city',
         'job_category',
+        'registration_starts_at',
         'registration_deadline',
         'exam_date',
+        'published_at',
         'registration_link',
         'source_url',
         'attachment_path',
@@ -29,6 +38,9 @@ class JobPost extends Model
         'view_count',
         'created_by',
         'approved_by',
+        'job_source_id',
+        'external_id',
+        'content_hash',
     ];
 
     protected $appends = [
@@ -40,8 +52,10 @@ class JobPost extends Model
     {
         return [
             'provinces' => 'array',
+            'registration_starts_at' => 'datetime',
             'registration_deadline' => 'datetime',
             'exam_date' => 'datetime',
+            'published_at' => 'datetime',
             'is_featured' => 'boolean',
             'view_count' => 'integer',
         ];
@@ -75,6 +89,11 @@ class JobPost extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(JobPostAttachment::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function source(): BelongsTo
+    {
+        return $this->belongsTo(JobSource::class, 'job_source_id');
     }
 
     public function getAttachmentUrlAttribute(): ?string

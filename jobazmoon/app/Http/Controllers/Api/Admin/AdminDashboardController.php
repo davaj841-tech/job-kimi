@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Api\BaseController;
+use App\Models\CrawlerRun;
 use App\Models\BlogPost;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\JobPost;
+use App\Models\JobSource;
 use App\Models\PdfPurchase;
 use App\Models\Question;
 use App\Models\SubscriptionPlan;
@@ -46,6 +48,10 @@ class AdminDashboardController extends BaseController
             'today_revenue' => (int) (clone $successToday)->sum('amount'),
             'month_revenue' => (int) (clone $successMonth)->sum('amount'),
             'transactions_today' => (clone $successToday)->count(),
+            'aggregated_jobs_pending' => JobPost::query()->whereNotNull('job_source_id')->where('status', 'pending')->count(),
+            'aggregated_jobs_total' => JobPost::query()->whereNotNull('job_source_id')->count(),
+            'whitelisted_job_sources' => JobSource::query()->whitelisted()->count(),
+            'recent_crawl_failures' => CrawlerRun::query()->whereIn('status', ['failed', 'partial'])->where('finished_at', '>=', now()->subDays(7))->count(),
         ];
 
         $revenueByDay = Transaction::query()

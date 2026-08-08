@@ -51,7 +51,7 @@ class ExamResource extends Resource
                 'draft' => 'پیش‌نویس',
                 'published' => 'منتشر شده',
                 'archived' => 'بایگانی',
-            ])->required()->helperText('وضعیت انتشار'),
+            ])->required()->default('published')->helperText('وضعیت انتشار'),
             Forms\Components\Select::make('created_by')->label('ایجادکننده')->relationship('creator', 'name')->required()->helperText('کاربر سازنده'),
         ]);
     }

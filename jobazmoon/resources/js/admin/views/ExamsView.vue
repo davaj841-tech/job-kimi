@@ -16,9 +16,9 @@
       <div class="rounded-xl bg-white p-4 shadow-sm">
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
           <input v-model="store.filters.search" class="field lg:col-span-2" placeholder="جستجو عنوان آزمون" @keyup.enter="apply" />
-          <select v-model="store.filters.category_id" class="field">
-            <option value="">همه دسته‌ها</option>
-            <option v-for="c in store.categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+          <select v-model="store.filters.job_classification_id" class="field">
+            <option value="">همه طبقه‌بندی‌ها</option>
+            <option v-for="c in store.classifications" :key="c.id" :value="c.id">{{ c.name }}</option>
           </select>
           <select v-model="store.filters.status" class="field">
             <option value="">همه وضعیت‌ها</option>
@@ -61,7 +61,7 @@
         </template>
         <template #actions="{ row }">
           <div class="flex flex-wrap justify-end gap-1">
-            <button class="act" @click="openPreview(row)">مشاهده آزمون</button>
+            <RouterLink class="act" :to="{ name: 'admin-exam-take', params: { id: row.id } }">آزمون‌گیری</RouterLink>
             <button class="act" @click="openEdit(row)">ویرایش</button>
             <RouterLink class="act" :to="{ path: '/admin/questions', query: { exam_id: row.id } }">سوالات</RouterLink>
             <button class="act" @click="openStats(row)">آمار</button>
@@ -105,11 +105,6 @@
       @close="modalOpen = false"
       @saved="onSaved"
     />
-    <ExamPreviewModal
-      :open="previewOpen"
-      :exam-id="previewExamId"
-      @close="previewOpen = false"
-    />
     <ExamStatsModal :open="statsOpen" :loading="store.statsLoading" :stats="store.stats" @close="statsOpen = false" />
     <ConfirmDialog
       :open="confirm.open"
@@ -127,7 +122,6 @@ import AdminLayout from '../components/layout/AdminLayout.vue';
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
 import DataTable from '../components/ui/DataTable.vue';
 import ExamModal from '../components/exams/ExamModal.vue';
-import ExamPreviewModal from '../components/exams/ExamPreviewModal.vue';
 import ExamStatsModal from '../components/exams/ExamStatsModal.vue';
 import { useToast } from '../../composables/useToast';
 import { useExamsStore } from '../stores/exams';
@@ -137,8 +131,6 @@ const toast = useToast();
 
 const modalOpen = ref(false);
 const statsOpen = ref(false);
-const previewOpen = ref(false);
-const previewExamId = ref(null);
 const editing = ref(null);
 const confirm = reactive({ open: false, title: '', message: '', action: null });
 
@@ -196,10 +188,6 @@ async function go(p) {
 function openCreate() {
   editing.value = null;
   modalOpen.value = true;
-}
-function openPreview(row) {
-  previewExamId.value = row.id;
-  previewOpen.value = true;
 }
 async function openEdit(row) {
   try {

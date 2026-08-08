@@ -74,7 +74,7 @@ class OtpAuthService
         ];
     }
 
-    public function verifyOtp(string $mobile, string $code): array
+    public function verifyOtp(string $mobile, string $code, ?string $province = null): array
     {
         $user = User::query()->where('mobile', $mobile)->first();
 
@@ -114,15 +114,29 @@ class OtpAuthService
         }
 
         $wasUnverified = ! $user->is_verified;
+        $needsProvince = blank($user->province);
+        if ($needsProvince && blank($province)) {
+            return [
+                'success' => false,
+                'message' => 'برای ورود اولیه انتخاب استان الزامی است.',
+                'code' => 'PROVINCE_REQUIRED',
+                'token' => null,
+                'user' => null,
+            ];
+        }
 
-        DB::transaction(function () use ($user) {
-            $user->update([
+        DB::transaction(function () use ($user, $province, $needsProvince) {
+            $payload = [
                 'is_verified' => true,
                 'otp_code' => null,
                 'otp_expires_at' => null,
                 'failed_login_attempts' => 0,
                 'locked_until' => null,
-            ]);
+            ];
+            if ($needsProvince || (filled($province) && blank($user->province))) {
+                $payload['province'] = $province;
+            }
+            $user->update($payload);
 
             if ($user->subscription_plan_id === null) {
                 $freePlan = SubscriptionPlan::query()->where('price', 0)->first();

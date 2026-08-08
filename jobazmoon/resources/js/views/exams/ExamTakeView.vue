@@ -55,6 +55,9 @@
         {{ submitting ? '...' : '✅ ثبت آزمون' }}
       </button>
     </div>
+    <p v-if="submitError" class="fixed inset-x-0 bottom-16 mx-auto max-w-app px-4 text-center text-xs text-brand">
+      {{ submitError }}
+    </p>
   </div>
 </template>
 
@@ -73,6 +76,7 @@ const PERSIAN_LETTERS = ['الف', 'ب', 'ج', 'د'];
 
 const pageIndex = ref(0);
 const submitting = ref(false);
+const submitError = ref('');
 const syncing = ref(false);
 const now = ref(Date.now());
 let timer;
@@ -240,6 +244,7 @@ watch(
 async function submit() {
   if (submitting.value || !examStore.current) return;
   submitting.value = true;
+  submitError.value = '';
   try {
     await syncAnswers();
     const { examId, attemptId } = examStore.current;
@@ -248,9 +253,9 @@ async function submit() {
     });
     examStore.clearCache();
     router.replace(`/exams/${examId}/result/${attemptId}`);
-  } catch (_) {
-    // Offline fallback: keep local cache; user can retry submit
+  } catch (e) {
     examStore.saveCache();
+    submitError.value = e.response?.data?.message || 'ثبت آزمون ناموفق بود. لطفاً دوباره تلاش کنید.';
     submitting.value = false;
   }
 }

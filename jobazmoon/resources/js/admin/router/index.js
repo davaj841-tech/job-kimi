@@ -31,6 +31,18 @@ const routes = [
     meta: { title: 'آزمون‌ها', auth: true },
   },
   {
+    path: '/admin/exams/:id/take',
+    name: 'admin-exam-take',
+    component: () => import('../views/ExamTakeView.vue'),
+    meta: { title: 'آزمون‌گیری', auth: true },
+  },
+  {
+    path: '/admin/exams/:id/result/:attemptId',
+    name: 'admin-exam-result',
+    component: () => import('../views/ExamResultView.vue'),
+    meta: { title: 'نتیجه آزمون', auth: true },
+  },
+  {
     path: '/admin/questions',
     name: 'admin-questions',
     component: () => import('../views/QuestionsView.vue'),
@@ -41,6 +53,30 @@ const routes = [
     name: 'admin-job-posts',
     component: () => import('../views/JobPostsView.vue'),
     meta: { title: 'آگهی‌ها', auth: true },
+  },
+  {
+    path: '/admin/job-sources',
+    name: 'admin-job-sources',
+    component: () => import('../views/JobSourcesView.vue'),
+    meta: { title: 'منابع تجمیع', auth: true },
+  },
+  {
+    path: '/admin/aggregation-settings',
+    name: 'admin-aggregation-settings',
+    component: () => import('../views/AggregationSettingsView.vue'),
+    meta: { title: 'زمان‌بندی تجمیع', auth: true },
+  },
+  {
+    path: '/admin/crawl-monitoring',
+    name: 'admin-crawl-monitoring',
+    component: () => import('../views/CrawlMonitoringView.vue'),
+    meta: { title: 'پایش خزش', auth: true },
+  },
+  {
+    path: '/admin/aggregated-jobs',
+    name: 'admin-aggregated-jobs',
+    component: () => import('../views/AggregatedJobsView.vue'),
+    meta: { title: 'بررسی تجمیع', auth: true },
   },
   {
     path: '/admin/blog-posts',

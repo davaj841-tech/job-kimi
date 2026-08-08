@@ -25,7 +25,7 @@ class DashboardController extends BaseController
             ->where('user_id', $user->id)
             ->where('status', 'completed');
 
-        $completedAttempts = (clone $completed)->get();
+        $completedAttempts = (clone $completed)->latest('finished_at')->latest('id')->get();
 
         $totalTaken = $completedAttempts->count();
         $totalPassed = $completedAttempts->filter(function (ExamAttempt $attempt) {
@@ -67,6 +67,7 @@ class DashboardController extends BaseController
             ];
         })->values()->all();
 
+        // ۱۲ تلاش اخیر (از جدید به قدیم خوانده شده؛ برای نمودار از قدیم به جدید)
         $examChart = $completedAttempts->take(12)->reverse()->values()->map(function (ExamAttempt $a) {
             $totalMarks = (float) ($a->exam?->total_marks ?: 1);
 

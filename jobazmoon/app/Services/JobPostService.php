@@ -205,14 +205,15 @@ class JobPostService
 
     protected function normalizePayload(array $data): array
     {
-        $provinces = $data['provinces'] ?? [];
-        if (! is_array($provinces)) {
-            $provinces = [];
+        if (array_key_exists('provinces', $data)) {
+            $provinces = $data['provinces'] ?? [];
+            if (! is_array($provinces)) {
+                $provinces = [];
+            }
+            $provinces = array_values(array_unique(array_filter($provinces)));
+            $data['provinces'] = $provinces;
+            $data['province'] = $provinces[0] ?? ($data['province'] ?? null);
         }
-        $provinces = array_values(array_unique(array_filter($provinces)));
-
-        $data['provinces'] = $provinces;
-        $data['province'] = $provinces[0] ?? null;
 
         if (! empty($data['job_classification_id'])) {
             $name = JobClassification::query()->whereKey($data['job_classification_id'])->value('name');
@@ -221,14 +222,12 @@ class JobPostService
             }
         }
 
-        if (! empty($data['seo_tag'])) {
-            $data['seo_tag'] = $this->normalizeSeoTag((string) $data['seo_tag']);
-        } else {
-            $data['seo_tag'] = null;
-        }
-
-        if (! array_key_exists('job_category', $data)) {
-            $data['job_category'] = null;
+        if (array_key_exists('seo_tag', $data)) {
+            if (! empty($data['seo_tag'])) {
+                $data['seo_tag'] = $this->normalizeSeoTag((string) $data['seo_tag']);
+            } else {
+                $data['seo_tag'] = null;
+            }
         }
 
         if (isset($data['attachment']) && $data['attachment'] instanceof UploadedFile) {

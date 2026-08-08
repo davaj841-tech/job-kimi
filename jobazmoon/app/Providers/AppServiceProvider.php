@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Contracts\Aggregation\DuplicateDetectorInterface;
+use App\Contracts\Aggregation\JobNormalizerInterface;
+use App\Contracts\Aggregation\JobPublisherInterface;
+use App\Contracts\Aggregation\JobValidatorInterface;
 use App\Events\ExamCompleted;
 use App\Events\JobPostApproved;
 use App\Events\PaymentSuccessful;
@@ -12,6 +16,14 @@ use App\Listeners\NotifyUserOfApproval;
 use App\Listeners\SendExpiryReminder;
 use App\Listeners\SendWelcomeNotification;
 use App\Listeners\UpdateUserStats;
+use App\Services\Aggregation\CrawlerResolver;
+use App\Services\Aggregation\DuplicateDetector;
+use App\Services\Aggregation\JobNormalizer;
+use App\Services\Aggregation\JobPublisher;
+use App\Services\Aggregation\JobSourceManager;
+use App\Services\Aggregation\JobValidator;
+use App\Services\Aggregation\Parsers\SourceParserRegistry;
+use App\Services\Aggregation\SafeHttpFetcher;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
@@ -23,7 +35,35 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->singleton(JobNormalizerInterface::class, JobNormalizer::class);
+        $this->app->singleton(JobValidatorInterface::class, JobValidator::class);
+        $this->app->singleton(DuplicateDetectorInterface::class, DuplicateDetector::class);
+        $this->app->singleton(JobPublisherInterface::class, JobPublisher::class);
+
+        $this->app->singleton(SourceParserRegistry::class, function ($app) {
+            return new SourceParserRegistry([
+                $app->make(\App\Services\Aggregation\Parsers\EmploymentKeywordRssParser::class),
+                $app->make(\App\Services\Aggregation\Parsers\OfficialAnnouncementHtmlParser::class),
+            ]);
+        });
+
+        $this->app->singleton(SafeHttpFetcher::class, function ($app) {
+            $http = config('aggregation.http', []);
+
+            return new SafeHttpFetcher(
+                $app->make(JobSourceManager::class),
+                (int) ($http['timeout_seconds'] ?? 30),
+                (int) ($http['max_bytes'] ?? 2_000_000),
+                (int) ($http['max_redirects'] ?? 3),
+            );
+        });
+
+        $this->app->singleton(CrawlerResolver::class, function ($app) {
+            return CrawlerResolver::makeDefault(
+                $app->make(SafeHttpFetcher::class),
+                $app->make(SourceParserRegistry::class),
+            );
+        });
     }
 
     public function boot(): void

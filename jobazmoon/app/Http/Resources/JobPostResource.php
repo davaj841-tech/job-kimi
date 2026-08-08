@@ -76,6 +76,26 @@ class JobPostResource extends JsonResource
             'catalog_pdfs' => $this->when(isset($this->catalog_pdfs), $this->catalog_pdfs),
             'creator_name' => $this->when($this->relationLoaded('creator'), $this->creator?->name),
             'approver_name' => $this->when($this->relationLoaded('approver'), $this->approver?->name),
+            'organization_name' => $this->company_name,
+            'is_aggregated' => filled($this->job_source_id),
+            'job_source_id' => $this->job_source_id,
+            'external_id' => $this->external_id,
+            'education' => $this->education,
+            'field_of_study' => $this->field_of_study,
+            'experience' => $this->experience,
+            'employment_type' => $this->employment_type,
+            'requirements' => $this->requirements,
+            'registration_starts_at' => $this->registration_starts_at?->toIso8601String(),
+            'published_at' => $this->published_at?->toIso8601String(),
+            'job_source' => $this->when($this->relationLoaded('source') && $this->source, function () {
+                return [
+                    'id' => $this->source->id,
+                    'name' => $this->source->name,
+                    'domain' => $this->source->domain,
+                    'slug' => $this->source->slug,
+                    'reliability_level' => $this->source->reliability_level?->value,
+                ];
+            }),
         ];
     }
 }

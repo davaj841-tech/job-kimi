@@ -12,7 +12,7 @@
       </div>
 
       <div v-if="loading" class="py-10 text-center text-sm text-desk-muted">در حال بارگذاری...</div>
-      <div v-else class="grid grid-cols-4 gap-5">
+      <div v-else-if="displayExams.length" class="grid grid-cols-4 gap-5">
         <article
           v-for="exam in displayExams"
           :key="exam.id"
@@ -51,9 +51,14 @@
           </div>
         </article>
       </div>
-
       <div
-        v-if="!loading && !displayExams.length"
+        v-else-if="error"
+        class="rounded-2xl border border-dashed border-red-200 bg-white p-8 text-center"
+      >
+        <p class="text-sm text-red-500">{{ error }}</p>
+      </div>
+      <div
+        v-else
         class="rounded-2xl border border-dashed border-desk-blue/30 bg-white p-8 text-center"
       >
         <p class="text-sm text-desk-muted">📭 هنوز آزمونی منتشر نشده است. به‌زودی آزمون‌های جدید اضافه می‌شود.</p>
@@ -71,6 +76,7 @@ import { useAuthStore } from '../../stores/auth';
 const props = defineProps({
   exams: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
+  error: { type: String, default: '' },
 });
 
 const auth = useAuthStore();

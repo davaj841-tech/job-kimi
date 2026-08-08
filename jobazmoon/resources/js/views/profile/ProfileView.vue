@@ -34,25 +34,33 @@
       </div>
     </div>
 
-    <!-- Details card -->
-    <div class="card-soft mb-4 space-y-2 p-4 text-sm">
-      <div class="flex items-center justify-between">
-        <span class="text-ink-muted">👤 نام کاربری</span>
-        <span class="font-medium" dir="ltr">{{ auth.user?.username || '—' }}</span>
+    <!-- Editable details -->
+    <form class="card-soft mb-4 space-y-3 p-4 text-sm" @submit.prevent="saveProfile">
+      <div>
+        <label class="mb-1 block text-xs text-ink-muted">👤 نام</label>
+        <input v-model="form.name" class="input-field" placeholder="نام و نام خانوادگی" />
       </div>
       <div class="flex items-center justify-between">
         <span class="text-ink-muted">📱 موبایل</span>
         <span class="font-medium" dir="ltr">{{ auth.user?.mobile || '—' }}</span>
       </div>
-      <div class="flex items-center justify-between">
-        <span class="text-ink-muted">📧 ایمیل</span>
-        <span class="font-medium" dir="ltr">{{ auth.user?.email || '—' }}</span>
+      <div>
+        <label class="mb-1 block text-xs text-ink-muted">📧 ایمیل</label>
+        <input v-model="form.email" type="email" class="input-field text-left" dir="ltr" placeholder="you@example.com" />
       </div>
-      <div class="flex items-center justify-between">
-        <span class="text-ink-muted">📍 استان</span>
-        <span class="font-medium">{{ auth.user?.province || '—' }}</span>
+      <div>
+        <label class="mb-1 block text-xs text-ink-muted">📍 استان *</label>
+        <select v-model="form.province" class="input-field" required>
+          <option value="">انتخاب استان</option>
+          <option v-for="p in IRAN_PROVINCES" :key="p" :value="p">{{ p }}</option>
+        </select>
       </div>
-    </div>
+      <p v-if="profileMsg" class="text-xs text-emerald-600">{{ profileMsg }}</p>
+      <p v-if="profileError" class="text-xs text-brand">{{ profileError }}</p>
+      <button type="submit" class="btn-primary w-full" :disabled="saving || !form.province">
+        {{ saving ? '...' : 'ذخیره تغییرات' }}
+      </button>
+    </form>
 
     <div class="space-y-2">
       <RouterLink
@@ -75,13 +83,22 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import { formatPrice } from '../../utils/format';
+import { IRAN_PROVINCES } from '../../utils/provinces';
 
 const auth = useAuthStore();
 const router = useRouter();
+const saving = ref(false);
+const profileMsg = ref('');
+const profileError = ref('');
+const form = reactive({
+  name: '',
+  email: '',
+  province: '',
+});
 
 const links = [
   { to: '/dashboard', label: 'داشبورد', emoji: '📊' },
@@ -101,12 +118,42 @@ const initials = computed(() => {
   return n.trim().charAt(0);
 });
 
-onMounted(() => {
-  auth.fetchMe().catch(() => {});
-});
+function syncForm() {
+  form.name = auth.user?.name || '';
+  form.email = auth.user?.email || '';
+  form.province = auth.user?.province || '';
+}
+
+async function saveProfile() {
+  saving.value = true;
+  profileMsg.value = '';
+  profileError.value = '';
+  try {
+    await auth.updateProfile({
+      name: form.name || null,
+      email: form.email || null,
+      province: form.province,
+    });
+    profileMsg.value = 'پروفایل ذخیره شد.';
+    syncForm();
+  } catch (e) {
+    profileError.value = e.response?.data?.message || 'ذخیره پروفایل ناموفق بود.';
+  } finally {
+    saving.value = false;
+  }
+}
 
 async function onLogout() {
   await auth.logout();
-  router.replace('/login');
+  router.push('/login');
 }
+
+onMounted(async () => {
+  try {
+    await auth.fetchMe();
+  } catch (_) {
+    // ignore
+  }
+  syncForm();
+});
 </script>

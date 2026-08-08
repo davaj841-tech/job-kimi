@@ -16,6 +16,7 @@ class VerifyOtpRequest extends FormRequest
         return [
             'mobile' => ['required', 'string', 'regex:/^09\d{9}$/'],
             'code' => ['required', 'string', 'digits:5'],
+            'province' => ['nullable', 'string', 'max:100'],
         ];
     }
 
@@ -26,6 +27,7 @@ class VerifyOtpRequest extends FormRequest
             'mobile.regex' => 'شماره موبایل نامعتبر است.',
             'code.required' => 'کد تایید الزامی است.',
             'code.digits' => 'کد تایید باید ۵ رقم باشد.',
+            'province.max' => 'نام استان معتبر نیست.',
         ];
     }
 }

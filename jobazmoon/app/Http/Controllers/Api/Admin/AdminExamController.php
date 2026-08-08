@@ -10,18 +10,25 @@ use App\Models\ExamAttempt;
 use App\Models\ExamCategory;
 use App\Models\JobPost;
 use App\Models\Question;
+use App\Services\ExamService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class AdminExamController extends BaseController
 {
+    public function __construct(
+        protected ExamService $examService
+    ) {}
+
     public function index(Request $request): JsonResponse
     {
         $data = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
             'category_id' => ['nullable', 'integer', 'exists:exam_categories,id'],
+            'job_classification_id' => ['nullable', 'integer', 'exists:job_classifications,id'],
             'status' => ['nullable', Rule::in(['draft', 'published', 'archived'])],
             'is_free' => ['nullable'],
             'sort' => ['nullable', Rule::in(['desc', 'asc', 'attempts'])],
@@ -44,6 +51,13 @@ class AdminExamController extends BaseController
 
         if (! empty($data['category_id'])) {
             $query->where('category_id', $data['category_id']);
+        }
+
+        if (! empty($data['job_classification_id'])) {
+            $classId = (int) $data['job_classification_id'];
+            $childIds = \App\Models\JobClassification::query()->where('parent_id', $classId)->pluck('id')->all();
+            $ids = array_merge([$classId], $childIds);
+            $query->whereIn('job_classification_id', $ids);
         }
 
         if (! empty($data['status'])) {
@@ -122,7 +136,7 @@ class AdminExamController extends BaseController
     {
         $payload = $request->validated();
         $payload['created_by'] = $request->user()->id;
-        $payload['status'] = $payload['status'] ?? 'draft';
+        $payload['status'] = $payload['status'] ?? 'published';
         $payload['total_questions'] = 0;
         $payload['price'] = $payload['price'] ?? 0;
         $payload['has_negative_marking'] = $payload['has_negative_marking'] ?? false;
@@ -247,6 +261,179 @@ class AdminExamController extends BaseController
         $items = ExamCategory::query()->orderBy('name')->get(['id', 'name', 'slug']);
 
         return $this->successResponse($items);
+    }
+
+    /**
+     * Operator/admin practice attempt — works for draft & published, bypasses subscription.
+     */
+    public function practiceStart(Request $request, int $id): JsonResponse
+    {
+        $exam = Exam::query()->find($id);
+
+        if (! $exam || $exam->status === 'archived') {
+            return $this->errorResponse('آزمون یافت نشد یا بایگانی شده است.', 404);
+        }
+
+        $user = $request->user();
+
+        ExamAttempt::query()
+            ->where('user_id', $user->id)
+            ->where('exam_id', $exam->id)
+            ->where('status', 'in_progress')
+            ->update(['status' => 'abandoned', 'finished_at' => now()]);
+
+        $questions = $this->examService->getQuestionsForAttempt($exam, true);
+
+        if ($questions->isEmpty()) {
+            return $this->errorResponse('سوالی برای این آزمون تعریف نشده است.', 422);
+        }
+
+        $attempt = ExamAttempt::query()->create([
+            'user_id' => $user->id,
+            'exam_id' => $exam->id,
+            'subject' => null,
+            'started_at' => now(),
+            'finished_at' => null,
+            'score' => 0,
+            'total_correct' => 0,
+            'total_wrong' => 0,
+            'status' => 'in_progress',
+            'answers' => [],
+        ]);
+
+        $ttl = max(60, ((int) $exam->duration_minutes) * 60);
+        $this->examService->cacheAttempt($attempt, $questions, $ttl);
+        $endsAt = $attempt->started_at->copy()->addMinutes($exam->duration_minutes);
+
+        return $this->successResponse([
+            'attempt_id' => $attempt->id,
+            'exam' => [
+                'id' => $exam->id,
+                'title' => $exam->title,
+                'duration_minutes' => $exam->duration_minutes,
+                'passing_score' => $exam->passing_score,
+                'total_marks' => $exam->total_marks,
+                'status' => $exam->status,
+            ],
+            'questions' => $this->examService->formatQuestionsForTaking($questions),
+            'end_time' => $endsAt->timestamp,
+            'duration_minutes' => $exam->duration_minutes,
+            'per_page' => 5,
+        ], 'آزمون‌گیری آغاز شد.', 201);
+    }
+
+    public function practiceSubmit(Request $request, int $id, int $attemptId): JsonResponse
+    {
+        $data = $request->validate([
+            'answers' => ['nullable', 'array'],
+            'answers.*' => ['nullable', 'string', 'in:a,b,c,d'],
+        ]);
+
+        $user = $request->user();
+        $exam = Exam::query()->find($id);
+        $attempt = ExamAttempt::query()
+            ->whereKey($attemptId)
+            ->where('exam_id', $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (! $exam || ! $attempt) {
+            return $this->errorResponse('تلاش آزمون یافت نشد.', 404);
+        }
+
+        if ($attempt->status !== 'in_progress') {
+            return $this->errorResponse('این تلاش قبلاً ثبت شده است.', 422);
+        }
+
+        $answers = $data['answers'] ?? [];
+        $cachedAnswers = $this->examService->getAutosavedAnswers($attempt->id);
+        if ($cachedAnswers !== []) {
+            $answers = array_replace($cachedAnswers, $answers);
+        }
+
+        $scoreData = DB::transaction(function () use ($attempt, $answers) {
+            $attempt->refresh()->load('exam');
+            $questionIds = $this->examService->cachedQuestionIds($attempt->id);
+            $questions = Question::query()
+                ->where('exam_id', $attempt->exam_id)
+                ->when($questionIds !== [], fn ($q) => $q->whereIn('id', $questionIds))
+                ->get();
+
+            $scoreData = $this->examService->calculateScore($attempt, $answers, $questions);
+
+            $attempt->update([
+                'status' => 'completed',
+                'finished_at' => now(),
+                'score' => $scoreData['score'],
+                'total_correct' => $scoreData['total_correct'],
+                'total_wrong' => $scoreData['total_wrong'],
+                'answers' => $answers,
+            ]);
+
+            $this->examService->forgetAttemptCache($attempt->id);
+
+            try {
+                Exam::query()->whereKey($attempt->exam_id)->increment('attempts_count');
+            } catch (\Throwable) {
+            }
+
+            return $scoreData;
+        });
+
+        return $this->successResponse([
+            'attempt_id' => $attempt->id,
+            'exam_id' => $exam->id,
+            'score' => $scoreData['score'],
+            'total_correct' => $scoreData['total_correct'],
+            'total_wrong' => $scoreData['total_wrong'],
+            'percentage' => $scoreData['percentage'],
+        ], 'نتیجه آزمون ذخیره شد.');
+    }
+
+    public function practiceResult(Request $request, int $id, int $attemptId): JsonResponse
+    {
+        $user = $request->user();
+        $attempt = ExamAttempt::query()
+            ->with('exam')
+            ->whereKey($attemptId)
+            ->where('exam_id', $id)
+            ->first();
+
+        if (! $attempt) {
+            return $this->errorResponse('نتیجه یافت نشد.', 404);
+        }
+
+        if ($attempt->user_id !== $user->id && ! in_array($user->role, ['admin', 'operator'], true)) {
+            return $this->errorResponse('نتیجه یافت نشد.', 404);
+        }
+
+        if ($attempt->status !== 'completed') {
+            return $this->errorResponse('نتیجه هنوز آماده نیست.', 422);
+        }
+
+        $payload = $this->examService->buildAnswerSheet($attempt);
+        $analysis = $payload['analysis'];
+
+        return $this->successResponse([
+            'attempt' => [
+                'id' => $attempt->id,
+                'exam_id' => $attempt->exam_id,
+                'score' => $attempt->score,
+                'total_correct' => $attempt->total_correct,
+                'total_wrong' => $attempt->total_wrong,
+                'percentage' => $analysis['percentage'],
+                'finished_at' => $attempt->finished_at?->toIso8601String(),
+                'started_at' => $attempt->started_at?->toIso8601String(),
+            ],
+            'exam' => [
+                'id' => $attempt->exam->id,
+                'title' => $attempt->exam->title,
+                'passing_score' => $attempt->exam->passing_score,
+                'total_marks' => $attempt->exam->total_marks,
+            ],
+            'analysis' => $analysis,
+            'sheet' => $payload['sheet'],
+        ]);
     }
 
     public function jobPosts(): JsonResponse

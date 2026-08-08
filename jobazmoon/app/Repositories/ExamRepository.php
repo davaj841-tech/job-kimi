@@ -81,12 +81,14 @@ class ExamRepository
         return Exam::query()->with('category')->withCount('questions')->find($id);
     }
 
-    public function getUserAttempts(User $user, int $limit = 5): Collection
+    public function getUserAttempts(User $user, int $limit = 5, bool $completedOnly = true): Collection
     {
         return ExamAttempt::query()
             ->with('exam')
             ->where('user_id', $user->id)
-            ->latest()
+            ->when($completedOnly, fn ($q) => $q->where('status', 'completed'))
+            ->latest('finished_at')
+            ->latest('id')
             ->limit($limit)
             ->get();
     }

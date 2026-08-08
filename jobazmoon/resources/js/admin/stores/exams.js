@@ -10,7 +10,7 @@ export const useExamsStore = defineStore('adminExams', {
     classifications: [],
     filters: {
       search: '',
-      category_id: '',
+      job_classification_id: '',
       status: '',
       is_free: '',
       sort: 'desc',
@@ -95,7 +95,7 @@ export const useExamsStore = defineStore('adminExams', {
     resetFilters() {
       this.filters = {
         search: '',
-        category_id: '',
+        job_classification_id: '',
         status: '',
         is_free: '',
         sort: 'desc',

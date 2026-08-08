@@ -220,6 +220,27 @@ const bottomStats = computed(() => [
     color: '#7c3aed',
   },
   {
+    id: 'agg-pending',
+    title: 'تجمیع در انتظار',
+    value: faNum(counts.value.aggregated_jobs_pending),
+    icon: '☑',
+    color: '#d97706',
+  },
+  {
+    id: 'agg-sources',
+    title: 'منابع whitelist',
+    value: faNum(counts.value.whitelisted_job_sources),
+    icon: '◎',
+    color: '#2563eb',
+  },
+  {
+    id: 'crawl-fail',
+    title: 'خطای خزش ۷روز',
+    value: faNum(counts.value.recent_crawl_failures),
+    icon: '⚠',
+    color: '#dc2626',
+  },
+  {
     id: 'today',
     title: 'درآمد امروز',
     value: faMoney(counts.value.today_revenue),

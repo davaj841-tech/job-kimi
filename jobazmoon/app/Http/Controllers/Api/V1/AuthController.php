@@ -36,11 +36,21 @@ class AuthController extends BaseController
     {
         $result = $this->otpAuthService->verifyOtp(
             $request->validated('mobile'),
-            $request->validated('code')
+            $request->validated('code'),
+            $request->validated('province')
         );
 
         if (! $result['success']) {
-            return $this->errorResponse($result['message'], 422);
+            $code = ($result['code'] ?? null) === 'PROVINCE_REQUIRED' ? 422 : 422;
+
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'],
+                'code' => $result['code'] ?? null,
+                'errors' => ($result['code'] ?? null) === 'PROVINCE_REQUIRED'
+                    ? ['province' => ['انتخاب استان الزامی است.']]
+                    : null,
+            ], $code);
         }
 
         return $this->successResponse([
@@ -138,5 +148,22 @@ class AuthController extends BaseController
         $user = $request->user()->load('subscriptionPlan');
 
         return $this->successResponse(new UserResource($user));
+    }
+
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $data = $request->validate([
+            'name' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'province' => ['sometimes', 'required', 'string', 'max:100'],
+            'email' => ['sometimes', 'nullable', 'email', 'max:191', 'unique:users,email,'.$user->id],
+        ], [
+            'province.required' => 'انتخاب استان الزامی است.',
+            'email.unique' => 'این ایمیل قبلاً ثبت شده است.',
+        ]);
+
+        $user->update($data);
+
+        return $this->successResponse(new UserResource($user->fresh()->load('subscriptionPlan')), 'پروفایل به‌روزرسانی شد.');
     }
 }

@@ -40,11 +40,12 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    async function verifyOtp(mobile, code, turnstile_token) {
+    async function verifyOtp(mobile, code, turnstile_token, province) {
         loading.value = true;
         try {
             const payload = { mobile, code };
             if (turnstile_token) payload.turnstile_token = turnstile_token;
+            if (province) payload.province = province;
             const { data } = await api.post('/auth/otp/verify', payload);
             applyAuthPayload(data);
             return data;
@@ -88,6 +89,18 @@ export const useAuthStore = defineStore('auth', () => {
         return user.value;
     }
 
+    async function updateProfile(payload) {
+        loading.value = true;
+        try {
+            const { data } = await api.put('/auth/profile', payload);
+            user.value = data.data?.user || data.data || user.value;
+            persist();
+            return user.value;
+        } finally {
+            loading.value = false;
+        }
+    }
+
     async function logout() {
         try {
             if (token.value) {
@@ -111,6 +124,7 @@ export const useAuthStore = defineStore('auth', () => {
         loginPassword,
         register,
         fetchMe,
+        updateProfile,
         logout,
     };
 });

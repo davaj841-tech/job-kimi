@@ -36,8 +36,8 @@
         <p class="-mt-1 text-[11px] text-slate-400">حداقل یکی از موبایل یا ایمیل الزامی است.</p>
 
         <div>
-          <label class="label">استان</label>
-          <select v-model="form.province" class="field">
+          <label class="label">استان *</label>
+          <select v-model="form.province" class="field" required>
             <option value="">انتخاب استان</option>
             <option v-for="p in IRAN_PROVINCES" :key="p" :value="p">{{ p }}</option>
           </select>
@@ -113,6 +113,10 @@ async function submit() {
   error.value = '';
   if (!form.mobile.trim() && !form.email.trim()) {
     error.value = 'حداقل یکی از موبایل یا ایمیل الزامی است.';
+    return;
+  }
+  if (!form.province) {
+    error.value = 'انتخاب استان الزامی است.';
     return;
   }
   if (form.password.length < 8) {
