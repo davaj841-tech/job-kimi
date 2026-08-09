@@ -1,0 +1,16 @@
+node_modules
+vendor
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/app/public/*
+bootstrap/cache/*
+npm-debug.log
+yarn-error.log
+.phpunit.result.cache
+public/build
