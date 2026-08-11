@@ -11,6 +11,7 @@ use App\Repositories\JobPostRepository;
 use App\Services\JobPostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -200,7 +201,7 @@ class JobPostAdminController extends BaseController
         ]);
     }
 
-    /** @return array<int, array{file:\Illuminate\Http\UploadedFile,title:?string,description:?string}> */
+    /** @return array<int, array{file:UploadedFile,title:?string,description:?string}> */
     protected function collectAttachments(Request $request): array
     {
         $files = $request->file('attachments', []);

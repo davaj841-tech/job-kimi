@@ -1,15 +1,16 @@
 <template>
-  <div class="flex min-h-dvh flex-col">
-    <!-- Mobile chrome -->
+  <UserLayout v-if="isUserPanel">
+    <slot />
+  </UserLayout>
+  <div v-else class="flex min-h-dvh flex-col bg-surface-page dark:bg-slate-900">
     <div class="lg:hidden">
       <AppHeader v-if="!hideChrome" />
     </div>
 
-    <!-- Desktop chrome -->
     <DesktopHeader v-if="!hideChrome" />
 
     <main class="min-h-[70dvh] flex-1" :class="hideChrome ? '' : 'lg:pb-0'">
-      <div :class="hideChrome ? '' : 'pb-20 lg:pb-0'">
+      <div class="pb-20 lg:pb-0">
         <slot />
       </div>
     </main>
@@ -18,7 +19,7 @@
     <MobileFooter v-if="!hideChrome" />
 
     <div class="lg:hidden">
-      <BottomNav v-if="!hideChrome" />
+      <BottomNav />
     </div>
 
     <OnboardingTour v-if="auth.isAuthenticated && !hideChrome" />
@@ -27,18 +28,24 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { useRoute } from 'vue-router';
-import AppHeader from '../AppHeader.vue';
-import AppToast from '../AppToast.vue';
-import BottomNav from '../BottomNav.vue';
-import DesktopFooter from './DesktopFooter.vue';
-import DesktopHeader from './DesktopHeader.vue';
-import MobileFooter from '../MobileFooter.vue';
-import OnboardingTour from '../OnboardingTour.vue';
-import { useAuthStore } from '../../stores/auth';
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import AppHeader from '../AppHeader.vue'
+import AppToast from '../AppToast.vue'
+import BottomNav from '../BottomNav.vue'
+import DesktopFooter from './DesktopFooter.vue'
+import DesktopHeader from './DesktopHeader.vue'
+import MobileFooter from '../MobileFooter.vue'
+import OnboardingTour from '../OnboardingTour.vue'
+import UserLayout from '../../layouts/UserLayout.vue'
+import { useAuthStore } from '../../stores/auth'
+import { useDarkMode } from '../../composables/useDarkMode'
 
-const route = useRoute();
-const auth = useAuthStore();
-const hideChrome = computed(() => Boolean(route.meta.hideNav));
+// Ensure theme class is applied globally
+useDarkMode()
+
+const route = useRoute()
+const auth = useAuthStore()
+const hideChrome = computed(() => Boolean(route.meta.hideNav))
+const isUserPanel = computed(() => Boolean(route.meta.userPanel))
 </script>

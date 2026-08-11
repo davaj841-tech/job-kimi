@@ -10,7 +10,7 @@ class SmsService
     public function gateway(): SmsGatewayInterface
     {
         // انتخاب درگاه SMS از تنظیمات ادمین
-        return match (Setting::get('sms_gateway', 'kavenegar')) {
+        return match (Setting::getFilled('sms_gateway', config('services.sms.gateway', 'kavenegar'))) {
             'melipayamak' => new MeliPayamakSmsGateway,
             default => new KavenegarSmsGateway,
         };

@@ -24,8 +24,6 @@ class ExamCategoryResource extends Resource
 
     protected static ?string $navigationGroup = 'آزمون‌ها';
 
-    
-
     public static function form(Form $form): Form
     {
         return $form->schema([

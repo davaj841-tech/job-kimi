@@ -24,8 +24,6 @@ class BlogPostResource extends Resource
 
     protected static ?string $navigationGroup = 'محتوا';
 
-    
-
     public static function form(Form $form): Form
     {
         return $form->schema([

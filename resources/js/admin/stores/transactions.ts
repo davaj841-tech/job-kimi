@@ -1,31 +1,31 @@
-import { defineStore } from 'pinia';
-import adminApi from '../api/client';
-import { unwrapList, unwrapMeta } from '../../utils/format';
+import { defineStore } from 'pinia'
+import adminApi from '../api/client'
+import { unwrapList, unwrapMeta } from '../../utils/format'
 
 interface TransactionsFilters {
-  date_from: string;
-  date_to: string;
-  gateway: string;
-  type: string;
-  status: string;
+  date_from: string
+  date_to: string
+  gateway: string
+  type: string
+  status: string
 }
 
 interface TransactionsStats {
-  revenue_today: number;
-  revenue_week: number;
-  revenue_month: number;
-  success_count: number;
-  failed_count: number;
-  pending_count: number;
+  revenue_today: number
+  revenue_week: number
+  revenue_month: number
+  success_count: number
+  failed_count: number
+  pending_count: number
 }
 
 interface TransactionsState {
-  transactions: Record<string, unknown>[];
-  meta: Record<string, unknown>;
-  selected: Record<string, unknown> | null;
-  stats: TransactionsStats;
-  filters: TransactionsFilters;
-  loading: boolean;
+  transactions: Record<string, unknown>[]
+  meta: Record<string, unknown>
+  selected: Record<string, unknown> | null
+  stats: TransactionsStats
+  filters: TransactionsFilters
+  loading: boolean
 }
 
 export const useTransactionsStore = defineStore('adminTransactions', {
@@ -53,27 +53,27 @@ export const useTransactionsStore = defineStore('adminTransactions', {
 
   actions: {
     async fetchStats() {
-      const { data } = await adminApi.get('/admin/transactions/stats');
-      this.stats = data.data || this.stats;
+      const { data } = await adminApi.get('/admin/transactions/stats')
+      this.stats = data.data || this.stats
     },
 
     async fetchTransactions(page = 1) {
-      this.loading = true;
+      this.loading = true
       try {
         const { data } = await adminApi.get('/admin/transactions', {
           params: { ...this.filters, page, per_page: 20 },
-        });
-        this.transactions = unwrapList(data) as Record<string, unknown>[];
-        this.meta = unwrapMeta(data) || {};
+        })
+        this.transactions = unwrapList(data) as Record<string, unknown>[]
+        this.meta = unwrapMeta(data) || {}
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
     async fetchTransaction(id: number | string) {
-      const { data } = await adminApi.get(`/admin/transactions/${id}`);
-      this.selected = data.data || null;
-      return this.selected;
+      const { data } = await adminApi.get(`/admin/transactions/${id}`)
+      this.selected = data.data || null
+      return this.selected
     },
   },
-});
+})

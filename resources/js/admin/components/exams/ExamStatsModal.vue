@@ -1,12 +1,19 @@
 ﻿<template>
-  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" >
-    <div class="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+  <div
+    v-if="open"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+  >
+    <div
+      class="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+    >
       <div class="mb-4 flex items-center justify-between">
         <h3 class="text-lg font-bold">آمار آزمون</h3>
         <button @click="$emit('close')">✕</button>
       </div>
 
-      <div v-if="loading" class="py-10 text-center text-sm text-slate-500">در حال بارگذاری...</div>
+      <div v-if="loading" class="py-10 text-center text-sm text-slate-500">
+        در حال بارگذاری...
+      </div>
       <template v-else-if="stats">
         <p class="mb-4 text-sm text-slate-600">{{ stats.exam?.title }}</p>
         <div class="mb-5 grid grid-cols-3 gap-3 text-center">
@@ -34,7 +41,12 @@
             <span>{{ p.user_name }}</span>
             <span class="font-bold text-orange-600">{{ fa(p.score) }}</span>
           </li>
-          <li v-if="!(stats.top_participants || []).length" class="text-xs text-slate-400">داده‌ای نیست</li>
+          <li
+            v-if="!(stats.top_participants || []).length"
+            class="text-xs text-slate-400"
+          >
+            داده‌ای نیست
+          </li>
         </ul>
 
         <h4 class="mb-2 text-sm font-bold">توزیع موضوعی سوالات</h4>
@@ -47,20 +59,20 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import DoughnutChart from '../ui/DoughnutChart.vue';
+import { computed } from 'vue'
+import DoughnutChart from '../ui/DoughnutChart.vue'
 
 const props = defineProps({
   open: Boolean,
   loading: Boolean,
   stats: { type: Object, default: null },
-});
+})
 
-defineEmits(['close']);
+defineEmits(['close'])
 
-const chartData = computed(() => props.stats?.subject_breakdown || []);
+const chartData = computed(() => props.stats?.subject_breakdown || [])
 
 function fa(n) {
-  return new Intl.NumberFormat('fa-IR').format(Number(n || 0));
+  return new Intl.NumberFormat('fa-IR').format(Number(n || 0))
 }
 </script>

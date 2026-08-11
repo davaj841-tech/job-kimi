@@ -13,7 +13,6 @@ class BlogPostStoreRequest extends FormRequest
     }
 
     /** @return array<string, mixed> */
-
     public function rules(): array
     {
         $blogPostId = $this->route('id') ?? $this->route('blog_post');

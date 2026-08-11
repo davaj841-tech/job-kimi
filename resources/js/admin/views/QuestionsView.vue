@@ -4,14 +4,20 @@
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
           <h1 class="text-2xl font-bold text-gray-800">بانک سوالات</h1>
-          <span class="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700">
+          <span
+            class="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700"
+          >
             {{ fa(totalQuestions) }}
           </span>
         </div>
         <div class="flex flex-wrap gap-2">
           <button class="btn-dark" @click="openCreate">سوال جدید</button>
-          <button class="btn-muted" @click="subjectManagerOpen = true">📚 مدیریت دروس</button>
-          <button class="btn-muted" @click="importOpen = true">ورود Excel</button>
+          <button class="btn-muted" @click="subjectManagerOpen = true">
+            📚 مدیریت دروس
+          </button>
+          <button class="btn-muted" @click="importOpen = true">
+            ورود Excel
+          </button>
           <button class="btn-muted" @click="onExport">خروجی Excel</button>
           <button class="btn-orange" @click="aiOpen = true">تولید با AI</button>
         </div>
@@ -19,14 +25,25 @@
 
       <div class="rounded-xl bg-white p-4 shadow-sm">
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
-          <input v-model="store.filters.search" class="field lg:col-span-2" placeholder="جستجو متن سوال" @keyup.enter="apply" />
+          <input
+            v-model="store.filters.search"
+            class="field lg:col-span-2"
+            placeholder="جستجو متن سوال"
+            @keyup.enter="apply"
+          />
           <select v-model="store.filters.exam_id" class="field">
             <option value="">همه آزمون‌ها</option>
-            <option v-for="e in examsStore.exams" :key="e.id" :value="e.id">{{ e.title }}</option>
+            <option v-for="e in examsStore.exams" :key="e.id" :value="e.id">
+              {{ e.title }}
+            </option>
           </select>
           <select v-model="store.filters.subject" class="field">
             <option value="">همه دروس</option>
-            <option v-for="s in subjectsStore.subjects" :key="s.slug" :value="s.slug">
+            <option
+              v-for="s in subjectsStore.subjects"
+              :key="s.slug"
+              :value="s.slug"
+            >
               {{ s.icon || '📘' }} {{ s.name }}
             </option>
           </select>
@@ -48,7 +65,10 @@
         </div>
       </div>
 
-      <div v-if="loadingExams" class="rounded-xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
+      <div
+        v-if="loadingExams"
+        class="rounded-xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm"
+      >
         در حال بارگذاری آزمون‌ها...
       </div>
 
@@ -69,16 +89,24 @@
                 {{ fa(exam.question_count ?? exam.total_questions ?? 0) }} سوال
               </p>
             </div>
-            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg font-bold text-slate-600">
+            <span
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg font-bold text-slate-600"
+            >
               {{ isExpanded(exam.id) ? '−' : '+' }}
             </span>
           </button>
 
           <div v-if="isExpanded(exam.id)" class="border-t border-slate-100">
-            <div v-if="bucket(exam.id).loading" class="p-6 text-center text-sm text-slate-500">
+            <div
+              v-if="bucket(exam.id).loading"
+              class="p-6 text-center text-sm text-slate-500"
+            >
               در حال بارگذاری سوالات...
             </div>
-            <div v-else-if="!bucket(exam.id).questions.length" class="p-6 text-center text-sm text-slate-500">
+            <div
+              v-else-if="!bucket(exam.id).questions.length"
+              class="p-6 text-center text-sm text-slate-500"
+            >
               سوالی یافت نشد
             </div>
             <div v-else class="overflow-x-auto">
@@ -99,7 +127,9 @@
                     :key="row.id"
                     class="border-t border-slate-100"
                   >
-                    <td class="px-3 py-2 text-slate-500">{{ fa(index + 1) }}</td>
+                    <td class="px-3 py-2 text-slate-500">
+                      {{ fa(index + 1) }}
+                    </td>
                     <td class="px-3 py-2">
                       <button
                         type="button"
@@ -113,14 +143,28 @@
                     <td class="px-3 py-2">{{ subjectLabel(row.subject) }}</td>
                     <td class="px-3 py-2">{{ diffLabel(row.difficulty) }}</td>
                     <td class="px-3 py-2">
-                      <span class="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                      <span
+                        class="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700"
+                      >
                         {{ answerLabel(row.correct_answer) }}
                       </span>
                     </td>
                     <td class="px-3 py-2">
                       <div class="flex justify-end gap-1">
-                        <button type="button" class="act" @click="openEdit(row)">ویرایش</button>
-                        <button type="button" class="act text-red-600" @click="askDelete(row)">حذف</button>
+                        <button
+                          type="button"
+                          class="act"
+                          @click="openEdit(row)"
+                        >
+                          ویرایش
+                        </button>
+                        <button
+                          type="button"
+                          class="act text-red-600"
+                          @click="askDelete(row)"
+                        >
+                          حذف
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -130,7 +174,10 @@
           </div>
         </div>
 
-        <p v-if="!visibleExams.length" class="rounded-xl bg-white py-8 text-center text-slate-500 shadow-sm">
+        <p
+          v-if="!visibleExams.length"
+          class="rounded-xl bg-white py-8 text-center text-slate-500 shadow-sm"
+        >
           آزمونی یافت نشد
         </p>
       </div>
@@ -150,8 +197,17 @@
       @close="importOpen = false"
       @imported="onImport"
     />
-    <AIGenerateModal ref="aiRef" :open="aiOpen" :exams="examsStore.exams" @close="aiOpen = false" @generate="onGenerate" />
-    <SubjectManagerModal :open="subjectManagerOpen" @close="subjectManagerOpen = false" />
+    <AIGenerateModal
+      ref="aiRef"
+      :open="aiOpen"
+      :exams="examsStore.exams"
+      @close="aiOpen = false"
+      @generate="onGenerate"
+    />
+    <SubjectManagerModal
+      :open="subjectManagerOpen"
+      @close="subjectManagerOpen = false"
+    />
     <ConfirmDialog
       :open="confirm.open"
       :title="confirm.title"
@@ -163,84 +219,90 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
-import { useRoute } from 'vue-router';
-import adminApi from '../api/client';
-import AdminLayout from '../components/layout/AdminLayout.vue';
-import ConfirmDialog from '../components/ui/ConfirmDialog.vue';
-import AIGenerateModal from '../components/questions/AIGenerateModal.vue';
-import BulkImportModal from '../components/questions/BulkImportModal.vue';
-import QuestionModal from '../components/questions/QuestionModal.vue';
-import SubjectManagerModal from '../components/questions/SubjectManagerModal.vue';
-import { useToast } from '../../composables/useToast';
-import { useExamsStore } from '../stores/exams';
-import { useExamSubjectsStore } from '../stores/examSubjects';
-import { useQuestionsStore } from '../stores/questions';
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import adminApi from '../api/client'
+import AdminLayout from '../components/layout/AdminLayout.vue'
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
+import AIGenerateModal from '../components/questions/AIGenerateModal.vue'
+import BulkImportModal from '../components/questions/BulkImportModal.vue'
+import QuestionModal from '../components/questions/QuestionModal.vue'
+import SubjectManagerModal from '../components/questions/SubjectManagerModal.vue'
+import { useToast } from '../../composables/useToast'
+import { useExamsStore } from '../stores/exams'
+import { useExamSubjectsStore } from '../stores/examSubjects'
+import { useQuestionsStore } from '../stores/questions'
 
-const route = useRoute();
-const store = useQuestionsStore();
-const examsStore = useExamsStore();
-const subjectsStore = useExamSubjectsStore();
-const toast = useToast();
+const route = useRoute()
+const store = useQuestionsStore()
+const examsStore = useExamsStore()
+const subjectsStore = useExamSubjectsStore()
+const toast = useToast()
 
-const modalOpen = ref(false);
-const importOpen = ref(false);
-const aiOpen = ref(false);
-const subjectManagerOpen = ref(false);
-const editing = ref(null);
-const importRef = ref(null);
-const aiRef = ref(null);
-const loadingExams = ref(true);
-const expanded = ref(new Set());
-const examBuckets = reactive({});
-const confirm = reactive({ open: false, title: '', message: '', action: null });
+const modalOpen = ref(false)
+const importOpen = ref(false)
+const aiOpen = ref(false)
+const subjectManagerOpen = ref(false)
+const editing = ref(null)
+const importRef = ref(null)
+const aiRef = ref(null)
+const loadingExams = ref(true)
+const expanded = ref(new Set())
+const examBuckets = reactive({})
+const confirm = reactive({ open: false, title: '', message: '', action: null })
 
-const answerMap = { a: 'الف', b: 'ب', c: 'ج', d: 'د' };
+const answerMap = { a: 'الف', b: 'ب', c: 'ج', d: 'د' }
 
 const visibleExams = computed(() => {
-  const list = examsStore.exams || [];
-  if (!store.filters.exam_id) return list;
-  return list.filter((e) => String(e.id) === String(store.filters.exam_id));
-});
+  const list = examsStore.exams || []
+  if (!store.filters.exam_id) return list
+  return list.filter((e) => String(e.id) === String(store.filters.exam_id))
+})
 
 const totalQuestions = computed(() =>
-  visibleExams.value.reduce((sum, e) => sum + Number(e.question_count ?? e.total_questions ?? 0), 0)
-);
+  visibleExams.value.reduce(
+    (sum, e) => sum + Number(e.question_count ?? e.total_questions ?? 0),
+    0
+  )
+)
 
 function fa(n) {
-  return new Intl.NumberFormat('fa-IR').format(Number(n || 0));
+  return new Intl.NumberFormat('fa-IR').format(Number(n || 0))
 }
 function stripHtml(t) {
-  return String(t || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return String(t || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 function truncate(t) {
-  const s = String(t || '');
-  return s.length > 100 ? `${s.slice(0, 100)}…` : s;
+  const s = String(t || '')
+  return s.length > 100 ? `${s.slice(0, 100)}…` : s
 }
 function subjectLabel(v) {
-  return subjectsStore.subjects.find((s) => s.slug === v)?.name || v || '—';
+  return subjectsStore.subjects.find((s) => s.slug === v)?.name || v || '—'
 }
 function diffLabel(v) {
-  return { easy: 'آسان', medium: 'متوسط', hard: 'سخت' }[v] || v;
+  return { easy: 'آسان', medium: 'متوسط', hard: 'سخت' }[v] || v
 }
 function answerLabel(v) {
-  const key = String(v || '').toLowerCase();
-  return answerMap[key] || String(v || '—').toUpperCase();
+  const key = String(v || '').toLowerCase()
+  return answerMap[key] || String(v || '—').toUpperCase()
 }
 function isExpanded(id) {
-  return expanded.value.has(Number(id));
+  return expanded.value.has(Number(id))
 }
 function bucket(id) {
-  const key = Number(id);
+  const key = Number(id)
   if (!examBuckets[key]) {
-    examBuckets[key] = { loading: false, questions: [] };
+    examBuckets[key] = { loading: false, questions: [] }
   }
-  return examBuckets[key];
+  return examBuckets[key]
 }
 
 async function loadExamQuestions(examId) {
-  const b = bucket(examId);
-  b.loading = true;
+  const b = bucket(examId)
+  b.loading = true
   try {
     const { data } = await adminApi.get('/admin/questions', {
       params: {
@@ -252,137 +314,142 @@ async function loadExamQuestions(examId) {
         per_page: 200,
         page: 1,
       },
-    });
-    b.questions = data.data || [];
+    })
+    b.questions = data.data || []
   } catch (e) {
-    toast.error(e.response?.data?.message || 'بارگذاری سوالات ناموفق بود.');
-    b.questions = [];
+    toast.error(e.response?.data?.message || 'بارگذاری سوالات ناموفق بود.')
+    b.questions = []
   } finally {
-    b.loading = false;
+    b.loading = false
   }
 }
 
 async function toggleExam(id) {
-  const key = Number(id);
-  const next = new Set(expanded.value);
+  const key = Number(id)
+  const next = new Set(expanded.value)
   if (next.has(key)) {
-    next.delete(key);
-    expanded.value = next;
-    return;
+    next.delete(key)
+    expanded.value = next
+    return
   }
-  next.add(key);
-  expanded.value = next;
-  await loadExamQuestions(key);
+  next.add(key)
+  expanded.value = next
+  await loadExamQuestions(key)
 }
 
 async function refreshExpanded() {
-  const ids = [...expanded.value];
-  await Promise.all(ids.map((id) => loadExamQuestions(id)));
+  const ids = [...expanded.value]
+  await Promise.all(ids.map((id) => loadExamQuestions(id)))
 }
 
 async function apply() {
-  await refreshExpanded();
+  await refreshExpanded()
 }
 async function clear() {
-  store.resetFilters();
-  expanded.value = new Set();
+  store.resetFilters()
+  expanded.value = new Set()
 }
 
 function openCreate() {
-  editing.value = null;
-  modalOpen.value = true;
+  editing.value = null
+  modalOpen.value = true
 }
 async function openEdit(row) {
   try {
-    editing.value = await store.fetchQuestion(row.id);
-    modalOpen.value = true;
+    editing.value = await store.fetchQuestion(row.id)
+    modalOpen.value = true
   } catch (e) {
-    toast.error(e.response?.data?.message || 'بارگذاری سوال ناموفق بود.');
+    toast.error(e.response?.data?.message || 'بارگذاری سوال ناموفق بود.')
   }
 }
 function askDelete(row) {
-  confirm.open = true;
-  confirm.title = 'حذف سوال';
-  confirm.message = `این سوال از آزمون «${row.exam_title || 'نامشخص'}» حذف شود؟`;
+  confirm.open = true
+  confirm.title = 'حذف سوال'
+  confirm.message = `این سوال از آزمون «${row.exam_title || 'نامشخص'}» حذف شود؟`
   confirm.action = async () => {
     try {
-      await store.deleteQuestion(row.id);
-      toast.success('سوال حذف شد.');
-      await refreshExpanded();
-      await examsStore.fetchExamOptions().catch(() => {});
+      await store.deleteQuestion(row.id)
+      toast.success('سوال حذف شد.')
+      await refreshExpanded()
+      await examsStore.fetchExamOptions().catch(() => {})
     } catch (e) {
-      toast.error(e.response?.data?.message || 'حذف ناموفق بود.');
+      toast.error(e.response?.data?.message || 'حذف ناموفق بود.')
     }
-  };
+  }
 }
 async function runConfirm() {
-  const fn = confirm.action;
-  confirm.open = false;
-  if (fn) await fn();
+  const fn = confirm.action
+  confirm.open = false
+  if (fn) await fn()
 }
 async function onSaved({ id, payload }) {
   try {
-    if (id) await store.updateQuestion(id, payload);
-    else await store.createQuestion(payload);
-    modalOpen.value = false;
-    toast.success('سوال ذخیره شد.');
-    await examsStore.fetchExamOptions().catch(() => {});
-    await refreshExpanded();
+    if (id) await store.updateQuestion(id, payload)
+    else await store.createQuestion(payload)
+    modalOpen.value = false
+    toast.success('سوال ذخیره شد.')
+    await examsStore.fetchExamOptions().catch(() => {})
+    await refreshExpanded()
   } catch (e) {
-    toast.error(e.response?.data?.message || 'ذخیره ناموفق بود.');
+    toast.error(e.response?.data?.message || 'ذخیره ناموفق بود.')
   }
 }
 async function onImport({ file, exam_id }) {
   try {
-    const result = await store.importQuestions({ file, exam_id });
-    importRef.value?.setResult(result);
-    toast.success('ورود اکسل انجام شد.');
-    await examsStore.fetchExamOptions().catch(() => {});
+    const result = await store.importQuestions({ file, exam_id })
+    importRef.value?.setResult(result)
+    toast.success('ورود اکسل انجام شد.')
+    await examsStore.fetchExamOptions().catch(() => {})
     if (exam_id) {
-      const next = new Set(expanded.value);
-      next.add(Number(exam_id));
-      expanded.value = next;
-      await loadExamQuestions(exam_id);
+      const next = new Set(expanded.value)
+      next.add(Number(exam_id))
+      expanded.value = next
+      await loadExamQuestions(exam_id)
     }
   } catch (e) {
-    importRef.value?.setError(e.response?.data?.message || 'ورود ناموفق بود.');
+    importRef.value?.setError(e.response?.data?.message || 'ورود ناموفق بود.')
   }
 }
 async function onExport() {
   try {
-    await store.exportQuestions();
-    toast.success('فایل خروجی آماده شد.');
+    await store.exportQuestions()
+    toast.success('فایل خروجی آماده شد.')
   } catch (e) {
-    toast.error(e.response?.data?.message || 'خروجی ناموفق بود.');
+    toast.error(e.response?.data?.message || 'خروجی ناموفق بود.')
   }
 }
 async function onGenerate(params) {
-  aiRef.value?.setLoading(true);
+  aiRef.value?.setLoading(true)
   try {
-    const res = await store.generateWithAI(params);
-    aiRef.value?.setMessage(res.message || 'تولید در صف قرار گرفت. پس از تایید ادمین اضافه می‌شود.');
-    toast.success('درخواست تولید ثبت شد.');
+    const res = await store.generateWithAI(params)
+    aiRef.value?.setMessage(
+      res.message || 'تولید در صف قرار گرفت. پس از تایید ادمین اضافه می‌شود.'
+    )
+    toast.success('درخواست تولید ثبت شد.')
   } catch (e) {
-    aiRef.value?.setError(e.response?.data?.message || 'تولید ناموفق بود.');
+    aiRef.value?.setError(e.response?.data?.message || 'تولید ناموفق بود.')
   } finally {
-    aiRef.value?.setLoading(false);
+    aiRef.value?.setLoading(false)
   }
 }
 
 onMounted(async () => {
   if (route.query.exam_id) {
-    store.filters.exam_id = String(route.query.exam_id);
+    store.filters.exam_id = String(route.query.exam_id)
   }
-  loadingExams.value = true;
+  loadingExams.value = true
   try {
-    await Promise.all([examsStore.fetchExamOptions(), subjectsStore.fetchSubjects()]);
+    await Promise.all([
+      examsStore.fetchExamOptions(),
+      subjectsStore.fetchSubjects(),
+    ])
     if (route.query.exam_id) {
-      await toggleExam(Number(route.query.exam_id));
+      await toggleExam(Number(route.query.exam_id))
     }
   } finally {
-    loadingExams.value = false;
+    loadingExams.value = false
   }
-});
+})
 </script>
 
 <style scoped>

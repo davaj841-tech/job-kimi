@@ -1,0 +1,133 @@
+<?php
+
+/**
+ * Spatie Laravel Backup — JobAzmoon defaults (ALTERNATIVE stack).
+ *
+ * Install:
+ *   composer require spatie/laravel-backup
+ *   php artisan vendor:publish --provider="Spatie\Backup\BackupServiceProvider"
+ *
+ * Then copy this file over config/backup.php (or merge include/disks).
+ *
+ * Conflict note: Spatie registers `backup:run`. JobAzmoon already has
+ * App\Console\Commands\BackupRunCommand with the same signature.
+ * Before enabling Spatie, rename the native command to `ja:backup`
+ * and update routes/console.php accordingly.
+ */
+
+use Spatie\Backup\Notifications\Notifiable;
+use Spatie\Backup\Notifications\Notifications\BackupHasFailedNotification;
+use Spatie\Backup\Notifications\Notifications\BackupWasSuccessfulNotification;
+use Spatie\Backup\Notifications\Notifications\CleanupHasFailedNotification;
+use Spatie\Backup\Notifications\Notifications\CleanupWasSuccessfulNotification;
+use Spatie\Backup\Notifications\Notifications\HealthyBackupWasFoundNotification;
+use Spatie\Backup\Notifications\Notifications\UnhealthyBackupWasFoundNotification;
+use Spatie\Backup\Tasks\Cleanup\Strategies\DefaultStrategy;
+use Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays;
+use Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumStorageInMegabytes;
+
+return [
+    'name' => env('APP_NAME', 'JobAzmoon'),
+
+    'source' => [
+        'files' => [
+            'include' => [
+                storage_path('app/public'),
+                storage_path('app/pdfs'),
+                storage_path('app/resumes'),
+            ],
+            'exclude' => [
+                storage_path('app/public/.gitignore'),
+            ],
+            'follow_links' => false,
+            'ignore_unreadable_directories' => false,
+            'relative_path' => null,
+        ],
+        'databases' => [
+            env('DB_CONNECTION', 'mysql'),
+        ],
+    ],
+
+    'database_dump_compressor' => null,
+    'database_dump_file_timestamp_format' => null,
+    'database_dump_filename_base' => 'database',
+    'database_dump_file_extension' => '',
+
+    'destination' => [
+        'compression_method' => ZipArchive::CM_DEFAULT,
+        'compression_level' => 9,
+        'filename_prefix' => 'jobazmoon-',
+        // Prefer S3 in production when AWS_* is set; otherwise local disk.
+        'disks' => array_values(array_filter([
+            env('BACKUP_DISK', env('AWS_BUCKET') ? 's3' : 'local'),
+        ])),
+        'continue_on_failure' => false,
+    ],
+
+    'temporary_directory' => storage_path('app/backup-temp'),
+    'password' => env('BACKUP_ARCHIVE_PASSWORD'),
+    'encryption' => env('BACKUP_ARCHIVE_PASSWORD') ? 'default' : 'none',
+    'verify_backup' => false,
+    'tries' => 1,
+    'retry_delay' => 0,
+
+    'notifications' => [
+        'notifications' => [
+            BackupHasFailedNotification::class => ['mail'],
+            UnhealthyBackupWasFoundNotification::class => ['mail'],
+            CleanupHasFailedNotification::class => ['mail'],
+            BackupWasSuccessfulNotification::class => [],
+            HealthyBackupWasFoundNotification::class => [],
+            CleanupWasSuccessfulNotification::class => [],
+        ],
+        'notifiable' => Notifiable::class,
+        'mail' => [
+            'to' => env('BACKUP_NOTIFICATION_EMAIL', env('MAIL_FROM_ADDRESS', 'ops@example.com')),
+            'from' => [
+                'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+                'name' => env('MAIL_FROM_NAME', 'JobAzmoon'),
+            ],
+        ],
+        'slack' => [
+            'webhook_url' => '',
+            'channel' => null,
+            'username' => null,
+            'icon' => null,
+        ],
+        'discord' => [
+            'webhook_url' => '',
+            'username' => '',
+            'avatar_url' => '',
+        ],
+        'webhook' => [
+            'url' => '',
+        ],
+    ],
+
+    'log_channel' => env('BACKUP_LOG_CHANNEL'),
+
+    'monitor_backups' => [
+        [
+            'name' => env('APP_NAME', 'JobAzmoon'),
+            'disks' => [env('BACKUP_DISK', env('AWS_BUCKET') ? 's3' : 'local')],
+            'health_checks' => [
+                MaximumAgeInDays::class => 1,
+                MaximumStorageInMegabytes::class => 5000,
+            ],
+        ],
+    ],
+
+    'cleanup' => [
+        'strategy' => DefaultStrategy::class,
+        'default_strategy' => [
+            'keep_all_backups_for_days' => 7,
+            'keep_daily_backups_for_days' => 16,
+            'keep_weekly_backups_for_weeks' => 8,
+            'keep_monthly_backups_for_months' => 4,
+            'keep_yearly_backups_for_years' => 2,
+            'delete_oldest_backups_when_using_more_megabytes_than' => 5000,
+        ],
+        'tries' => 1,
+        'retry_delay' => 0,
+    ],
+];

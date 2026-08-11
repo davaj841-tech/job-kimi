@@ -8,6 +8,7 @@ use App\Models\CrawlerRun;
 use App\Models\JobSource;
 use App\Services\Aggregation\AggregationScheduleService;
 use App\Services\Aggregation\JobSourceManager;
+use App\Services\FeatureFlagService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -25,8 +26,14 @@ class AggregateJobsDispatchCommand extends Command
 
     protected $description = 'Dispatch aggregation crawl jobs for administrator-whitelisted job sources';
 
-    public function handle(JobSourceManager $sources, AggregationScheduleService $schedule): int
+    public function handle(JobSourceManager $sources, AggregationScheduleService $schedule, FeatureFlagService $features): int
     {
+        if (! $features->isEnabled('job-crawler', true)) {
+            $this->warn('Feature flag job-crawler is disabled.');
+
+            return self::SUCCESS;
+        }
+
         $config = $schedule->get();
         $force = (bool) $this->option('force');
         $dryRun = (bool) $this->option('dry-run');
@@ -105,6 +112,7 @@ class AggregateJobsDispatchCommand extends Command
             if ($this->isSourceBusy($source->id)) {
                 $this->line("Skip busy #{$source->id} {$source->name}");
                 $skippedBusy++;
+
                 continue;
             }
 

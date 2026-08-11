@@ -1,12 +1,40 @@
 <template>
   <AdminLayout>
     <div class="space-y-6">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-800">داشبورد</h1>
-        <span class="text-sm text-gray-500">{{ todayJalali }}</span>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">داشبورد</h1>
+          <p class="text-sm text-gray-500">{{ todayJalali }}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+            :disabled="loading"
+            @click="loadStats"
+          >
+            بروزرسانی
+          </button>
+          <span class="text-xs text-slate-400">خودکار هر ۳۰ث</span>
+        </div>
       </div>
 
-      <div v-if="loading" class="rounded-2xl bg-white p-10 text-center text-sm text-slate-500">
+      <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <RouterLink
+          v-for="action in quickActions"
+          :key="action.to"
+          :to="action.to"
+          class="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md"
+        >
+          <p class="text-lg">{{ action.icon }}</p>
+          <p class="mt-1 text-sm font-bold text-slate-800">{{ action.label }}</p>
+        </RouterLink>
+      </div>
+
+      <div
+        v-if="loading"
+        class="rounded-2xl bg-white p-10 text-center text-sm text-slate-500"
+      >
         در حال بارگذاری آمار...
       </div>
 
@@ -35,8 +63,18 @@
         </div>
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <StatCard title="بازدید امروز" :value="faNum(counts.visits_today)" icon="👁" color="#0284c7" />
-          <StatCard title="بازدید این ماه" :value="faNum(counts.visits_month)" icon="📊" color="#4338ca" />
+          <StatCard
+            title="بازدید امروز"
+            :value="faNum(counts.visits_today)"
+            icon="👁"
+            color="#0284c7"
+          />
+          <StatCard
+            title="بازدید این ماه"
+            :value="faNum(counts.visits_month)"
+            icon="📊"
+            color="#4338ca"
+          />
         </div>
 
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -76,12 +114,18 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="p in topPages" :key="p.page" class="border-b border-slate-50">
+              <tr
+                v-for="p in topPages"
+                :key="p.page"
+                class="border-b border-slate-50"
+              >
                 <td class="py-2 font-medium" dir="ltr">{{ p.page }}</td>
                 <td class="py-2 text-left">{{ faNum(p.count) }}</td>
               </tr>
               <tr v-if="!topPages.length">
-                <td colspan="2" class="py-4 text-center text-slate-400">هنوز بازدیدی ثبت نشده</td>
+                <td colspan="2" class="py-4 text-center text-slate-400">
+                  هنوز بازدیدی ثبت نشده
+                </td>
               </tr>
             </tbody>
           </table>
@@ -124,31 +168,53 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-import adminApi from '../api/client';
-import AdminLayout from '../components/layout/AdminLayout.vue';
-import BarChart from '../components/ui/BarChart.vue';
-import ChartCard from '../components/ui/ChartCard.vue';
-import DoughnutChart from '../components/ui/DoughnutChart.vue';
-import LineChart from '../components/ui/LineChart.vue';
-import RecentTable from '../components/ui/RecentTable.vue';
-import StatCard from '../components/ui/StatCard.vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import adminApi from '../api/client'
+import AdminLayout from '../components/layout/AdminLayout.vue'
+import BarChart from '../components/ui/BarChart.vue'
+import ChartCard from '../components/ui/ChartCard.vue'
+import DoughnutChart from '../components/ui/DoughnutChart.vue'
+import LineChart from '../components/ui/LineChart.vue'
+import RecentTable from '../components/ui/RecentTable.vue'
+import StatCard from '../components/ui/StatCard.vue'
 
-const loading = ref(true);
-const error = ref('');
-const counts = ref({});
-const charts = ref({ revenue: [], users: [], exams: [], visits: [], devices: [] });
-const recent = ref({ users: [], exams: [], purchases: [], job_posts: [], blog_posts: [] });
-const subscriptionDistribution = ref([]);
-const topPages = ref([]);
-const deviceDistribution = ref([]);
+const loading = ref(true)
+const error = ref('')
+const counts = ref({})
+const charts = ref({
+  revenue: [],
+  users: [],
+  exams: [],
+  visits: [],
+  devices: [],
+})
+const recent = ref({
+  users: [],
+  exams: [],
+  purchases: [],
+  job_posts: [],
+  blog_posts: [],
+})
+const subscriptionDistribution = ref([])
+const topPages = ref([])
+const deviceDistribution = ref([])
+let pollTimer
+
+const quickActions = [
+  { to: '/admin/exams', label: 'آزمون‌ها', icon: '📋' },
+  { to: '/admin/users', label: 'کاربران', icon: '👤' },
+  { to: '/admin/transactions', label: 'تراکنش‌ها', icon: '💳' },
+  { to: '/admin/tickets', label: 'تیکت‌ها', icon: '✉' },
+  { to: '/admin/aggregated-jobs', label: 'تجمیع', icon: '☑' },
+  { to: '/admin/job-posts', label: 'آگهی‌ها', icon: '💼' },
+]
 
 const visitSeries = computed(() =>
   (charts.value.visits || []).map((r) => ({
     date: r.date,
     visits: r.visits ?? r.page_views ?? 0,
   }))
-);
+)
 
 const todayJalali = computed(() =>
   new Date().toLocaleDateString('fa-IR', {
@@ -157,22 +223,22 @@ const todayJalali = computed(() =>
     month: 'long',
     day: 'numeric',
   })
-);
+)
 
 function faNum(n) {
-  return new Intl.NumberFormat('fa-IR').format(Number(n || 0));
+  return new Intl.NumberFormat('fa-IR').format(Number(n || 0))
 }
 
 function faMoney(n) {
-  return `${faNum(n)} ریال`;
+  return `${faNum(n)} ریال`
 }
 
 function faDate(v) {
-  if (!v) return '—';
+  if (!v) return '—'
   try {
-    return new Date(v).toLocaleDateString('fa-IR');
+    return new Date(v).toLocaleDateString('fa-IR')
   } catch {
-    return String(v);
+    return String(v)
   }
 }
 
@@ -209,7 +275,7 @@ const topStats = computed(() => [
     color: '#22c55e',
     trend: '',
   },
-]);
+])
 
 const bottomStats = computed(() => [
   {
@@ -261,15 +327,24 @@ const bottomStats = computed(() => [
     icon: '🔁',
     color: '#be123c',
   },
-]);
+])
 
 const userRows = computed(() =>
-  (recent.value.users || []).map((u) => [u.name, u.mobile, faDate(u.created_at)])
-);
+  (recent.value.users || []).map((u) => [
+    u.name,
+    u.mobile,
+    faDate(u.created_at),
+  ])
+)
 
 const examRows = computed(() =>
-  (recent.value.exams || []).map((e) => [e.title, e.user_name, faNum(e.score), faDate(e.created_at)])
-);
+  (recent.value.exams || []).map((e) => [
+    e.title,
+    e.user_name,
+    faNum(e.score),
+    faDate(e.created_at),
+  ])
+)
 
 const purchaseRows = computed(() =>
   (recent.value.purchases || []).map((p) => [
@@ -278,7 +353,7 @@ const purchaseRows = computed(() =>
     faMoney(p.amount),
     faDate(p.created_at),
   ])
-);
+)
 
 const jobRows = computed(() =>
   (recent.value.job_posts || []).map((j) => [
@@ -287,7 +362,7 @@ const jobRows = computed(() =>
     statusFa(j.status),
     faDate(j.created_at),
   ])
-);
+)
 
 function statusFa(status) {
   return (
@@ -297,24 +372,43 @@ function statusFa(status) {
       rejected: 'رد شده',
       draft: 'پیش‌نویس',
       published: 'منتشر شده',
-    }[status] || status || '—'
-  );
+    }[status] ||
+    status ||
+    '—'
+  )
 }
 
-onMounted(async () => {
+onMounted(() => {
+  loadStats()
+  pollTimer = setInterval(() => loadStats(true), 30000)
+})
+
+onUnmounted(() => {
+  if (pollTimer) clearInterval(pollTimer)
+})
+
+async function loadStats(silent = false) {
+  if (!silent) loading.value = true
+  error.value = ''
   try {
-    const { data } = await adminApi.get('/admin/dashboard-stats');
-    const payload = data.data || {};
-    counts.value = payload.counts || {};
-    charts.value = payload.charts || { revenue: [], users: [], exams: [], visits: [], devices: [] };
-    recent.value = payload.recent || {};
-    subscriptionDistribution.value = payload.subscription_distribution || [];
-    topPages.value = payload.top_pages || [];
-    deviceDistribution.value = payload.charts?.devices || [];
+    const { data } = await adminApi.get('/admin/dashboard-stats')
+    const payload = data.data || {}
+    counts.value = payload.counts || {}
+    charts.value = payload.charts || {
+      revenue: [],
+      users: [],
+      exams: [],
+      visits: [],
+      devices: [],
+    }
+    recent.value = payload.recent || {}
+    subscriptionDistribution.value = payload.subscription_distribution || []
+    topPages.value = payload.top_pages || []
+    deviceDistribution.value = payload.charts?.devices || []
   } catch (e) {
-    error.value = e.response?.data?.message || 'بارگذاری داشبورد ناموفق بود.';
+    error.value = e.response?.data?.message || 'بارگذاری داشبورد ناموفق بود.'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-});
+}
 </script>

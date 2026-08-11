@@ -1,19 +1,25 @@
 <template>
   <footer class="mt-auto hidden bg-[#0a1c33] text-white lg:block">
-    <div class="desk-container grid grid-cols-4 gap-8 py-12">
+    <div class="desk-container grid grid-cols-4 gap-6 py-6">
       <div>
-        <p class="mb-3 text-xl font-black">جاب‌آزمون</p>
-        <p class="mb-4 text-sm leading-7 text-white/70">
-          پلتفرم آمادگی آزمون‌های استخدامی، رزومه‌ساز آنلاین و دسترسی به آگهی‌های شغلی.
+        <p class="mb-1.5 text-base font-black">جاب‌آزمون</p>
+        <p class="mb-3 text-xs leading-6 text-white/65">
+          آزمون استخدامی، رزومه‌ساز و آگهی شغلی در یک مسیر.
         </p>
-        <TrustBadges dark />
+        <TrustBadges
+          dark
+          compact
+        />
       </div>
 
       <div v-for="col in columns" :key="col.title">
-        <h3 class="mb-4 text-base font-bold">{{ col.title }}</h3>
-        <ul class="space-y-2.5">
-          <li v-for="link in col.links" :key="link.to">
-            <RouterLink :to="link.to" class="text-sm text-white/70 transition hover:text-desk-orange">
+        <h3 class="mb-2 text-sm font-bold">{{ col.title }}</h3>
+        <ul class="space-y-1.5">
+          <li v-for="link in col.links" :key="link.to + link.label">
+            <RouterLink
+              :to="link.to"
+              class="text-xs text-white/65 transition hover:text-desk-orange"
+            >
               {{ link.label }}
             </RouterLink>
           </li>
@@ -22,36 +28,40 @@
     </div>
 
     <div class="border-t border-white/10">
-      <div class="desk-container flex items-center justify-between py-4 text-xs text-white/55">
+      <div
+        class="desk-container flex items-center justify-between py-2.5 text-[11px] text-white/50"
+      >
         <p>تمامی حقوق محفوظ است © {{ faYear }} جاب‌آزمون</p>
-        <p>طراحی‌شده برای آمادگی آزمون‌های استخدامی</p>
+        <p>آمادگی آزمون‌های استخدامی</p>
       </div>
     </div>
   </footer>
 </template>
 
 <script setup>
-import TrustBadges from '../TrustBadges.vue';
+import TrustBadges from '../TrustBadges.vue'
 
-const faYear = new Intl.DateTimeFormat('fa-IR', { year: 'numeric' }).format(new Date());
+const faYear = new Intl.DateTimeFormat('fa-IR', { year: 'numeric' }).format(
+  new Date()
+)
 
 const columns = [
   {
-    title: 'خدمات ما',
+    title: 'خدمات',
     links: [
-      { to: '/exams', label: 'آزمون‌های آنلاین' },
+      { to: '/exams', label: 'آزمون‌ها' },
       { to: '/resumes', label: 'رزومه‌ساز' },
-      { to: '/pdfs', label: 'فروشگاه فایل' },
-      { to: '/blog', label: 'وبلاگ' },
+      { to: '/pdfs', label: 'فروشگاه' },
+      { to: '/articles', label: 'مقالات' },
     ],
   },
   {
-    title: 'دسترسی سریع',
+    title: 'دسترسی',
     links: [
       { to: '/', label: 'صفحه اصلی' },
       { to: '/jobs', label: 'استخدام‌ها' },
+      { to: '/blog', label: 'وبلاگ' },
       { to: '/contact', label: 'تماس با ما' },
-      { to: '/about', label: 'درباره ما' },
     ],
   },
   {
@@ -60,8 +70,7 @@ const columns = [
       { to: '/terms', label: 'قوانین و مقررات' },
       { to: '/privacy', label: 'حریم خصوصی' },
       { to: '/about', label: 'درباره ما' },
-      { to: '/contact', label: 'تماس با ما' },
     ],
   },
-];
+]
 </script>

@@ -19,14 +19,20 @@ Route::match(['get', 'post'], '/subscription/verify', [SubscriptionController::c
 Route::match(['get', 'post'], '/pdf-products/{id}/verify', [PDFProductController::class, 'verifyPurchase'])->whereNumber('id');
 
 Route::middleware(['auth:sanctum', 'subscription.check'])->group(function () {
-    Route::get('/wallet', [WalletController::class, 'index']);
-    Route::post('/wallet/charge', [WalletController::class, 'charge']);
+    Route::get('/wallet', [WalletController::class, 'index'])->middleware('feature:wallet');
+    Route::post('/wallet/charge', [WalletController::class, 'charge'])->middleware('feature:wallet');
 
-    Route::post('/subscription/subscribe', [SubscriptionController::class, 'subscribe']);
+    Route::post('/subscription/subscribe', [SubscriptionController::class, 'subscribe'])
+        ->middleware('feature:subscription');
 
-    Route::post('/pdf-products/{id}/purchase', [PDFProductController::class, 'purchase'])->whereNumber('id');
-    Route::get('/pdf-products/{id}/download', [PDFProductController::class, 'download'])->whereNumber('id');
-    Route::get('/my-purchases', [PDFProductController::class, 'myPurchases']);
+    Route::post('/pdf-products/{id}/purchase', [PDFProductController::class, 'purchase'])
+        ->middleware('feature:pdf-store')
+        ->whereNumber('id');
+    Route::get('/pdf-products/{id}/download', [PDFProductController::class, 'download'])
+        ->middleware('feature:pdf-store')
+        ->whereNumber('id');
+    Route::get('/my-purchases', [PDFProductController::class, 'myPurchases'])
+        ->middleware('feature:pdf-store');
 
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::get('/transactions/{id}/invoice', [InvoiceController::class, 'download'])->whereNumber('id');

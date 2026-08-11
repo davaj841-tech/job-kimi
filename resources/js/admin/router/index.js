@@ -85,6 +85,12 @@ const routes = [
     meta: { title: 'بلاگ', auth: true },
   },
   {
+    path: '/admin/generated-contents',
+    name: 'admin-generated-contents',
+    component: () => import('../views/GeneratedContentsView.vue'),
+    meta: { title: 'تولید محتوا', auth: true },
+  },
+  {
     path: '/admin/pdf-products',
     name: 'admin-pdf-products',
     component: () => import('../views/PDFProductsView.vue'),
@@ -124,7 +130,7 @@ const routes = [
     path: '/admin/settings',
     name: 'admin-settings',
     component: () => import('../views/SettingsView.vue'),
-    meta: { title: 'تنظیمات', auth: true },
+    meta: { title: 'تنظیمات', auth: true, adminOnly: true },
   },
   {
     path: '/admin/tickets',
@@ -148,19 +154,19 @@ const routes = [
     path: '/admin/backups',
     name: 'admin-backups',
     component: () => import('../views/BackupsView.vue'),
-    meta: { title: 'بکاپ', auth: true },
+    meta: { title: 'بکاپ', auth: true, adminOnly: true },
   },
   {
     path: '/admin/audit-logs',
     name: 'admin-audit-logs',
     component: () => import('../views/AuditLogsView.vue'),
-    meta: { title: 'حسابرسی', auth: true },
+    meta: { title: 'حسابرسی', auth: true, adminOnly: true },
   },
   {
     path: '/admin/site-errors',
     name: 'admin-site-errors',
     component: () => import('../views/SiteErrorsView.vue'),
-    meta: { title: 'خطاهای سایت', auth: true },
+    meta: { title: 'خطاهای سایت', auth: true, adminOnly: true },
   },
   {
     path: '/admin/:pathMatch(.*)*',
@@ -187,6 +193,10 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.guest && auth.isAuthenticated && auth.isStaff) {
+    return { name: 'admin-dashboard' };
+  }
+
+  if (to.meta.adminOnly && !auth.isAdmin) {
     return { name: 'admin-dashboard' };
   }
 

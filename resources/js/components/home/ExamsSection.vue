@@ -1,56 +1,65 @@
 <template>
-  <section class="bg-desk-gray py-14">
-    <div class="desk-container">
-      <div class="mb-6 flex items-center justify-between">
+  <section class="bg-surface-page py-6 sm:py-7">
+    <div class="mx-auto max-w-7xl px-4">
+      <div class="mb-3 flex items-end justify-between gap-3">
         <div>
-          <h2 class="desk-section-title">آزمون‌های آنلاین</h2>
-          <p class="mt-1 text-sm text-desk-muted">تمرین هدفمند برای آزمون‌های استخدامی</p>
+          <h2 class="text-lg font-black text-desk-dark sm:text-xl">آزمون‌های آنلاین</h2>
+          <p class="mt-0.5 text-xs text-desk-muted">تمرین هدفمند برای آزمون‌های استخدامی</p>
         </div>
-        <RouterLink to="/exams" class="text-sm font-bold text-desk-orange hover:underline">
-          همه آزمون‌ها
+        <RouterLink
+          to="/exams"
+          class="text-xs font-bold text-brand hover:underline sm:text-sm"
+        >
+          مشاهده همه
         </RouterLink>
       </div>
 
-      <div v-if="loading" class="py-10 text-center text-sm text-desk-muted">در حال بارگذاری...</div>
-      <div v-else-if="displayExams.length" class="grid grid-cols-4 gap-5">
+      <div v-if="loading" class="py-10 text-center text-sm text-desk-muted">
+        در حال بارگذاری...
+      </div>
+      <HomeRail v-else-if="displayExams.length">
         <article
           v-for="exam in displayExams"
           :key="exam.id"
-          class="desk-card cursor-pointer overflow-hidden"
+          class="w-[16rem] shrink-0 cursor-pointer rounded-2xl border border-surface-line bg-white p-3.5 text-right shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           @click="goExam(exam)"
         >
-          <div class="flex aspect-video items-center justify-center bg-desk-blue">
-            <DesktopIcon name="clipboard" :size="32" class="text-white" />
-          </div>
-          <div class="p-4 text-right">
-            <div class="mb-2 flex flex-wrap justify-end gap-2">
-              <span
-                v-if="exam.is_free"
-                class="rounded-md bg-desk-green/15 px-2 py-0.5 text-[11px] font-bold text-desk-green"
-              >
-                رایگان
-              </span>
-              <span
-                v-if="exam.has_negative_marking"
-                class="rounded-md bg-orange-50 px-2 py-0.5 text-[11px] font-bold text-desk-orange"
-              >
-                نمره منفی
-              </span>
-            </div>
-            <h3 class="mb-2 line-clamp-2 text-base font-semibold text-desk-text">{{ exam.title }}</h3>
-            <p class="mb-3 text-xs text-desk-muted">
-              {{ exam.duration_minutes }} دقیقه · {{ exam.total_questions }} سوال
-            </p>
-            <button
-              type="button"
-              class="inline-flex w-full items-center justify-center rounded-lg bg-desk-dark px-3 py-2.5 text-sm font-bold text-white hover:bg-desk-blue"
-              @click.stop="goExam(exam)"
+          <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <span
+              v-if="exam.is_free"
+              class="rounded-md bg-desk-green/15 px-2 py-0.5 text-[11px] font-bold text-desk-green"
             >
-              شروع آزمون
-            </button>
+              رایگان
+            </span>
+            <span
+              v-else
+              class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-desk-muted"
+            >
+              ویژه
+            </span>
+            <span
+              v-if="exam.has_negative_marking"
+              class="rounded-md bg-orange-50 px-2 py-0.5 text-[11px] font-bold text-desk-orange"
+            >
+              نمره منفی
+            </span>
           </div>
+          <h3 class="line-clamp-2 text-sm font-bold text-desk-text">
+            {{ exam.title }}
+          </h3>
+          <p class="mt-1.5 mb-3 text-[11px] text-desk-muted">
+            {{ exam.duration_minutes }} دقیقه ·
+            {{ exam.total_questions }} سوال
+          </p>
+          <button
+            type="button"
+            class="inline-flex w-full items-center justify-center rounded-lg bg-desk-dark px-3 py-2 text-xs font-bold text-white hover:bg-desk-blue"
+            @click.stop="goExam(exam)"
+          >
+            شروع آزمون
+          </button>
         </article>
-      </div>
+      </HomeRail>
       <div
         v-else-if="error"
         class="rounded-2xl border border-dashed border-red-200 bg-white p-8 text-center"
@@ -61,40 +70,42 @@
         v-else
         class="rounded-2xl border border-dashed border-desk-blue/30 bg-white p-8 text-center"
       >
-        <p class="text-sm text-desk-muted">📭 هنوز آزمونی منتشر نشده است. به‌زودی آزمون‌های جدید اضافه می‌شود.</p>
+        <p class="text-sm text-desk-muted">
+          هنوز آزمونی منتشر نشده است.
+        </p>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { useRouter } from 'vue-router';
-import DesktopIcon from '../DesktopIcon.vue';
-import { useAuthStore } from '../../stores/auth';
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../../stores/auth'
+import HomeRail from './HomeRail.vue'
 
 const props = defineProps({
   exams: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
   error: { type: String, default: '' },
-});
+})
 
-const auth = useAuthStore();
-const router = useRouter();
+const auth = useAuthStore()
+const router = useRouter()
 
-const displayExams = computed(() => (props.exams || []).slice(0, 4));
+const displayExams = computed(() => (props.exams || []).slice(0, 12))
 
 function examPath(exam) {
-  const slug = exam.slug || exam.id;
-  return `/exams/${slug}`;
+  const slug = exam.slug || exam.id
+  return `/exams/${slug}`
 }
 
 function goExam(exam) {
-  const path = examPath(exam);
+  const path = examPath(exam)
   if (!auth.isAuthenticated) {
-    router.push({ path: '/login', query: { redirect: path } });
-    return;
+    router.push({ path: '/login', query: { redirect: path } })
+    return
   }
-  router.push(path);
+  router.push(path)
 }
 </script>

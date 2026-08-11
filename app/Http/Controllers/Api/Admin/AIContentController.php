@@ -6,7 +6,9 @@ use App\Http\Controllers\Api\BaseController;
 use App\Http\Resources\AiContentResource;
 use App\Jobs\CrawlJobsJob;
 use App\Jobs\GenerateQuestionsJob;
+use App\Models\AiContent;
 use App\Models\Exam;
+use App\Models\Setting;
 use App\Repositories\AiContentRepository;
 use App\Services\AIService;
 use Illuminate\Http\JsonResponse;
@@ -90,7 +92,7 @@ class AIContentController extends BaseController
         try {
             $this->aiService->ensureWithinDailyLimit(
                 'exam_question',
-                (int) \App\Models\Setting::get('ai_question_limit_per_day', 20)
+                (int) Setting::get('ai_question_limit_per_day', 20)
             );
         } catch (\RuntimeException $e) {
             return $this->errorResponse($e->getMessage(), 429);
@@ -116,17 +118,17 @@ class AIContentController extends BaseController
     public function stats(): JsonResponse
     {
         $today = $this->aiContentRepository->getTodayCount();
-        $limit = (int) \App\Models\Setting::get('ai_daily_limit', 50);
+        $limit = (int) Setting::get('ai_daily_limit', 50);
 
         return $this->successResponse([
             'generated_today' => $today,
             'daily_limit' => $limit,
-            'pending' => \App\Models\AiContent::query()->where('status', 'pending')->count(),
+            'pending' => AiContent::query()->where('status', 'pending')->count(),
             'by_type' => [
-                'exam_question' => \App\Models\AiContent::query()->where('type', 'exam_question')->count(),
-                'blog_post' => \App\Models\AiContent::query()->where('type', 'blog_post')->count(),
-                'job_crawl' => \App\Models\AiContent::query()->where('type', 'job_crawl')->count(),
-                'resume_tip' => \App\Models\AiContent::query()->where('type', 'resume_tip')->count(),
+                'exam_question' => AiContent::query()->where('type', 'exam_question')->count(),
+                'blog_post' => AiContent::query()->where('type', 'blog_post')->count(),
+                'job_crawl' => AiContent::query()->where('type', 'job_crawl')->count(),
+                'resume_tip' => AiContent::query()->where('type', 'resume_tip')->count(),
             ],
         ]);
     }
@@ -136,7 +138,7 @@ class AIContentController extends BaseController
         $type = $request->query('type');
         $status = $request->query('status');
 
-        $query = \App\Models\AiContent::query()->latest();
+        $query = AiContent::query()->latest();
 
         if ($type) {
             $query->where('type', $type);
@@ -163,14 +165,14 @@ class AIContentController extends BaseController
 
     public function show(int $id): JsonResponse
     {
-        $content = \App\Models\AiContent::query()->findOrFail($id);
+        $content = AiContent::query()->findOrFail($id);
 
         return $this->successResponse(new AiContentResource($content));
     }
 
     public function destroy(int $id): JsonResponse
     {
-        $content = \App\Models\AiContent::query()->findOrFail($id);
+        $content = AiContent::query()->findOrFail($id);
         $content->delete();
 
         return $this->successResponse(null, 'محتوا حذف شد.');

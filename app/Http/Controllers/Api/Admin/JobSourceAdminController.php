@@ -15,6 +15,7 @@ use App\Models\JobSourceEndpoint;
 use App\Services\Aggregation\CrawlOrchestrator;
 use App\Services\Aggregation\JobSourceDomainGuard;
 use App\Services\Aggregation\Parsers\SourceParserRegistry;
+use App\Services\Aggregation\SourceHealthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -233,7 +234,7 @@ class JobSourceAdminController extends BaseController
             return $this->errorResponse('منبع یافت نشد.', 404);
         }
 
-        $updated = app(\App\Services\Aggregation\SourceHealthService::class)->resetCounters($source);
+        $updated = app(SourceHealthService::class)->resetCounters($source);
 
         return $this->successResponse($this->serializeSource($updated), 'شمارنده‌های سلامت بازنشانی شد.');
     }
@@ -371,7 +372,6 @@ class JobSourceAdminController extends BaseController
     }
 
     /**
-     * @param  mixed  $times
      * @return list<array{time: string, enabled: bool, label: ?string}>|null
      */
     protected function normalizeCustomTimes(mixed $times): ?array

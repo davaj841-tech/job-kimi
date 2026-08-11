@@ -1,11 +1,15 @@
 export function formatPrice(
   value: number | string | null | undefined,
-  options?: { freeLabel?: string },
+  options?: { freeLabel?: string }
 ): string
 
-export function formatDate(value: string | number | Date | null | undefined): string
+export function formatDate(
+  value: string | number | Date | null | undefined
+): string
 
-export function formatDateTime(value: string | number | Date | null | undefined): string
+export function formatDateTime(
+  value: string | number | Date | null | undefined
+): string
 
 export function toFaDigits(input: unknown): string
 

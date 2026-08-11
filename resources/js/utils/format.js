@@ -14,6 +14,26 @@ export function formatDateTime(value) {
     return formatJalaliDateTime(value);
 }
 
+/** Relative time in Persian (e.g. «۲ روز پیش») */
+export function formatDistanceToNow(value) {
+    if (!value) return '—';
+    const d = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(d.getTime())) return '—';
+    const diffSec = Math.round((Date.now() - d.getTime()) / 1000);
+    const rtf = new Intl.RelativeTimeFormat('fa', { numeric: 'auto' });
+    const abs = Math.abs(diffSec);
+    if (abs < 60) return rtf.format(-diffSec, 'second');
+    const mins = Math.round(diffSec / 60);
+    if (Math.abs(mins) < 60) return rtf.format(-mins, 'minute');
+    const hours = Math.round(mins / 60);
+    if (Math.abs(hours) < 24) return rtf.format(-hours, 'hour');
+    const days = Math.round(hours / 24);
+    if (Math.abs(days) < 30) return rtf.format(-days, 'day');
+    const months = Math.round(days / 30);
+    if (Math.abs(months) < 12) return rtf.format(-months, 'month');
+    return rtf.format(-Math.round(months / 12), 'year');
+}
+
 export function toFaDigits(input) {
     return String(input ?? '').replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[d]);
 }

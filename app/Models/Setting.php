@@ -23,6 +23,25 @@ class Setting extends Model
         });
     }
 
+    /** مقدار خالی دیتابیس را نادیده می‌گیرد تا fallback به env/config کار کند. */
+    public static function getFilled(string $key, mixed $default = null): mixed
+    {
+        $value = static::get($key);
+
+        return filled($value) ? $value : $default;
+    }
+
+    public static function getBool(string $key, bool $default = false): bool
+    {
+        $value = static::get($key);
+
+        if ($value === null || $value === '') {
+            return $default;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+    }
+
     public static function set(string $key, mixed $value, string $group = 'general'): void
     {
         static::query()->updateOrCreate(

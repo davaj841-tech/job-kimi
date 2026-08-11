@@ -39,6 +39,7 @@ class ExamResource extends JsonResource
             'price' => $this->price,
             'subscription_required' => $this->subscription_required,
             'status' => $this->status,
+            'is_random' => (bool) ($this->is_random ?? false),
             'avg_rating' => (float) ($this->avg_rating ?? 0),
             'ratings_count' => (int) ($this->ratings_count ?? 0),
             'attempts_count' => (int) ($this->attempts_count ?? 0),

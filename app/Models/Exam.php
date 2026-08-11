@@ -2,15 +2,22 @@
 
 namespace App\Models;
 
+use App\Observers\ExamObserver;
+use App\Traits\HasUniqueSlug;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
+#[ObservedBy([ExamObserver::class])]
 class Exam extends Model
 {
     use HasFactory;
+    use HasUniqueSlug;
+
+    protected string $slugSourceField = 'title';
+
     protected $fillable = [
         'title',
         'slug',
@@ -29,6 +36,8 @@ class Exam extends Model
         'price',
         'subscription_required',
         'status',
+        'is_random',
+        'random_config',
         'created_by',
     ];
 
@@ -36,6 +45,8 @@ class Exam extends Model
     {
         return [
             'is_free' => 'boolean',
+            'is_random' => 'boolean',
+            'random_config' => 'array',
             'has_negative_marking' => 'boolean',
             'negative_mark_ratio' => 'float',
             'price' => 'decimal:0',
@@ -44,15 +55,6 @@ class Exam extends Model
             'total_questions' => 'integer',
             'total_marks' => 'integer',
         ];
-    }
-
-    protected static function booted(): void
-    {
-        static::creating(function (Exam $exam) {
-            if (blank($exam->slug)) {
-                $exam->slug = Str::slug($exam->title).'-'.Str::random(5);
-            }
-        });
     }
 
     public function category(): BelongsTo

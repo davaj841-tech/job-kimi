@@ -8,7 +8,9 @@ use App\Http\Requests\Api\Admin\UpdateUserRequest;
 use App\Http\Requests\Api\Admin\UpdateUserRoleRequest;
 use App\Http\Requests\Api\Admin\UpdateUserStatusRequest;
 use App\Models\User;
+use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AdminUserController extends BaseController
 {
@@ -138,7 +140,7 @@ class AdminUserController extends BaseController
         $old = $user->only(['name', 'email', 'mobile', 'role', 'status', 'username', 'national_code']);
         $user->update($data);
 
-        app(\App\Services\AuditLogService::class)->log(
+        app(AuditLogService::class)->log(
             'user.updated',
             $user,
             $old,
@@ -162,7 +164,7 @@ class AdminUserController extends BaseController
 
         $old = ['role' => $user->role];
         $user->update(['role' => $request->validated('role')]);
-        app(\App\Services\AuditLogService::class)->log('user.role_changed', $user, $old, ['role' => $user->role]);
+        app(AuditLogService::class)->log('user.role_changed', $user, $old, ['role' => $user->role]);
 
         return $this->successResponse($this->listItem($user->fresh('subscriptionPlan')), 'نقش کاربر به‌روزرسانی شد.');
     }
@@ -184,7 +186,7 @@ class AdminUserController extends BaseController
         return $this->successResponse($this->listItem($user->fresh('subscriptionPlan')), 'وضعیت کاربر به‌روزرسانی شد.');
     }
 
-    public function store(\Illuminate\Http\Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],

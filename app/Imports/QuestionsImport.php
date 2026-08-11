@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Exam;
+use App\Models\ExamSubject;
 use App\Models\Question;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -21,17 +22,25 @@ class QuestionsImport implements ToCollection, WithHeadingRow
 
     public function collection(Collection $rows): void
     {
-        $validAnswers = ['a', 'b', 'c', 'd', 'الف', 'ب', 'ج', 'د'];
         $answerMap = [
             'الف' => 'a', 'ب' => 'b', 'ج' => 'c', 'د' => 'd',
             'a' => 'a', 'b' => 'b', 'c' => 'c', 'd' => 'd',
         ];
-        $validDifficulty = ['easy', 'medium', 'hard', 'آسان', 'متوسط', 'سخت'];
         $diffMap = [
             'آسان' => 'easy', 'متوسط' => 'medium', 'سخت' => 'hard',
             'easy' => 'easy', 'medium' => 'medium', 'hard' => 'hard',
         ];
-        $validSubjects = ['math', 'literature', 'islamic', 'english', 'chemistry', 'physics', 'iq', 'general'];
+
+        $validSubjects = ExamSubject::query()
+            ->pluck('slug')
+            ->map(fn ($s) => strtolower((string) $s))
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($validSubjects === []) {
+            $validSubjects = ['math', 'literature', 'islamic', 'english', 'chemistry', 'physics', 'iq', 'general'];
+        }
 
         $forcedExam = $this->forcedExamId
             ? Exam::query()->find($this->forcedExamId)
@@ -47,20 +56,29 @@ class QuestionsImport implements ToCollection, WithHeadingRow
             $optionD = trim((string) ($row['option_d'] ?? $row['گزینه_د'] ?? ''));
             $correctRaw = trim((string) ($row['correct_answer'] ?? $row['پاسخ_صحیح'] ?? ''));
             $correct = $answerMap[mb_strtolower($correctRaw)] ?? $answerMap[$correctRaw] ?? strtolower($correctRaw);
+
+            // Empty level → medium (required behavior for Excel/CSV import)
             $difficultyRaw = trim((string) ($row['difficulty'] ?? $row['سطح'] ?? ''));
-            $difficulty = $diffMap[$difficultyRaw] ?? $diffMap[mb_strtolower($difficultyRaw)] ?? 'medium';
+            if ($difficultyRaw === '') {
+                $difficulty = 'medium';
+            } else {
+                $difficulty = $diffMap[$difficultyRaw] ?? $diffMap[mb_strtolower($difficultyRaw)] ?? 'medium';
+            }
+
             $subject = strtolower(trim((string) ($row['subject'] ?? $row['درس'] ?? 'general')));
             $explanation = trim((string) ($row['explanation'] ?? $row['توضیحات'] ?? ''));
 
             if ($questionText === '' || $optionA === '' || $optionB === '' || $optionC === '' || $optionD === '' || $correct === '') {
                 $this->skipped++;
                 $this->errors[] = "ردیف {$rowNumber}: فیلدهای الزامی ناقص است.";
+
                 continue;
             }
 
             if (! in_array($correct, ['a', 'b', 'c', 'd'], true)) {
                 $this->skipped++;
                 $this->errors[] = "ردیف {$rowNumber}: پاسخ صحیح نامعتبر است (الف/ب/ج/د).";
+
                 continue;
             }
 
@@ -69,6 +87,7 @@ class QuestionsImport implements ToCollection, WithHeadingRow
                 if ($examSlug === '') {
                     $this->skipped++;
                     $this->errors[] = "ردیف {$rowNumber}: آزمون انتخاب نشده است.";
+
                     continue;
                 }
                 $exam = Exam::query()->where('slug', $examSlug)->first();
@@ -77,6 +96,7 @@ class QuestionsImport implements ToCollection, WithHeadingRow
             if (! $exam) {
                 $this->skipped++;
                 $this->errors[] = "ردیف {$rowNumber}: آزمون یافت نشد.";
+
                 continue;
             }
 
@@ -85,7 +105,7 @@ class QuestionsImport implements ToCollection, WithHeadingRow
             }
 
             if (! in_array($subject, $validSubjects, true)) {
-                $subject = 'general';
+                $subject = in_array('general', $validSubjects, true) ? 'general' : ($validSubjects[0] ?? 'general');
             }
 
             Question::query()->create([

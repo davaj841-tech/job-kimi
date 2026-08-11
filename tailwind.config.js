@@ -2,6 +2,7 @@ import defaultTheme from 'tailwindcss/defaultTheme';
 
 /** @type {import('tailwindcss').Config} */
 export default {
+    darkMode: 'class',
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
@@ -12,20 +13,33 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Vazirmatn', ...defaultTheme.fontFamily.sans],
+                sans: ['"Estedad Variable"', 'Estedad', 'Vazirmatn', 'Tahoma', ...defaultTheme.fontFamily.sans],
+                display: ['"Estedad Variable"', 'Estedad', 'Vazirmatn', 'Tahoma', ...defaultTheme.fontFamily.sans],
             },
             colors: {
+                primary: {
+                    50: '#fef2f2',
+                    100: '#fee2e2',
+                    200: '#fecaca',
+                    300: '#fca5a5',
+                    400: '#f87171',
+                    500: '#ef394e',
+                    600: '#ef394e',
+                    700: '#d32f41',
+                    800: '#b91c1c',
+                    900: '#991b1b',
+                },
                 brand: {
-                    DEFAULT: '#ef394e',
-                    soft: '#fff1f2',
-                    dark: '#d32f41',
+                    DEFAULT: 'rgb(var(--c-brand) / <alpha-value>)',
+                    soft: 'rgb(var(--c-brand-soft) / <alpha-value>)',
+                    dark: 'rgb(var(--c-brand-dark) / <alpha-value>)',
                 },
                 desk: {
-                    dark: '#0f2744',
-                    blue: '#1e3a5f',
-                    orange: '#f97316',
+                    dark: 'rgb(var(--c-ink) / <alpha-value>)',
+                    blue: 'rgb(var(--c-ink-2) / <alpha-value>)',
+                    orange: 'rgb(var(--c-accent) / <alpha-value>)',
                     green: '#22c55e',
-                    gray: '#f8fafc',
+                    gray: 'rgb(var(--c-page) / <alpha-value>)',
                     text: '#1e293b',
                     muted: '#64748b',
                 },
@@ -36,8 +50,8 @@ export default {
                 },
                 surface: {
                     DEFAULT: '#ffffff',
-                    page: '#f8fafc',
-                    line: '#e2e8f0',
+                    page: 'rgb(var(--c-page) / <alpha-value>)',
+                    line: 'rgb(var(--c-line) / <alpha-value>)',
                 },
             },
             boxShadow: {

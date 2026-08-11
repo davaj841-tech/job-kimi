@@ -15,6 +15,7 @@ use App\Services\Aggregation\CrawlOrchestrator;
 use App\Services\Aggregation\JobSourceManager;
 use App\Services\Aggregation\SourceHealthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -132,7 +133,7 @@ XML;
         $source = $this->makeSource();
         Http::fake([
             'jobs.example.gov.ir/*' => function () {
-                throw new \Illuminate\Http\Client\ConnectionException('cURL error 28: Connection timed out');
+                throw new ConnectionException('cURL error 28: Connection timed out');
             },
         ]);
 

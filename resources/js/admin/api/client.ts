@@ -1,4 +1,8 @@
-import axios, { type AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
+import axios, {
+  type AxiosError,
+  type AxiosInstance,
+  type InternalAxiosRequestConfig,
+} from 'axios'
 
 const adminApi: AxiosInstance = axios.create({
   baseURL: '/api/v1',
@@ -27,7 +31,7 @@ adminApi.interceptors.response.use(
       }
     }
     return Promise.reject(error)
-  },
+  }
 )
 
 export default adminApi

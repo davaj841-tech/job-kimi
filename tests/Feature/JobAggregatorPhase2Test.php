@@ -12,6 +12,7 @@ use App\Models\JobPost;
 use App\Models\JobSource;
 use App\Models\JobSourceEndpoint;
 use App\Services\Aggregation\JobSourceManager;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
@@ -157,7 +158,7 @@ class JobAggregatorPhase2Test extends TestCase
             'detection_reason' => 'registration_link',
         ]);
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         JobDuplicate::query()->create([
             'original_job_post_id' => $a->id,

@@ -1,0 +1,27 @@
+/* JobAzmoon Filament admin — RTL / Persian */
+
+.fi-body {
+    font-family: 'Estedad Variable', Estedad, Vazirmatn, system-ui, sans-serif !important;
+    direction: rtl;
+}
+
+.fi-sidebar {
+    border-right: 0 !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark .fi-sidebar {
+    border-left-color: rgba(255, 255, 255, 0.08);
+}
+
+.fi-ta-cell {
+    padding-block: 0.75rem;
+}
+
+.flatpickr-calendar {
+    direction: rtl;
+}
+
+.fi-wi-stats-overview-stat {
+    border-radius: 0.85rem;
+}

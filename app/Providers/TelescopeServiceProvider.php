@@ -12,6 +12,22 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
 {
     public function register(): void
     {
+        if (! config('telescope.enabled')) {
+            return;
+        }
+
+        try {
+            if (! \Illuminate\Support\Facades\Schema::hasTable('telescope_entries')) {
+                config(['telescope.enabled' => false]);
+
+                return;
+            }
+        } catch (\Throwable) {
+            config(['telescope.enabled' => false]);
+
+            return;
+        }
+
         $this->hideSensitiveRequestDetails();
 
         if (! $this->app->environment(['local', 'staging'])) {

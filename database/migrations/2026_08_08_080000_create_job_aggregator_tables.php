@@ -121,7 +121,7 @@ return new class extends Migration
             Schema::table('job_posts', function (Blueprint $table) {
                 $table->index('registration_deadline', 'job_posts_deadline_idx');
             });
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // index may already exist
         }
 
@@ -129,14 +129,14 @@ return new class extends Migration
             Schema::table('job_posts', function (Blueprint $table) {
                 $table->index(['job_source_id', 'external_id'], 'job_posts_source_external_idx');
             });
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
 
         try {
             Schema::table('job_posts', function (Blueprint $table) {
                 $table->index('content_hash', 'job_posts_content_hash_idx');
             });
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
     }
 

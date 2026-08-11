@@ -36,11 +36,8 @@ class TransactionRepository
     }
 
     /**
-
      * @param  array<string, mixed>  $filters
-
      */
-
     public function getAll(array $filters): LengthAwarePaginator
     {
         $query = Transaction::query()->with('user:id,name,mobile');

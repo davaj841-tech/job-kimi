@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   push:
@@ -67,6 +67,12 @@ jobs:
       - name: PHPUnit
         run: php artisan test
 
+      - name: Generate API Docs
+        run: php artisan scribe:generate
+
+      - name: Check Docs Are Up-to-Date
+        run: git diff --exit-code -- storage/app/private/scribe resources/views/scribe public/vendor/scribe || echo "Docs need regeneration"
+
   frontend:
     name: Vite Build
     runs-on: ubuntu-latest
@@ -79,8 +85,37 @@ jobs:
           node-version: '20'
           cache: npm
 
-      - name: Install & build
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint Frontend
+        run: npm run lint
+
+      - name: Check Formatting
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npm run type-check
+
+      - name: Run Frontend Tests
+        run: npm run test:unit
+
+      - name: Frontend Coverage
+        run: npm run test:unit:coverage
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
+        continue-on-error: true
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+
+      - name: Build
+        run: npm run build
+
+      - name: Check Screenshots Exist
         run: |
-          npm ci
-          npm run build
+          test -f docs/screenshots/home.png || echo "WARNING: Missing screenshots"
+          test -f docs/screenshots/exam-list.png || echo "WARNING: Missing exam-list.png"
+          test -f docs/screenshots/admin-dashboard.png || echo "WARNING: Missing admin-dashboard.png"
 

@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Exam;
 use App\Models\ExamAttempt;
+use App\Models\JobClassification;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -23,7 +24,7 @@ class ExamRepository
 
         if (! empty($filters['job_classification_id'])) {
             $classId = (int) $filters['job_classification_id'];
-            $childIds = \App\Models\JobClassification::query()->where('parent_id', $classId)->pluck('id')->all();
+            $childIds = JobClassification::query()->where('parent_id', $classId)->pluck('id')->all();
             $ids = array_merge([$classId], $childIds);
             $query->whereIn('job_classification_id', $ids);
         }
@@ -111,5 +112,18 @@ class ExamRepository
             ->where('exam_id', $exam->id)
             ->where('status', 'in_progress')
             ->count();
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<string, int|string>
+     */
+    public function questionCountsBySubject(Exam $exam): \Illuminate\Support\Collection
+    {
+        return $exam->questions()
+            ->selectRaw('subject, COUNT(*) as aggregate')
+            ->whereNotNull('subject')
+            ->where('subject', '!=', '')
+            ->groupBy('subject')
+            ->pluck('aggregate', 'subject');
     }
 }

@@ -32,11 +32,15 @@ class BackupService
 
         $pdfs = storage_path('app/pdfs');
         $resumes = storage_path('app/resumes');
+        $public = storage_path('app/public');
         if (is_dir($pdfs)) {
             File::copyDirectory($pdfs, $work.'/pdfs');
         }
         if (is_dir($resumes)) {
             File::copyDirectory($resumes, $work.'/resumes');
+        }
+        if (is_dir($public)) {
+            File::copyDirectory($public, $work.'/public');
         }
 
         $zipName = 'backup-'.$stamp.'.zip';
@@ -59,6 +63,20 @@ class BackupService
 
     protected function dumpDatabase(string $sqlFile): void
     {
+        if (config('database.default') === 'sqlite') {
+            $sqlite = config('database.connections.sqlite.database');
+            if (is_string($sqlite) && is_file($sqlite)) {
+                $sqliteCopy = preg_replace('/\.sql$/', '.sqlite', $sqlFile) ?: ($sqlFile.'.sqlite');
+                copy($sqlite, $sqliteCopy);
+                file_put_contents(
+                    $sqlFile,
+                    '-- SQLite binary copied as '.basename($sqliteCopy)."\n-- At: ".now()->toIso8601String()."\n"
+                );
+
+                return;
+            }
+        }
+
         $host = config('database.connections.mysql.host');
         $port = config('database.connections.mysql.port', 3306);
         $db = config('database.connections.mysql.database');
@@ -68,14 +86,19 @@ class BackupService
         $mysqldump = $this->findMysqldump();
 
         if ($mysqldump) {
-            $result = Process::timeout(300)->run([
+            $args = [
                 $mysqldump,
                 '--host='.$host,
                 '--port='.(string) $port,
                 '--user='.$user,
+                '--single-transaction',
+                '--routines',
+                '--triggers',
                 ...($pass !== null && $pass !== '' ? ['--password='.$pass] : []),
                 $db,
-            ]);
+            ];
+
+            $result = Process::timeout(300)->run($args);
 
             if ($result->successful()) {
                 file_put_contents($sqlFile, $result->output());

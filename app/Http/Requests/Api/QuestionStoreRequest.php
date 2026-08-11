@@ -12,7 +12,6 @@ class QuestionStoreRequest extends FormRequest
     }
 
     /** @return array<string, mixed> */
-
     public function rules(): array
     {
         return [
@@ -25,8 +24,16 @@ class QuestionStoreRequest extends FormRequest
             'option_d' => ['required', 'string', 'max:2000'],
             'correct_answer' => ['required', 'in:a,b,c,d'],
             'explanation' => ['nullable', 'string', 'max:5000'],
-            'difficulty' => ['required', 'in:easy,medium,hard'],
+            'difficulty' => ['nullable', 'in:easy,medium,hard'],
             'subject' => ['required', 'string', 'exists:exam_subjects,slug'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $difficulty = $this->input('difficulty');
+        if ($difficulty === null || $difficulty === '') {
+            $this->merge(['difficulty' => 'medium']);
+        }
     }
 }

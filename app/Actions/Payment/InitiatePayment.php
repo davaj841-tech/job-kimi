@@ -2,6 +2,7 @@
 
 namespace App\Actions\Payment;
 
+use App\Services\IdempotencyService;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
 
@@ -11,7 +12,8 @@ use Illuminate\Http\Request;
 class InitiatePayment
 {
     public function __construct(
-        protected PaymentService $payments
+        protected PaymentService $payments,
+        protected IdempotencyService $idempotency,
     ) {}
 
     /**
@@ -21,6 +23,16 @@ class InitiatePayment
     public function handle(string $gateway, int $amount, string $description, string $callback, array $meta = []): array
     {
         return $this->payments->initiate($gateway, $amount, $description, $callback, $meta);
+    }
+
+    public function newIdempotencyKey(): string
+    {
+        return $this->idempotency->generateKey();
+    }
+
+    public function callbackWithIdempotency(string $callback, string $key): string
+    {
+        return $this->idempotency->appendKeyToCallback($callback, $key);
     }
 
     /**

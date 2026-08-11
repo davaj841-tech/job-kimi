@@ -21,7 +21,16 @@ class JobPostController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        $filters = $request->only(['province', 'city', 'job_classification_id', 'is_featured', 'search', 'per_page']);
+        $filters = $request->only([
+            'province',
+            'city',
+            'job_classification_id',
+            'is_featured',
+            'search',
+            'per_page',
+            'employment_type',
+            'sort',
+        ]);
         $posts = $this->jobPostService->getPublicList($filters);
 
         return $this->successResponse(new JobPostCollection($posts));

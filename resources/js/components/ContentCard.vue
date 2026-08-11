@@ -14,17 +14,23 @@
           {{ badge }}
         </span>
       </div>
-      <p v-if="subtitle" class="mb-2 line-clamp-1 text-xs text-desk-muted">{{ subtitle }}</p>
+      <p v-if="subtitle" class="mb-2 line-clamp-1 text-xs text-desk-muted">
+        {{ subtitle }}
+      </p>
       <div class="flex items-center justify-between text-xs text-desk-muted">
         <span>{{ meta }}</span>
-        <span v-if="price !== null" class="font-bold tabular-nums text-desk-orange">{{ formatPrice(price) }}</span>
+        <span
+          v-if="price !== null"
+          class="font-bold tabular-nums text-desk-orange"
+          >{{ formatPrice(price) }}</span
+        >
       </div>
     </div>
   </article>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -32,18 +38,18 @@ const props = defineProps({
   meta: { type: String, default: '' },
   badge: { type: String, default: '' },
   price: { type: [Number, String], default: null },
-});
+})
 
-defineEmits(['click']);
+defineEmits(['click'])
 
 const badgeClass = computed(() => {
-  if (props.badge === 'رایگان') return 'bg-emerald-50 text-desk-green';
-  if (props.badge === 'ویژه') return 'bg-orange-50 text-desk-orange';
-  return 'bg-slate-100 text-desk-blue';
-});
+  if (props.badge === 'رایگان') return 'bg-emerald-50 text-desk-green'
+  if (props.badge === 'ویژه') return 'bg-orange-50 text-desk-orange'
+  return 'bg-slate-100 text-desk-blue'
+})
 
 function formatPrice(value) {
-  if (Number(value) === 0) return 'رایگان';
-  return new Intl.NumberFormat('fa-IR').format(Number(value)) + ' ریال';
+  if (Number(value) === 0) return 'رایگان'
+  return new Intl.NumberFormat('fa-IR').format(Number(value)) + ' ریال'
 }
 </script>

@@ -18,7 +18,9 @@ export const useExamStore = defineStore('exam', () => {
   const endsAt = ref<number | string | null>(null)
   const dirty = ref(false)
   const lastSyncedAt = ref<string | null>(null)
-  const offline = ref(typeof navigator !== 'undefined' ? !navigator.onLine : false)
+  const offline = ref(
+    typeof navigator !== 'undefined' ? !navigator.onLine : false
+  )
   const pageIndex = ref(0)
 
   function loadCache(): ExamAttemptCache | null {
@@ -48,7 +50,7 @@ export const useExamStore = defineStore('exam', () => {
         dirty: dirty.value,
         lastSyncedAt: lastSyncedAt.value,
         pageIndex: pageIndex.value,
-      }),
+      })
     )
   }
 

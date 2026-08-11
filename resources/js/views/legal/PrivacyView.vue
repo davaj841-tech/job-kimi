@@ -1,7 +1,5 @@
 <template>
-  <div class="mx-auto max-w-3xl px-4 py-8 lg:py-12">
-    <h1 class="mb-2 text-2xl font-black text-ink lg:text-3xl">حریم خصوصی</h1>
-    <p class="mb-8 text-sm text-ink-muted">آخرین بروزرسانی: {{ updatedAt }}</p>
+  <PageShell title="حریم خصوصی" :subtitle="`آخرین بروزرسانی: ${updatedAt}`">
 
     <article class="space-y-8">
       <section v-for="s in sections" :key="s.title">
@@ -9,11 +7,12 @@
         <div class="space-y-2 text-sm leading-7 text-ink/80" v-html="s.body" />
       </section>
     </article>
-  </div>
+  </PageShell>
 </template>
 
 <script setup>
-const updatedAt = '۱۴۰۳/۰۵/۱۴';
+import PageShell from '../../components/layout/PageShell.vue'
+const updatedAt = '۱۴۰۳/۰۵/۱۴'
 
 const sections = [
   {
@@ -44,5 +43,5 @@ const sections = [
     title: 'تماس با مسئول حفاظت داده',
     body: `<p>برای سوالات حریم خصوصی با <a class="text-brand underline" href="/contact">فرم تماس</a> یا ایمیل پشتیبانی اقدام کنید.</p>`,
   },
-];
+]
 </script>

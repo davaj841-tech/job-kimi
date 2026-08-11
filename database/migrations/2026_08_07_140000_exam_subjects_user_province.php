@@ -55,7 +55,7 @@ return new class extends Migration
                 Schema::table('questions', function (Blueprint $table) {
                     $table->string('subject', 80)->nullable()->default('general')->change();
                 });
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 // بدون doctrine/dbal؛ در sqlite معمولاً string است
             }
         }

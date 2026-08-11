@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Api\BaseController;
 use App\Http\Resources\PdfProductResource;
 use App\Repositories\PDFProductRepository;
+use App\Services\AuditLogService;
 use App\Services\PDFProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PDFProductAdminController extends BaseController
 {
@@ -53,6 +55,12 @@ class PDFProductAdminController extends BaseController
             $request->file('thumbnail')
         );
 
+        app(AuditLogService::class)->log('pdf.created', $product, null, [
+            'title' => $product->title,
+            'price' => $product->price,
+            'is_active' => $product->is_active,
+        ]);
+
         return $this->successResponse(new PdfProductResource($product), 'محصول PDF ایجاد شد.', 201);
     }
 
@@ -90,17 +98,22 @@ class PDFProductAdminController extends BaseController
         unset($data['file'], $data['thumbnail']);
 
         if ($request->hasFile('file')) {
-            $uuid = (string) \Illuminate\Support\Str::uuid();
+            $uuid = (string) Str::uuid();
             $data['file_path'] = $request->file('file')->storeAs('pdfs', $uuid.'.pdf', 'local');
         }
 
         if ($request->hasFile('thumbnail')) {
-            $uuid = (string) \Illuminate\Support\Str::uuid();
+            $uuid = (string) Str::uuid();
             $ext = $request->file('thumbnail')->getClientOriginalExtension() ?: 'jpg';
             $data['thumbnail'] = $request->file('thumbnail')->storeAs('pdf_thumbnails', $uuid.'.'.$ext, 'public');
         }
 
         $product->update($data);
+
+        app(AuditLogService::class)->log('pdf.updated', $product, null, [
+            'title' => $product->title,
+            'is_active' => $product->is_active,
+        ]);
 
         return $this->successResponse(new PdfProductResource($product->fresh()), 'محصول به‌روزرسانی شد.');
     }

@@ -15,16 +15,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { useToast } from '../composables/useToast';
+import { computed } from 'vue'
+import { useToast } from '../composables/useToast'
 
-const toast = useToast();
+const toast = useToast()
 
 const tone = computed(() => {
-    if (toast.state.type === 'success') return 'bg-emerald-600';
-    if (toast.state.type === 'error') return 'bg-brand';
-    return 'bg-ink';
-});
+  if (toast.state.type === 'success') return 'bg-emerald-600'
+  if (toast.state.type === 'error') return 'bg-brand'
+  return 'bg-ink'
+})
 </script>
 
 <style scoped>

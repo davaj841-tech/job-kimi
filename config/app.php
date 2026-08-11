@@ -123,4 +123,13 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Trusted Proxies (Cloudflare / CDN)
+    |--------------------------------------------------------------------------
+    */
+
+    'trusted_proxies' => env('TRUSTED_PROXIES', ''),
+    'trusted_proxies_v6' => env('TRUSTED_PROXIES_V6', ''),
+
 ];

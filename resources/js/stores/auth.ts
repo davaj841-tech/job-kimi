@@ -24,7 +24,9 @@ interface AuthApiPayload {
 
 export const useAuthStore = defineStore('auth', () => {
   const storedUser = localStorage.getItem('user')
-  const user = ref<User | null>(storedUser ? (JSON.parse(storedUser) as User) : null)
+  const user = ref<User | null>(
+    storedUser ? (JSON.parse(storedUser) as User) : null
+  )
   const token = ref<string>(localStorage.getItem('token') || '')
   const loading = ref(false)
 
@@ -49,7 +51,10 @@ export const useAuthStore = defineStore('auth', () => {
     persist()
   }
 
-  async function sendOtp(mobile: string, turnstile_token?: string): Promise<unknown> {
+  async function sendOtp(
+    mobile: string,
+    turnstile_token?: string
+  ): Promise<unknown> {
     loading.value = true
     try {
       const payload: Record<string, string> = { mobile }
@@ -65,7 +70,7 @@ export const useAuthStore = defineStore('auth', () => {
     mobile: string,
     code: string,
     turnstile_token?: string,
-    province?: string,
+    province?: string
   ): Promise<unknown> {
     loading.value = true
     try {
@@ -83,7 +88,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function loginPassword(
     login: string,
     password: string,
-    turnstile_token?: string,
+    turnstile_token?: string
   ): Promise<unknown> {
     loading.value = true
     try {
@@ -99,7 +104,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function register(
     payload: Record<string, unknown>,
-    turnstile_token?: string,
+    turnstile_token?: string
   ): Promise<unknown> {
     loading.value = true
     try {
@@ -121,7 +126,9 @@ export const useAuthStore = defineStore('auth', () => {
     return user.value
   }
 
-  async function updateProfile(payload: Record<string, unknown>): Promise<User | null> {
+  async function updateProfile(
+    payload: Record<string, unknown>
+  ): Promise<User | null> {
     loading.value = true
     try {
       const { data } = await api.put('/auth/profile', payload)

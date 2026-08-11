@@ -1,18 +1,23 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <style>
         @font-face {
             font-family: 'Vazirmatn';
-            src: url('file://{{ str_replace('\\', '/', $fontPath) }}') format('truetype');
-            font-weight: normal;
-            font-style: normal;
+            font-weight: 400;
+            src: url('{{ $fontRegular ?? $fontPath }}') format('truetype');
+        }
+        @font-face {
+            font-family: 'Vazirmatn';
+            font-weight: 700;
+            src: url('{{ $fontBold ?? $fontRegular ?? $fontPath }}') format('truetype');
         }
         * { box-sizing: border-box; }
         body {
-            font-family: 'Vazirmatn', DejaVu Sans, sans-serif;
-            direction: rtl;
+            font-family: 'Vazirmatn', sans-serif;
+            direction: ltr;
+            text-align: right;
             color: #1f2937;
             font-size: 11px;
             margin: 0;

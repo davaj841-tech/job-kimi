@@ -21,8 +21,8 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
-import FileUploader from './FileUploader.vue';
+import { ref, watch } from 'vue'
+import FileUploader from './FileUploader.vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -30,31 +30,31 @@ const props = defineProps({
   hint: { type: String, default: 'JPG, PNG, WEBP — حداکثر ۲ مگابایت' },
   accept: { type: String, default: 'image/*' },
   maxSizeMb: { type: Number, default: 2 },
-});
+})
 
-const emit = defineEmits(['update:modelValue', 'file']);
+const emit = defineEmits(['update:modelValue', 'file'])
 
-const file = ref(null);
-const preview = ref(props.modelValue || '');
+const file = ref(null)
+const preview = ref(props.modelValue || '')
 
 watch(
   () => props.modelValue,
   (v) => {
-    preview.value = v || '';
+    preview.value = v || ''
   }
-);
+)
 
 function onFile(val) {
-  file.value = val;
+  file.value = val
   if (val instanceof File) {
-    emit('file', val);
+    emit('file', val)
   }
 }
 
 function remove() {
-  file.value = null;
-  preview.value = '';
-  emit('update:modelValue', '');
-  emit('file', null);
+  file.value = null
+  preview.value = ''
+  emit('update:modelValue', '')
+  emit('file', null)
 }
 </script>

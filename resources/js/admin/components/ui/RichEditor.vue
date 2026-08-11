@@ -14,7 +14,7 @@
     </div>
     <div
       ref="editor"
-      class="prose prose-sm max-w-none min-h-48 px-3 py-2 text-sm leading-7 outline-none [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:p-2"
+      class="prose prose-sm min-h-48 max-w-none px-3 py-2 text-sm leading-7 outline-none [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:p-2"
       contenteditable="true"
       @input="onInput"
     />
@@ -22,15 +22,15 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
-});
-const emit = defineEmits(['update:modelValue']);
+})
+const emit = defineEmits(['update:modelValue'])
 
-const editor = ref(null);
-let syncing = false;
+const editor = ref(null)
+let syncing = false
 
 const buttons = [
   { label: 'پررنگ', cmd: 'bold', title: 'پررنگ' },
@@ -46,68 +46,68 @@ const buttons = [
   { label: 'فرمول', action: 'formula', title: 'درج فرمول ریاضی' },
   { label: 'جدول', action: 'table', title: 'درج جدول' },
   { label: 'پاک‌سازی', cmd: 'removeFormat', title: 'حذف قالب' },
-];
+]
 
 onMounted(() => {
-  if (editor.value) editor.value.innerHTML = props.modelValue || '';
-});
+  if (editor.value) editor.value.innerHTML = props.modelValue || ''
+})
 
 watch(
   () => props.modelValue,
   (val) => {
-    if (!editor.value || syncing) return;
+    if (!editor.value || syncing) return
     if (editor.value.innerHTML !== (val || '')) {
-      editor.value.innerHTML = val || '';
+      editor.value.innerHTML = val || ''
     }
   }
-);
+)
 
 function onInput() {
-  syncing = true;
-  emit('update:modelValue', editor.value?.innerHTML || '');
+  syncing = true
+  emit('update:modelValue', editor.value?.innerHTML || '')
   queueMicrotask(() => {
-    syncing = false;
-  });
+    syncing = false
+  })
 }
 
 function run(btn) {
-  editor.value?.focus();
+  editor.value?.focus()
   if (btn.action === 'link') {
-    const url = window.prompt('آدرس لینک:');
-    if (url) document.execCommand('createLink', false, url);
+    const url = window.prompt('آدرس لینک:')
+    if (url) document.execCommand('createLink', false, url)
   } else if (btn.action === 'formula') {
-    insertFormula();
+    insertFormula()
   } else if (btn.action === 'table') {
-    insertTable();
+    insertTable()
   } else {
-    document.execCommand(btn.cmd, false, btn.value || null);
+    document.execCommand(btn.cmd, false, btn.value || null)
   }
-  onInput();
+  onInput()
 }
 
 function insertFormula() {
-  const latex = window.prompt('فرمول LaTeX را وارد کنید:');
-  if (!latex) return;
-  const trimmed = latex.trim();
-  const html = `<span class="math">\\(${trimmed}\\)</span>&nbsp;`;
-  document.execCommand('insertHTML', false, html);
+  const latex = window.prompt('فرمول LaTeX را وارد کنید:')
+  if (!latex) return
+  const trimmed = latex.trim()
+  const html = `<span class="math">\\(${trimmed}\\)</span>&nbsp;`
+  document.execCommand('insertHTML', false, html)
 }
 
 function insertTable() {
-  const rows = Number(window.prompt('تعداد ردیف؟', '3') || 0);
-  const cols = Number(window.prompt('تعداد ستون؟', '3') || 0);
-  if (!rows || !cols || rows < 1 || cols < 1 || rows > 20 || cols > 10) return;
+  const rows = Number(window.prompt('تعداد ردیف؟', '3') || 0)
+  const cols = Number(window.prompt('تعداد ستون؟', '3') || 0)
+  if (!rows || !cols || rows < 1 || cols < 1 || rows > 20 || cols > 10) return
 
-  let html = '<table><tbody>';
+  let html = '<table><tbody>'
   for (let r = 0; r < rows; r += 1) {
-    html += '<tr>';
+    html += '<tr>'
     for (let c = 0; c < cols; c += 1) {
-      if (r === 0) html += '<th>عنوان</th>';
-      else html += '<td>&nbsp;</td>';
+      if (r === 0) html += '<th>عنوان</th>'
+      else html += '<td>&nbsp;</td>'
     }
-    html += '</tr>';
+    html += '</tr>'
   }
-  html += '</tbody></table><p><br></p>';
-  document.execCommand('insertHTML', false, html);
+  html += '</tbody></table><p><br></p>'
+  document.execCommand('insertHTML', false, html)
 }
 </script>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BaseController;
 use App\Services\Aggregation\AggregationScheduleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -155,11 +156,11 @@ class AggregationScheduleAdminController extends BaseController
     public function dispatchNow(Request $request): JsonResponse
     {
         $dry = filter_var($request->input('dry_run', false), FILTER_VALIDATE_BOOLEAN);
-        $code = \Illuminate\Support\Facades\Artisan::call('jobs:aggregate-dispatch', [
+        $code = Artisan::call('jobs:aggregate-dispatch', [
             '--force' => true,
             '--dry-run' => $dry,
         ]);
-        $output = trim(\Illuminate\Support\Facades\Artisan::output());
+        $output = trim(Artisan::output());
 
         return $this->successResponse([
             'exit_code' => $code,

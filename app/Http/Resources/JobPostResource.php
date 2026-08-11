@@ -9,7 +9,7 @@ class JobPostResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        return [
+        $data = [
             'id' => $this->id,
             'title' => $this->title,
             'seo_tag' => $this->seo_tag,
@@ -97,5 +97,45 @@ class JobPostResource extends JsonResource
                 ];
             }),
         ];
+
+        $org = is_string($data['organization_name'] ?? null) ? $data['organization_name'] : null;
+        $className = is_string($data['classification_name'] ?? null) ? $data['classification_name'] : null;
+        $city = is_string($data['city'] ?? null) ? $data['city'] : null;
+        $province = is_string($data['province'] ?? null) ? $data['province'] : null;
+        $employmentType = is_string($data['employment_type'] ?? null) ? $data['employment_type'] : null;
+        $deadlineIso = is_string($data['registration_deadline'] ?? null) ? $data['registration_deadline'] : null;
+
+        $locationParts = array_values(array_unique(array_filter([$city, $province])));
+        $typeLabel = $this->employmentTypeLabel($employmentType);
+
+        $data['company'] = [
+            'name' => $org ?: ($className ?: 'سازمان'),
+            'logo' => null,
+        ];
+        $data['location'] = $locationParts !== [] ? implode('، ', $locationParts) : 'سراسر کشور';
+        $data['type'] = $employmentType;
+        $data['tags'] = array_values(array_unique(array_filter([
+            is_string($data['job_category'] ?? null) ? $data['job_category'] : null,
+            is_string($data['education'] ?? null) ? $data['education'] : null,
+            is_string($data['experience'] ?? null) ? $data['experience'] : null,
+            $typeLabel,
+        ])));
+        $data['deadline'] = $deadlineIso !== null ? substr($deadlineIso, 0, 10) : null;
+        $data['published_at'] = $data['published_at'] ?? $data['created_at'];
+
+        return $data;
+    }
+
+    protected function employmentTypeLabel(?string $type): ?string
+    {
+        return match ($type) {
+            'full_time' => 'تمام‌وقت',
+            'part_time' => 'پاره‌وقت',
+            'remote' => 'دورکاری',
+            'contract' => 'قراردادی',
+            'internship' => 'کارآموزی',
+            'military' => 'امریه',
+            default => $type,
+        };
     }
 }

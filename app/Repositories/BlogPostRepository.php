@@ -48,11 +48,8 @@ class BlogPostRepository
     }
 
     /**
-
      * @param  array<string, mixed>  $filters
-
      */
-
     public function getAdminList(array $filters): LengthAwarePaginator
     {
         $query = BlogPost::query()->with('creator:id,name');

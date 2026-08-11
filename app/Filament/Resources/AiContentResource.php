@@ -4,8 +4,10 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AiContentResource\Pages;
 use App\Models\AiContent;
+use App\Repositories\AiContentRepository;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -23,8 +25,6 @@ class AiContentResource extends Resource
     protected static ?string $pluralModelLabel = 'محتواهای AI';
 
     protected static ?string $navigationGroup = 'محتوا';
-
-    
 
     public static function form(Form $form): Form
     {
@@ -63,15 +63,15 @@ class AiContentResource extends Resource
                     ->visible(fn ($record) => $record->status === 'pending')
                     ->action(function ($record) {
                         try {
-                            app(\App\Repositories\AiContentRepository::class)
+                            app(AiContentRepository::class)
                                 ->approve($record->id, auth()->id());
 
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('تایید شد')
                                 ->success()
                                 ->send();
                         } catch (\Throwable $e) {
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('خطا در تایید')
                                 ->body($e->getMessage())
                                 ->danger()
@@ -84,7 +84,7 @@ class AiContentResource extends Resource
                     ->requiresConfirmation()
                     ->visible(fn ($record) => $record->status === 'pending')
                     ->action(function ($record) {
-                        app(\App\Repositories\AiContentRepository::class)
+                        app(AiContentRepository::class)
                             ->reject($record->id, auth()->id());
                     }),
             ])

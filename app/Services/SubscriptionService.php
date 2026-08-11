@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Events\PaymentSuccessful;
+use App\Events\SubscriptionExpired;
+use App\Listeners\DispatchAfterCommit;
 use App\Models\Coupon;
 use App\Models\Setting;
 use App\Models\SubscriptionPlan;
@@ -93,7 +96,9 @@ class SubscriptionService
 
             $this->activate($locked, $plan);
             $this->invoiceService->ensureInvoice($tx);
-            event(new \App\Events\PaymentSuccessful($tx));
+            DispatchAfterCommit::handle($tx, static function (Transaction $transaction): void {
+                event(new PaymentSuccessful($transaction));
+            });
 
             return [
                 'success' => true,
@@ -116,6 +121,9 @@ class SubscriptionService
             return $this->subscribeWithWallet($user, $plan, 0, $original, $discount, $coupon);
         }
 
+        $idempotency = app(IdempotencyService::class);
+        $idempotencyKey = $idempotency->generateKey();
+
         $transaction = Transaction::query()->create([
             'user_id' => $user->id,
             'amount' => $amount,
@@ -124,23 +132,36 @@ class SubscriptionService
             'coupon_id' => $coupon?->id,
             'type' => 'purchase',
             'gateway' => $gateway,
-            'status' => 'pending',
+            'status' => Transaction::STATUS_PENDING,
+            'idempotency_key' => $idempotencyKey,
             'description' => 'خرید اشتراک '.$plan->name,
             'payable_type' => SubscriptionPlan::class,
             'payable_id' => $plan->id,
         ]);
 
-        $callback = url('/payment/subscription');
+        $callback = $idempotency->appendKeyToCallback(url('/payment/subscription'), $idempotencyKey);
+        $meta = ['order_id' => (string) $transaction->id, 'idempotency_key' => $idempotencyKey];
+
         $result = $this->paymentService->initiate(
             $gateway,
             $amount,
             'خرید اشتراک '.$plan->name.' — JobAzmoon',
             $callback,
-            ['order_id' => (string) $transaction->id]
+            $meta
         );
 
         if ($result['error'] || ! $result['authority']) {
-            $transaction->update(['status' => 'failed']);
+            $result = $this->paymentService->initiate(
+                $gateway,
+                $amount,
+                'خرید اشتراک '.$plan->name.' — JobAzmoon',
+                $callback,
+                $meta
+            );
+        }
+
+        if ($result['error'] || ! $result['authority']) {
+            $transaction->update(['status' => Transaction::STATUS_FAILED]);
 
             return [
                 'success' => false,
@@ -155,6 +176,7 @@ class SubscriptionService
             'success' => true,
             'message' => 'در حال انتقال به درگاه پرداخت',
             'payment_url' => $result['payment_url'],
+            'idempotency_key' => $idempotencyKey,
         ];
     }
 
@@ -177,7 +199,9 @@ class SubscriptionService
                 }
             }
             $this->invoiceService->ensureInvoice($transaction);
-            event(new \App\Events\PaymentSuccessful($transaction->fresh()));
+            DispatchAfterCommit::handle($transaction->fresh() ?? $transaction, static function (Transaction $tx): void {
+                event(new PaymentSuccessful($tx));
+            });
         }
     }
 
@@ -200,7 +224,7 @@ class SubscriptionService
     {
         if ($user->subscription_plan_id && ! $this->isActive($user)) {
             $user->update(['subscription_plan_id' => null]);
-            event(new \App\Events\SubscriptionExpired($user->fresh()));
+            event(new SubscriptionExpired($user->fresh()));
         }
     }
 

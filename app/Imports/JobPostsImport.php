@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class JobPostsImport implements ToCollection, WithHeadingRow
 {
@@ -41,6 +42,7 @@ class JobPostsImport implements ToCollection, WithHeadingRow
             if ($title === '' || $classificationName === '' || $description === '') {
                 $this->skipped++;
                 $this->errors[] = "ردیف {$rowNumber}: عنوان، طبقه‌بندی و شرح الزامی است.";
+
                 continue;
             }
 
@@ -48,6 +50,7 @@ class JobPostsImport implements ToCollection, WithHeadingRow
             if (! $deadline) {
                 $this->skipped++;
                 $this->errors[] = "ردیف {$rowNumber}: تاریخ مهلت ثبت‌نام نامعتبر است.";
+
                 continue;
             }
 
@@ -61,6 +64,7 @@ class JobPostsImport implements ToCollection, WithHeadingRow
             if ($link !== '' && ! filter_var($link, FILTER_VALIDATE_URL)) {
                 $this->skipped++;
                 $this->errors[] = "ردیف {$rowNumber}: لینک ثبت‌نام نامعتبر است.";
+
                 continue;
             }
 
@@ -96,7 +100,7 @@ class JobPostsImport implements ToCollection, WithHeadingRow
 
         try {
             if (is_numeric($value)) {
-                return Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float) $value));
+                return Carbon::instance(Date::excelToDateTimeObject((float) $value));
             }
 
             return Carbon::parse((string) $value);

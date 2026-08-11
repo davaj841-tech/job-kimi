@@ -1,11 +1,22 @@
 <template>
-  <section class="bg-desk-blue py-12 text-white">
-    <div class="desk-container">
-      <div class="flex flex-row-reverse flex-wrap items-center justify-between gap-8">
-        <form class="flex min-w-[320px] flex-1 flex-row-reverse gap-3" @submit.prevent="submit">
+  <section class="bg-white py-10 sm:py-12">
+    <div class="mx-auto max-w-7xl px-4">
+      <div
+        class="flex flex-col items-stretch justify-between gap-6 rounded-2xl border border-surface-line bg-gradient-to-l from-slate-50 to-brand-soft/40 p-6 sm:flex-row sm:items-center sm:p-8"
+      >
+        <div class="text-right">
+          <h2 class="mb-1 text-xl font-black text-desk-dark sm:text-2xl">خبرنامه جاب‌آزمون</h2>
+          <p class="text-sm leading-7 text-desk-muted">
+            از آخرین استخدام‌ها و آزمون‌ها زودتر باخبر شوید.
+          </p>
+        </div>
+        <form
+          class="flex w-full max-w-md flex-row-reverse gap-2"
+          @submit.prevent="submit"
+        >
           <button
             type="submit"
-            class="shrink-0 rounded-xl bg-desk-orange px-6 py-3 text-sm font-bold text-white transition hover:bg-orange-500 disabled:opacity-60"
+            class="shrink-0 rounded-xl bg-brand px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-dark disabled:opacity-60"
             :disabled="submitting"
           >
             عضویت
@@ -14,45 +25,35 @@
             v-model="contact"
             type="text"
             required
-            placeholder="ایمیل یا شماره موبایل"
-            class="h-12 w-full rounded-xl border-0 bg-white px-4 text-sm text-desk-text outline-none ring-0 placeholder:text-desk-muted"
+            placeholder="ایمیل یا موبایل"
+            class="h-12 w-full rounded-xl border border-surface-line bg-white px-4 text-sm text-desk-text outline-none ring-brand focus:ring-2"
           />
         </form>
-
-        <div class="max-w-md text-right">
-          <h2 class="mb-2 text-2xl font-bold">عضویت در خبرنامه</h2>
-          <p class="text-sm leading-7 text-white/75">
-            با عضویت در خبرنامه، از آخرین استخدام‌ها و آزمون‌ها با خبر شوید.
-          </p>
-        </div>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useToast } from '../../composables/useToast';
+import { ref } from 'vue'
+import { useToast } from '../../composables/useToast'
+import api from '../../api/client'
+import { apiErrorMessage } from '../../utils/format'
 
-const toast = useToast();
-const contact = ref('');
-const submitting = ref(false);
+const toast = useToast()
+const contact = ref('')
+const submitting = ref(false)
 
 async function submit() {
-  if (!contact.value.trim()) return;
-  submitting.value = true;
+  submitting.value = true
   try {
-    // No dedicated newsletter API yet — persist locally and confirm UX.
-    const key = 'jobazmoon_newsletter';
-    const existing = JSON.parse(localStorage.getItem(key) || '[]');
-    if (!existing.includes(contact.value.trim())) {
-      existing.push(contact.value.trim());
-      localStorage.setItem(key, JSON.stringify(existing));
-    }
-    toast.success('عضویت شما در خبرنامه ثبت شد.');
-    contact.value = '';
+    await api.post('/newsletter/subscribe', { contact: contact.value })
+    toast.success('عضویت در خبرنامه ثبت شد.')
+    contact.value = ''
+  } catch (e) {
+    toast.error(apiErrorMessage(e, 'ثبت عضویت ناموفق بود.'))
   } finally {
-    submitting.value = false;
+    submitting.value = false
   }
 }
 </script>

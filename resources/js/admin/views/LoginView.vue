@@ -10,16 +10,22 @@
         <button
           type="button"
           class="rounded-lg px-3 py-2 text-sm font-bold transition"
-          :class="tab === 'password' ? 'bg-white text-slate-800 shadow' : 'text-slate-500'"
-          @click="tab = 'password'; showForgot = false"
+          :class="
+            tab === 'password'
+              ? 'bg-white text-slate-800 shadow'
+              : 'text-slate-500'
+          "
+          @click="selectPasswordTab"
         >
           ورود با رمز عبور
         </button>
         <button
           type="button"
           class="rounded-lg px-3 py-2 text-sm font-bold transition"
-          :class="tab === 'otp' ? 'bg-white text-slate-800 shadow' : 'text-slate-500'"
-          @click="tab = 'otp'; showForgot = false; otpStep = 1"
+          :class="
+            tab === 'otp' ? 'bg-white text-slate-800 shadow' : 'text-slate-500'
+          "
+          @click="selectOtpTab"
         >
           ورود با پیامک
         </button>
@@ -28,7 +34,9 @@
       <!-- Password login -->
       <div v-if="tab === 'password' && !showForgot" class="space-y-4">
         <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">نام کاربری</label>
+          <label class="mb-1 block text-sm font-medium text-slate-700"
+            >نام کاربری</label
+          >
           <input
             v-model="username"
             class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
@@ -39,7 +47,9 @@
           />
         </div>
         <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">رمز عبور</label>
+          <label class="mb-1 block text-sm font-medium text-slate-700"
+            >رمز عبور</label
+          >
           <input
             v-model="password"
             type="password"
@@ -57,16 +67,24 @@
         >
           ورود
         </button>
-        <button type="button" class="w-full text-sm text-slate-500 underline" @click="showForgot = true; error = ''; info = ''">
+        <button
+          type="button"
+          class="w-full text-sm text-slate-500 underline"
+          @click="openForgot"
+        >
           فراموشی رمز عبور
         </button>
       </div>
 
       <!-- Forgot password -->
       <div v-else-if="tab === 'password' && showForgot" class="space-y-4">
-        <p class="text-sm text-slate-500">لینک بازنشانی به ایمیل ادمین ارسال می‌شود.</p>
+        <p class="text-sm text-slate-500">
+          لینک بازنشانی به ایمیل ادمین ارسال می‌شود.
+        </p>
         <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700">ایمیل</label>
+          <label class="mb-1 block text-sm font-medium text-slate-700"
+            >ایمیل</label
+          >
           <input
             v-model="email"
             type="email"
@@ -83,14 +101,20 @@
         >
           ارسال لینک بازنشانی
         </button>
-        <button type="button" class="w-full text-sm text-slate-500" @click="showForgot = false; error = ''; info = ''">
+        <button
+          type="button"
+          class="w-full text-sm text-slate-500"
+          @click="closeForgot"
+        >
           بازگشت به ورود
         </button>
       </div>
 
       <!-- OTP login -->
       <div v-else-if="tab === 'otp' && otpStep === 1" class="space-y-4">
-        <label class="block text-sm font-medium text-slate-700">شماره موبایل</label>
+        <label class="block text-sm font-medium text-slate-700"
+          >شماره موبایل</label
+        >
         <input
           v-model="mobile"
           class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left tracking-widest outline-none focus:border-orange-500"
@@ -125,81 +149,110 @@
         >
           ورود
         </button>
-        <button class="w-full text-sm text-slate-500" @click="otpStep = 1">تغییر شماره</button>
+        <button class="w-full text-sm text-slate-500" @click="otpStep = 1">
+          تغییر شماره
+        </button>
       </div>
 
-      <p v-if="info" class="mt-4 text-center text-sm text-emerald-600">{{ info }}</p>
-      <p v-if="error" class="mt-4 text-center text-sm text-red-500">{{ error }}</p>
+      <p v-if="info" class="mt-4 text-center text-sm text-emerald-600">
+        {{ info }}
+      </p>
+      <p v-if="error" class="mt-4 text-center text-sm text-red-500">
+        {{ error }}
+      </p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAdminAuthStore } from '../stores/auth';
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAdminAuthStore } from '../stores/auth'
 
-const auth = useAdminAuthStore();
-const router = useRouter();
+const auth = useAdminAuthStore()
+const router = useRouter()
 
-const tab = ref('password');
-const showForgot = ref(false);
-const otpStep = ref(1);
+const tab = ref('password')
+const showForgot = ref(false)
+const otpStep = ref(1)
 
-const username = ref('');
-const password = ref('');
-const email = ref('');
-const mobile = ref('');
-const code = ref('');
-const error = ref('');
-const info = ref('');
+const username = ref('')
+const password = ref('')
+const email = ref('')
+const mobile = ref('')
+const code = ref('')
+const error = ref('')
+const info = ref('')
 
 const canSubmitPassword = computed(() => {
-  const u = username.value.trim();
-  return /^[a-z0-9_]{3,20}$/.test(u) && password.value.length >= 8;
-});
+  const u = username.value.trim()
+  return /^[a-z0-9_]{3,20}$/.test(u) && password.value.length >= 8
+})
+
+function selectPasswordTab() {
+  tab.value = 'password'
+  showForgot.value = false
+}
+
+function selectOtpTab() {
+  tab.value = 'otp'
+  showForgot.value = false
+  otpStep.value = 1
+}
+
+function openForgot() {
+  showForgot.value = true
+  error.value = ''
+  info.value = ''
+}
+
+function closeForgot() {
+  showForgot.value = false
+  error.value = ''
+  info.value = ''
+}
 
 async function onPasswordLogin() {
-  error.value = '';
-  info.value = '';
+  error.value = ''
+  info.value = ''
   try {
-    await auth.loginWithPassword(username.value.trim(), password.value);
-    router.replace('/admin/dashboard');
+    await auth.loginWithPassword(username.value.trim(), password.value)
+    router.replace('/admin/dashboard')
   } catch (e) {
-    error.value = e.response?.data?.message || 'ورود ناموفق بود.';
+    error.value = e.response?.data?.message || 'ورود ناموفق بود.'
   }
 }
 
 async function onForgot() {
-  error.value = '';
-  info.value = '';
+  error.value = ''
+  info.value = ''
   try {
-    const data = await auth.forgotPassword(email.value.trim());
-    info.value = data.message || 'لینک بازنشانی ارسال شد.';
+    const data = await auth.forgotPassword(email.value.trim())
+    info.value = data.message || 'لینک بازنشانی ارسال شد.'
   } catch (e) {
-    error.value = e.response?.data?.message || 'ارسال لینک ناموفق بود.';
+    error.value = e.response?.data?.message || 'ارسال لینک ناموفق بود.'
   }
 }
 
 async function onSend() {
-  error.value = '';
-  info.value = '';
+  error.value = ''
+  info.value = ''
   try {
-    await auth.sendOtp(mobile.value);
-    otpStep.value = 2;
+    await auth.sendOtp(mobile.value)
+    otpStep.value = 2
   } catch (e) {
-    error.value = e.response?.data?.message || 'ارسال کد ناموفق بود.';
+    error.value = e.response?.data?.message || 'ارسال کد ناموفق بود.'
   }
 }
 
 async function onVerify() {
-  error.value = '';
-  info.value = '';
+  error.value = ''
+  info.value = ''
   try {
-    await auth.verifyOtp(mobile.value, code.value);
-    router.replace('/admin/dashboard');
+    await auth.verifyOtp(mobile.value, code.value)
+    router.replace('/admin/dashboard')
   } catch (e) {
-    error.value = e.response?.data?.message || 'ورود ناموفق بود.';
+    error.value = e.response?.data?.message || 'ورود ناموفق بود.'
   }
 }
 </script>

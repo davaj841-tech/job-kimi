@@ -1,16 +1,42 @@
+@import '@fontsource-variable/estedad/wght.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+    :root {
+        --c-brand: 239 57 78;
+        --c-brand-dark: 211 47 65;
+        --c-brand-soft: 255 241 242;
+        --c-ink: 15 39 68;
+        --c-ink-2: 30 58 95;
+        --c-accent: 249 115 22;
+        --c-page: 248 250 252;
+        --c-line: 226 232 240;
+        --theme-ink: #0f2744;
+        --theme-ink-2: #1e3a5f;
+        --theme-accent: #f97316;
+        --theme-page: #f8fafc;
+    }
+
     html {
         direction: rtl;
         -webkit-tap-highlight-color: transparent;
     }
 
     body {
-        @apply bg-surface-page font-sans text-ink antialiased;
-        font-feature-settings: 'ss01';
+        @apply bg-surface-page font-sans text-ink antialiased dark:bg-slate-900 dark:text-slate-100;
+        font-family: 'Estedad Variable', Estedad, Vazirmatn, Tahoma, sans-serif;
+        font-feature-settings: 'ss01', 'kern';
+        letter-spacing: -0.01em;
+        line-height: 1.75;
+    }
+
+    h1, h2, h3, h4, .font-display {
+        font-family: 'Estedad Variable', Estedad, Vazirmatn, Tahoma, sans-serif;
+        letter-spacing: -0.02em;
+        line-height: 1.35;
     }
 
     #app {
@@ -33,32 +59,84 @@
         @apply mx-auto w-full max-w-7xl px-4;
     }
 
+    .page-shell {
+        @apply mx-auto w-full max-w-7xl px-4 py-5 sm:py-8;
+    }
+
+    .page-head {
+        @apply mb-5 flex items-end justify-between gap-3 sm:mb-6;
+    }
+
+    .page-title {
+        @apply text-lg font-black tracking-tight text-desk-dark sm:text-xl;
+    }
+
+    .page-sub {
+        @apply mt-1 text-xs text-desk-muted sm:text-sm;
+    }
+
+    .page-card {
+        @apply rounded-2xl border border-surface-line bg-white;
+    }
+
+    .page-chip {
+        @apply shrink-0 whitespace-nowrap rounded-full border border-surface-line bg-white px-3 py-1.5 text-xs font-bold text-desk-muted transition hover:bg-surface-page;
+    }
+
+    .page-chip-on {
+        @apply border-desk-dark bg-desk-dark text-white hover:bg-desk-dark;
+    }
+
+    .page-chip-brand {
+        @apply border-brand bg-brand text-white hover:bg-brand;
+    }
+
+    .page-banner {
+        @apply relative overflow-hidden bg-desk-dark text-white;
+    }
+
     .desk-card {
         @apply rounded-xl bg-white shadow-sm transition hover:shadow-md;
     }
 
     .desk-section-title {
-        @apply text-2xl font-bold text-desk-text md:text-[28px];
+        @apply text-lg font-black text-desk-dark sm:text-xl;
     }
 
     .btn-primary {
-        @apply inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand px-4 text-sm font-bold text-white transition active:bg-brand-dark disabled:opacity-50;
+        @apply inline-flex h-11 w-full items-center justify-center rounded-xl bg-brand px-4 text-sm font-bold text-white transition hover:bg-brand-dark active:bg-brand-dark disabled:opacity-50;
     }
 
     .btn-ghost {
-        @apply inline-flex h-11 items-center justify-center rounded-lg px-4 text-sm font-medium text-ink transition active:bg-black/5;
+        @apply inline-flex h-11 items-center justify-center rounded-xl px-4 text-sm font-medium text-ink transition active:bg-black/5;
+    }
+
+    .btn-navy {
+        @apply inline-flex h-11 items-center justify-center rounded-xl bg-desk-dark px-4 text-sm font-bold text-white transition hover:bg-desk-blue;
     }
 
     .input-field {
-        @apply h-11 w-full rounded-lg border border-surface-line bg-white px-3 text-sm outline-none transition focus:border-brand;
+        @apply h-11 w-full rounded-xl border border-surface-line bg-white px-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white;
+    }
+
+    .field {
+        @apply h-11 w-full rounded-xl border border-surface-line bg-white px-3 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white;
+    }
+
+    .chip {
+        @apply page-chip;
+    }
+
+    .chip-active {
+        @apply page-chip-on;
     }
 
     .card-soft {
-        @apply rounded-xl bg-white shadow-card;
+        @apply rounded-2xl border border-surface-line bg-white shadow-none dark:border-slate-700 dark:bg-slate-800;
     }
 
     .section-title {
-        @apply text-lg font-bold text-desk-text;
+        @apply page-title;
     }
 
     .mobile-page-title {
@@ -84,4 +162,74 @@
     .price {
         @apply font-bold tabular-nums text-brand;
     }
+
+    .prose-ja {
+        @apply whitespace-pre-wrap text-sm leading-7 text-desk-text;
+    }
+}
+
+@layer utilities {
+    .animate-panel-in {
+        animation: panel-in 0.35s ease-out;
+    }
+}
+
+@keyframes panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-16px);
+    }
+}
+
+@keyframes pulse-slow {
+    0%,
+    100% {
+        opacity: 0.45;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.75;
+        transform: scale(1.06);
+    }
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+    will-change: transform;
+}
+
+.animate-pulse-slow {
+    animation: pulse-slow 8s ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+.delay-1000 {
+    animation-delay: 1s;
+}
+
+.delay-700 {
+    animation-delay: 0.7s;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
 }

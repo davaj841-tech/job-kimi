@@ -3,7 +3,6 @@
 namespace App\Services\Aggregation\Parsers;
 
 use App\Contracts\Aggregation\JobParserInterface;
-use Illuminate\Support\Str;
 
 /**
  * Official RSS feeds that mix news + occasional recruitment notices.

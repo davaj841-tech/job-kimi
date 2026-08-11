@@ -1,0 +1,7 @@
+# Laravel scheduler — install as root:
+#   cp deploy/scheduler.cron /etc/cron.d/jobazmoon
+#   chmod 644 /etc/cron.d/jobazmoon
+#
+# Adjust PHP path and app path for the host.
+
+* * * * * www-data cd /var/www/jobazmoon && /usr/bin/php artisan schedule:run >> /dev/null 2>&1

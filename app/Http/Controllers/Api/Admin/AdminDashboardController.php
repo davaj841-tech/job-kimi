@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Api\BaseController;
-use App\Models\CrawlerRun;
 use App\Models\BlogPost;
+use App\Models\CrawlerRun;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\JobPost;
@@ -14,6 +14,7 @@ use App\Models\Question;
 use App\Models\SubscriptionPlan;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\AnalyticsService;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\JsonResponse;
@@ -219,7 +220,7 @@ class AdminDashboardController extends BaseController
 
         $charts['hourly_today'] = $hourly;
         $charts['top_exams'] = $topExams;
-        $charts['devices'] = collect(app(\App\Services\AnalyticsService::class)->devices(now()->subDays(29), now()))
+        $charts['devices'] = collect(app(AnalyticsService::class)->devices(now()->subDays(29), now()))
             ->map(fn ($row) => [
                 'label' => match ($row['device']) {
                     'mobile' => 'موبایل',
@@ -239,7 +240,7 @@ class AdminDashboardController extends BaseController
             ];
         }
 
-        $analytics = app(\App\Services\AnalyticsService::class);
+        $analytics = app(AnalyticsService::class);
         $counts['visits_today'] = $analytics->todayCount();
         $counts['visits_month'] = $analytics->monthCount();
         $charts['visits'] = $analytics->visits(

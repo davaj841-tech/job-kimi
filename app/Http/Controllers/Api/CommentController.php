@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\BaseController;
 use App\Models\BlogComment;
 use App\Models\BlogPost;
 use App\Models\Setting;

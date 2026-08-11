@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\BaseController;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\ExamRating;

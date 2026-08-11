@@ -37,12 +37,38 @@ class PDFProductRepository
             $query->where('price', '<=', (int) $filters['price_max']);
         }
 
-        return $query->latest()->paginate($filters['per_page'] ?? 15);
+        $query->withCount('purchases');
+
+        $sort = $filters['sort'] ?? 'newest';
+        match ($sort) {
+            'popular' => $query->orderByDesc('purchases_count')->orderByDesc('download_count'),
+            'price_asc' => $query->orderBy('price'),
+            'price_desc' => $query->orderByDesc('price'),
+            default => $query->latest(),
+        };
+
+        return $query->paginate($filters['per_page'] ?? 12);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function getCategories(): array
+    {
+        return PdfProduct::query()
+            ->where('is_active', true)
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->distinct()
+            ->orderBy('category')
+            ->pluck('category')
+            ->values()
+            ->all();
     }
 
     public function findActive(int $id): ?PdfProduct
     {
-        return PdfProduct::query()->where('is_active', true)->find($id);
+        return PdfProduct::query()->where('is_active', true)->withCount('purchases')->find($id);
     }
 
     public function findById(int $id): ?PdfProduct
@@ -68,11 +94,8 @@ class PDFProductRepository
     }
 
     /**
-
      * @param  array<string, mixed>  $filters
-
      */
-
     public function getAdminList(array $filters): LengthAwarePaginator
     {
         $query = PdfProduct::query();

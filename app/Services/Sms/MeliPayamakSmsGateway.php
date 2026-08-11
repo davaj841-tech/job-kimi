@@ -8,24 +8,40 @@ use Illuminate\Support\Facades\Log;
 
 class MeliPayamakSmsGateway implements SmsGatewayInterface
 {
-    /** ارسال پیامک از طریق ملی‌پیامک — تنظیمات از جدول settings */
     public function send(string $mobile, string $message): bool
     {
-        $apiKey = Setting::get('sms_api_key');
+        $username = (string) Setting::getFilled('sms_api_key', config('services.melipayamak.username'));
+        $password = (string) Setting::getFilled('sms_password', config('services.melipayamak.password'));
+        $from = (string) Setting::getFilled('sms_from', config('services.melipayamak.from'));
 
-        if (blank($apiKey)) {
-            Log::info('MeliPayamak OTP (no api key)', ['mobile' => $mobile, 'message' => $message]);
+        if (blank($username) || blank($password)) {
+            if (config('services.sms.allow_log_fallback')) {
+                Log::info('MeliPayamak OTP skipped (no credentials; log fallback)', [
+                    'mobile' => $mobile,
+                ]);
 
-            return true;
+                return true;
+            }
+
+            Log::error('MeliPayamak SMS aborted: missing credentials');
+
+            return false;
         }
 
         $response = Http::asForm()->post('https://rest.payamak-panel.com/api/SendSMS/SendSMS', [
-            'username' => $apiKey,
-            'password' => Setting::get('sms_password', ''),
+            'username' => $username,
+            'password' => $password,
             'to' => $mobile,
-            'from' => Setting::get('sms_from', ''),
+            'from' => $from,
             'text' => $message,
         ]);
+
+        if (! $response->successful()) {
+            Log::warning('MeliPayamak SMS failed', [
+                'status' => $response->status(),
+                'mobile' => $mobile,
+            ]);
+        }
 
         return $response->successful();
     }

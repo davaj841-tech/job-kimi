@@ -40,13 +40,9 @@ class PaymentService
     }
 
     /**
-
      * @param  array<string, mixed>  $meta
-
      * @return array<string, mixed>
-
      */
-
     public function verifyZarinPal(string $authority, int $amount, array $meta = []): array
     {
         return $this->verify('zarinpal', $authority, $amount, $meta);
@@ -83,11 +79,8 @@ class PaymentService
     }
 
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function activeGateways(): array
     {
         return $this->gateways->activeList();

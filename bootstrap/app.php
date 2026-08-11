@@ -1,5 +1,16 @@
 <?php
 
+use App\Http\Middleware\CacheResponse;
+use App\Http\Middleware\CheckSubscription;
+use App\Http\Middleware\EnsureAuth;
+use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\FeatureEnabled;
+use App\Http\Middleware\ForceHttps;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\TrackPageView;
+use App\Http\Middleware\TrustProxies;
+use App\Http\Middleware\VerifyTurnstileToken;
+use App\Services\SiteErrorLogger;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,40 +24,58 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api/v1',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->trustProxies(at: '*');
+        $trustedProxies = collect([
+            env('TRUSTED_PROXIES', ''),
+            env('TRUSTED_PROXIES_V6', ''),
+        ])
+            ->flatMap(fn (string $ips) => array_filter(explode(',', $ips)))
+            ->map(fn (string $ip) => trim($ip))
+            ->filter()
+            ->values()
+            ->all();
+
+        if (! empty($trustedProxies)) {
+            $middleware->trustProxies(at: $trustedProxies);
+        }
+
+        $middleware->prepend(TrustProxies::class);
         $middleware->throttleApi('api');
+        $middleware->validateCsrfTokens(except: [
+            'csp-report',
+        ]);
         $middleware->alias([
-            'auth.ensure' => \App\Http\Middleware\EnsureAuth::class,
-            'role' => \App\Http\Middleware\EnsureRole::class,
-            'subscription.check' => \App\Http\Middleware\CheckSubscription::class,
-            'turnstile' => \App\Http\Middleware\VerifyTurnstileToken::class,
-            'track.page' => \App\Http\Middleware\TrackPageView::class,
-            'cache.response' => \App\Http\Middleware\CacheResponse::class,
+            'auth.ensure' => EnsureAuth::class,
+            'role' => EnsureRole::class,
+            'subscription.check' => CheckSubscription::class,
+            'turnstile' => VerifyTurnstileToken::class,
+            'track.page' => TrackPageView::class,
+            'cache.response' => CacheResponse::class,
+            'feature' => FeatureEnabled::class,
         ]);
         $middleware->web(append: [
-            \App\Http\Middleware\ForceHttps::class,
-            \App\Http\Middleware\SecurityHeaders::class,
-            \App\Http\Middleware\TrackPageView::class,
+            ForceHttps::class,
+            SecurityHeaders::class,
+            TrackPageView::class,
         ]);
         $middleware->api(append: [
-            \App\Http\Middleware\SecurityHeaders::class,
+            SecurityHeaders::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->report(function (\Throwable $e) {
+        $exceptions->report(function (Throwable $e) {
             try {
                 $request = request();
-                app(\App\Services\SiteErrorLogger::class)->report($e, [
+                app(SiteErrorLogger::class)->report($e, [
                     'url' => $request?->fullUrl(),
                     'method' => $request?->method(),
                     'user_id' => $request?->user()?->id,
                 ]);
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 // ignore
             }
         });
 
-        $exceptions->reportable(function (\Throwable $e) {
+        $exceptions->reportable(function (Throwable $e) {
             if (app()->bound('sentry') && app()->environment('production')) {
                 app('sentry')->captureException($e);
             }

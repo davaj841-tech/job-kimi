@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BlogPost;
+use App\Models\GeneratedContent;
 use App\Models\JobPost;
 use App\Models\Setting;
 use Illuminate\Http\Response;
@@ -39,11 +40,8 @@ class SEOService
     }
 
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function generateBlogSchema(BlogPost $post): array
     {
         return [
@@ -70,13 +68,9 @@ class SEOService
     }
 
     /**
-
      * @param  array<string, mixed>  $items
-
      * @return array<string, mixed>
-
      */
-
     public function generateBreadcrumbSchema(array $items): array
     {
         return [
@@ -93,6 +87,34 @@ class SEOService
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function generateGeneratedContentSchema(GeneratedContent $content): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'Article',
+            'headline' => $content->title,
+            'description' => $content->excerpt,
+            'datePublished' => optional($content->published_at)->toIso8601String(),
+            'dateModified' => optional($content->updated_at)->toIso8601String(),
+            'author' => [
+                '@type' => 'Organization',
+                'name' => Setting::get('site_name', 'JobAzmoon'),
+            ],
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => Setting::get('site_name', 'JobAzmoon'),
+            ],
+            'mainEntityOfPage' => [
+                '@type' => 'WebPage',
+                '@id' => $content->publicUrl(),
+            ],
+            'about' => $content->jobPost?->company_name,
+        ];
+    }
+
     public function generateSitemap(): Response
     {
         $jobs = JobPost::query()
@@ -105,12 +127,18 @@ class SEOService
             ->orderByDesc('updated_at')
             ->get(['slug', 'updated_at']);
 
+        $articles = GeneratedContent::query()
+            ->published()
+            ->orderByDesc('published_at')
+            ->get(['slug', 'updated_at', 'published_at']);
+
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
 
         $xml .= $this->urlEntry(url('/'), now()->toAtomString(), 'daily', '1.0');
         $xml .= $this->urlEntry(url('/jobs'), now()->toAtomString(), 'daily', '0.9');
         $xml .= $this->urlEntry(url('/blog'), now()->toAtomString(), 'daily', '0.9');
+        $xml .= $this->urlEntry(url('/articles'), now()->toAtomString(), 'daily', '0.9');
         $xml .= $this->urlEntry(url('/exams'), now()->toAtomString(), 'daily', '0.9');
 
         foreach ($jobs as $job) {
@@ -128,6 +156,15 @@ class SEOService
                 optional($post->updated_at)->toAtomString() ?? now()->toAtomString(),
                 'weekly',
                 '0.7'
+            );
+        }
+
+        foreach ($articles as $article) {
+            $xml .= $this->urlEntry(
+                url('/articles/'.$article->slug),
+                optional($article->updated_at ?? $article->published_at)->toAtomString() ?? now()->toAtomString(),
+                'weekly',
+                '0.75'
             );
         }
 

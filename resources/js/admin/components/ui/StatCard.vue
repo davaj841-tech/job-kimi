@@ -10,7 +10,11 @@
       <span
         v-if="trend"
         class="rounded-md px-2 py-0.5 text-[11px] font-bold"
-        :class="trend.startsWith('-') ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'"
+        :class="
+          trend.startsWith('-')
+            ? 'bg-red-50 text-red-600'
+            : 'bg-emerald-50 text-emerald-600'
+        "
       >
         {{ trend }}
       </span>
@@ -27,5 +31,5 @@ defineProps({
   icon: { type: String, default: '•' },
   color: { type: String, default: '#0f2744' },
   trend: { type: String, default: '' },
-});
+})
 </script>

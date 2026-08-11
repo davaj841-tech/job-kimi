@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Events\PaymentSuccessful;
 use App\Models\Coupon;
 use App\Models\PdfProduct;
 use App\Models\PdfPurchase;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Notifications\GenericDatabaseNotification;
 use App\Repositories\PDFProductRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -24,11 +26,8 @@ class PDFProductService
     ) {}
 
     /**
-
      * @param  array<string, mixed>  $filters
-
      */
-
     public function getAvailable(array $filters): LengthAwarePaginator
     {
         return $this->pdfProductRepository->getActive($filters);
@@ -119,9 +118,9 @@ class PDFProductService
             }
 
             $this->invoiceService->ensureInvoice($tx);
-            event(new \App\Events\PaymentSuccessful($tx));
+            event(new PaymentSuccessful($tx));
 
-            $locked->notify(new \App\Notifications\GenericDatabaseNotification(
+            $locked->notify(new GenericDatabaseNotification(
                 'pdf_purchased',
                 'خرید PDF موفق',
                 'فایل «'.$pdf->title.'» خریداری شد.',
@@ -225,12 +224,12 @@ class PDFProductService
             }
 
             $this->invoiceService->ensureInvoice($transaction->fresh());
-            event(new \App\Events\PaymentSuccessful($transaction->fresh()));
+            event(new PaymentSuccessful($transaction->fresh()));
 
             $user = User::query()->find($transaction->user_id);
             $pdf = PdfProduct::query()->find($transaction->payable_id);
             if ($user && $pdf) {
-                $user->notify(new \App\Notifications\GenericDatabaseNotification(
+                $user->notify(new GenericDatabaseNotification(
                     'pdf_purchased',
                     'خرید PDF موفق',
                     'فایل «'.$pdf->title.'» خریداری شد.',
@@ -256,11 +255,8 @@ class PDFProductService
     }
 
     /**
-
      * @param  array<string, mixed>  $data
-
      */
-
     public function storeUploaded(array $data, $file, $thumbnail = null): PdfProduct
     {
         $uuid = (string) Str::uuid();

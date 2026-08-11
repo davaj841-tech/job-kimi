@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 class JobPost extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'title',
         'seo_tag',

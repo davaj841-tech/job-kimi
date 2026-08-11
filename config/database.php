@@ -170,4 +170,15 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Financial DB transaction settings
+    |--------------------------------------------------------------------------
+    */
+    'transactions' => [
+        'attempts' => (int) env('DB_TRANSACTION_ATTEMPTS', 3),
+        'isolation' => env('DB_TRANSACTION_ISOLATION', 'REPEATABLE READ'),
+        'lock_wait_timeout' => (int) env('DB_LOCK_WAIT_TIMEOUT', 10),
+    ],
+
 ];

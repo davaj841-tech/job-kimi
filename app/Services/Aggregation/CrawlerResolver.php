@@ -9,6 +9,7 @@ use App\Services\Aggregation\Crawlers\ApiCrawler;
 use App\Services\Aggregation\Crawlers\HtmlCrawler;
 use App\Services\Aggregation\Crawlers\JsonCrawler;
 use App\Services\Aggregation\Crawlers\RssCrawler;
+use App\Services\Aggregation\Parsers\BoardListingHtmlParser;
 use App\Services\Aggregation\Parsers\EmploymentKeywordRssParser;
 use App\Services\Aggregation\Parsers\HtmlJobParser;
 use App\Services\Aggregation\Parsers\JsonFeedParser;
@@ -34,6 +35,7 @@ class CrawlerResolver
         $registry ??= new SourceParserRegistry([
             app(EmploymentKeywordRssParser::class),
             app(OfficialAnnouncementHtmlParser::class),
+            app(BoardListingHtmlParser::class),
         ]);
 
         return new self([

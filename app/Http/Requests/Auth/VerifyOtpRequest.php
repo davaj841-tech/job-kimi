@@ -12,7 +12,6 @@ class VerifyOtpRequest extends FormRequest
     }
 
     /** @return array<string, mixed> */
-
     public function rules(): array
     {
         return [
@@ -23,7 +22,6 @@ class VerifyOtpRequest extends FormRequest
     }
 
     /** @return array<string, string> */
-
     public function messages(): array
     {
         return [

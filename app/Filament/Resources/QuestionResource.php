@@ -24,8 +24,6 @@ class QuestionResource extends Resource
 
     protected static ?string $navigationGroup = 'آزمون‌ها';
 
-    
-
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -43,14 +41,15 @@ class QuestionResource extends Resource
                 'a' => 'الف', 'b' => 'ب', 'c' => 'ج', 'd' => 'د',
             ])->required()->helperText('گزینه صحیح'),
             Forms\Components\RichEditor::make('explanation')->label('توضیح')->columnSpanFull()->helperText('توضیح پاسخ صحیح'),
-            Forms\Components\Select::make('difficulty')->label('سختی')->options([
+            Forms\Components\Select::make('difficulty')->label('سطح')->options([
                 'easy' => 'آسان', 'medium' => 'متوسط', 'hard' => 'سخت',
-            ])->helperText('سطح دشواری'),
-            Forms\Components\Select::make('subject')->label('ماده')->options([
-                'math' => 'ریاضی', 'literature' => 'ادبیات', 'islamic' => 'معارف',
-                'english' => 'انگلیسی', 'chemistry' => 'شیمی', 'physics' => 'فیزیک',
-                'iq' => 'هوش', 'general' => 'عمومی',
-            ])->helperText('موضوع سوال'),
+            ])->default('medium')->helperText('اختیاری — پیش‌فرض متوسط'),
+            Forms\Components\Select::make('subject')->label('درس')->options(
+                fn () => \App\Models\ExamSubject::query()
+                    ->orderBy('sort_order')
+                    ->pluck('name', 'slug')
+                    ->all()
+            )->searchable()->helperText('موضوع سوال'),
         ]);
     }
 

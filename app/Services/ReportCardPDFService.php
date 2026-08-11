@@ -3,43 +3,45 @@
 namespace App\Services;
 
 use App\Models\ExamAttempt;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\Pdf\PersianPdfFont;
+use App\Services\Pdf\PersianPdfText;
+use Illuminate\Support\Carbon;
+use Morilog\Jalali\Jalalian;
 
 class ReportCardPDFService
 {
     public function __construct(
-        protected ExamService $examService
+        protected ExamService $examService,
+        protected PersianPdfFont $persianFont,
+        protected PersianPdfText $persianText,
     ) {}
 
     public function renderHtml(ExamAttempt $attempt): string
     {
         $payload = $this->examService->buildAnswerSheet($attempt);
-        $fontPath = $this->ensureVazirmatnFont();
+        $fonts = $this->persianFont->ensure();
+        $finishedAt = $attempt->finished_at ?? $attempt->updated_at ?? now();
 
-        return view('pdf.report-card', [
+        $html = view('pdf.report-card', [
             'attempt' => $attempt,
             'exam' => $attempt->exam,
             'user' => $attempt->user,
             'sheet' => $payload['sheet'],
             'analysis' => $payload['analysis'],
-            'fontPath' => $fontPath,
-            'generatedAt' => now(),
+            'fontRegular' => $this->persianFont->cssUrl($fonts['regular']),
+            'fontBold' => $this->persianFont->cssUrl($fonts['bold']),
+            'finishedAtFa' => self::fa(Jalalian::fromCarbon(Carbon::parse($finishedAt))->format('Y/m/d H:i')),
+            'generatedAtFa' => self::fa(Jalalian::now()->format('Y/m/d H:i')),
         ])->render();
+
+        return $this->persianText->reshapeHtml($html);
     }
 
     public function download(ExamAttempt $attempt)
     {
         $html = $this->renderHtml($attempt);
-
-        $pdf = Pdf::loadHTML($html)
-            ->setPaper('a4')
-            ->setOptions([
-                'isRemoteEnabled' => true,
-                'isHtml5ParserEnabled' => true,
-                'defaultFont' => 'Vazirmatn',
-                'isFontSubsettingEnabled' => true,
-            ]);
-
+        $pdf = $this->persianFont->applyOptions(app('dompdf.wrapper'));
+        $pdf->loadHTML($html)->setPaper('a4');
         $filename = 'report-card-'.$attempt->exam_id.'-'.$attempt->id.'.pdf';
 
         return $pdf->download($filename);
@@ -48,37 +50,38 @@ class ReportCardPDFService
     public function stream(ExamAttempt $attempt)
     {
         $html = $this->renderHtml($attempt);
-
-        $pdf = Pdf::loadHTML($html)
-            ->setPaper('a4')
-            ->setOptions([
-                'isRemoteEnabled' => true,
-                'isHtml5ParserEnabled' => true,
-                'defaultFont' => 'Vazirmatn',
-                'isFontSubsettingEnabled' => true,
-            ]);
-
+        $pdf = $this->persianFont->applyOptions(app('dompdf.wrapper'));
+        $pdf->loadHTML($html)->setPaper('a4');
         $filename = 'report-card-'.$attempt->exam_id.'-'.$attempt->id.'.pdf';
 
         return $pdf->stream($filename);
     }
 
-    protected function ensureVazirmatnFont(): string
+    public static function fa(mixed $value): string
     {
-        $dir = storage_path('fonts');
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
+        return strtr((string) $value, [
+            '0' => '۰',
+            '1' => '۱',
+            '2' => '۲',
+            '3' => '۳',
+            '4' => '۴',
+            '5' => '۵',
+            '6' => '۶',
+            '7' => '۷',
+            '8' => '۸',
+            '9' => '۹',
+        ]);
+    }
 
-        $fontFile = $dir.DIRECTORY_SEPARATOR.'Vazirmatn-Regular.ttf';
-
-        if (! file_exists($fontFile)) {
-            $fallback = base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans.ttf');
-            if (file_exists($fallback)) {
-                copy($fallback, $fontFile);
-            }
-        }
-
-        return $fontFile;
+    public static function optionLetter(?string $letter): string
+    {
+        return match (strtolower(trim((string) $letter))) {
+            'a' => 'الف',
+            'b' => 'ب',
+            'c' => 'ج',
+            'd' => 'د',
+            '' => '—',
+            default => strtoupper((string) $letter),
+        };
     }
 }

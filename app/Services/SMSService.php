@@ -12,7 +12,7 @@ class SMSService
 {
     public function gateway(): SmsGatewayInterface
     {
-        return match (Setting::get('sms_gateway', 'kavenegar')) {
+        return match (Setting::getFilled('sms_gateway', config('services.sms.gateway', 'kavenegar'))) {
             'melipayamak' => new MeliPayamakSmsGateway,
             default => new KavenegarSmsGateway,
         };

@@ -167,4 +167,72 @@ class ResumeController extends BaseController
             'note' => 'این پیشنهادها فقط مشورتی هستند و به‌صورت خودکار روی رزومه اعمال نمی‌شوند.',
         ], 'پیشنهادهای بهبود رزومه آماده است.');
     }
+
+    public function aiWriteSummary(Request $request, int $id): JsonResponse
+    {
+        return $this->runResumeAi($request, $id, function ($resume) use ($request) {
+            $context = [
+                'title' => (string) ($request->input('title') ?: data_get($resume->data, 'target_job') ?: data_get($resume->data, 'personal.full_name')),
+                'target_job' => data_get($resume->data, 'target_job'),
+                'experiences' => $request->input('experiences', data_get($resume->data, 'experience', [])),
+                'skills' => $request->input('skills', data_get($resume->data, 'skills', [])),
+            ];
+
+            return $this->aiService->writeResumeSummary($context);
+        }, 'خلاصه حرفه‌ای آماده شد.');
+    }
+
+    public function aiEnhanceExperience(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'title' => ['required', 'string', 'max:100'],
+            'description' => ['required', 'string', 'max:2000'],
+        ]);
+
+        return $this->runResumeAi($request, $id, function () use ($request) {
+            return $this->aiService->enhanceExperienceDescription(
+                (string) $request->input('title'),
+                (string) $request->input('description')
+            );
+        }, 'توضیحات سابقه شغلی بهبود یافت.');
+    }
+
+    public function aiSuggestSkills(Request $request, int $id): JsonResponse
+    {
+        return $this->runResumeAi($request, $id, function ($resume) use ($request) {
+            $context = [
+                'title' => (string) ($request->input('title') ?: data_get($resume->data, 'target_job') ?: ''),
+                'experiences' => $request->input('experiences', data_get($resume->data, 'experience', [])),
+            ];
+
+            return $this->aiService->suggestResumeSkills($context);
+        }, 'مهارت‌های پیشنهادی آماده شد.');
+    }
+
+    /**
+     * @param  callable(\App\Models\Resume): array<string, mixed>  $callback
+     */
+    protected function runResumeAi(Request $request, int $id, callable $callback, string $message): JsonResponse
+    {
+        $key = 'ai-resume:'.$request->user()->id;
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            return $this->errorResponse('تعداد درخواست‌های AI بیش از حد مجاز است.', 429);
+        }
+        RateLimiter::hit($key, 3600);
+
+        $resume = $this->resumeRepository->findById($id, $request->user());
+        if (! $resume) {
+            return $this->errorResponse('رزومه یافت نشد.', 404);
+        }
+
+        try {
+            $result = $callback($resume);
+        } catch (\RuntimeException $e) {
+            $code = str_contains($e->getMessage(), 'سقف') ? 429 : 400;
+
+            return $this->errorResponse($e->getMessage(), $code);
+        }
+
+        return $this->successResponse($result, $message);
+    }
 }

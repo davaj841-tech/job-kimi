@@ -18,6 +18,15 @@ return [
     'name' => env('HORIZON_NAME'),
 
     /*
+    | Extra emails that may open /horizon when role is not admin/operator.
+    | Comma-separated: HORIZON_ALLOWED_EMAILS=ops@jobazmoon.ir
+    */
+    'allowed_emails' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('HORIZON_ALLOWED_EMAILS', ''))
+    ))),
+
+    /*
     |--------------------------------------------------------------------------
     | Horizon Domain
     |--------------------------------------------------------------------------

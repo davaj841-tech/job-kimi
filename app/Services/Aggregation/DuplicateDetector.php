@@ -6,6 +6,7 @@ use App\Contracts\Aggregation\DuplicateDetectorInterface;
 use App\Models\JobPost;
 use App\Services\Aggregation\Support\PersianText;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 
 class DuplicateDetector implements DuplicateDetectorInterface
 {
@@ -61,7 +62,7 @@ class DuplicateDetector implements DuplicateDetectorInterface
 
         if (filled($titleKey) && filled($orgKey) && filled($deadline)) {
             try {
-                $deadlineDate = \Illuminate\Support\Carbon::parse($deadline)->toDateString();
+                $deadlineDate = Carbon::parse($deadline)->toDateString();
             } catch (\Throwable) {
                 $deadlineDate = null;
             }

@@ -13,11 +13,8 @@ class ResumeService
     ) {}
 
     /**
-
      * @param  array<string, mixed>  $payload
-
      */
-
     public function create(array $payload): Resume
     {
         $data = $payload['data'];
@@ -39,11 +36,8 @@ class ResumeService
     }
 
     /**
-
      * @param  array<string, mixed>  $payload
-
      */
-
     public function update(Resume $resume, array $payload): Resume
     {
         $updates = [];
@@ -91,11 +85,8 @@ class ResumeService
     }
 
     /**
-
      * @param  array<string, mixed>  $data
-
      */
-
     public function validateData(array $data): bool
     {
         $validator = Validator::make(

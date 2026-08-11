@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Exam\StartExamAttempt;
+use App\Events\ExamCompleted;
 use App\Http\Requests\Api\SubmitExamRequest;
 use App\Http\Resources\ExamAttemptResource;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\Question;
+use App\Notifications\GenericDatabaseNotification;
 use App\Repositories\ExamRepository;
 use App\Services\ExamService;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +21,7 @@ class ExamAttemptController extends BaseController
     public function __construct(
         protected ExamService $examService,
         protected ExamRepository $examRepository,
-        protected \App\Actions\Exam\StartExamAttempt $startExamAttempt,
+        protected StartExamAttempt $startExamAttempt,
     ) {}
 
     public function start(Request $request, int $id): JsonResponse
@@ -86,11 +89,11 @@ class ExamAttemptController extends BaseController
         $ids = ! empty($cacheIds) ? $cacheIds : $questionIds;
 
         $questions = Question::query()
-            ->where('exam_id', $id)
             ->when(! empty($ids), fn ($q) => $q->whereIn('id', $ids))
+            ->when(empty($ids), fn ($q) => $q->where('exam_id', $id))
             ->get();
 
-        if ($questions->isEmpty()) {
+        if ($questions->isEmpty() && ! $attempt->exam?->is_random) {
             $questions = Question::query()->where('exam_id', $id)->get();
         }
 
@@ -230,7 +233,7 @@ class ExamAttemptController extends BaseController
 
             $user = $attempt->user;
             if ($user) {
-                $user->notify(new \App\Notifications\GenericDatabaseNotification(
+                $user->notify(new GenericDatabaseNotification(
                     'exam_completed',
                     'نتیجه آزمون آماده است',
                     'آزمون «'.($attempt->exam?->title ?? 'آزمون').'» تمام شد - نمره: '.$scoreData['score'],
@@ -238,7 +241,7 @@ class ExamAttemptController extends BaseController
                 ));
             }
 
-            event(new \App\Events\ExamCompleted($attempt->fresh(['exam', 'user'])));
+            event(new ExamCompleted($attempt->fresh(['exam', 'user'])));
 
             return [
                 'score' => $scoreData['score'],

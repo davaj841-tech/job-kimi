@@ -30,12 +30,21 @@
 <script setup>
 defineProps({
   modelValue: { type: String, default: '#f97316' },
-});
-defineEmits(['update:modelValue']);
+})
+defineEmits(['update:modelValue'])
 
-const presets = ['#f97316', '#0f2744', '#059669', '#2563eb', '#dc2626', '#7c3aed'];
+const presets = [
+  '#f97316',
+  '#0f2744',
+  '#059669',
+  '#2563eb',
+  '#dc2626',
+  '#7c3aed',
+]
 </script>
 
 <style scoped>
-.field { @apply h-10 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-orange-400; }
+.field {
+  @apply h-10 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-orange-400;
+}
 </style>

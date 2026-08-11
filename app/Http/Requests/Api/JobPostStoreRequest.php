@@ -14,7 +14,6 @@ class JobPostStoreRequest extends FormRequest
     }
 
     /** @return array<string, mixed> */
-
     public function rules(): array
     {
         $id = $this->route('id');
@@ -56,7 +55,6 @@ class JobPostStoreRequest extends FormRequest
     }
 
     /** @return array<string, string> */
-
     public function messages(): array
     {
         return [

@@ -24,8 +24,6 @@ class SubscriptionPlanResource extends Resource
 
     protected static ?string $navigationGroup = 'اشتراک و مالی';
 
-    
-
     public static function form(Form $form): Form
     {
         return $form->schema([

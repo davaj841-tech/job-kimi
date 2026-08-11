@@ -27,7 +27,15 @@ export default defineConfig({
         }),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
+            includeAssets: [
+                'offline.html',
+                'offline.svg',
+                'icons/icon-192.png',
+                'icons/icon-512.png',
+                'icons/maskable-icon-152.png',
+                'icons/maskable-icon-192.png',
+                'icons/maskable-icon-512.png',
+            ],
             manifest: {
                 name: 'جاب‌آزمون',
                 short_name: 'JobAzmoon',
@@ -43,29 +51,54 @@ export default defineConfig({
                         src: '/icons/icon-192.png',
                         sizes: '192x192',
                         type: 'image/png',
+                        purpose: 'any',
                     },
                     {
                         src: '/icons/icon-512.png',
                         sizes: '512x512',
                         type: 'image/png',
+                        purpose: 'any',
+                    },
+                    {
+                        src: '/icons/maskable-icon-192.png',
+                        sizes: '192x192',
+                        type: 'image/png',
+                        purpose: 'maskable',
+                    },
+                    {
+                        src: '/icons/maskable-icon-512.png',
+                        sizes: '512x512',
+                        type: 'image/png',
+                        purpose: 'maskable',
                     },
                 ],
             },
             workbox: {
-                navigateFallback: null,
+                navigateFallback: '/offline.html',
+                navigateFallbackDenylist: [/^\/api/, /^\/admin/, /^\/horizon/, /^\/up/],
                 runtimeCaching: [
                     {
                         urlPattern: ({ url }) => url.pathname.startsWith('/api/v1/exams'),
-                        handler: 'NetworkFirst',
+                        handler: 'StaleWhileRevalidate',
                         options: {
                             cacheName: 'exam-api-cache',
-                            networkTimeoutSeconds: 5,
                             expiration: {
                                 maxEntries: 64,
                                 maxAgeSeconds: 60 * 60 * 24,
                             },
                             cacheableResponse: {
                                 statuses: [0, 200],
+                            },
+                        },
+                    },
+                    {
+                        urlPattern: ({ request }) => request.destination === 'image',
+                        handler: 'CacheFirst',
+                        options: {
+                            cacheName: 'image-cache',
+                            expiration: {
+                                maxEntries: 100,
+                                maxAgeSeconds: 60 * 60 * 24 * 30,
                             },
                         },
                     },

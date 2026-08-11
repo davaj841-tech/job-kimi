@@ -121,6 +121,7 @@ class PilotAggregateCrawlCommand extends Command
                     0,
                     0,
                 ];
+
                 continue;
             }
 

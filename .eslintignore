@@ -1,9 +1,0 @@
-node_modules
-vendor
-public
-storage
-bootstrap
-resources/js/views
-resources/js/admin/views
-resources/js/components
-resources/js/admin/components

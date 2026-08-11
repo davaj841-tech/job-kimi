@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Resources\DashboardResource;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
+use App\Models\ExamSubject;
 use App\Models\Question;
 use App\Repositories\ExamRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class DashboardController extends BaseController
 {
@@ -35,6 +37,18 @@ class DashboardController extends BaseController
         $avgScore = $totalTaken > 0 ? round((float) $completedAttempts->avg('score'), 2) : 0;
         $totalCorrect = (int) $completedAttempts->sum('total_correct');
         $totalWrong = (int) $completedAttempts->sum('total_wrong');
+
+        $examsThisWeek = $completedAttempts
+            ->filter(fn (ExamAttempt $a) => $a->finished_at && $a->finished_at->gte(now()->subDays(7)))
+            ->count();
+
+        $scoreTrend = '';
+        if ($completedAttempts->count() >= 2) {
+            $latest = (float) $completedAttempts->first()?->score;
+            $previous = (float) $completedAttempts->skip(1)->first()?->score;
+            $delta = round($latest - $previous, 1);
+            $scoreTrend = ($delta >= 0 ? '+' : '').$delta.' نسبت به قبل';
+        }
 
         $daysLeft = null;
         if ($user->subscription_expires_at) {
@@ -72,7 +86,7 @@ class DashboardController extends BaseController
             $totalMarks = (float) ($a->exam?->total_marks ?: 1);
 
             return [
-                'label' => \Illuminate\Support\Str::limit($a->exam?->title ?: 'آزمون', 18),
+                'label' => Str::limit($a->exam?->title ?: 'آزمون', 18),
                 'percentage' => round(((float) $a->score / $totalMarks) * 100, 1),
                 'score' => (float) $a->score,
             ];
@@ -96,6 +110,8 @@ class DashboardController extends BaseController
                 'average_score' => $avgScore,
                 'total_correct_answers' => $totalCorrect,
                 'total_wrong_answers' => $totalWrong,
+                'exams_this_week' => $examsThisWeek,
+                'score_trend' => $scoreTrend,
             ],
             'progress_chart' => $progressChart,
             'exam_chart' => $examChart,
@@ -109,7 +125,7 @@ class DashboardController extends BaseController
         return $this->successResponse(new DashboardResource($payload));
     }
 
-    protected function buildProgressChart(int $userId): array
+    public function buildProgressChart(int $userId): array
     {
         $attempts = ExamAttempt::query()
             ->where('user_id', $userId)
@@ -144,7 +160,7 @@ class DashboardController extends BaseController
         }
 
         return collect($subjectStats)->map(function (array $stat, string $subject) {
-            $label = \App\Models\ExamSubject::query()->where('slug', $subject)->value('name') ?: $subject;
+            $label = ExamSubject::query()->where('slug', $subject)->value('name') ?: $subject;
 
             return [
                 'subject' => $subject,

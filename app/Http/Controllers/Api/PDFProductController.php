@@ -24,17 +24,35 @@ class PDFProductController extends BaseController
 
     public function index(Request $request): JsonResponse
     {
-        $filters = $request->only(['category', 'search', 'price_min', 'price_max', 'per_page']);
+        $filters = $request->only(['category', 'search', 'price_min', 'price_max', 'per_page', 'sort']);
         $products = $this->pdfProductService->getAvailable($filters);
 
+        $purchasedIds = [];
+        $user = $request->user('sanctum');
+        if ($user) {
+            $purchasedIds = \App\Models\PdfPurchase::query()
+                ->where('user_id', $user->id)
+                ->pluck('pdf_product_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        }
+
+        $items = collect($products->items())->map(function (PdfProduct $pdf) use ($purchasedIds) {
+            $row = (new PdfProductResource($pdf))->resolve();
+            $row['is_purchased'] = in_array((int) $pdf->id, $purchasedIds, true);
+
+            return $row;
+        });
+
         return $this->successResponse([
-            'data' => PdfProductResource::collection($products->items()),
+            'data' => $items,
             'meta' => [
                 'current_page' => $products->currentPage(),
                 'last_page' => $products->lastPage(),
                 'per_page' => $products->perPage(),
                 'total' => $products->total(),
             ],
+            'categories' => $this->pdfProductRepository->getCategories(),
         ]);
     }
 

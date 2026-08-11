@@ -30,7 +30,7 @@ return new class extends Migration
             $table->decimal('wallet_balance', 15, 0)->default(0);
             $table->foreignId('subscription_plan_id')->nullable()->constrained('subscription_plans')->nullOnDelete();
             $table->timestamp('subscription_expires_at')->nullable();
-            $table->string('otp_code', 10)->nullable();
+            $table->string('otp_code', 64)->nullable();
             $table->timestamp('otp_expires_at')->nullable();
             $table->boolean('is_verified')->default(false);
             $table->string('password')->nullable();

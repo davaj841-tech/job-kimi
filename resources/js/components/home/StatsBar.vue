@@ -1,68 +1,116 @@
 <template>
-  <section class="relative z-10 -mt-6">
-    <div class="desk-container">
-      <div class="grid grid-cols-4 gap-4 rounded-2xl bg-white p-4 shadow-desk">
+  <section
+    v-if="displayStats.length"
+    class="relative z-20 -mt-6 px-4 pb-2 sm:-mt-8"
+  >
+    <div
+      ref="root"
+      class="mx-auto grid max-w-5xl grid-cols-2 gap-3 rounded-2xl border border-surface-line bg-white p-4 shadow-[0_12px_40px_-12px_rgba(15,39,68,0.18)] sm:grid-cols-4 sm:gap-4 sm:p-6"
+    >
+      <div
+        v-for="stat in displayStats"
+        :key="stat.label"
+        class="animate-on-scroll text-center"
+      >
         <div
-          v-for="item in stats"
-          :key="item.label"
-          class="flex items-center gap-3 rounded-xl px-3 py-3"
+          class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl"
+          :class="stat.tint"
         >
-          <div
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-            :class="item.bg"
-          >
-            <DesktopIcon :name="item.icon" :size="22" :class="item.color" />
-          </div>
-          <div class="text-right">
-            <p class="text-xl font-black text-desk-text">{{ item.value }}</p>
-            <p class="text-sm text-desk-muted">{{ item.label }}</p>
-          </div>
+          <component
+            :is="stat.icon"
+            class="h-5 w-5"
+            :class="stat.iconClass"
+          />
+        </div>
+        <div class="text-xl font-black tabular-nums text-desk-dark sm:text-2xl">
+          <span
+            class="js-count"
+            :data-value="stat.value"
+            :data-decimals="stat.decimals"
+            >0</span
+          >{{ stat.suffix }}
+        </div>
+        <div class="mt-0.5 text-[11px] text-desk-muted sm:text-xs">
+          {{ stat.label }}
         </div>
       </div>
     </div>
   </section>
 </template>
 
-<script setup>
-import { computed } from 'vue';
-import { toFaDigits } from '../../utils/format';
-import DesktopIcon from '../DesktopIcon.vue';
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import {
+  AcademicCapIcon,
+  BriefcaseIcon,
+  DocumentTextIcon,
+  UsersIcon,
+} from '@heroicons/vue/24/outline'
+import { animateCountUp } from '../../composables/useScrollAnimations'
 
-const props = defineProps({
-  jobsCount: { type: Number, default: 0 },
-  examsCount: { type: Number, default: 0 },
-  filesCount: { type: Number, default: 0 },
-  postsCount: { type: Number, default: 0 },
-});
+const props = withDefaults(
+  defineProps<{
+    users?: number
+    jobs?: number
+    files?: number
+    examsCount?: number
+  }>(),
+  {
+    users: 0,
+    jobs: 0,
+    files: 0,
+    examsCount: 0,
+  },
+)
 
-const stats = computed(() => [
-  {
-    label: 'آگهی استخدام',
-    value: toFaDigits(props.jobsCount || '—'),
-    icon: 'briefcase',
-    bg: 'bg-orange-50',
-    color: 'text-desk-orange',
-  },
-  {
-    label: 'آزمون آنلاین',
-    value: toFaDigits(props.examsCount || '—'),
-    icon: 'clipboard',
-    bg: 'bg-blue-50',
-    color: 'text-desk-blue',
-  },
-  {
-    label: 'فایل آموزشی',
-    value: toFaDigits(props.filesCount || '—'),
-    icon: 'file',
-    bg: 'bg-emerald-50',
-    color: 'text-desk-green',
-  },
-  {
-    label: 'مقاله بلاگ',
-    value: toFaDigits(props.postsCount || '—'),
-    icon: 'book',
-    bg: 'bg-violet-50',
-    color: 'text-violet-600',
-  },
-]);
+const root = ref<HTMLElement | null>(null)
+
+const displayStats = computed(() =>
+  [
+    {
+      icon: BriefcaseIcon,
+      value: props.jobs,
+      suffix: '+',
+      label: 'آگهی استخدام',
+      decimals: 0,
+      tint: 'bg-sky-50',
+      iconClass: 'text-sky-600',
+    },
+    {
+      icon: UsersIcon,
+      value: props.users,
+      suffix: '+',
+      label: 'کاربر فعال',
+      decimals: 0,
+      tint: 'bg-brand-soft',
+      iconClass: 'text-brand',
+    },
+    {
+      icon: DocumentTextIcon,
+      value: props.files,
+      suffix: '+',
+      label: 'فایل آموزشی',
+      decimals: 0,
+      tint: 'bg-amber-50',
+      iconClass: 'text-desk-orange',
+    },
+    {
+      icon: AcademicCapIcon,
+      value: props.examsCount,
+      suffix: '+',
+      label: 'آزمون برگزارشده',
+      decimals: 0,
+      tint: 'bg-emerald-50',
+      iconClass: 'text-desk-green',
+    },
+  ].filter((stat) => Number(stat.value) > 0),
+)
+
+onMounted(() => {
+  root.value?.querySelectorAll<HTMLElement>('.js-count').forEach((el) => {
+    animateCountUp(el, Number(el.dataset.value || 0), {
+      decimals: Number(el.dataset.decimals || 0),
+    })
+  })
+})
 </script>

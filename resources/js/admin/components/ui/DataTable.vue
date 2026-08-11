@@ -1,6 +1,8 @@
 <template>
   <div class="overflow-hidden rounded-xl bg-white shadow-sm">
-    <div v-if="loading" class="p-10 text-center text-sm text-slate-500">در حال بارگذاری...</div>
+    <div v-if="loading" class="p-10 text-center text-sm text-slate-500">
+      در حال بارگذاری...
+    </div>
     <div v-else class="overflow-x-auto">
       <table class="min-w-full text-sm">
         <thead class="bg-gray-50 text-gray-600">
@@ -12,14 +14,16 @@
             >
               {{ col.label }}
             </th>
-            <th v-if="actions" class="px-4 py-3 text-right font-medium">عملیات</th>
+            <th v-if="actions" class="px-4 py-3 text-right font-medium">
+              عملیات
+            </th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="(row, index) in rows"
             :key="row.id || index"
-            class="border-t border-slate-100 hover:bg-gray-50 odd:bg-slate-50/60"
+            class="border-t border-slate-100 odd:bg-slate-50/60 hover:bg-gray-50"
           >
             <td
               v-for="col in columns"
@@ -35,7 +39,10 @@
             </td>
           </tr>
           <tr v-if="!rows.length">
-            <td :colspan="columns.length + (actions ? 1 : 0)" class="px-4 py-10 text-center text-slate-400">
+            <td
+              :colspan="columns.length + (actions ? 1 : 0)"
+              class="px-4 py-10 text-center text-slate-400"
+            >
               <slot name="empty">موردی یافت نشد</slot>
             </td>
           </tr>
@@ -51,5 +58,5 @@ defineProps({
   rows: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
   actions: { type: Boolean, default: true },
-});
+})
 </script>

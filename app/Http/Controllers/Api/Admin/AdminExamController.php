@@ -8,8 +8,10 @@ use App\Http\Requests\Api\ExamUpdateRequest;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\ExamCategory;
+use App\Models\JobClassification;
 use App\Models\JobPost;
 use App\Models\Question;
+use App\Services\AuditLogService;
 use App\Services\ExamService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -55,7 +57,7 @@ class AdminExamController extends BaseController
 
         if (! empty($data['job_classification_id'])) {
             $classId = (int) $data['job_classification_id'];
-            $childIds = \App\Models\JobClassification::query()->where('parent_id', $classId)->pluck('id')->all();
+            $childIds = JobClassification::query()->where('parent_id', $classId)->pluck('id')->all();
             $ids = array_merge([$classId], $childIds);
             $query->whereIn('job_classification_id', $ids);
         }
@@ -137,7 +139,9 @@ class AdminExamController extends BaseController
         $payload = $request->validated();
         $payload['created_by'] = $request->user()->id;
         $payload['status'] = $payload['status'] ?? 'published';
-        $payload['total_questions'] = 0;
+        $payload['is_random'] = (bool) ($payload['is_random'] ?? false);
+        $payload['random_config'] = $payload['random_config'] ?? null;
+        $payload['total_questions'] = $this->totalFromRandomConfig($payload);
         $payload['price'] = $payload['price'] ?? 0;
         $payload['has_negative_marking'] = $payload['has_negative_marking'] ?? false;
         $payload['negative_mark_ratio'] = $payload['negative_mark_ratio'] ?? 0.3333;
@@ -150,14 +154,14 @@ class AdminExamController extends BaseController
         }
 
         if (empty($payload['category_id'])) {
-            $payload['category_id'] = \App\Models\ExamCategory::query()->firstOrCreate(
+            $payload['category_id'] = ExamCategory::query()->firstOrCreate(
                 ['slug' => 'general'],
                 ['name' => 'عمومی', 'icon' => 'book']
             )->id;
         }
 
         $exam = Exam::query()->create($payload);
-        app(\App\Services\AuditLogService::class)->log('exam.created', $exam, null, $exam->only(['title', 'status', 'slug']));
+        app(AuditLogService::class)->log('exam.created', $exam, null, $exam->only(['title', 'status', 'slug']));
 
         return $this->successResponse(
             $this->detailItem($exam->fresh()->load(['category', 'classification'])->loadCount(['questions', 'attempts'])),
@@ -175,8 +179,18 @@ class AdminExamController extends BaseController
         }
 
         $old = $exam->only(['title', 'status', 'slug', 'price']);
-        $exam->update($request->validated());
-        app(\App\Services\AuditLogService::class)->log('exam.updated', $exam, $old, $exam->fresh()->only(['title', 'status', 'slug', 'price']));
+        $payload = $request->validated();
+        if (array_key_exists('random_config', $payload) || array_key_exists('is_random', $payload)) {
+            $isRandom = (bool) ($payload['is_random'] ?? $exam->is_random);
+            if ($isRandom) {
+                $payload['total_questions'] = $this->totalFromRandomConfig([
+                    'is_random' => true,
+                    'random_config' => $payload['random_config'] ?? $exam->random_config,
+                ]);
+            }
+        }
+        $exam->update($payload);
+        app(AuditLogService::class)->log('exam.updated', $exam, $old, $exam->fresh()->only(['title', 'status', 'slug', 'price']));
 
         return $this->successResponse(
             $this->detailItem($exam->fresh()->load(['category', 'classification'])->loadCount(['questions', 'attempts'])),
@@ -192,7 +206,7 @@ class AdminExamController extends BaseController
             return $this->errorResponse('آزمون یافت نشد.', 404);
         }
 
-        app(\App\Services\AuditLogService::class)->log('exam.archived', $exam, $exam->only(['title', 'status']), ['status' => 'archived']);
+        app(AuditLogService::class)->log('exam.archived', $exam, $exam->only(['title', 'status']), ['status' => 'archived']);
         $exam->update(['status' => 'archived']);
 
         return $this->successResponse(null, 'آزمون بایگانی شد.');
@@ -468,6 +482,7 @@ class AdminExamController extends BaseController
             'has_negative_marking' => (bool) $exam->has_negative_marking,
             'negative_mark_ratio' => (float) ($exam->negative_mark_ratio ?? 0.3333),
             'status' => $exam->status,
+            'is_random' => (bool) $exam->is_random,
             'created_at' => $exam->created_at?->toIso8601String(),
         ];
     }
@@ -480,6 +495,23 @@ class AdminExamController extends BaseController
             'classification_name' => $exam->classification?->name,
             'description' => $exam->description,
             'job_post_title' => $exam->jobPost?->title,
+            'random_config' => $exam->random_config,
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    protected function totalFromRandomConfig(array $payload): int
+    {
+        if (! ($payload['is_random'] ?? false)) {
+            return 0;
+        }
+        $subjects = $payload['random_config']['subjects'] ?? [];
+        if (! is_array($subjects)) {
+            return 0;
+        }
+
+        return (int) array_sum(array_map('intval', $subjects));
     }
 }

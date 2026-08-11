@@ -1159,18 +1159,6 @@ parameters:
 			path: app/Http/Controllers/Api/SearchController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$subscription_expires_at\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/Api/SubscriptionController.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Services\\SubscriptionService\:\:activate\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/Api/SubscriptionController.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
 			identifier: property.notFound
 			count: 1
@@ -1184,12 +1172,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\|string\)\: array\{id\: int, type\: ''deposit''\|''purchase''\|''refund''\|''withdrawal'', amount\: int, status\: ''failed''\|''pending''\|''success'', description\: string\|null, invoice_number\: string\|null, created_at\: string\|null\}, Closure\(App\\Models\\Transaction\)\: array\{id\: int, type\: ''deposit''\|''purchase''\|''refund''\|''withdrawal'', amount\: int, status\: ''failed''\|''pending''\|''success'', description\: string\|null, invoice_number\: string\|null, created_at\: string\|null\} given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/Api/WalletController.php
-
-		-
-			message: '#^Parameter \#1 \$user of method App\\Services\\PaymentService\:\:depositToWallet\(\) expects App\\Models\\User, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Http/Controllers/Api/WalletController.php

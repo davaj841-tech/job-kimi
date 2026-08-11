@@ -22,7 +22,6 @@ class ExamStoreRequest extends FormRequest
     }
 
     /** @return array<string, mixed> */
-
     public function rules(): array
     {
         return [
@@ -52,11 +51,15 @@ class ExamStoreRequest extends FormRequest
             'price' => ['required_if:is_free,false', 'numeric', 'min:0'],
             'subscription_required' => ['required', 'in:free,paid,any'],
             'status' => ['sometimes', 'in:draft,published,archived'],
+            'is_random' => ['sometimes', 'boolean'],
+            'random_config' => ['nullable', 'array'],
+            'random_config.prefer_frequent' => ['sometimes', 'boolean'],
+            'random_config.subjects' => ['nullable', 'array'],
+            'random_config.subjects.*' => ['integer', 'min:0', 'max:200'],
         ];
     }
 
     /** @return array<string, string> */
-
     public function messages(): array
     {
         return [

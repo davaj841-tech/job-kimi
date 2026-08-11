@@ -1,36 +1,46 @@
 <template>
-  <div class="px-4 py-4">
-    <h1 class="mb-4 section-title">بلاگ استخدامی</h1>
+  <PageShell title="بلاگ استخدامی" subtitle="نکات و راهنماهای آمادگی آزمون">
     <LoadingSpinner v-if="loading" />
-    <div v-else class="space-y-2">
-      <RouterLink
-        v-for="post in posts"
-        :key="post.id"
-        :to="`/blog/${post.slug}`"
-        class="card-soft block p-3"
-      >
-        <p class="text-sm font-bold">{{ post.title }}</p>
-        <p class="mt-1 line-clamp-2 text-xs text-ink-muted">{{ post.excerpt }}</p>
-        <p class="mt-2 text-[11px] text-ink-muted">{{ post.category }} · {{ post.author_name }}</p>
-      </RouterLink>
-    </div>
-  </div>
+    <ul
+      v-else
+      class="page-card divide-y divide-surface-line overflow-hidden"
+    >
+      <li v-for="post in posts" :key="post.id">
+        <RouterLink
+          :to="`/blog/${post.slug}`"
+          class="block px-4 py-4 transition hover:bg-surface-page sm:px-5"
+        >
+          <p class="text-sm font-bold text-desk-text sm:text-base">{{ post.title }}</p>
+          <p class="mt-1 line-clamp-2 text-sm leading-6 text-desk-muted">
+            {{ post.excerpt }}
+          </p>
+          <p class="mt-2 text-[11px] text-desk-muted">
+            {{ post.category }} · {{ post.author_name }}
+          </p>
+        </RouterLink>
+      </li>
+      <li v-if="!posts.length" class="px-4 py-12 text-center text-sm text-desk-muted">
+        مطلبی منتشر نشده است.
+      </li>
+    </ul>
+  </PageShell>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
-import api from '../../api/client';
-import LoadingSpinner from '../../components/LoadingSpinner.vue';
+import { onMounted, ref } from 'vue'
+import api from '../../api/client'
+import LoadingSpinner from '../../components/LoadingSpinner.vue'
+import PageShell from '../../components/layout/PageShell.vue'
 
-const posts = ref([]);
-const loading = ref(true);
+const posts = ref([])
+const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const { data } = await api.get('/blog-posts');
-    posts.value = data.data?.data || data.data || [];
+    const { data } = await api.get('/blog-posts')
+    posts.value = data.data?.data || data.data || []
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-});
+})
 </script>

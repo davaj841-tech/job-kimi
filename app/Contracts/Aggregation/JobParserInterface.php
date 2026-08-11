@@ -10,7 +10,6 @@ interface JobParserInterface
     public function parserType(): string;
 
     /**
-     * @param  mixed  $payload
      * @return array<int, array<string, mixed>>
      */
     public function parse(mixed $payload, array $context = []): array;

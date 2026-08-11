@@ -51,7 +51,7 @@ class OtpAuthService
         );
 
         $user->update([
-            'otp_code' => $code,
+            'otp_code' => $this->hashOtp($code),
             'otp_expires_at' => now()->addMinutes(2),
         ]);
 
@@ -96,7 +96,7 @@ class OtpAuthService
             ];
         }
 
-        if ($user->otp_code !== $code || $user->otp_expires_at === null || $user->otp_expires_at->isPast()) {
+        if (! $this->otpMatches($user->otp_code, $code) || $user->otp_expires_at === null || $user->otp_expires_at->isPast()) {
             $attempts = (int) $user->failed_login_attempts + 1;
             $payload = ['failed_login_attempts' => $attempts];
             if ($attempts >= 5) {
@@ -172,5 +172,24 @@ class OtpAuthService
     protected function isLocked(User $user): bool
     {
         return $user->locked_until !== null && $user->locked_until->isFuture();
+    }
+
+    protected function hashOtp(string $code): string
+    {
+        return hash_hmac('sha256', $code, (string) config('app.key'));
+    }
+
+    protected function otpMatches(?string $stored, string $code): bool
+    {
+        if ($stored === null || $stored === '') {
+            return false;
+        }
+
+        if (hash_equals($stored, $this->hashOtp($code))) {
+            return true;
+        }
+
+        // Legacy plaintext codes (pre-hash column / in-flight OTPs).
+        return hash_equals($stored, $code);
     }
 }

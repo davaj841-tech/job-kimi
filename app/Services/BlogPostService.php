@@ -14,11 +14,8 @@ class BlogPostService
     ) {}
 
     /**
-
      * @param  array<string, mixed>  $filters
-
      */
-
     public function getPublishedList(array $filters): LengthAwarePaginator
     {
         return $this->blogPostRepository->getPublished($filters);
@@ -65,11 +62,8 @@ class BlogPostService
     }
 
     /**
-
      * @param  array<string, mixed>  $data
-
      */
-
     public function create(array $data): BlogPost
     {
         if (empty($data['slug'])) {
@@ -82,11 +76,8 @@ class BlogPostService
     }
 
     /**
-
      * @param  array<string, mixed>  $data
-
      */
-
     public function update(BlogPost $post, array $data): BlogPost
     {
         $post->update($data);

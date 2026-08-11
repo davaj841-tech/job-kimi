@@ -8,10 +8,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>جاب‌آزمون</title>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <!-- Fallback if Estedad bundle fails to load -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" href="/icons/icon-192.png">
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/icons/maskable-icon-152.png">
     @vite(['resources/css/app.css', 'resources/js/app.ts'])
 </head>
 <body class="bg-surface-page">

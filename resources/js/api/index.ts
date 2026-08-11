@@ -1,4 +1,8 @@
-import axios, { type AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
+import axios, {
+  type AxiosError,
+  type AxiosInstance,
+  type InternalAxiosRequestConfig,
+} from 'axios'
 
 const api: AxiosInstance = axios.create({
   baseURL: '/api/v1',
@@ -28,7 +32,7 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error)
-  },
+  }
 )
 
 export default api

@@ -37,6 +37,6 @@ function track(path: string): void {
 onMounted(() => track(route.fullPath))
 watch(
   () => route.fullPath,
-  (path) => track(path),
+  (path) => track(path)
 )
 </script>

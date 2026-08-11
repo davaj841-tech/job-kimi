@@ -38,14 +38,26 @@ class JobPostRepository
             });
         }
 
-        return $query
-            ->where(function ($q) {
-                $q->whereNull('registration_deadline')
-                    ->orWhereDate('registration_deadline', '>=', now()->toDateString());
-            })
-            ->orderByDesc('is_featured')
-            ->orderByDesc('created_at')
-            ->paginate($filters['per_page'] ?? 15);
+        if (! empty($filters['employment_type'])) {
+            $query->where('employment_type', $filters['employment_type']);
+        }
+
+        $query->where(function ($q) {
+            $q->whereNull('registration_deadline')
+                ->orWhereDate('registration_deadline', '>=', now()->toDateString());
+        });
+
+        $sort = $filters['sort'] ?? 'newest';
+        if ($sort === 'deadline') {
+            $query->orderByRaw('registration_deadline IS NULL')
+                ->orderBy('registration_deadline')
+                ->orderByDesc('is_featured');
+        } else {
+            $query->orderByDesc('is_featured')
+                ->orderByDesc('created_at');
+        }
+
+        return $query->paginate($filters['per_page'] ?? 15);
     }
 
     public function findApproved(int $id): ?JobPost
@@ -74,11 +86,8 @@ class JobPostRepository
     }
 
     /**
-
      * @param  array<string, mixed>  $filters
-
      */
-
     public function getAdminList(array $filters): LengthAwarePaginator
     {
         $query = JobPost::query()
@@ -126,11 +135,8 @@ class JobPostRepository
     }
 
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function getAdminFilterOptions(): array
     {
         $provinceValues = JobPost::query()
@@ -203,11 +209,8 @@ class JobPostRepository
     }
 
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function getFilterOptions(): array
     {
         $base = JobPost::query()->where('status', 'approved');
@@ -281,11 +284,8 @@ class JobPostRepository
     }
 
     /**
-
      * @param  array<string, mixed>  $filters
-
      */
-
     protected function applyLocationFilters($query, array $filters): void
     {
         if (! empty($filters['province'])) {

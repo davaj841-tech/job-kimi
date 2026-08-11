@@ -2,13 +2,24 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Exports\SiteErrorsExport;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\SiteError;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SiteErrorAdminController extends BaseController
 {
+    public function export(Request $request): BinaryFileResponse
+    {
+        $rows = $this->filteredQuery($request)->with('user:id,name,username')->limit(5000)->get();
+        $fileName = 'site-errors-'.now()->format('Ymd-His').'.xlsx';
+
+        return Excel::download(new SiteErrorsExport($rows), $fileName);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -19,29 +30,9 @@ class SiteErrorAdminController extends BaseController
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $q = SiteError::query()->with('user:id,name,username')->latest('last_seen_at');
-
-        if (! empty($data['search'])) {
-            $s = $data['search'];
-            $q->where(function ($w) use ($s) {
-                $w->where('message', 'like', "%{$s}%")
-                    ->orWhere('message_fa', 'like', "%{$s}%")
-                    ->orWhere('exception_class', 'like', "%{$s}%")
-                    ->orWhere('url', 'like', "%{$s}%");
-            });
-        }
-
-        if (! empty($data['level'])) {
-            $q->where('level', $data['level']);
-        }
-
-        if (($data['resolved'] ?? null) === '1') {
-            $q->whereNotNull('resolved_at');
-        } elseif (($data['resolved'] ?? '0') === '0') {
-            $q->whereNull('resolved_at');
-        }
-
-        $rows = $q->paginate($data['per_page'] ?? 20);
+        $rows = $this->filteredQuery($request)
+            ->with('user:id,name,username')
+            ->paginate($data['per_page'] ?? 20);
 
         return $this->successResponse([
             'data' => collect($rows->items())->map(fn (SiteError $e) => [
@@ -106,5 +97,45 @@ class SiteErrorAdminController extends BaseController
         SiteError::query()->whereNotNull('resolved_at')->delete();
 
         return $this->successResponse(null, 'خطاهای حل‌شده پاک شدند.');
+    }
+
+    protected function filteredQuery(Request $request)
+    {
+        $data = $request->validate([
+            'search' => ['nullable', 'string', 'max:200'],
+            'level' => ['nullable', 'string', 'max:20'],
+            'resolved' => ['nullable', 'in:0,1'],
+        ]);
+
+        $q = SiteError::query()->latest('last_seen_at');
+
+        if (! empty($data['search'])) {
+            $s = $data['search'];
+            $q->where(function ($w) use ($s) {
+                $w->where('message', 'like', "%{$s}%")
+                    ->orWhere('message_fa', 'like', "%{$s}%")
+                    ->orWhere('exception_class', 'like', "%{$s}%")
+                    ->orWhere('url', 'like', "%{$s}%");
+            });
+        }
+
+        if (! empty($data['level'])) {
+            $q->where('level', $data['level']);
+        }
+
+        if (($data['resolved'] ?? null) === '1') {
+            $q->whereNotNull('resolved_at');
+        } elseif (($data['resolved'] ?? '0') === '0') {
+            $q->whereNull('resolved_at');
+        }
+
+        return $q;
+    }
+
+    public function autoHeal(\Illuminate\Http\Request $request): JsonResponse
+    {
+        $stats = app(\App\Services\SiteAutoHealService::class)->run($request->boolean('aggressive', false));
+
+        return $this->successResponse($stats, 'خودترمیمی اجرا شد.');
     }
 }

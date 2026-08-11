@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Api\BaseController;
+use App\Models\PaymentGateway;
 use App\Models\Setting;
+use App\Services\AuditLogService;
+use App\Support\SiteThemes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -36,6 +39,9 @@ class SettingsAdminController extends BaseController
             'secondary_color',
             'logo_dark',
             'logo_light',
+        ],
+        'homepage' => [
+            'homepage_layout',
         ],
         'seo' => [
             'meta_title',
@@ -150,6 +156,21 @@ class SettingsAdminController extends BaseController
             if (! in_array($key, $allowed, true)) {
                 continue;
             }
+            if ($key === 'homepage_layout') {
+                $value = SiteThemes::normalize($value);
+                Setting::set('homepage_layout', $value, 'homepage');
+                $palette = SiteThemes::colors($value);
+                Setting::set('primary_color', $palette['primary'], 'theme');
+                Setting::set('secondary_color', $palette['secondary'], 'theme');
+
+                continue;
+            }
+            if ($key === 'primary_color') {
+                $value = SiteThemes::sanitizeHex($value, '#f97316');
+            }
+            if ($key === 'secondary_color') {
+                $value = SiteThemes::sanitizeHex($value, '#0f2744');
+            }
             if (is_bool($value)) {
                 $value = $value ? 'true' : 'false';
             }
@@ -163,7 +184,7 @@ class SettingsAdminController extends BaseController
             $this->syncPaymentGateways($data['values']);
         }
 
-        app(\App\Services\AuditLogService::class)->log('settings.updated', null, null, [
+        app(AuditLogService::class)->log('settings.updated', null, null, [
             'group' => $group,
             'keys' => array_keys($data['values']),
         ]);
@@ -209,8 +230,9 @@ class SettingsAdminController extends BaseController
             'smtp_from_name' => 'جاب‌آزمون',
             'primary_color' => '#f97316',
             'secondary_color' => '#0f2744',
+            'homepage_layout' => 'atlas',
             'payment_gateway' => 'zarinpal',
-            'zarinpal_sandbox' => 'true',
+            'zarinpal_sandbox' => 'false',
             'nextpay_active' => 'false',
             'idpay_active' => 'false',
             'idpay_sandbox' => 'true',
@@ -235,7 +257,7 @@ class SettingsAdminController extends BaseController
     {
         $default = $values['payment_gateway'] ?? Setting::get('payment_gateway', 'zarinpal');
 
-        \App\Models\PaymentGateway::query()->updateOrCreate(
+        PaymentGateway::query()->updateOrCreate(
             ['name' => 'zarinpal'],
             [
                 'display_name' => 'زرین‌پال',
@@ -246,7 +268,7 @@ class SettingsAdminController extends BaseController
             ]
         );
 
-        \App\Models\PaymentGateway::query()->updateOrCreate(
+        PaymentGateway::query()->updateOrCreate(
             ['name' => 'nextpay'],
             [
                 'display_name' => 'نکست‌پی',
@@ -257,7 +279,7 @@ class SettingsAdminController extends BaseController
             ]
         );
 
-        \App\Models\PaymentGateway::query()->updateOrCreate(
+        PaymentGateway::query()->updateOrCreate(
             ['name' => 'idpay'],
             [
                 'display_name' => 'آیدی‌پی',
@@ -269,8 +291,8 @@ class SettingsAdminController extends BaseController
         );
 
         if ($default) {
-            \App\Models\PaymentGateway::query()->where('name', '!=', $default)->update(['is_default' => false]);
-            \App\Models\PaymentGateway::query()->where('name', $default)->update(['is_default' => true]);
+            PaymentGateway::query()->where('name', '!=', $default)->update(['is_default' => false]);
+            PaymentGateway::query()->where('name', $default)->update(['is_default' => true]);
         }
     }
 }

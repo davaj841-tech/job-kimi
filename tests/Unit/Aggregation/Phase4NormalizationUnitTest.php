@@ -13,7 +13,7 @@ class Phase4NormalizationUnitTest extends TestCase
 {
     public function test_persian_text_normalizes_whitespace_and_zwnj(): void
     {
-        $raw = "  کارشناس   اداری  ";
+        $raw = '  کارشناس   اداری  ';
         $this->assertSame('کارشناس اداری', PersianText::normalize($raw));
     }
 

@@ -11,6 +11,10 @@ class SiteErrorLogger
     public function report(Throwable $e, array $context = []): void
     {
         try {
+            if ($this->shouldIgnore($e)) {
+                return;
+            }
+
             $message = Str::limit($e->getMessage() ?: class_basename($e), 900);
             $file = Str::limit((string) $e->getFile(), 480);
             $line = (int) $e->getLine();
@@ -54,6 +58,16 @@ class SiteErrorLogger
         } catch (Throwable) {
             // never break the app because of logging
         }
+    }
+
+    protected function shouldIgnore(Throwable $e): bool
+    {
+        $hay = $e->getMessage().' '.$e->getFile();
+
+        return str_contains($hay, 'telescope_entries')
+            || str_contains($hay, 'vendor'.DIRECTORY_SEPARATOR.'psy'.DIRECTORY_SEPARATOR.'psysh')
+            || str_contains($hay, 'ParseErrorException')
+            || str_contains($hay, 'The "--columns" option does not exist');
     }
 
     protected function translate(Throwable $e, string $message): string

@@ -8,7 +8,10 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Morilog\Jalali\Jalalian;
 
 class UserResource extends Resource
 {
@@ -24,54 +27,57 @@ class UserResource extends Resource
 
     protected static ?string $navigationGroup = 'مدیریت کاربران';
 
+    protected static ?int $navigationSort = 1;
+
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('mobile')
-                ->label('موبایل')
-                ->required()
-                ->unique(ignoreRecord: true)
-                ->helperText('شماره موبایل ۱۱ رقمی برای ورود با OTP'),
-            Forms\Components\TextInput::make('name')
-                ->label('نام')
-                ->helperText('نام نمایشی کاربر'),
-            Forms\Components\TextInput::make('email')
-                ->label('ایمیل')
-                ->email()
-                ->helperText('ایمیل اختیاری کاربر'),
-            Forms\Components\TextInput::make('national_code')
-                ->label('کد ملی')
-                ->helperText('کد ملی ۱۰ رقمی ایران'),
-            Forms\Components\Select::make('role')
-                ->label('نقش')
-                ->options([
-                    'jobseeker' => 'کارجو',
-                    'employer' => 'کارفرما',
-                    'operator' => 'اپراتور',
-                    'admin' => 'ادمین',
-                ])
-                ->required()
-                ->helperText('سطح دسترسی کاربر در سامانه'),
-            Forms\Components\TextInput::make('wallet_balance')
-                ->label('موجودی کیف پول')
-                ->numeric()
-                ->suffix('ریال')
-                ->helperText('موجودی کیف پول به ریال'),
-            Forms\Components\Select::make('subscription_plan_id')
-                ->label('پلن اشتراک')
-                ->relationship('subscriptionPlan', 'name')
-                ->helperText('پلن اشتراک فعال کاربر'),
-            Forms\Components\DateTimePicker::make('subscription_expires_at')
-                ->label('انقضای اشتراک')
-                ->helperText('تاریخ پایان اشتراک'),
-            Forms\Components\TextInput::make('password')
-                ->label('رمز عبور')
-                ->password()
-                ->dehydrated(fn ($state) => filled($state))
-                ->helperText('فقط برای ورود به پنل ادمین'),
-            Forms\Components\Toggle::make('is_verified')
-                ->label('تایید شده')
-                ->helperText('آیا موبایل کاربر تایید شده است'),
+            Forms\Components\Section::make('اطلاعات کاربر')
+                ->columns(2)
+                ->schema([
+                    Forms\Components\TextInput::make('mobile')
+                        ->label('موبایل')
+                        ->required()
+                        ->unique(ignoreRecord: true),
+                    Forms\Components\TextInput::make('name')
+                        ->label('نام'),
+                    Forms\Components\TextInput::make('email')
+                        ->label('ایمیل')
+                        ->email()
+                        ->unique(ignoreRecord: true),
+                    Forms\Components\Select::make('role')
+                        ->label('نقش')
+                        ->options([
+                            'jobseeker' => 'کارجو',
+                            'employer' => 'کارفرما',
+                            'operator' => 'اپراتور',
+                            'admin' => 'ادمین',
+                        ])
+                        ->required(),
+                    Forms\Components\Select::make('status')
+                        ->label('وضعیت')
+                        ->options([
+                            'active' => 'فعال',
+                            'blocked' => 'مسدود',
+                        ])
+                        ->required()
+                        ->default('active'),
+                    Forms\Components\Toggle::make('is_verified')
+                        ->label('تایید شده'),
+                    Forms\Components\TextInput::make('wallet_balance')
+                        ->label('موجودی کیف پول')
+                        ->numeric()
+                        ->suffix('ریال'),
+                    Forms\Components\Select::make('subscription_plan_id')
+                        ->label('پلن اشتراک')
+                        ->relationship('subscriptionPlan', 'name'),
+                    Forms\Components\DateTimePicker::make('subscription_expires_at')
+                        ->label('انقضای اشتراک'),
+                    Forms\Components\TextInput::make('password')
+                        ->label('رمز عبور')
+                        ->password()
+                        ->dehydrated(fn ($state) => filled($state)),
+                ]),
         ]);
     }
 
@@ -79,21 +85,94 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('mobile')->label('موبایل')->searchable(),
-                Tables\Columns\TextColumn::make('name')->label('نام')->searchable(),
-                Tables\Columns\TextColumn::make('role')->label('نقش')->badge(),
-                Tables\Columns\TextColumn::make('wallet_balance')->label('کیف پول')->suffix(' ریال'),
-                Tables\Columns\IconColumn::make('is_verified')->label('تایید')->boolean(),
-                Tables\Columns\TextColumn::make('subscriptionPlan.name')->label('اشتراک'),
+                Tables\Columns\TextColumn::make('name')
+                    ->label('نام')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold'),
+                Tables\Columns\TextColumn::make('mobile')
+                    ->label('موبایل')
+                    ->searchable()
+                    ->copyable()
+                    ->icon('heroicon-m-phone'),
+                Tables\Columns\TextColumn::make('role')
+                    ->label('نقش')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'admin' => 'danger',
+                        'operator' => 'warning',
+                        'employer' => 'info',
+                        default => 'success',
+                    }),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('وضعیت')
+                    ->badge()
+                    ->color(fn (string $state): string => $state === 'active' ? 'success' : 'danger'),
+                Tables\Columns\TextColumn::make('wallet_balance')
+                    ->label('موجودی')
+                    ->numeric(decimalPlaces: 0)
+                    ->suffix(' ریال')
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('is_verified')
+                    ->label('تایید')
+                    ->boolean(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('ثبت‌نام')
+                    ->formatStateUsing(fn ($state) => $state
+                        ? Jalalian::fromDateTime($state)->format('Y/m/d H:i')
+                        : '—')
+                    ->sortable()
+                    ->toggleable(),
+            ])
+            ->filters([
+                SelectFilter::make('role')
+                    ->label('نقش')
+                    ->options([
+                        'jobseeker' => 'کارجو',
+                        'employer' => 'کارفرما',
+                        'operator' => 'اپراتور',
+                        'admin' => 'ادمین',
+                    ]),
+                SelectFilter::make('status')
+                    ->label('وضعیت')
+                    ->options([
+                        'active' => 'فعال',
+                        'blocked' => 'مسدود',
+                    ]),
+                Tables\Filters\Filter::make('created_at')
+                    ->label('تاریخ ثبت‌نام')
+                    ->form([
+                        Forms\Components\DatePicker::make('from')->label('از'),
+                        Forms\Components\DatePicker::make('until')->label('تا'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['from'] ?? null, fn ($q, $v) => $q->whereDate('created_at', '>=', $v))
+                            ->when($data['until'] ?? null, fn ($q, $v) => $q->whereDate('created_at', '<=', $v));
+                    }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->label('ویرایش'),
+                ActionGroup::make([
+                    Tables\Actions\EditAction::make()->label('ویرایش'),
+                    Tables\Actions\DeleteAction::make()->label('حذف'),
+                ])->label('عملیات'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
+                    Tables\Actions\DeleteBulkAction::make()->label('حذف انتخاب‌شده‌ها'),
+                    Tables\Actions\BulkAction::make('activate')
+                        ->label('فعال‌سازی')
+                        ->icon('heroicon-o-check')
+                        ->action(fn ($records) => $records->each->update(['status' => 'active'])),
+                    Tables\Actions\BulkAction::make('deactivate')
+                        ->label('مسدودسازی')
+                        ->icon('heroicon-o-x-mark')
+                        ->color('warning')
+                        ->action(fn ($records) => $records->each->update(['status' => 'blocked'])),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->poll('30s');
     }
 
     public static function getPages(): array

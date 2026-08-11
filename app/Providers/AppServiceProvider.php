@@ -11,17 +11,23 @@ use App\Events\JobPostApproved;
 use App\Events\PaymentSuccessful;
 use App\Events\SubscriptionExpired;
 use App\Events\UserRegistered;
+use App\Helpers\IpHelper;
 use App\Listeners\GenerateInvoice;
 use App\Listeners\NotifyUserOfApproval;
 use App\Listeners\SendExpiryReminder;
 use App\Listeners\SendWelcomeNotification;
 use App\Listeners\UpdateUserStats;
+use App\Models\Feature;
+use App\Observers\FeatureObserver;
 use App\Services\Aggregation\CrawlerResolver;
 use App\Services\Aggregation\DuplicateDetector;
 use App\Services\Aggregation\JobNormalizer;
 use App\Services\Aggregation\JobPublisher;
 use App\Services\Aggregation\JobSourceManager;
 use App\Services\Aggregation\JobValidator;
+use App\Services\Aggregation\Parsers\BoardListingHtmlParser;
+use App\Services\Aggregation\Parsers\EmploymentKeywordRssParser;
+use App\Services\Aggregation\Parsers\OfficialAnnouncementHtmlParser;
 use App\Services\Aggregation\Parsers\SourceParserRegistry;
 use App\Services\Aggregation\SafeHttpFetcher;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -35,6 +41,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->singleton(IpHelper::class);
+
         $this->app->singleton(JobNormalizerInterface::class, JobNormalizer::class);
         $this->app->singleton(JobValidatorInterface::class, JobValidator::class);
         $this->app->singleton(DuplicateDetectorInterface::class, DuplicateDetector::class);
@@ -42,8 +50,9 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(SourceParserRegistry::class, function ($app) {
             return new SourceParserRegistry([
-                $app->make(\App\Services\Aggregation\Parsers\EmploymentKeywordRssParser::class),
-                $app->make(\App\Services\Aggregation\Parsers\OfficialAnnouncementHtmlParser::class),
+                $app->make(EmploymentKeywordRssParser::class),
+                $app->make(OfficialAnnouncementHtmlParser::class),
+                $app->make(BoardListingHtmlParser::class),
             ]);
         });
 
@@ -68,6 +77,13 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Feature::observe(FeatureObserver::class);
+
+        Request::macro('trustedIp', function (): ?string {
+            /** @var Request $this */
+            return app(IpHelper::class)->getClientIp($this);
+        });
+
         Event::listen(UserRegistered::class, SendWelcomeNotification::class);
         Event::listen(ExamCompleted::class, UpdateUserStats::class);
         Event::listen(PaymentSuccessful::class, GenerateInvoice::class);

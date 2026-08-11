@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             PaymentGatewaySeeder::class,
             PilotJobSourceSeeder::class,
+            FeatureSeeder::class,
+            ContentTemplateSeeder::class,
         ]);
     }
 }

@@ -5,8 +5,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { Bar } from 'vue-chartjs';
+import { computed } from 'vue'
+import { Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,14 +14,14 @@ import {
   BarElement,
   Tooltip,
   Legend,
-} from 'chart.js';
+} from 'chart.js'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 const props = defineProps({
   data: { type: Array, default: () => [] },
   color: { type: String, default: '#0f2744' },
-});
+})
 
 const chartData = computed(() => ({
   labels: props.data.map((d) => formatLabel(d.date)),
@@ -34,24 +34,30 @@ const chartData = computed(() => ({
       maxBarThickness: 18,
     },
   ],
-}));
+}))
 
 const options = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: { legend: { display: false } },
   scales: {
-    x: { grid: { display: false }, ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+    x: {
+      grid: { display: false },
+      ticks: { maxTicksLimit: 8, font: { size: 10 } },
+    },
     y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } } },
   },
-};
+}
 
 function formatLabel(date) {
-  if (!date) return '';
+  if (!date) return ''
   try {
-    return new Date(date).toLocaleDateString('fa-IR', { month: 'numeric', day: 'numeric' });
+    return new Date(date).toLocaleDateString('fa-IR', {
+      month: 'numeric',
+      day: 'numeric',
+    })
   } catch {
-    return String(date);
+    return String(date)
   }
 }
 </script>

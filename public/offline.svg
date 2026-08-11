@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label=""AD'�F">
+  <rect width="128" height="128" rx="24" fill="#f5f5f5"/>
+  <g fill="none" stroke="#ef394e" stroke-width="8" stroke-linecap="round">
+    <path d="M32 72c12-20 52-20 64 0"/>
+    <path d="M44 84c8-12 32-12 40 0"/>
+    <circle cx="64" cy="100" r="5" fill="#ef394e" stroke="none"/>
+    <path d="M40 40 L88 88" stroke="#94a3b8" stroke-width="10"/>
+  </g>
+</svg>

@@ -2,6 +2,7 @@
 
 namespace App\Services\Payment;
 
+use App\Models\PaymentGateway;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +21,7 @@ class ZarinPalGateway implements PaymentGatewayInterface
 
     protected function baseUrl(): string
     {
-        $sandbox = filter_var(Setting::get('zarinpal_sandbox', 'true'), FILTER_VALIDATE_BOOLEAN);
+        $sandbox = Setting::getBool('zarinpal_sandbox', (bool) config('services.zarinpal.sandbox', false));
 
         return $sandbox
             ? 'https://sandbox.zarinpal.com'
@@ -29,8 +30,9 @@ class ZarinPalGateway implements PaymentGatewayInterface
 
     protected function merchantId(): string
     {
-        return (string) (Setting::get('zarinpal_merchant_id')
-            ?: optional(\App\Models\PaymentGateway::query()->where('name', 'zarinpal')->first())->merchant_id
+        return (string) (Setting::getFilled('zarinpal_merchant_id')
+            ?: optional(PaymentGateway::query()->where('name', 'zarinpal')->first())->merchant_id
+            ?: config('services.zarinpal.merchant_id')
             ?: '');
     }
 

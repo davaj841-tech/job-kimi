@@ -4,14 +4,19 @@
       <div class="mb-6 flex items-center justify-between">
         <div>
           <h2 class="desk-section-title">از وبلاگ جاب‌آزمون</h2>
-          <p class="mt-1 text-sm text-desk-muted">راهنماها و نکات کاربردی برای قبولی</p>
+          <p class="mt-1 text-sm text-desk-muted">
+            راهنماها و نکات کاربردی برای قبولی
+          </p>
         </div>
-        <RouterLink to="/blog" class="text-sm font-bold text-desk-orange hover:underline">
+        <RouterLink
+          to="/blog"
+          class="text-sm font-bold text-desk-orange hover:underline"
+        >
           همه مقالات
         </RouterLink>
       </div>
 
-      <div class="grid grid-cols-4 gap-5">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <RouterLink
           v-for="post in displayPosts"
           :key="post.id || post.slug || post.title"
@@ -25,11 +30,19 @@
             <DesktopIcon name="book" :size="30" class="text-white" />
           </div>
           <div class="p-4 text-right">
-            <div class="mb-2 flex flex-wrap items-center justify-end gap-2 text-[11px] text-desk-muted">
-              <span class="rounded-md bg-white px-2 py-0.5">{{ post.category || 'عمومی' }}</span>
-              <span>{{ formatDate(post.published_at || post.created_at) }}</span>
+            <div
+              class="mb-2 flex flex-wrap items-center justify-end gap-2 text-[11px] text-desk-muted"
+            >
+              <span class="rounded-md bg-white px-2 py-0.5">{{
+                post.category || 'عمومی'
+              }}</span>
+              <span>{{
+                formatDate(post.published_at || post.created_at)
+              }}</span>
             </div>
-            <h3 class="line-clamp-2 text-base font-semibold leading-7 text-desk-text">
+            <h3
+              class="line-clamp-2 text-base font-semibold leading-7 text-desk-text"
+            >
               {{ post.title }}
             </h3>
           </div>
@@ -40,13 +53,13 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { formatDate } from '../../utils/format';
-import DesktopIcon from '../DesktopIcon.vue';
+import { computed } from 'vue'
+import { formatDate } from '../../utils/format'
+import DesktopIcon from '../DesktopIcon.vue'
 
 const props = defineProps({
   posts: { type: Array, default: () => [] },
-});
+})
 
 const fallbackPosts = [
   {
@@ -73,15 +86,15 @@ const fallbackPosts = [
     category: 'تکنیک',
     created_at: '2024-03-15',
   },
-];
+]
 
-const tints = ['bg-desk-blue', 'bg-desk-orange', 'bg-[#0f766e]', 'bg-[#7c3aed]'];
+const tints = ['bg-desk-blue', 'bg-desk-orange', 'bg-[#0f766e]', 'bg-[#7c3aed]']
 
 const displayPosts = computed(() => {
-  const source = props.posts?.length ? props.posts : fallbackPosts;
+  const source = props.posts?.length ? props.posts : fallbackPosts
   return source.slice(0, 4).map((post, i) => ({
     ...post,
     tint: tints[i % tints.length],
-  }));
-});
+  }))
+})
 </script>

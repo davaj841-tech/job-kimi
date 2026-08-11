@@ -267,6 +267,127 @@ Resume JSON:
     }
 
     /**
+     * Write a Persian professional summary for the resume builder.
+     *
+     * @param  array<string, mixed>  $context
+     * @return array{suggestion: string, ai_content_id: int}
+     */
+    public function writeResumeSummary(array $context): array
+    {
+        if (! $this->isEnabled()) {
+            throw new \RuntimeException('سرویس هوش مصنوعی غیرفعال است.');
+        }
+
+        $this->ensureWithinDailyLimit('resume_tip', (int) Setting::get('ai_resume_limit_per_day', 5));
+
+        $title = (string) ($context['title'] ?? $context['target_job'] ?? 'کارشناس');
+        $prompt = 'Write a compelling 2-3 sentence professional resume summary in Persian (Farsi) for an Iranian job seeker. Be concise and ATS-friendly. Return JSON object: {"suggestion":"..."}. Context: '.json_encode($context, JSON_UNESCAPED_UNICODE).' Job title/target: '.$title;
+
+        $raw = $this->chat($prompt);
+        $obj = $this->parseJsonObject($raw);
+        $suggestion = trim((string) ($obj['suggestion'] ?? $obj['summary'] ?? ''));
+        if ($suggestion === '') {
+            $suggestion = trim($this->stripCodeFences($raw));
+        }
+        if ($suggestion === '' || str_starts_with($suggestion, '{')) {
+            throw new \RuntimeException('پاسخ AI برای خلاصه رزومه نامعتبر است.');
+        }
+
+        $aiContent = AiContent::query()->create([
+            'type' => 'resume_tip',
+            'prompt' => $prompt,
+            'generated_content' => $suggestion,
+            'reviewed_by' => null,
+            'status' => 'pending',
+            'metadata' => ['field' => 'summary'],
+        ]);
+
+        return ['suggestion' => $suggestion, 'ai_content_id' => $aiContent->id];
+    }
+
+    /**
+     * Enhance a single experience description.
+     *
+     * @return array{enhanced: string, ai_content_id: int}
+     */
+    public function enhanceExperienceDescription(string $title, string $description): array
+    {
+        if (! $this->isEnabled()) {
+            throw new \RuntimeException('سرویس هوش مصنوعی غیرفعال است.');
+        }
+
+        $this->ensureWithinDailyLimit('resume_tip', (int) Setting::get('ai_resume_limit_per_day', 5));
+
+        $prompt = 'Enhance this Persian job experience for an ATS-friendly Iranian resume. Use action verbs and quantify achievements when possible. Keep 3-4 short bullet lines separated by newline. Return JSON: {"enhanced":"..."}. Title: '.$title."\nDescription: ".$description;
+
+        $raw = $this->chat($prompt);
+        $obj = $this->parseJsonObject($raw);
+        $enhanced = trim((string) ($obj['enhanced'] ?? $obj['description'] ?? ''));
+        if ($enhanced === '') {
+            $enhanced = trim($this->stripCodeFences($raw));
+        }
+        if ($enhanced === '' || str_starts_with($enhanced, '{')) {
+            throw new \RuntimeException('پاسخ AI برای بهبود سابقه شغلی نامعتبر است.');
+        }
+
+        $aiContent = AiContent::query()->create([
+            'type' => 'resume_tip',
+            'prompt' => $prompt,
+            'generated_content' => $enhanced,
+            'reviewed_by' => null,
+            'status' => 'pending',
+            'metadata' => ['field' => 'experience'],
+        ]);
+
+        return ['enhanced' => $enhanced, 'ai_content_id' => $aiContent->id];
+    }
+
+    /**
+     * Suggest skills for the Iranian job market.
+     *
+     * @param  array<string, mixed>  $context
+     * @return array{skills: array<int, string>, ai_content_id: int}
+     */
+    public function suggestResumeSkills(array $context): array
+    {
+        if (! $this->isEnabled()) {
+            throw new \RuntimeException('سرویس هوش مصنوعی غیرفعال است.');
+        }
+
+        $this->ensureWithinDailyLimit('resume_tip', (int) Setting::get('ai_resume_limit_per_day', 5));
+
+        $prompt = 'Suggest 8-12 relevant skills for an Iranian job seeker. Mix Persian and English terms as common in Iran job ads. Return JSON: {"skills":["..."]}. Context: '.json_encode($context, JSON_UNESCAPED_UNICODE);
+
+        $raw = $this->chat($prompt);
+        $obj = $this->parseJsonObject($raw);
+        $skills = [];
+        if (isset($obj['skills']) && is_array($obj['skills'])) {
+            foreach ($obj['skills'] as $skill) {
+                if (is_string($skill) && trim($skill) !== '') {
+                    $skills[] = Str::limit(trim($skill), 50, '');
+                }
+            }
+        }
+
+        if ($skills === []) {
+            throw new \RuntimeException('پاسخ AI برای پیشنهاد مهارت نامعتبر است.');
+        }
+
+        $skills = array_values(array_unique($skills));
+
+        $aiContent = AiContent::query()->create([
+            'type' => 'resume_tip',
+            'prompt' => $prompt,
+            'generated_content' => json_encode($skills, JSON_UNESCAPED_UNICODE),
+            'reviewed_by' => null,
+            'status' => 'pending',
+            'metadata' => ['field' => 'skills', 'count' => count($skills)],
+        ]);
+
+        return ['skills' => $skills, 'ai_content_id' => $aiContent->id];
+    }
+
+    /**
      * Generate exam questions into AiContent only (Option A — no questions table until approve).
      *
      * @return array{ai_content_id: int, preview: array<int, array<string, mixed>>, count: int}
@@ -396,7 +517,7 @@ Return JSON array: [{question_text, option_a, option_b, option_c, option_d, corr
 
     protected function apiKey(): ?string
     {
-        $key = Setting::get('ai_api_key', env('OPENAI_API_KEY', ''));
+        $key = Setting::getFilled('ai_api_key', env('OPENAI_API_KEY', ''));
 
         return $key !== '' && $key !== null ? (string) $key : null;
     }

@@ -37,11 +37,8 @@ class QuestionsExport implements FromQuery, WithHeadings, WithMapping
     }
 
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function headings(): array
     {
         return [
@@ -59,11 +56,8 @@ class QuestionsExport implements FromQuery, WithHeadings, WithMapping
     }
 
     /**
-
      * @return array<string, mixed>
-
      */
-
     public function map($question): array
     {
         return [

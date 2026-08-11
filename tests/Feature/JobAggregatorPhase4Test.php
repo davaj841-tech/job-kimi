@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\Aggregation\JobCrawlerType;
 use App\Enums\Aggregation\JobEndpointType;
 use App\Enums\Aggregation\JobSourceReliability;
+use App\Http\Requests\Api\JobPostStoreRequest;
 use App\Models\JobPost;
 use App\Models\JobSource;
 use App\Models\JobSourceEndpoint;
@@ -292,7 +293,7 @@ class JobAggregatorPhase4Test extends TestCase
 
     public function test_manual_job_post_store_rules_unchanged_for_required_fields(): void
     {
-        $request = new \App\Http\Requests\Api\JobPostStoreRequest;
+        $request = new JobPostStoreRequest;
         $rules = $request->rules();
 
         $this->assertContains('required', $rules['title']);

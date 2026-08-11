@@ -13,29 +13,33 @@
     >
       ★
     </button>
-    <span v-if="showValue" class="mr-2 text-xs text-slate-500">{{ fa(modelValue || avg) }}</span>
+    <span v-if="showValue" class="mr-2 text-xs text-slate-500">{{
+      fa(modelValue || avg)
+    }}</span>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
-import { toFaDigits } from '../utils/format';
+import { computed, ref } from 'vue'
+import { toFaDigits } from '../utils/format'
 
 const props = defineProps({
   modelValue: { type: Number, default: 0 },
   avg: { type: Number, default: 0 },
   readonly: Boolean,
   showValue: Boolean,
-});
-const emit = defineEmits(['update:modelValue']);
-const hover = ref(0);
-const display = computed(() => hover.value || props.modelValue || Math.round(props.avg || 0));
+})
+const emit = defineEmits(['update:modelValue'])
+const hover = ref(0)
+const display = computed(
+  () => hover.value || props.modelValue || Math.round(props.avg || 0)
+)
 
 function set(n) {
-  if (props.readonly) return;
-  emit('update:modelValue', n);
+  if (props.readonly) return
+  emit('update:modelValue', n)
 }
 function fa(n) {
-  return toFaDigits(Number(n || 0).toFixed(1));
+  return toFaDigits(Number(n || 0).toFixed(1))
 }
 </script>

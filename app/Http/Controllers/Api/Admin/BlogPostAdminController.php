@@ -7,6 +7,7 @@ use App\Http\Requests\Api\BlogPostStoreRequest;
 use App\Http\Resources\BlogPostCollection;
 use App\Http\Resources\BlogPostResource;
 use App\Repositories\BlogPostRepository;
+use App\Services\AuditLogService;
 use App\Services\BlogPostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,6 +51,11 @@ class BlogPostAdminController extends BaseController
 
         $post = $this->blogPostService->create($data);
 
+        app(AuditLogService::class)->log('blog.created', $post, null, [
+            'title' => $post->title,
+            'status' => $post->status,
+        ]);
+
         return $this->successResponse(new BlogPostResource($post->load('creator')), 'پست ایجاد شد.', 201);
     }
 
@@ -68,6 +74,11 @@ class BlogPostAdminController extends BaseController
         }
 
         $updated = $this->blogPostService->update($post, $data);
+
+        app(AuditLogService::class)->log('blog.updated', $updated, null, [
+            'title' => $updated->title,
+            'status' => $updated->status,
+        ]);
 
         return $this->successResponse(new BlogPostResource($updated), 'پست به‌روزرسانی شد.');
     }

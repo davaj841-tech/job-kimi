@@ -4,9 +4,11 @@ namespace App\Services;
 
 use App\Models\Exam;
 use App\Models\ExamAttempt;
+use App\Models\ExamSubject;
 use App\Models\Question;
 use App\Models\User;
 use App\Repositories\ExamRepository;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -56,7 +58,7 @@ class ExamService
             return false;
         }
 
-        /** @var \Illuminate\Support\Carbon $startedAt */
+        /** @var Carbon $startedAt */
         $startedAt = $attempt->started_at;
         $endsAt = $startedAt->copy()->addMinutes($attempt->exam->duration_minutes);
 
@@ -69,11 +71,17 @@ class ExamService
      */
     public function getQuestionsForAttempt(Exam $exam, bool $shuffle = true, ?array $onlyIds = null, ?string $subject = null): Collection
     {
-        $query = $exam->questions();
-
         if ($onlyIds !== null) {
-            $query->whereIn('id', $onlyIds);
+            $questions = Question::query()->whereIn('id', $onlyIds)->get();
+
+            return $shuffle ? $questions->shuffle()->values() : $questions->values();
         }
+
+        if ($exam->is_random) {
+            return app(\App\Services\Exam\RandomExamAssembler::class)->assemble($exam, $subject);
+        }
+
+        $query = $exam->questions();
 
         if ($subject) {
             $query->where('subject', $subject);
@@ -92,19 +100,22 @@ class ExamService
     public function calculateScore(ExamAttempt $attempt, array $answers, ?Collection $questions = null): array
     {
         $attempt->loadMissing('exam');
-        $questions ??= Question::query()
-            ->where('exam_id', $attempt->exam_id)
-            ->when(
-                ! empty($this->cachedQuestionIds($attempt->id)),
-                fn ($q) => $q->whereIn('id', $this->cachedQuestionIds($attempt->id))
-            )
-            ->get()
-            ->keyBy('id');
-
-        if ($questions->isEmpty()) {
-            $questions = Question::query()->where('exam_id', $attempt->exam_id)->get()->keyBy('id');
+        if ($questions === null) {
+            $cacheIds = $this->cachedQuestionIds($attempt->id);
+            if (! empty($cacheIds)) {
+                $questions = Question::query()->whereIn('id', $cacheIds)->get()->keyBy('id');
+            } else {
+                $questions = Question::query()
+                    ->where('exam_id', $attempt->exam_id)
+                    ->get()
+                    ->keyBy('id');
+            }
         } else {
             $questions = $questions->keyBy('id');
+        }
+
+        if ($questions->isEmpty() && ! $attempt->exam?->is_random) {
+            $questions = Question::query()->where('exam_id', $attempt->exam_id)->get()->keyBy('id');
         }
 
         $totalQuestions = max($questions->count(), 1);
@@ -119,6 +130,7 @@ class ExamService
 
             if ($userAnswer === null || $userAnswer === '') {
                 $unanswered++;
+
                 continue;
             }
 
@@ -268,7 +280,7 @@ class ExamService
             if (! isset($bySubject[$subject])) {
                 $bySubject[$subject] = [
                     'subject' => $subject,
-                    'subject_label' => $subject,
+                    'subject_label' => self::subjectDisplayName($subject),
                     'correct' => 0,
                     'wrong' => 0,
                     'blank' => 0,
@@ -285,12 +297,12 @@ class ExamService
             }
         }
 
-        $labels = \App\Models\ExamSubject::query()
+        $labels = ExamSubject::query()
             ->whereIn('slug', array_keys($bySubject))
             ->pluck('name', 'slug');
 
         foreach ($bySubject as $slug => &$row) {
-            $row['subject_label'] = $labels[$slug] ?? $slug;
+            $row['subject_label'] = self::subjectDisplayName($slug, $labels[$slug] ?? null);
             $row['percentage'] = $row['total'] > 0
                 ? round(($row['correct'] / $row['total']) * 100, 1)
                 : 0;
@@ -325,7 +337,7 @@ class ExamService
      */
     public function cacheAttempt(ExamAttempt $attempt, Collection $questions, int $ttlSeconds, bool $isRetryWrong = false): void
     {
-        /** @var \Illuminate\Support\Carbon $startedAt */
+        /** @var Carbon $startedAt */
         $startedAt = $attempt->started_at;
 
         Cache::put($this->cacheKey($attempt->id), [
@@ -370,19 +382,62 @@ class ExamService
      */
     public function formatQuestionsForTaking(Collection $questions): array
     {
-        return $questions->map(fn (Question $q) => [
-            'id' => $q->id,
-            'question_text' => $q->question_text,
-            'question_type' => $q->question_type,
-            'options' => [
-                'a' => $q->option_a,
-                'b' => $q->option_b,
-                'c' => $q->option_c,
-                'd' => $q->option_d,
-            ],
-            'difficulty' => $q->difficulty,
-            'subject' => $q->subject,
-        ])->values()->all();
+        $slugs = $questions->pluck('subject')->filter()->unique()->values()->all();
+        $labels = ExamSubject::query()
+            ->whereIn('slug', $slugs)
+            ->pluck('name', 'slug')
+            ->all();
+
+        return $questions->map(function (Question $q) use ($labels) {
+            $slug = $q->subject ?: 'general';
+
+            return [
+                'id' => $q->id,
+                'question_text' => $q->question_text,
+                'question_type' => $q->question_type,
+                'options' => [
+                    'a' => $q->option_a,
+                    'b' => $q->option_b,
+                    'c' => $q->option_c,
+                    'd' => $q->option_d,
+                ],
+                'difficulty' => $q->difficulty,
+                'subject' => $slug,
+                'subject_name' => self::subjectDisplayName($slug, $labels[$slug] ?? null),
+            ];
+        })->values()->all();
+    }
+
+    /**
+     * نام فارسی درس برای کارنامه و تحلیل (اسلاگ انگلیسی هرگز به کاربر نشان داده نشود).
+     */
+    public static function subjectDisplayName(?string $slug, ?string $label = null): string
+    {
+        $label = trim((string) $label);
+        if ($label !== '' && preg_match('/[^\x00-\x7F]/u', $label)) {
+            return $label;
+        }
+
+        $map = [
+            'islamic' => 'معارف',
+            'literature' => 'ادبیات',
+            'math' => 'ریاضی',
+            'mathematics' => 'ریاضی',
+            'chemistry' => 'شیمی',
+            'physics' => 'فیزیک',
+            'iq' => 'هوش',
+            'intelligence' => 'هوش',
+            'english' => 'انگلیسی',
+            'general' => 'عمومی',
+            'computer' => 'کامپیوتر',
+            'law' => 'حقوق',
+            'accounting' => 'حسابداری',
+            'management' => 'مدیریت',
+        ];
+
+        $key = strtolower(trim((string) ($slug ?: $label)));
+
+        return $map[$key] ?? ($label !== '' ? $label : ($key !== '' ? $key : 'عمومی'));
     }
 
     public function cacheKey(int $attemptId): string

@@ -24,8 +24,6 @@ class JobPostResource extends Resource
 
     protected static ?string $navigationGroup = 'استخدام';
 
-    
-
     public static function form(Form $form): Form
     {
         return $form->schema([

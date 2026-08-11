@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\BaseController;
 use App\Mail\ContactFormMail;
 use App\Models\Ticket;
 use App\Models\TicketReply;

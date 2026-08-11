@@ -4,9 +4,11 @@ namespace App\Actions\Exam;
 
 use App\Models\Exam;
 use App\Models\ExamAttempt;
+use App\Models\Question;
 use App\Models\User;
 use App\Repositories\ExamRepository;
 use App\Services\ExamService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use RuntimeException;
 
@@ -22,7 +24,7 @@ class StartExamAttempt
 
     /**
      * @param  list<int>|null  $onlyQuestionIds
-     * @return array{attempt: ExamAttempt, questions: Collection<int, \App\Models\Question>, ends_at: \Illuminate\Support\Carbon}
+     * @return array{attempt: ExamAttempt, questions: Collection<int, Question>, ends_at: Carbon}
      */
     public function handle(
         User $user,
@@ -66,7 +68,7 @@ class StartExamAttempt
         $ttl = max(60, $exam->duration_minutes * 60);
         $this->exams->cacheAttempt($attempt, $questions, $ttl, $isRetryWrong);
 
-        /** @var \Illuminate\Support\Carbon $startedAt */
+        /** @var Carbon $startedAt */
         $startedAt = $attempt->started_at;
 
         return [

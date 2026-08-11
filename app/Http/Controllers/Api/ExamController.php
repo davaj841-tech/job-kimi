@@ -8,6 +8,8 @@ use App\Http\Resources\ExamCollection;
 use App\Http\Resources\ExamResource;
 use App\Models\Exam;
 use App\Repositories\ExamRepository;
+use App\Services\Exam\ExamCreationService;
+use App\Services\Exam\ExamSubjectAssembler;
 use App\Services\ExamService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,9 +18,29 @@ class ExamController extends BaseController
 {
     public function __construct(
         protected ExamRepository $examRepository,
-        protected ExamService $examService
+        protected ExamService $examService,
+        protected ExamSubjectAssembler $subjectAssembler,
+        protected ExamCreationService $examCreationService,
     ) {}
 
+    /**
+     * فهرست آزمون‌ها
+     *
+     * لیست صفحه‌بندی‌شده آزمون‌های منتشرشده.
+     *
+     * @group آزمون‌ها
+     *
+     * @unauthenticated
+     *
+     * @queryParam category_id integer فیلتر بر اساس دسته‌بندی. Example: 1
+     * @queryParam job_classification_id integer فیلتر رسته شغلی. Example: 2
+     * @queryParam search string جستجو در عنوان. Example: استخدامی
+     * @queryParam is_free boolean فقط آزمون‌های رایگان. Example: 1
+     * @queryParam per_page integer تعداد در هر صفحه. Example: 15
+     * @queryParam sort string مرتب‌سازی. Example: newest
+     *
+     * @response 200 {"success":true,"data":{"data":[],"links":{},"meta":{}}}
+     */
     public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
@@ -33,6 +55,20 @@ class ExamController extends BaseController
         return $this->successResponse((new ExamCollection($exams))->resolve());
     }
 
+    /**
+     * جزئیات آزمون
+     *
+     * دریافت یک آزمون منتشرشده با اسلاگ.
+     *
+     * @group آزمون‌ها
+     *
+     * @unauthenticated
+     *
+     * @urlParam slug string required اسلاگ آزمون. Example: azmoon-estekhdami
+     *
+     * @response 200 {"success":true,"data":{"id":1,"title":"...","subjects":[]}}
+     * @response 404 {"success":false,"message":"آزمون یافت نشد."}
+     */
     public function show(string $slug): JsonResponse
     {
         $exam = $this->examRepository->findBySlug($slug);
@@ -45,79 +81,48 @@ class ExamController extends BaseController
         $exam->user_best_score = $user ? $this->examRepository->userBestScore($user, $exam) : null;
         $exam->is_eligible = $user ? $this->examService->isEligible($user, $exam) : false;
 
-        // دروس موجود در این آزمون (بدون N+1)
-        $countsBySubject = $exam->questions()
-            ->selectRaw('subject, COUNT(*) as aggregate')
-            ->whereNotNull('subject')
-            ->where('subject', '!=', '')
-            ->groupBy('subject')
-            ->pluck('aggregate', 'subject');
-
-        $subjectSlugs = $countsBySubject->keys()->values();
-        $subjects = \App\Models\ExamSubject::query()
-            ->whereIn('slug', $subjectSlugs)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->get(['id', 'name', 'slug', 'icon'])
-            ->map(function ($s) use ($countsBySubject) {
-                return [
-                    'id' => $s->id,
-                    'name' => $s->name,
-                    'slug' => $s->slug,
-                    'icon' => $s->icon,
-                    'question_count' => (int) ($countsBySubject[$s->slug] ?? 0),
-                ];
-            })
-            ->values();
-
-        foreach ($subjectSlugs as $slugVal) {
-            if ($subjects->firstWhere('slug', $slugVal)) {
-                continue;
-            }
-            $subjects->push([
-                'id' => null,
-                'name' => $slugVal,
-                'slug' => $slugVal,
-                'icon' => '📘',
-                'question_count' => (int) ($countsBySubject[$slugVal] ?? 0),
-            ]);
-        }
-
         $data = (new ExamResource($exam))->resolve();
-        $data['subjects'] = $subjects;
+        $data['subjects'] = $this->subjectAssembler->assemble($exam, $user);
 
         return $this->successResponse($data);
     }
 
+    /**
+     * ایجاد آزمون
+     *
+     * ایجاد آزمون جدید (ادمین/اپراتور).
+     *
+     * @group آزمون‌ها
+     *
+     * @authenticated
+     *
+     * @response 201 {"success":true,"message":"آزمون ایجاد شد.","data":{}}
+     * @response 403 {"success":false,"message":"دسترسی غیرمجاز."}
+     */
     public function store(ExamStoreRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $data['created_by'] = $request->user()->id;
-        $data['status'] = $data['status'] ?? 'published';
-        $data['total_questions'] = 0;
-        $data['price'] = $data['price'] ?? 0;
-        $data['has_negative_marking'] = $data['has_negative_marking'] ?? false;
-        $data['negative_mark_ratio'] = $data['negative_mark_ratio'] ?? 0.3333;
-
-        if (blank($data['slug'] ?? null)) {
-            $data['slug'] = \Illuminate\Support\Str::slug($data['title']).'-'.\Illuminate\Support\Str::random(5);
-            if (blank($data['slug'])) {
-                $data['slug'] = 'exam-'.\Illuminate\Support\Str::random(8);
-            }
-        }
-
-        if (empty($data['category_id'])) {
-            $data['category_id'] = \App\Models\ExamCategory::query()->firstOrCreate(
-                ['slug' => 'general'],
-                ['name' => 'عمومی', 'icon' => 'book']
-            )->id;
-        }
-
+        $data = $this->examCreationService->prepareData($request->validated(), $request->user());
         $exam = Exam::query()->create($data);
 
-        return $this->successResponse(new ExamResource($exam->load('category')->loadCount('questions')), 'آزمون ایجاد شد.', 201);
+        return $this->successResponse(
+            new ExamResource($exam->load('category')->loadCount('questions')),
+            'آزمون ایجاد شد.',
+            201
+        );
     }
 
+    /**
+     * به‌روزرسانی آزمون
+     *
+     * @group آزمون‌ها
+     *
+     * @authenticated
+     *
+     * @urlParam id integer required شناسه آزمون. Example: 1
+     *
+     * @response 200 {"success":true,"message":"آزمون به‌روزرسانی شد.","data":{}}
+     * @response 404 {"success":false,"message":"آزمون یافت نشد."}
+     */
     public function update(ExamUpdateRequest $request, int $id): JsonResponse
     {
         $exam = $this->examRepository->findById($id);
@@ -136,6 +141,17 @@ class ExamController extends BaseController
         return $this->successResponse(new ExamResource($exam->fresh()->load('category')->loadCount('questions')), 'آزمون به‌روزرسانی شد.');
     }
 
+    /**
+     * بایگانی آزمون
+     *
+     * @group آزمون‌ها
+     *
+     * @authenticated
+     *
+     * @urlParam id integer required شناسه آزمون. Example: 1
+     *
+     * @response 200 {"success":true,"message":"آزمون بایگانی شد.","data":null}
+     */
     public function destroy(int $id): JsonResponse
     {
         $exam = $this->examRepository->findById($id);

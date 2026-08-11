@@ -88,6 +88,30 @@ class CrawlerRunAdminController extends BaseController
         ]);
     }
 
+    /**
+     * Delete failed/partial crawler runs (and related errors) to keep dashboard fast.
+     */
+    public function pruneFailed(Request $request): JsonResponse
+    {
+        $aggressive = $request->boolean('aggressive', true);
+        $stats = app(\App\Services\SiteAutoHealService::class)->run($aggressive);
+
+        return $this->successResponse($stats, 'وضعیت‌های ناموفق خزش پاک شدند.');
+    }
+
+    public function destroy(int $id): JsonResponse
+    {
+        $run = CrawlerRun::query()->find($id);
+        if (! $run) {
+            return $this->errorResponse('اجرای خزنده یافت نشد.', 404);
+        }
+
+        CrawlerError::query()->where('crawler_run_id', $run->id)->delete();
+        $run->delete();
+
+        return $this->successResponse(null, 'اجرا حذف شد.');
+    }
+
     protected function serializeRun(CrawlerRun $run, bool $withErrors = false): array
     {
         $row = [

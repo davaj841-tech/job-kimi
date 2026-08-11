@@ -21,8 +21,9 @@ class NextPayGateway implements PaymentGatewayInterface
 
     protected function apiKey(): string
     {
-        return (string) (Setting::get('nextpay_api_key')
+        return (string) (Setting::getFilled('nextpay_api_key')
             ?: optional(PaymentGateway::query()->where('name', 'nextpay')->first())->api_key
+            ?: config('services.nextpay.api_key')
             ?: '');
     }
 

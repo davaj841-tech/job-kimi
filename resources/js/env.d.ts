@@ -15,7 +15,9 @@ declare module 'virtual:pwa-register' {
     onRegisterError?: (error: unknown) => void
   }
 
-  export function registerSW(options?: RegisterSWOptions): (reloadPage?: boolean) => Promise<void>
+  export function registerSW(
+    options?: RegisterSWOptions
+  ): (reloadPage?: boolean) => Promise<void>
 }
 
 interface ImportMetaEnv {

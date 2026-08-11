@@ -9,6 +9,7 @@ use App\Services\Auth\OtpAuthService;
 use App\Services\MailConfigService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -106,7 +107,7 @@ class PasswordResetController extends BaseController
             return $this->errorResponse('لینک بازنشانی نامعتبر است.', 422);
         }
 
-        if ($row->created_at && \Illuminate\Support\Carbon::parse($row->created_at)->lt(now()->subMinutes(60))) {
+        if ($row->created_at && Carbon::parse($row->created_at)->lt(now()->subMinutes(60))) {
             return $this->errorResponse('لینک بازنشانی منقضی شده است.', 422);
         }
 

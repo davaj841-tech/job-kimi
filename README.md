@@ -20,23 +20,33 @@ JobAzmoon یک SPA/PWA است با:
 |------|-----------|
 | Frontend کاربر | Vue 3 + Vite + Pinia + Vue Router + TailwindCSS + PWA |
 | Admin SPA | Vue 3 جداگانه در مسیر `/admin` |
-| Backend | Laravel 11 + Sanctum |
-| Admin PHP (اختیاری) | Filament در مسیر `/filament` (نه `/admin`) |
+| Backend | Laravel 11 + Sanctum + Horizon |
+| Admin PHP (اختیاری) | Filament در مسیر `/filament` |
 
 ### امکانات کلیدی
 
-- 📝 آزمون آنلاین با autosave، نمره‌دهی و لیدربورد
-- 💼 آگهی استخدام + تجمیع منابع رسمی (صف `crawlers`)
-- 📄 فروشگاه PDF، اشتراک (Subscription)، کیف پول و درگاه زرین‌پال
-- 🤖 رزومه‌ساز با AI Suggest، تیکت، کوپن، وبلاگ، بنر و صفحات ثابت
+- آزمون آنلاین با autosave، نمره‌دهی و لیدربورد
+- آگهی استخدام + تجمیع منابع رسمی (صف `crawlers`)
+- فروشگاه PDF، اشتراک، کیف پول و درگاه زرین‌پال (verify ایدمپوتنت)
+- رزومه‌ساز با AI Suggest، تیکت، کوپن، وبلاگ، بنر و صفحات ثابت
+- Feature flags (`features` + Filament + `GET /api/v1/features`)
+- مانیتورینگ: Sentry، Horizon، Telescope، گزارش CSP
 
 ### اسکرین‌شات
 
-> Placeholder — اسکرین‌شات‌های واقعی را در `docs/screenshots/` قرار دهید.
-
 | صفحه اصلی | آزمون | پنل ادمین |
 |-----------|--------|-----------|
-| `docs/screenshots/home.png` | `docs/screenshots/exam.png` | `docs/screenshots/admin.png` |
+| ![Home](docs/screenshots/home.png) | ![Exam](docs/screenshots/exam-question.png) | ![Admin](docs/screenshots/admin-dashboard.png) |
+
+| لیست آزمون | نتیجه | موبایل |
+|------------|--------|--------|
+| ![Exams](docs/screenshots/exam-list.png) | ![Result](docs/screenshots/exam-result.png) | ![Mobile](docs/screenshots/mobile-pwa.png) |
+
+| کیف پول | اشتراک | شروع آزمون |
+|---------|--------|------------|
+| ![Wallet](docs/screenshots/wallet.png) | ![Plans](docs/screenshots/subscription.png) | ![Start](docs/screenshots/exam-start.png) |
+
+راهنما و اسکریپت: [`docs/screenshots/README.md`](docs/screenshots/README.md) و `npm run screenshots`
 
 ---
 
@@ -46,7 +56,7 @@ JobAzmoon یک SPA/PWA است با:
 - Composer 2
 - Node.js 18+ و npm
 - MySQL 8 / MariaDB یا SQLite (لوکال)
-- Redis (توصیه برای production: queue / cache / session)
+- Redis (توصیه برای production: queue / cache / session / Horizon)
 - پسوندهای PHP: intl, gd, mbstring, pdo, tokenizer, xml, curl, zip, bcmath
 
 ---
@@ -54,24 +64,17 @@ JobAzmoon یک SPA/PWA است با:
 ## نصب (لوکال)
 
 ```bash
-# ۱. کلون
 git clone https://github.com/davaj841-tech/job-kimi.git
 cd job-kimi
 
-# ۲. وابستگی‌های PHP
 composer install
-
-# ۳. محیط
 cp .env.example .env
 php artisan key:generate
 
-# ۴. دیتابیس (تنظیم DB_* در .env)
+# تنظیم DB_* در .env
 php artisan migrate --seed
-
-# ۵. لینک storage (برای آپلود فایل و Spatie MediaLibrary)
 php artisan storage:link
 
-# ۶. وابستگی‌های JS
 npm install
 npm run build
 ```
@@ -82,23 +85,15 @@ npm run build
 composer run dev
 ```
 
-این دستور همزمان اجرا می‌کند: Laravel Serve + Queue Worker + Logs + Vite
+همزمان: Laravel Serve + Queue Worker + Logs + Vite
 
-### کرون (Scheduler)
+### کرون و صف
 
 ```bash
 * * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1
-```
 
-### Queue Worker
-
-```bash
 php artisan queue:work --queue=crawlers,default --timeout=150
-```
-
-### Horizon (با Redis)
-
-```bash
+# یا با Redis:
 php artisan horizon
 ```
 
@@ -108,58 +103,22 @@ php artisan horizon
 
 ```
 job-kimi/
-├── .github/
-│   └── workflows/
-│       └── ci.yml              # GitHub Actions: Test + Lint + Build
-├── app/
-│   ├── Actions/                # Action Classes (Payment, Wallet, Exam)
-│   ├── Http/
-│   │   └── Controllers/
-│   │       └── Api/            # API Controllers
-│   ├── Models/
-│   ├── Filament/               # Filament Resources
-│   └── ...
-├── bootstrap/
-├── config/
-├── database/
-│   ├── migrations/
-│   ├── factories/
-│   └── seeders/
+├── .github/workflows/ci.yml
+├── app/                    # Actions, Controllers, Filament, Services, …
 ├── docs/
-│   └── screenshots/            # Placeholder برای اسکرین‌شات
-├── lang/                       # فایل‌های ترجمه فارسی
-├── public/
-├── resources/
-│   ├── js/                     # Vue SPA کاربر + PWA
-│   │   ├── admin/              # Vue SPA پنل ادمین
-│   │   ├── components/
-│   │   ├── composables/
-│   │   ├── router/
-│   │   ├── stores/
-│   │   └── views/
-│   └── views/
-├── routes/
-│   ├── api.php                 # Loader
-│   ├── api/                    # Split routes
-│   │   ├── auth.php
-│   │   ├── public.php
-│   │   ├── user.php
-│   │   ├── exam.php
-│   │   ├── payment.php
-│   │   └── admin.php
-│   ├── web.php
-│   └── console.php
-├── storage/
-├── tests/
-│   ├── Feature/
-│   └── Unit/
+│   ├── BACKUP.md           # RTO 4h / RPO 24h
+│   ├── PERFORMANCE.md      # ایندکس‌ها و نکات پرفورمنس
+│   ├── MONITORING_CHECKLIST.md
+│   ├── PRODUCTION_CHECKLIST.md
+│   ├── STAGING_CHECKLIST.md
+│   ├── GITHUB_PROTECTION.md
+│   └── screenshots/
+├── resources/js/           # Vue SPA کاربر + admin + PWA
+├── routes/api/*.php
+├── scripts/backup.sh
+├── scripts/restore.sh
 ├── deploy.sh
-├── composer.json
-├── package.json
-├── phpstan.neon
-├── phpstan-baseline.neon
-├── tailwind.config.js
-├── vite.config.js
+├── tests/
 └── README.md
 ```
 
@@ -170,55 +129,58 @@ job-kimi/
 | Backend | Frontend |
 |---------|----------|
 | Laravel 11 | Vue 3.5 + Composition API |
-| Sanctum (Auth) | Vite 6 |
-| Filament 3 (Admin PHP) | Pinia 2 |
-| Horizon (Queue) | Vue Router 4 |
-| Spatie Permission & MediaLibrary | TailwindCSS 3 |
-| DomPDF | Chart.js |
-| Maatwebsite Excel | KaTeX |
-| Jalali (Shamsi) | vite-plugin-pwa |
-| Predis (Redis) | @vueuse/core |
+| Sanctum | Vite 6 |
+| Filament 3 | Pinia 2 |
+| Horizon | Vue Router 4 |
+| Telescope (اختیاری) | TailwindCSS 3 |
+| Scribe (API docs) | Chart.js / KaTeX |
+| Spatie Permission & MediaLibrary | vite-plugin-pwa |
+| DomPDF / Maatwebsite Excel | Vitest + Testing Library |
+| Sentry (PHP + Vue) | ESLint + Prettier |
+| Predis | @vueuse/core |
 
 ---
 
 ## API
 
-پایه: `/api/v1` (تنظیم‌شده در `bootstrap/app.php`)
+پایه: `/api/v1`
 
-### مستندات
+### مستندات (Scribe)
 
-- UI: [`/api/documentation`](/api/documentation)
-- Spec JSON: [`/api/documentation.json`](/api/documentation.json)
+| نوع | مسیر |
+|-----|------|
+| UI | [`/api/documentation`](/api/documentation) |
+| OpenAPI | [`/api/documentation.openapi`](/api/documentation.openapi) |
+
+بازتولید بعد از تغییر کنترلرها:
+
+```bash
+php artisan scribe:generate
+```
 
 ### نمونه درخواست‌ها
-
-ورود با OTP:
 
 ```http
 POST /api/v1/auth/otp/send
 Content-Type: application/json
 
-{
-  "mobile": "09123456789"
-}
+{ "mobile": "09123456789" }
 ```
-
-لیست آزمون‌ها:
 
 ```http
 GET /api/v1/exams
 ```
-
-شروع آزمون (نیاز به login):
 
 ```http
 POST /api/v1/exams/123/start
 Authorization: Bearer {token}
 ```
 
-> ⚠️ مسیرهای callback زرین‌پال (`/wallet/verify`, `/subscription/verify`) public هستند و نیاز به token ندارند.
+```http
+GET /api/v1/features
+```
 
-مسیرهای route در `routes/api/*.php` تقسیم شده‌اند.
+مسیرهای callback زرین‌پال (`/wallet/verify`, `/subscription/verify`) public هستند و نیاز به token ندارند. مسیرها در `routes/api/*.php` تقسیم شده‌اند.
 
 ---
 
@@ -226,97 +188,106 @@ Authorization: Bearer {token}
 
 | مسیر | نوع | کاربرد |
 |------|-----|--------|
-| `/admin` | Vue SPA | پنل اصلی عملیاتی (کاربران، آزمون، تجمیع، تنظیمات) |
-| `/filament` | Redirect → `/admin` | هدایت به پنل Vue (ادمین عملیاتی) |
-
-متغیر محیطی: `FILAMENT_PATH=filament`
+| `/admin` | Vue SPA | پنل عملیاتی |
+| `/filament` | Filament | منابع PHP (از جمله Feature flags) |
+| `/horizon` | Horizon | مانیتور صف (نیاز به auth) |
+| `/telescope` | Telescope | دیباگ (اگر `TELESCOPE_ENABLED=true`) |
 
 ---
 
 ## متغیرهای محیطی کلیدی
 
-| متغیر | توضیح | مثال |
-|-------|-------|------|
-| `APP_NAME` | نام اپلیکیشن | JobAzmoon |
-| `APP_URL` | آدرس سایت | https://jobazmoon.ir |
-| `DB_DATABASE` | نام دیتابیس | jobazmoon |
-| `QUEUE_CONNECTION` | صف (prod: redis) | redis |
-| `CACHE_STORE` | کش (prod: redis) | redis |
-| `SESSION_DRIVER` | سشن (prod: redis) | redis |
-| `REDIS_CLIENT` | درایور Redis | predis |
-| `ZARINPAL_MERCHANT_ID` | مرچنت زرین‌پال | xxxxxxxx-xxxx-xxxx |
-| `ZARINPAL_SANDBOX` | حالت تست | true / false |
-| `KAVENEGAR_API_KEY` | API کاوه‌نگار | xxxxxxxx |
-| `OPENAI_API_KEY` | کلید OpenAI | sk-... |
-| `TURNSTILE_SITE_KEY` | Cloudflare Turnstile | 0x... |
-| `TURNSTILE_SECRET_KEY` | Secret Turnstile | 0x... |
-| `FILAMENT_PATH` | مسیر Filament | filament |
-
-> 💡 برای production حتماً `QUEUE_CONNECTION=redis`, `CACHE_STORE=redis`, `SESSION_DRIVER=redis` تنظیم شود.
+| متغیر | توضیح |
+|-------|-------|
+| `APP_URL` | آدرس سایت |
+| `QUEUE_CONNECTION` / `CACHE_STORE` / `SESSION_DRIVER` | در prod: `redis` |
+| `REDIS_CLIENT` | معمولاً `predis` |
+| `ZARINPAL_MERCHANT_ID` / `ZARINPAL_SANDBOX` | درگاه پرداخت |
+| `KAVENEGAR_API_KEY` | OTP SMS |
+| `OPENAI_API_KEY` | رزومه AI |
+| `TURNSTILE_*` | Cloudflare Turnstile |
+| `SENTRY_LARAVEL_DSN` / `VITE_SENTRY_DSN` | Sentry |
+| `BACKUP_S3_URI` / `BACKUP_KEEP_DAYS` | بکاپ off-site |
+| `DEPLOY_SECRET` | bypass هنگام `artisan down` |
+| `TELESCOPE_ENABLED` | روشن/خاموش Telescope |
+| `FILAMENT_PATH` | مسیر Filament |
 
 ---
 
 ## توسعه و کیفیت کد
 
 ```bash
-# اجرای تست‌ها
 php artisan test
-
-# تست فیلترشده
-php artisan test --filter=JobAggregator
-
-# Code Style (Laravel Pint)
-./vendor/bin/pint
-
-# یا فقط چک بدون تغییر
+npm run test:unit
+npm run lint && npm run type-check
 ./vendor/bin/pint --test
-
-# Static Analysis (PHPStan Level 6)
 ./vendor/bin/phpstan analyse --no-progress
-
-# همه با هم (dev)
-composer run dev
+npm run build
 ```
+
+CI: `.github/workflows/ci.yml` (PHP tests + Pint/PHPStan + Vite build + Scribe generate).
 
 ---
 
 ## Deploy
 
-اسکریپت نمونه: `deploy.sh`
+فقط روی Linux VPS (از Windows/Laragon اجرا نمی‌شود):
 
 ```bash
-./deploy.sh
+# Staging
+./deploy.sh staging
+
+# Production (maintenance → backup → migrate → cache → Horizon → up)
+DEPLOY_SECRET='your-secret-key' ./deploy.sh production
 ```
 
-- Health Check: `/health`
-- PWA Manifest: توسط Vite تولید می‌شود
-- پس از هر تغییر فرانت: `npm run build`
+چک‌لیست‌ها:
+
+- [`docs/PRODUCTION_CHECKLIST.md`](docs/PRODUCTION_CHECKLIST.md)
+- [`docs/STAGING_CHECKLIST.md`](docs/STAGING_CHECKLIST.md)
+- [`docs/MONITORING_CHECKLIST.md`](docs/MONITORING_CHECKLIST.md) — Sentry / Horizon / Telescope / CF / CSP / Zarinpal
+- [`docs/BACKUP.md`](docs/BACKUP.md) — RTO 4h / RPO 24h
+- [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)
+
+Health: `GET /health`
 
 ---
 
 ## امنیت
 
-- 🔒 Secretها فقط در `.env` — هرگز commit نشوند
-- 🛡️ Turnstile روی مسیرهای auth فعال است
-- 🌐 Crawler فقط دامنه‌های تأییدشده را fetch می‌کند (SSRF Guard)
-- 🔐 Sanctum برای احراز هویت API
-- 👮 Spatie Permission برای کنترل دسترسی (admin/operator/user)
+- Secretها فقط در `.env`
+- Trust Proxies (Cloudflare CIDR) — XFF از peer غیرقابل‌اعتماد نادیده گرفته می‌شود
+- CSP + گزارش به `storage/logs/csp-violations.log`
+- Turnstile روی auth
+- پرداخت: کلید ایدمپوتنسی روی verify
+- Crawler فقط دامنه‌های تأییدشده (SSRF Guard)
+- Sanctum + Spatie Permission
+
+---
+
+## مستندات بیشتر
+
+| سند | موضوع |
+|-----|--------|
+| [BACKUP.md](docs/BACKUP.md) | بکاپ و بازیابی |
+| [PERFORMANCE.md](docs/PERFORMANCE.md) | ایندکس و پرفورمنس |
+| [MONITORING_CHECKLIST.md](docs/MONITORING_CHECKLIST.md) | مانیتورینگ بعد از deploy |
+| [GITHUB_PROTECTION.md](docs/GITHUB_PROTECTION.md) | محافظت branch |
+| [screenshots/README.md](docs/screenshots/README.md) | تولید اسکرین‌شات |
 
 ---
 
 ## مجوز
 
-این پروژه تحت [MIT License](LICENSE) منتشر شده است.
-
----
+[MIT License](LICENSE)
 
 ## مشارکت
 
-1. از `main` یک branch بسازید: `feature/description` یا `fix/description`
-2. تست‌ها را سبز نگه دارید: `php artisan test`
-3. Code Style را رعایت کنید: `./vendor/bin/pint`
-4. Static Analysis را پاس کنید: `./vendor/bin/phpstan analyse`
-5. API عمومی `/api/v1/*` را بدون نیاز، breaking change ندهید
-6. Pull Request بسازید
+1. Branch از `main`: `feature/…` یا `fix/…`
+2. `php artisan test` و `npm run test:unit` سبز
+3. Pint + PHPStan
+4. در صورت تغییر API: `php artisan scribe:generate`
+5. بدون breaking change غیرضروری روی `/api/v1/*`
+6. Pull Request (قالب: `.github/PULL_REQUEST_TEMPLATE.md`)
 
 گزارش باگ: [Issues](https://github.com/davaj841-tech/job-kimi/issues)

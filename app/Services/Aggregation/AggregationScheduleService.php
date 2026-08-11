@@ -203,12 +203,14 @@ class AggregationScheduleService
                 if ($validate) {
                     throw new InvalidArgumentException('زمان نامعتبر است. فرمت معتبر HH:MM است.');
                 }
+
                 continue;
             }
             if (isset($seen[$time])) {
                 if ($validate) {
                     throw new InvalidArgumentException("زمان تکراری: {$time}");
                 }
+
                 continue;
             }
             $seen[$time] = true;

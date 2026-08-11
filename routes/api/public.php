@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\ExamController;
+use App\Http\Controllers\Api\FeatureController;
 use App\Http\Controllers\Api\JobPostController;
 use App\Http\Controllers\Api\LeaderboardController;
 use App\Http\Controllers\Api\PageController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Api\PublicSettingsController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SearchSuggestionController;
 use App\Http\Controllers\Api\SubscriptionController;
+use App\Models\ExamSubject;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,6 +28,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/coupons/validate', [CouponController::class, 'validateCode']);
 Route::post('/page-views', [PageViewController::class, 'store']);
+Route::get('/features', [FeatureController::class, 'index']);
 Route::get('/search', SearchController::class);
 Route::get('/search/suggestions', SearchSuggestionController::class);
 Route::get('/payment-gateways', [PaymentGatewayController::class, 'index']);
@@ -34,7 +37,7 @@ Route::get('/exam-subjects', function () {
     return response()->json([
         'success' => true,
         'message' => 'عملیات موفق',
-        'data' => \App\Models\ExamSubject::query()
+        'data' => ExamSubject::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -48,6 +51,9 @@ Route::get('/job-posts/{id}', [JobPostController::class, 'show'])->whereNumber('
 
 Route::get('/blog-posts', [BlogPostController::class, 'index']);
 Route::get('/blog-posts/{slug}', [BlogPostController::class, 'show']);
+
+Route::get('/articles', [\App\Http\Controllers\Api\GeneratedContentPublicController::class, 'index']);
+Route::get('/articles/{slug}', [\App\Http\Controllers\Api\GeneratedContentPublicController::class, 'show']);
 
 Route::get('/subscription-plans', [SubscriptionController::class, 'plans']);
 Route::get('/pdf-products', [PDFProductController::class, 'index']);

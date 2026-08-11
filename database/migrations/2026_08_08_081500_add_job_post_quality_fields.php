@@ -36,7 +36,7 @@ return new class extends Migration
             Schema::table('job_posts', function (Blueprint $table) {
                 $table->index('registration_starts_at', 'job_posts_reg_start_idx');
             });
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
     }
 
@@ -45,7 +45,7 @@ return new class extends Migration
         Schema::table('job_posts', function (Blueprint $table) {
             try {
                 $table->dropIndex('job_posts_reg_start_idx');
-            } catch (\Throwable) {
+            } catch (Throwable) {
             }
             foreach ([
                 'education', 'field_of_study', 'experience', 'employment_type',

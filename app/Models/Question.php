@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Question extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'exam_id',
         'question_text',
@@ -21,7 +22,15 @@ class Question extends Model
         'explanation',
         'difficulty',
         'subject',
+        'times_served',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'times_served' => 'integer',
+        ];
+    }
 
     public function exam(): BelongsTo
     {

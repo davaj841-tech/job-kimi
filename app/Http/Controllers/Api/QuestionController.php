@@ -8,9 +8,12 @@ use App\Http\Resources\QuestionResource;
 use App\Models\Exam;
 use App\Models\Question;
 use App\Repositories\QuestionRepository;
+use App\Services\AuditLogService;
 use App\Services\QuestionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class QuestionController extends BaseController
 {
@@ -76,6 +79,11 @@ class QuestionController extends BaseController
     {
         $model = Question::query()->create($request->validated());
         Exam::query()->whereKey($model->exam_id)->increment('total_questions');
+        app(AuditLogService::class)->log('question.created', $model, null, [
+            'exam_id' => $model->exam_id,
+            'subject' => $model->subject,
+            'difficulty' => $model->difficulty,
+        ]);
 
         return $this->successResponse(new QuestionResource($model), 'سوال ایجاد شد.', 201);
     }
@@ -122,28 +130,59 @@ class QuestionController extends BaseController
             (int) $request->input('exam_id')
         );
 
+        app(AuditLogService::class)->log('question.imported', null, null, [
+            'exam_id' => (int) $request->input('exam_id'),
+            'created' => $summary['created'] ?? 0,
+            'skipped' => $summary['skipped'] ?? 0,
+        ]);
+
         return $this->successResponse($summary, 'ورود اکسل انجام شد.');
     }
 
-    public function importSample()
+    public function importSample(Request $request)
     {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('سوالات');
+        $format = strtolower((string) $request->query('format', 'xlsx'));
+        if (! in_array($format, ['xlsx', 'csv'], true)) {
+            $format = 'xlsx';
+        }
+
         $headers = [
             'question_text', 'option_a', 'option_b', 'option_c', 'option_d',
             'correct_answer', 'explanation', 'difficulty', 'subject',
         ];
+        $rows = [
+            ['نمونه سوال آسان؟', 'گزینه الف', 'گزینه ب', 'گزینه ج', 'گزینه د', 'الف', 'توضیح پاسخ آسان', 'آسان', 'general'],
+            ['نمونه سوال متوسط؟', 'گزینه الف', 'گزینه ب', 'گزینه ج', 'گزینه د', 'ب', 'توضیح پاسخ متوسط', '', 'math'],
+            ['نمونه سوال سخت؟', 'گزینه الف', 'گزینه ب', 'گزینه ج', 'گزینه د', 'ج', 'توضیح پاسخ سخت', 'سخت', 'chemistry'],
+        ];
+
+        if ($format === 'csv') {
+            return response()->streamDownload(function () use ($headers, $rows) {
+                $out = fopen('php://output', 'w');
+                if ($out === false) {
+                    return;
+                }
+                // UTF-8 BOM for Excel
+                fwrite($out, "\xEF\xBB\xBF");
+                fputcsv($out, $headers);
+                foreach ($rows as $row) {
+                    fputcsv($out, $row);
+                }
+                fclose($out);
+            }, 'questions-import-sample.csv', [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+            ]);
+        }
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('سوالات');
         foreach ($headers as $i => $h) {
             $sheet->setCellValue([$i + 1, 1], $h);
         }
-        $sheet->fromArray([
-            ['نمونه سوال آسان؟', 'گزینه الف', 'گزینه ب', 'گزینه ج', 'گزینه د', 'الف', 'توضیح پاسخ آسان', 'آسان', 'general'],
-            ['نمونه سوال متوسط؟', 'گزینه الف', 'گزینه ب', 'گزینه ج', 'گزینه د', 'ب', 'توضیح پاسخ متوسط', 'متوسط', 'math'],
-            ['نمونه سوال سخت؟', 'گزینه الف', 'گزینه ب', 'گزینه ج', 'گزینه د', 'ج', 'توضیح پاسخ سخت', 'سخت', 'chemistry'],
-        ], null, 'A2');
+        $sheet->fromArray($rows, null, 'A2');
 
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer = new Xlsx($spreadsheet);
 
         return response()->streamDownload(function () use ($writer) {
             $writer->save('php://output');

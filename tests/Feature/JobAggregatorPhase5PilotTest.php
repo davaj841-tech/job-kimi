@@ -7,7 +7,6 @@ use App\Enums\Aggregation\JobCrawlerType;
 use App\Enums\Aggregation\JobEndpointType;
 use App\Enums\Aggregation\JobSourceReliability;
 use App\Enums\Aggregation\JobSourceType;
-use App\Models\CrawlerError;
 use App\Models\CrawlerRun;
 use App\Models\JobPost;
 use App\Models\JobSource;

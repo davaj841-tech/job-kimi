@@ -7,8 +7,15 @@ import { registerSW } from 'virtual:pwa-register'
 import * as Sentry from '@sentry/vue'
 import App from './App.vue'
 import router from './router'
+import { useFeatureStore } from './stores/feature'
+import { useSiteTheme } from './composables/useSiteTheme'
 
-registerSW({ immediate: true })
+registerSW({
+  immediate: true,
+  onOfflineReady() {
+    console.log('App ready to work offline')
+  },
+})
 
 const app = createApp(App)
 
@@ -21,6 +28,16 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
   })
 }
 
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
+
+useFeatureStore(pinia)
+  .fetch()
+  .catch(() => {})
+
+useSiteTheme()
+  .ensureLoaded()
+  .catch(() => {})
+
 app.mount('#app')

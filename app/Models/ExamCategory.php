@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 class ExamCategory extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'name',
         'slug',

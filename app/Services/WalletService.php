@@ -4,26 +4,45 @@ namespace App\Services;
 
 use App\Models\Transaction;
 use App\Models\User;
+use App\Notifications\GenericDatabaseNotification;
 use Illuminate\Support\Facades\DB;
 
 class WalletService
 {
     public function deposit(User $user, int $amount, Transaction $transaction): void
     {
-        DB::transaction(function () use ($user, $amount, $transaction) {
+        $credited = false;
+
+        DB::transaction(function () use ($user, $amount, $transaction, &$credited) {
+            /** @var Transaction $lockedTx */
+            $lockedTx = Transaction::query()
+                ->whereKey($transaction->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedTx->status === Transaction::STATUS_COMPLETED) {
+                return;
+            }
+
+            User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
             User::query()->whereKey($user->id)->increment('wallet_balance', $amount);
 
-            if ($transaction->status !== 'success') {
-                $transaction->update(['status' => 'success']);
-            }
+            $lockedTx->update(['status' => Transaction::STATUS_COMPLETED]);
+            $credited = true;
         });
 
-        $user->notify(new \App\Notifications\GenericDatabaseNotification(
-            'wallet_charged',
-            'شارژ کیف پول',
-            'مبلغ '.number_format($amount).' تومان به کیف پول شما اضافه شد.',
-            '/wallet'
-        ));
+        if (! $credited) {
+            return;
+        }
+
+        DB::afterCommit(function () use ($user, $amount) {
+            $user->notify(new GenericDatabaseNotification(
+                'wallet_charged',
+                'شارژ کیف پول',
+                'مبلغ '.number_format($amount).' تومان به کیف پول شما اضافه شد.',
+                '/wallet'
+            ));
+        });
     }
 
     public function withdraw(User $user, int $amount, string $description): bool
@@ -42,7 +61,7 @@ class WalletService
                 'amount' => $amount,
                 'type' => 'purchase',
                 'gateway' => 'wallet',
-                'status' => 'success',
+                'status' => Transaction::STATUS_COMPLETED,
                 'description' => $description,
             ]);
 
@@ -69,7 +88,7 @@ class WalletService
                 'amount' => $amount,
                 'type' => 'deposit',
                 'gateway' => 'wallet',
-                'status' => 'success',
+                'status' => Transaction::STATUS_COMPLETED,
                 'description' => $description,
                 'reference_id' => 'ADMIN-DEP-'.uniqid(),
             ]);
@@ -97,7 +116,7 @@ class WalletService
                 'amount' => $amount,
                 'type' => 'withdrawal',
                 'gateway' => 'wallet',
-                'status' => 'success',
+                'status' => Transaction::STATUS_COMPLETED,
                 'description' => $reason,
                 'reference_id' => 'ADMIN-WD-'.uniqid(),
             ]);

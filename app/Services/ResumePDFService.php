@@ -3,11 +3,17 @@
 namespace App\Services;
 
 use App\Models\Resume;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\Pdf\PersianPdfFont;
+use App\Services\Pdf\PersianPdfText;
 use Illuminate\Support\Facades\Storage;
 
 class ResumePDFService
 {
+    public function __construct(
+        protected PersianPdfFont $persianFont,
+        protected PersianPdfText $persianText,
+    ) {}
+
     public function viewName(int|string|null $templateId): string
     {
         $id = (int) ($templateId ?: 1);
@@ -21,9 +27,9 @@ class ResumePDFService
     public function renderHtml(Resume $resume): string
     {
         $data = $resume->data ?? [];
-        $fontPath = $this->ensureVazirmatnFont();
+        $fonts = $this->persianFont->ensure();
 
-        return view($this->viewName($resume->template_id), [
+        $html = view($this->viewName($resume->template_id), [
             'resume' => $resume,
             'data' => $data,
             'personal' => $data['personal'] ?? [],
@@ -34,22 +40,22 @@ class ResumePDFService
             'summary' => $data['summary'] ?? null,
             'targetJob' => $data['target_job'] ?? null,
             'photoPath' => $resume->photoAbsolutePath(),
-            'fontPath' => $fontPath,
+            'fontRegular' => $this->persianFont->cssUrl($fonts['regular']),
+            'fontBold' => $this->persianFont->cssUrl($fonts['bold']),
+            'fontPath' => $this->persianFont->cssUrl($fonts['regular']),
         ])->render();
+
+        return $this->persianText->reshapeHtml($html);
     }
 
     public function generatePDF(Resume $resume): string
     {
         $html = $this->renderHtml($resume);
 
-        $pdf = Pdf::loadHTML($html)
-            ->setPaper('a4')
-            ->setOptions([
-                'isRemoteEnabled' => true,
-                'isHtml5ParserEnabled' => true,
-                'defaultFont' => 'Vazirmatn',
-                'isFontSubsettingEnabled' => true,
-            ]);
+        $pdf = $this->persianFont->applyOptions(app('dompdf.wrapper'));
+        $pdf->getOptions()->set('isRemoteEnabled', true);
+        $pdf->getOptions()->set('chroot', base_path());
+        $pdf->loadHTML($html)->setPaper('a4');
 
         $relative = 'resumes/'.$resume->user_id.'/resume_'.$resume->id.'_'.now()->format('YmdHis').'.pdf';
         Storage::disk('local')->put($relative, $pdf->output());
@@ -77,25 +83,5 @@ class ResumePDFService
         }
 
         return Storage::disk('local')->path($resume->pdf_path);
-    }
-
-    protected function ensureVazirmatnFont(): string
-    {
-        $dir = storage_path('fonts');
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        $fontFile = $dir.DIRECTORY_SEPARATOR.'Vazirmatn-Regular.ttf';
-
-        if (! file_exists($fontFile)) {
-            // Fallback copy from DejaVu if download not available at runtime
-            $fallback = base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans.ttf');
-            if (file_exists($fallback)) {
-                copy($fallback, $fontFile);
-            }
-        }
-
-        return $fontFile;
     }
 }

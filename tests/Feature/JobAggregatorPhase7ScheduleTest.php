@@ -9,6 +9,7 @@ use App\Models\JobSource;
 use App\Models\User;
 use App\Services\Aggregation\AggregationScheduleService;
 use Carbon\Carbon;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
@@ -373,7 +374,7 @@ class JobAggregatorPhase7ScheduleTest extends TestCase
 
     public function test_laravel_scheduler_registers_aggregate_dispatch_every_minute(): void
     {
-        $events = app(\Illuminate\Console\Scheduling\Schedule::class)->events();
+        $events = app(Schedule::class)->events();
         $found = collect($events)->contains(
             fn ($e) => str_contains($e->command ?? $e->description ?? '', 'jobs:aggregate-dispatch')
                 || str_contains(json_encode($e), 'jobs:aggregate-dispatch')

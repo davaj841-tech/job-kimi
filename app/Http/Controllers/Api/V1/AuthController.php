@@ -19,6 +19,21 @@ class AuthController extends BaseController
         protected OtpAuthService $otpAuthService
     ) {}
 
+    /**
+     * ارسال کد یکبارمصرف (OTP)
+     *
+     * ارسال رمز یکبارمصرف به شماره موبایل کاربر.
+     *
+     * @group احراز هویت
+     *
+     * @unauthenticated
+     *
+     * @bodyParam mobile string required شماره موبایل کاربر. Example: 09123456789
+     *
+     * @response 200 {"success":true,"message":"کد تأیید ارسال شد.","data":{"expires_in":120}}
+     * @response 422 {"success":false,"message":"شماره موبایل نامعتبر است."}
+     * @response 429 {"success":false,"message":"لطفاً کمی بعد دوباره تلاش کنید."}
+     */
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
         $result = $this->otpAuthService->sendOtp($request->validated('mobile'));
@@ -32,6 +47,22 @@ class AuthController extends BaseController
         ], $result['message']);
     }
 
+    /**
+     * تأیید OTP و ورود
+     *
+     * تأیید کد یکبارمصرف و دریافت توکن Sanctum.
+     *
+     * @group احراز هویت
+     *
+     * @unauthenticated
+     *
+     * @bodyParam mobile string required شماره موبایل. Example: 09123456789
+     * @bodyParam code string required کد تأیید. Example: 123456
+     * @bodyParam province string استان (برای کاربران جدید). Example: تهران
+     *
+     * @response 200 {"success":true,"message":"ورود موفق.","data":{"token":"...","user":{}}}
+     * @response 422 {"success":false,"message":"کد تأیید نامعتبر است.","code":null}
+     */
     public function verifyOtp(VerifyOtpRequest $request): JsonResponse
     {
         $result = $this->otpAuthService->verifyOtp(
@@ -59,6 +90,21 @@ class AuthController extends BaseController
         ], $result['message']);
     }
 
+    /**
+     * ورود با رمز عبور
+     *
+     * ورود با نام کاربری یا ایمیل و رمز عبور.
+     *
+     * @group احراز هویت
+     *
+     * @unauthenticated
+     *
+     * @bodyParam login string required نام کاربری یا ایمیل. Example: user@example.com
+     * @bodyParam password string required رمز عبور. Example: secret123
+     *
+     * @response 200 {"success":true,"message":"ورود موفق.","data":{"token":"...","user":{}}}
+     * @response 401 {"success":false,"message":"نام کاربری یا رمز عبور اشتباه است."}
+     */
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -93,6 +139,26 @@ class AuthController extends BaseController
         ], 'ورود موفق.');
     }
 
+    /**
+     * عضویت
+     *
+     * ثبت‌نام کاربر جدید با نام کاربری و رمز عبور.
+     *
+     * @group احراز هویت
+     *
+     * @unauthenticated
+     *
+     * @bodyParam name string required نام. Example: علی رضایی
+     * @bodyParam username string required نام کاربری. Example: ali_reza
+     * @bodyParam password string required رمز عبور. Example: secret123
+     * @bodyParam password_confirmation string required تکرار رمز. Example: secret123
+     * @bodyParam province string required استان. Example: تهران
+     * @bodyParam mobile string شماره موبایل. Example: 09123456789
+     * @bodyParam email string ایمیل. Example: ali@example.com
+     *
+     * @response 201 {"success":true,"message":"عضویت با موفقیت انجام شد.","data":{"token":"...","user":{}}}
+     * @response 422 {"success":false,"message":"حداقل یکی از موبایل یا ایمیل الزامی است."}
+     */
     public function register(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -136,6 +202,17 @@ class AuthController extends BaseController
         ], 'عضویت با موفقیت انجام شد.', 201);
     }
 
+    /**
+     * خروج
+     *
+     * باطل کردن توکن فعلی.
+     *
+     * @group احراز هویت
+     *
+     * @authenticated
+     *
+     * @response 200 {"success":true,"message":"خروج موفق.","data":null}
+     */
     public function logout(Request $request): JsonResponse
     {
         $this->otpAuthService->logout($request->user());
@@ -143,6 +220,17 @@ class AuthController extends BaseController
         return $this->successResponse(null, 'خروج موفق.');
     }
 
+    /**
+     * پروفایل فعلی
+     *
+     * دریافت اطلاعات کاربر لاگین‌شده.
+     *
+     * @group احراز هویت
+     *
+     * @authenticated
+     *
+     * @response 200 {"success":true,"data":{}}
+     */
     public function me(Request $request): JsonResponse
     {
         $user = $request->user()->load('subscriptionPlan');
@@ -150,6 +238,19 @@ class AuthController extends BaseController
         return $this->successResponse(new UserResource($user));
     }
 
+    /**
+     * به‌روزرسانی پروفایل
+     *
+     * @group احراز هویت
+     *
+     * @authenticated
+     *
+     * @bodyParam name string نام. Example: علی رضایی
+     * @bodyParam province string استان. Example: تهران
+     * @bodyParam email string ایمیل. Example: ali@example.com
+     *
+     * @response 200 {"success":true,"message":"پروفایل به‌روزرسانی شد.","data":{}}
+     */
     public function updateProfile(Request $request): JsonResponse
     {
         $user = $request->user();

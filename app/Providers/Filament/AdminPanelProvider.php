@@ -2,11 +2,18 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\QuickActions;
+use App\Filament\Widgets\ExamParticipationChart;
+use App\Filament\Widgets\LatestNotifications;
+use App\Filament\Widgets\RecentExamsTable;
+use App\Filament\Widgets\RecentTransactionsTable;
+use App\Filament\Widgets\RevenueChart;
+use App\Filament\Widgets\StatsOverview;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -27,19 +34,43 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path(env('FILAMENT_PATH', 'filament'))
             ->login()
-            // Distinct from Vue SPA at /admin — Filament is a secondary PHP admin UI.
-            ->brandName('جاب‌آزمون · Filament')
+            ->brandName('جاب‌آزمون')
             ->font('Vazirmatn')
             ->colors([
-                'primary' => Color::Teal,
+                'primary' => Color::Rose,
+                'danger' => Color::Red,
+                'success' => Color::Emerald,
+                'warning' => Color::Amber,
+                'info' => Color::Blue,
+            ])
+            ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('16rem')
+            ->maxContentWidth('full')
+            ->spa()
+            ->breadcrumbs(false)
+            ->navigationGroups([
+                'مدیریت محتوا',
+                'آزمون‌ها',
+                'مدیریت کاربران',
+                'اشتراک و مالی',
+                'مالی',
+                'تنظیمات',
+                'سیستم',
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                Dashboard::class,
+                QuickActions::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
+                StatsOverview::class,
+                RevenueChart::class,
+                ExamParticipationChart::class,
+                RecentExamsTable::class,
+                RecentTransactionsTable::class,
+                LatestNotifications::class,
                 Widgets\AccountWidget::class,
             ])
             ->middleware([
@@ -58,7 +89,15 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 'panels::head.end',
-                fn () => '<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" /><style>body,.fi-body{font-family:Vazirmatn,sans-serif!important;direction:rtl}</style>'
+                function (): string {
+                    $theme = '';
+                    $path = resource_path('css/filament/admin/theme.css');
+                    if (is_file($path)) {
+                        $theme = '<style>'.file_get_contents($path).'</style>';
+                    }
+
+                    return '<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />'.$theme;
+                }
             );
     }
 }

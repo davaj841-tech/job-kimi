@@ -21,14 +21,15 @@ class IdPayGateway implements PaymentGatewayInterface
 
     protected function apiKey(): string
     {
-        return (string) (Setting::get('idpay_api_key')
+        return (string) (Setting::getFilled('idpay_api_key')
             ?: optional(PaymentGateway::query()->where('name', 'idpay')->first())->api_key
+            ?: config('services.idpay.api_key')
             ?: '');
     }
 
     protected function sandbox(): bool
     {
-        return filter_var(Setting::get('idpay_sandbox', 'true'), FILTER_VALIDATE_BOOLEAN);
+        return Setting::getBool('idpay_sandbox', (bool) config('services.idpay.sandbox', false));
     }
 
     public function request(int $amount, string $description, string $callbackUrl, array $meta = []): array

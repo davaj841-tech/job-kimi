@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\Aggregation\CrawlerRunStatus;
 use App\Enums\Aggregation\JobCrawlerType;
 use App\Enums\Aggregation\JobEndpointType;
 use App\Enums\Aggregation\JobSourceReliability;
@@ -12,7 +13,6 @@ use App\Models\JobPost;
 use App\Models\JobSource;
 use App\Models\JobSourceEndpoint;
 use App\Models\User;
-use App\Enums\Aggregation\CrawlerRunStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;

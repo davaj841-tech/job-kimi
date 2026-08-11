@@ -35,4 +35,34 @@ return [
         ],
     ],
 
+    'sms' => [
+        'gateway' => env('SMS_GATEWAY', 'kavenegar'),
+        // local/testing may log OTP instead of sending; production must fail closed.
+        'allow_log_fallback' => env('SMS_ALLOW_LOG_FALLBACK', env('APP_ENV') !== 'production'),
+    ],
+
+    'kavenegar' => [
+        'api_key' => env('KAVENEGAR_API_KEY'),
+    ],
+
+    'melipayamak' => [
+        'username' => env('MELIPAYAMAK_USERNAME'),
+        'password' => env('MELIPAYAMAK_PASSWORD'),
+        'from' => env('MELIPAYAMAK_FROM'),
+    ],
+
+    'zarinpal' => [
+        'merchant_id' => env('ZARINPAL_MERCHANT_ID'),
+        'sandbox' => env('ZARINPAL_SANDBOX', false),
+    ],
+
+    'nextpay' => [
+        'api_key' => env('NEXTPAY_API_KEY'),
+    ],
+
+    'idpay' => [
+        'api_key' => env('IDPAY_API_KEY'),
+        'sandbox' => env('IDPAY_SANDBOX', false),
+    ],
+
 ];

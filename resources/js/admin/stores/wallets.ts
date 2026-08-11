@@ -1,23 +1,23 @@
-import { defineStore } from 'pinia';
-import adminApi from '../api/client';
-import { unwrapList, unwrapMeta } from '../../utils/format';
+import { defineStore } from 'pinia'
+import adminApi from '../api/client'
+import { unwrapList, unwrapMeta } from '../../utils/format'
 
 interface WalletsStats {
-  total_balance: number;
-  charges_today: number;
-  charge_amount_today: number;
+  total_balance: number
+  charges_today: number
+  charge_amount_today: number
 }
 
 interface WalletsState {
-  wallets: Record<string, unknown>[];
-  meta: Record<string, unknown>;
-  history: Record<string, unknown>[];
-  historyMeta: Record<string, unknown>;
-  historyUser: Record<string, unknown> | null;
-  stats: WalletsStats;
-  filters: { search: string };
-  historyType: string;
-  loading: boolean;
+  wallets: Record<string, unknown>[]
+  meta: Record<string, unknown>
+  history: Record<string, unknown>[]
+  historyMeta: Record<string, unknown>
+  historyUser: Record<string, unknown> | null
+  stats: WalletsStats
+  filters: { search: string }
+  historyType: string
+  loading: boolean
 }
 
 export const useWalletsStore = defineStore('adminWallets', {
@@ -39,49 +39,58 @@ export const useWalletsStore = defineStore('adminWallets', {
 
   actions: {
     async fetchStats() {
-      const { data } = await adminApi.get('/admin/wallets/stats');
-      this.stats = data.data || this.stats;
+      const { data } = await adminApi.get('/admin/wallets/stats')
+      this.stats = data.data || this.stats
     },
 
     async fetchWallets(page = 1) {
-      this.loading = true;
+      this.loading = true
       try {
         const { data } = await adminApi.get('/admin/wallets', {
           params: { ...this.filters, page, per_page: 20 },
-        });
-        this.wallets = unwrapList(data) as Record<string, unknown>[];
-        this.meta = unwrapMeta(data) || {};
+        })
+        this.wallets = unwrapList(data) as Record<string, unknown>[]
+        this.meta = unwrapMeta(data) || {}
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
     async fetchHistory(userId: number | string, page = 1) {
-      this.loading = true;
+      this.loading = true
       try {
-        const { data } = await adminApi.get(`/admin/wallets/${userId}/history`, {
-          params: { type: this.historyType || undefined, page, per_page: 30 },
-        });
-        this.historyUser = data.data?.user || null;
-        this.history = unwrapList(data) as Record<string, unknown>[];
-        this.historyMeta = unwrapMeta(data) || {};
+        const { data } = await adminApi.get(
+          `/admin/wallets/${userId}/history`,
+          {
+            params: { type: this.historyType || undefined, page, per_page: 30 },
+          }
+        )
+        this.historyUser = data.data?.user || null
+        this.history = unwrapList(data) as Record<string, unknown>[]
+        this.historyMeta = unwrapMeta(data) || {}
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
     async charge(userId: number | string, amount: number, description: string) {
-      const { data } = await adminApi.post(`/admin/wallets/${userId}/charge`, { amount, description });
-      await this.fetchWallets((this.meta.current_page as number) || 1);
-      await this.fetchStats();
-      return data.data;
+      const { data } = await adminApi.post(`/admin/wallets/${userId}/charge`, {
+        amount,
+        description,
+      })
+      await this.fetchWallets((this.meta.current_page as number) || 1)
+      await this.fetchStats()
+      return data.data
     },
 
     async deduct(userId: number | string, amount: number, reason: string) {
-      const { data } = await adminApi.post(`/admin/wallets/${userId}/deduct`, { amount, reason });
-      await this.fetchWallets((this.meta.current_page as number) || 1);
-      await this.fetchStats();
-      return data.data;
+      const { data } = await adminApi.post(`/admin/wallets/${userId}/deduct`, {
+        amount,
+        reason,
+      })
+      await this.fetchWallets((this.meta.current_page as number) || 1)
+      await this.fetchStats()
+      return data.data
     },
   },
-});
+})

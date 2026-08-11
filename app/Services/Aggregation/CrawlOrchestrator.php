@@ -79,6 +79,7 @@ class CrawlOrchestrator
                         $this->logError($source, $run, 'validation', implode('; ', $validation['errors']), $normalized['source_url'] ?? null, [
                             'errors' => $validation['errors'],
                         ]);
+
                         continue;
                     }
 
@@ -91,6 +92,7 @@ class CrawlOrchestrator
                             $updated++;
                         }
                         $dupes++;
+
                         continue;
                     }
 

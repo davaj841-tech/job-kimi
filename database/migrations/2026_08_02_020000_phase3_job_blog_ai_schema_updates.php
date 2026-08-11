@@ -126,7 +126,7 @@ return new class extends Migration
         foreach (['job_posts_status_index', 'job_posts_old_status_index'] as $index) {
             try {
                 DB::statement("DROP INDEX IF EXISTS \"{$index}\"");
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 // ignore
             }
         }
