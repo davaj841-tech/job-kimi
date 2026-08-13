@@ -49,6 +49,19 @@
       </div>
 
       <div
+        class="rounded-2xl border border-surface-line bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+      >
+        <h2 class="mb-4 text-lg font-bold dark:text-white">📊 نمودار عملکرد</h2>
+        <ExamResultCharts
+          :percentage="result.percentage || 0"
+          :correct="result.total_correct || 0"
+          :wrong="result.total_wrong || 0"
+          :blank="blankCount"
+          :subjects="chartSubjects"
+        />
+      </div>
+
+      <div
         v-if="subjects.length"
         class="rounded-2xl border border-surface-line bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
       >
@@ -237,6 +250,7 @@ import confetti from 'canvas-confetti'
 import api from '../../api/client'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import StarRating from '../../components/StarRating.vue'
+import ExamResultCharts from '../../components/exam/ExamResultCharts.vue'
 import { toFaDigits } from '../../utils/format'
 import { renderKatexHtml } from '../../utils/renderKatexHtml'
 
@@ -254,6 +268,12 @@ const ratingMsg = ref('')
 
 const passed = computed(() => Boolean(analysis.value?.passed))
 const subjects = computed(() => analysis.value?.by_subject || [])
+const chartSubjects = computed(() =>
+  subjects.value.map((row: any) => ({
+    ...row,
+    emoji: subjectEmoji(row.subject),
+  }))
+)
 const totalCount = computed(
   () => (result.value?.total_correct || 0) + (result.value?.total_wrong || 0)
 )
@@ -299,6 +319,18 @@ const stats = computed(() => [
     bg: 'bg-amber-50 dark:bg-amber-900/20',
   },
 ])
+
+function subjectEmoji(slug: string) {
+  const map: Record<string, string> = {
+    islamic: '📖',
+    general: '📚',
+    intelligence: '🧠',
+    specialized: '🎯',
+    math: '🔢',
+    language: '🔤',
+  }
+  return map[slug] || '📘'
+}
 
 onMounted(async () => {
   try {

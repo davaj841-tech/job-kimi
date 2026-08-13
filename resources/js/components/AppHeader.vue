@@ -1,19 +1,23 @@
 <template>
-  <header class="sticky top-0 z-30 border-b border-surface-line bg-white/92 backdrop-blur-md">
+  <header class="sticky top-0 z-30 border-b border-surface-line bg-surface">
     <div
       class="mx-auto flex h-13 max-w-app items-center gap-2.5 px-3 pt-[env(safe-area-inset-top)]"
       style="height: 3.25rem"
     >
       <RouterLink
         to="/"
-        class="shrink-0 font-display text-[15px] font-black tracking-tight text-desk-dark"
+        class="shrink-0"
+        aria-label="صفحه اصلی"
       >
-        جاب‌آزمون
+        <SiteBrandLogo
+          img-class="h-8 w-auto max-w-[8.5rem]"
+          text-class="text-[15px] text-desk-text"
+        />
       </RouterLink>
 
       <button
         type="button"
-        class="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-surface-line bg-surface-page px-3 py-2 text-right text-xs text-desk-muted transition active:bg-slate-100"
+        class="flex min-w-0 flex-1 items-center justify-start gap-2 rounded-xl border border-surface-line bg-surface-page px-3 py-2 text-right text-xs text-desk-muted transition active:opacity-80"
         @click="openSearch"
       >
         <svg
@@ -33,11 +37,12 @@
       </button>
 
       <div class="flex shrink-0 items-center gap-1.5">
+        <ThemeToggle />
         <NotificationBell v-if="auth.isAuthenticated" />
         <RouterLink
           v-if="auth.isAuthenticated"
           to="/profile"
-          class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-desk-dark/[0.06] text-xs font-bold text-desk-dark"
+          class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-desk-dark/[0.06] text-xs font-bold text-desk-text dark:bg-white/10"
           :title="auth.user?.name || 'پروفایل'"
         >
           <img
@@ -68,12 +73,12 @@
       >
         <div class="absolute inset-0 bg-desk-dark/40" @click="closeSearch" />
         <div
-          class="relative border-b border-surface-line bg-white px-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-lg"
+          class="relative border-b border-surface-line bg-surface px-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-lg"
         >
           <div class="mx-auto flex max-w-app items-center gap-2">
             <button
               type="button"
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-desk-muted hover:bg-slate-100"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-desk-muted hover:bg-surface-page"
               aria-label="بستن"
               @click="closeSearch"
             >
@@ -104,6 +109,8 @@ import { computed, nextTick, ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import GlobalSearch from './GlobalSearch.vue'
 import NotificationBell from './NotificationBell.vue'
+import SiteBrandLogo from './SiteBrandLogo.vue'
+import ThemeToggle from './ThemeToggle.vue'
 
 const auth = useAuthStore()
 const searchOpen = ref(false)

@@ -64,11 +64,12 @@ const sections = [
   { key: 'general', label: 'عمومی' },
   { key: 'mail', label: 'ایمیل SMTP' },
   { key: 'theme', label: 'رنگ و تم' },
-  { key: 'homepage', label: 'طرح و تم سایت' },
+  { key: 'homepage', label: 'طرح، تم و فونت سایت' },
   { key: 'seo', label: 'سئو' },
   { key: 'payment', label: 'پرداخت' },
   { key: 'sms', label: 'پیامک' },
   { key: 'ai', label: 'هوش مصنوعی' },
+  { key: 'exam', label: 'آزمون' },
   { key: 'security', label: 'امنیت' },
   { key: 'social', label: 'شبکه‌های اجتماعی' },
 ]
@@ -128,8 +129,13 @@ const fieldMap = {
   homepage: [
     {
       key: 'homepage_layout',
-      label: 'تم کل سایت (صفحه اول، صفحات جانبی، موبایل، داشبورد و پنل)',
+      label: 'تم کل سایت (صفحه اول، صفحات جانبی، موبایل، داشبورد، پنل و فوتر)',
       type: 'homepage-layout',
+    },
+    {
+      key: 'site_font',
+      label: 'فونت فارسی سایت',
+      type: 'site-font',
     },
   ],
   seo: [
@@ -224,6 +230,18 @@ const fieldMap = {
     { key: 'ai_questions_enabled', label: 'تولید سوال', type: 'toggle' },
     { key: 'ai_crawl_enabled', label: 'خزش آگهی', type: 'toggle' },
   ],
+  exam: [
+    {
+      key: 'default_exam_duration',
+      label: 'مدت پیش‌فرض آزمون (دقیقه)',
+      type: 'number',
+    },
+    {
+      key: 'exam_questions_per_page',
+      label: 'تعداد سوال در هر صفحه آزمون',
+      type: 'number',
+    },
+  ],
   security: [
     {
       key: 'turnstile_site_key',
@@ -276,6 +294,20 @@ watch(
       homepage_layout: id,
       primary_color: preset.primary,
       secondary_color: preset.secondary,
+      site_font: form.site_font,
+    })
+  }
+)
+
+watch(
+  () => form.site_font,
+  (id) => {
+    if (active.value !== 'homepage' || !id) return
+    applySiteTheme({
+      homepage_layout: form.homepage_layout,
+      primary_color: store.groups.theme?.primary_color,
+      secondary_color: store.groups.theme?.secondary_color,
+      site_font: id,
     })
   }
 )
@@ -338,6 +370,7 @@ async function save() {
       homepage_layout: store.groups.homepage?.homepage_layout,
       primary_color: store.groups.theme?.primary_color,
       secondary_color: store.groups.theme?.secondary_color,
+      site_font: store.groups.homepage?.site_font,
     })
     toast.success('تنظیمات ذخیره شد و روی کل سایت اعمال شد')
   } catch (e) {
@@ -345,8 +378,11 @@ async function save() {
   }
 }
 
-async function onUpload({ type, file }) {
-  if (!file) return
+async function onUpload({ type, file, key }) {
+  if (!file) {
+    if (key) form[key] = ''
+    return
+  }
   try {
     const res = await store.uploadLogo(file, type)
     if (res?.key) form[res.key] = res.url

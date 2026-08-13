@@ -7,11 +7,10 @@
       <div
         class="overflow-hidden rounded-3xl border border-surface-line bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900"
       >
-        <div
-          class="relative h-36 bg-desk-dark"
-        >
+        <div class="relative h-36 bg-desk-dark">
           <div class="absolute inset-0 bg-black/10" />
           <div class="absolute inset-x-0 bottom-0 p-6 text-white">
+            <p class="mb-1 text-2xl" aria-hidden="true">📝</p>
             <h1 class="text-2xl font-black">{{ exam.title }}</h1>
             <p class="mt-1 text-sm text-white/80">
               {{ exam.category?.name || exam.subject || 'آزمون' }}
@@ -55,13 +54,19 @@
         </div>
 
         <div v-if="subjects.length" class="px-6 pb-4">
-          <h3 class="mb-3 font-bold text-ink dark:text-white">درس‌ها</h3>
+          <h3 class="mb-3 font-bold text-ink dark:text-white">
+            درس‌ها (فقط آمار)
+          </h3>
+          <p class="mb-3 text-xs text-ink-muted">
+            پس از شروع، تب دروس در بالای صفحه آزمون در دسترس است.
+          </p>
           <div class="space-y-2">
             <div
               v-for="subject in subjects"
               :key="subject.slug || subject.name"
               class="flex items-center gap-3"
             >
+              <span class="text-base">{{ subject.icon || '📘' }}</span>
               <span class="flex-1 truncate text-sm dark:text-slate-200">{{
                 subject.name || subject.label
               }}</span>
@@ -74,12 +79,40 @@
               >
                 <div
                   class="h-full rounded-full bg-brand"
-                  :style="{
-                    width: `${subjectPercent(subject)}%`,
-                  }"
+                  :style="{ width: `${subjectPercent(subject)}%` }"
                 />
               </div>
             </div>
+          </div>
+        </div>
+
+        <div
+          v-if="hasActive"
+          class="mx-6 mb-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/40"
+        >
+          <p class="mb-1 text-sm font-bold text-amber-900 dark:text-amber-200">
+            ⏳ تلاش ناتمام وجود دارد
+          </p>
+          <p class="mb-3 text-xs text-amber-800 dark:text-amber-300/80">
+            می‌توانید ادامه دهید یا از ابتدا شروع کنید.
+          </p>
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              class="flex-1 rounded-xl bg-brand py-3 text-sm font-bold text-white disabled:opacity-50"
+              :disabled="isStarting"
+              @click="startExam({ resume: true })"
+            >
+              ادامه آزمون
+            </button>
+            <button
+              type="button"
+              class="flex-1 rounded-xl border border-amber-300 bg-white py-3 text-sm font-bold text-amber-900 disabled:opacity-50 dark:bg-slate-900 dark:text-amber-100"
+              :disabled="isStarting"
+              @click="startExam({ restart: true })"
+            >
+              شروع مجدد
+            </button>
           </div>
         </div>
 
@@ -88,16 +121,17 @@
             {{ error }}
           </p>
           <button
+            v-if="!hasActive"
             type="button"
             class="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand py-4 font-bold text-white transition hover:bg-brand-dark disabled:opacity-50"
             :disabled="isStarting"
-            @click="startExam"
+            @click="startExam()"
           >
             <PlayIcon v-if="!isStarting" class="h-6 w-6" />
-            <span>{{ isStarting ? 'در حال آماده‌سازی...' : 'شروع آزمون' }}</span>
+            <span>{{ isStarting ? 'در حال آماده‌سازی...' : 'شروع آزمون کامل' }}</span>
           </button>
           <p class="mt-3 text-center text-xs text-ink-muted">
-            با زدن دکمه شروع، تایمر آغاز می‌شود و قابل توقف نیست.
+            با زدن دکمه شروع، تایمر آغاز می‌شود. در طول آزمون می‌توانید درس‌ها را از تب‌ها فیلتر کنید، سوالات مانده را ببینید یا رد شوید.
           </p>
           <RouterLink
             :to="`/exams/${exam.slug}`"
@@ -142,9 +176,9 @@ const error = ref('')
 
 const rules = [
   'پس از شروع آزمون، تایمر به صورت خودکار شروع می‌شود و قابل توقف نیست.',
-  'بین سوالات می‌توانید جابجا شوید و سوالات را علامت‌گذاری کنید.',
+  'در بالای صفحه تب دروس دارید؛ می‌توانید همه دروس یا یک درس را انتخاب کنید.',
+  'سوالات مانده، علامت‌گذاری، رد شدن و بررسی مجدد در دسترس است.',
   'پاسخ‌ها به صورت خودکار ذخیره می‌شوند (حتی آفلاین).',
-  'خروج از صفحه یا تغییر تب مرورگر ثبت می‌شود.',
   'پس از اتمام زمان، آزمون به صورت خودکار ارسال می‌شود.',
 ]
 
@@ -156,6 +190,8 @@ const subjects = computed(() => {
     []
   return Array.isArray(list) ? list : []
 })
+
+const hasActive = computed(() => Boolean(exam.value?.active_attempt))
 
 const questionCount = computed(
   () =>
@@ -202,6 +238,12 @@ onMounted(async () => {
   try {
     const { data } = await api.get(`/exams/${route.params.slug}`)
     exam.value = data.data
+    // Auto-continue if linked with resume/restart
+    if (route.query.resume === '1') {
+      await startExam({ resume: true })
+    } else if (route.query.restart === '1') {
+      await startExam({ restart: true })
+    }
   } catch {
     error.value = 'آزمون یافت نشد.'
   } finally {
@@ -209,7 +251,7 @@ onMounted(async () => {
   }
 })
 
-async function startExam() {
+async function startExam(opts: { resume?: boolean; restart?: boolean } = {}) {
   if (!exam.value) return
   const loginPath = {
     path: '/login',
@@ -222,36 +264,58 @@ async function startExam() {
   isStarting.value = true
   error.value = ''
   try {
-    const subject = (route.query.subject as string) || null
-    const { data } = await api.post(`/exams/${exam.value.id}/start`, {
-      subject,
-    })
+    const body: Record<string, unknown> = {}
+    if (opts.resume) body.resume = true
+    if (opts.restart) body.restart = true
+    const { data } = await api.post(`/exams/${exam.value.id}/start`, body)
     const payload = data.data
-    session.resetSessionUx()
-    examStore.current = {
-      examId: exam.value.id,
-      attemptId: payload.attempt_id || payload.attempt?.id,
-      questions: payload.questions || [],
-      duration: exam.value.duration_minutes,
-      hasNegativeMarking: Boolean(exam.value.has_negative_marking),
-      title: exam.value.title,
-    }
-    examStore.answers = {}
-    examStore.dirty = false
-    examStore.pageIndex = 0
-    examStore.endsAt = payload.end_time
-      ? payload.end_time * 1000
-      : Date.now() + exam.value.duration_minutes * 60 * 1000
-    examStore.saveCache()
+    applyPayload(payload)
     router.push(`/exams/${exam.value.id}/take`)
   } catch (e: any) {
     if (e.response?.status === 401) {
       router.push(loginPath)
       return
     }
+    if (e.response?.status === 409) {
+      // unfinished — show continue/restart UI
+      const err = e.response?.data?.errors || {}
+      exam.value = {
+        ...exam.value,
+        active_attempt: {
+          id: err.attempt_id,
+          remaining_seconds: err.remaining_seconds,
+          answered: 0,
+        },
+      }
+      error.value = ''
+      return
+    }
     error.value = e.response?.data?.message || 'شروع آزمون ممکن نشد.'
   } finally {
     isStarting.value = false
   }
+}
+
+function applyPayload(payload: any) {
+  session.resetSessionUx()
+  const perPage = Math.max(1, Math.min(20, Number(payload.per_page) || 5))
+  session.setQuestionsPerPage(perPage)
+  examStore.current = {
+    examId: exam.value.id,
+    attemptId: payload.attempt_id || payload.attempt?.id,
+    questions: payload.questions || [],
+    duration: exam.value.duration_minutes,
+    hasNegativeMarking: Boolean(exam.value.has_negative_marking),
+    title: exam.value.title,
+    perPage,
+  }
+  const answers = payload.answers || {}
+  examStore.answers = { ...answers }
+  examStore.dirty = false
+  examStore.pageIndex = 0
+  examStore.endsAt = payload.end_time
+    ? payload.end_time * 1000
+    : Date.now() + exam.value.duration_minutes * 60 * 1000
+  examStore.saveCache()
 }
 </script>

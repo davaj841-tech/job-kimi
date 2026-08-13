@@ -1,12 +1,12 @@
 <template>
   <div class="min-h-screen bg-surface-page dark:bg-slate-950">
-    <div class="page-banner py-10 sm:py-12">
+    <div class="page-banner py-6 sm:py-8">
       <div class="mx-auto max-w-7xl px-4 text-right sm:text-center">
-        <h1 class="page-title text-white sm:text-2xl">فروشگاه منابع آموزشی</h1>
-        <p class="mx-auto mt-2 max-w-2xl text-xs text-white/70 sm:text-sm">
-          هر PDF جداگانه خریداری می‌شود — بدون اشتراک. پس از خرید، برای همیشه در کتابخانه شماست.
+        <h1 class="page-title text-white sm:text-2xl">📄 فروشگاه منابع آموزشی</h1>
+        <p class="mx-auto mt-1.5 max-w-2xl text-xs text-white/70 sm:text-sm">
+          هر PDF جداگانه خریداری می‌شود — بدون اشتراک.
         </p>
-        <div class="relative mx-auto mt-8 max-w-xl">
+        <div class="relative mx-auto mt-5 max-w-xl">
           <MagnifyingGlassIcon
             class="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
           />
@@ -14,7 +14,7 @@
             v-model="filters.search"
             type="search"
             placeholder="جستجو در PDFها…"
-            class="w-full rounded-2xl border border-white/20 bg-white/10 py-3.5 pl-4 pr-12 text-white placeholder-slate-400 backdrop-blur-sm outline-none ring-brand focus:ring-2"
+            class="w-full rounded-xl border border-white/20 bg-white/10 py-2.5 pl-4 pr-12 text-sm text-white placeholder-slate-400 backdrop-blur-sm outline-none ring-brand focus:ring-2"
             @input="debouncedSearch"
           />
         </div>
@@ -22,7 +22,7 @@
     </div>
 
     <div
-      class="sticky top-0 z-30 border-b border-surface-line bg-white/92 backdrop-blur-md lg:top-16"
+      class="sticky top-0 z-30 border-b border-surface-line bg-surface/95 lg:top-16"
     >
       <div class="mx-auto max-w-7xl px-4 py-3">
         <div class="scrollbar-hide flex items-center gap-2 overflow-x-auto">
@@ -48,14 +48,14 @@
       </div>
     </div>
 
-    <div class="mx-auto max-w-7xl px-4 py-8">
-      <div class="mb-6 flex items-center justify-between gap-3">
+    <div class="mx-auto max-w-7xl px-4 py-5 sm:py-6">
+      <div class="mb-4 flex items-center justify-between gap-3">
         <p class="text-sm text-desk-muted">
           {{ toFaDigits(pagination.total) }} منبع آموزشی
         </p>
         <select
           v-model="filters.sort"
-          class="rounded-xl border border-surface-line bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          class="rounded-xl border border-surface-line bg-surface px-3 py-2 text-sm"
         >
           <option value="newest">جدیدترین</option>
           <option value="popular">پرفروش‌ترین</option>
@@ -66,7 +66,7 @@
 
       <div
         v-if="loading"
-        class="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4"
+        class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
       >
         <PdfCardSkeleton
           v-for="i in 8"
@@ -76,7 +76,7 @@
 
       <div
         v-else
-        class="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4"
+        class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
       >
         <PdfCard
           v-for="pdf in pdfs"
@@ -88,19 +88,19 @@
 
       <div
         v-if="!loading && !pdfs.length"
-        class="py-20 text-center"
+        class="py-16 text-center"
       >
-        <DocumentIcon class="mx-auto mb-4 h-14 w-14 text-slate-300" />
+        <DocumentIcon class="mx-auto mb-4 h-12 w-12 text-slate-300" />
         <p class="text-desk-muted">موردی یافت نشد</p>
       </div>
 
       <div
         v-if="hasMore && !loading"
-        class="mt-8 text-center"
+        class="mt-6 text-center"
       >
         <button
           type="button"
-          class="rounded-xl border border-surface-line bg-white px-6 py-2.5 text-sm font-medium dark:border-slate-700 dark:bg-slate-800"
+          class="rounded-xl border border-surface-line bg-surface px-6 py-2.5 text-sm font-medium"
           :disabled="loadingMore"
           @click="loadMore"
         >

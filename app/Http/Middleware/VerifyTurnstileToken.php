@@ -13,13 +13,15 @@ class VerifyTurnstileToken
     public function handle(Request $request, Closure $next): Response
     {
         $enabled = Setting::get('captcha_enabled', 'false') === 'true'
-            || Setting::get('turnstile_enabled', 'false') === 'true';
+            || Setting::get('turnstile_enabled', 'false') === 'true'
+            || filled(config('services.turnstile.secret'));
 
         if (! $enabled) {
             return $next($request);
         }
 
-        $secret = Setting::get('turnstile_secret_key');
+        // Prefer Admin Settings; fall back to .env via config/services.php
+        $secret = Setting::getFilled('turnstile_secret_key', config('services.turnstile.secret'));
         if (! $secret) {
             return $next($request);
         }

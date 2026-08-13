@@ -9,6 +9,7 @@ use App\Http\Requests\Api\Admin\UpdateUserRoleRequest;
 use App\Http\Requests\Api\Admin\UpdateUserStatusRequest;
 use App\Models\User;
 use App\Services\AuditLogService;
+use App\Support\OperatorPermissions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -97,6 +98,7 @@ class AdminUserController extends BaseController
             'username' => $user->username,
             'avatar' => $user->avatar,
             'role' => $user->role,
+            'operator_permissions' => OperatorPermissions::normalize($user->operator_permissions),
             'status' => $user->status ?? 'active',
             'wallet_balance' => $user->wallet_balance,
             'subscription_plan' => $user->subscriptionPlan?->name,
@@ -119,6 +121,19 @@ class AdminUserController extends BaseController
         }
 
         $data = $request->validated();
+        $actor = $request->user();
+
+        if (($actor?->role !== 'admin') && (($data['role'] ?? null) === 'admin')) {
+            return $this->errorResponse('فقط مدیر می‌تواند نقش مدیر تعیین کند.', 403);
+        }
+
+        if ($actor?->role === 'admin' && array_key_exists('operator_permissions', $data)) {
+            $data['operator_permissions'] = ($data['role'] ?? $user->role) === 'operator'
+                ? OperatorPermissions::normalize($data['operator_permissions'])
+                : null;
+        } else {
+            unset($data['operator_permissions']);
+        }
 
         if ($request->user()->id === $user->id) {
             if (isset($data['role']) && $data['role'] !== 'admin') {
@@ -158,12 +173,20 @@ class AdminUserController extends BaseController
             return $this->errorResponse('کاربر یافت نشد.', 404);
         }
 
+        if ($request->user()?->role !== 'admin' && $request->validated('role') === 'admin') {
+            return $this->errorResponse('فقط مدیر می‌تواند نقش مدیر تعیین کند.', 403);
+        }
+
         if ($request->user()->id === $user->id && $request->validated('role') !== 'admin') {
             return $this->errorResponse('نمی‌توانید نقش خودتان را از ادمین خارج کنید.', 422);
         }
 
         $old = ['role' => $user->role];
-        $user->update(['role' => $request->validated('role')]);
+        $payload = ['role' => $request->validated('role')];
+        if ($request->validated('role') !== 'operator') {
+            $payload['operator_permissions'] = null;
+        }
+        $user->update($payload);
         app(AuditLogService::class)->log('user.role_changed', $user, $old, ['role' => $user->role]);
 
         return $this->successResponse($this->listItem($user->fresh('subscriptionPlan')), 'نقش کاربر به‌روزرسانی شد.');
@@ -188,34 +211,63 @@ class AdminUserController extends BaseController
 
     public function store(Request $request): JsonResponse
     {
+        $request->merge([
+            'mobile' => filled($request->input('mobile')) ? trim((string) $request->input('mobile')) : null,
+            'email' => filled($request->input('email')) ? trim((string) $request->input('email')) : null,
+            'username' => strtolower(trim((string) $request->input('username', ''))),
+        ]);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'username' => ['required', 'string', 'regex:/^[a-zA-Z0-9_]{3,20}$/', 'unique:users,username'],
+            'username' => ['required', 'string', 'regex:/^[a-z0-9_]{3,20}$/', 'unique:users,username'],
             'password' => ['required', 'string', 'min:8'],
             'mobile' => ['nullable', 'regex:/^09\d{9}$/', 'unique:users,mobile'],
             'email' => ['nullable', 'email', 'max:191', 'unique:users,email'],
             'province' => ['required', 'string', 'max:100'],
             'role' => ['required', 'in:jobseeker,employer,operator,admin'],
+            'operator_permissions' => ['sometimes', 'nullable', 'array'],
+            'operator_permissions.*' => ['string'],
             'status' => ['nullable', 'in:active,blocked'],
         ], [
+            'name.required' => 'نام الزامی است.',
+            'username.required' => 'نام کاربری الزامی است.',
+            'username.regex' => 'نام کاربری باید ۳ تا ۲۰ کاراکتر و فقط حروف کوچک انگلیسی، عدد و ـ باشد.',
             'username.unique' => 'نام کاربری تکراری است.',
+            'password.required' => 'رمز عبور الزامی است.',
+            'password.min' => 'رمز عبور باید حداقل ۸ کاراکتر باشد.',
+            'mobile.regex' => 'شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود.',
             'mobile.unique' => 'موبایل تکراری است.',
+            'email.email' => 'ایمیل معتبر نیست.',
             'email.unique' => 'ایمیل تکراری است.',
             'province.required' => 'انتخاب استان الزامی است.',
+            'role.required' => 'انتخاب نقش الزامی است.',
+            'role.in' => 'نقش انتخاب‌شده معتبر نیست.',
         ]);
 
         if (empty($data['mobile']) && empty($data['email'])) {
             return $this->errorResponse('حداقل یکی از موبایل یا ایمیل الزامی است.', 422);
         }
 
+        if ($request->user()?->role !== 'admin' && $data['role'] === 'admin') {
+            return $this->errorResponse('فقط مدیر می‌تواند حساب مدیر بسازد.', 403);
+        }
+
+        $permissions = null;
+        if ($data['role'] === 'operator') {
+            $permissions = $request->user()?->role === 'admin'
+                ? OperatorPermissions::normalize($data['operator_permissions'] ?? OperatorPermissions::defaults())
+                : OperatorPermissions::defaults();
+        }
+
         $user = User::query()->create([
             'name' => $data['name'],
-            'username' => strtolower($data['username']),
+            'username' => $data['username'],
             'password' => $data['password'],
             'mobile' => $data['mobile'] ?? null,
             'email' => $data['email'] ?? null,
             'province' => $data['province'] ?? null,
             'role' => $data['role'],
+            'operator_permissions' => $permissions,
             'status' => $data['status'] ?? 'active',
             'is_verified' => true,
         ]);
@@ -250,6 +302,7 @@ class AdminUserController extends BaseController
             'username' => $user->username,
             'province' => $user->province,
             'role' => $user->role,
+            'operator_permissions' => OperatorPermissions::normalize($user->operator_permissions),
             'wallet_balance' => $user->wallet_balance,
             'subscription_plan' => $user->subscriptionPlan?->name,
             'status' => $user->status ?? 'active',

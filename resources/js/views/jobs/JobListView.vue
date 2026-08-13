@@ -127,10 +127,8 @@
         />
       </div>
 
-      <TransitionGroup
+      <div
         v-else
-        name="job-list"
-        tag="div"
         class="space-y-2.5"
       >
         <JobCardCompact
@@ -140,7 +138,7 @@
           @bookmark="toggleBookmark"
           @click="openDetail(job)"
         />
-      </TransitionGroup>
+      </div>
 
       <div
         v-if="!loading && jobs.length === 0"
@@ -167,7 +165,7 @@
       >
         <button
           type="button"
-          class="rounded-xl border border-surface-line bg-white px-6 py-2.5 text-sm font-medium transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
+          class="rounded-xl border border-surface-line bg-surface px-6 py-2.5 text-sm font-medium transition hover:bg-surface-page disabled:opacity-60"
           :disabled="loadingMore"
           @click="loadMore"
         >
@@ -240,15 +238,5 @@ function onDrawerBookmark(id) {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-.job-list-enter-active,
-.job-list-leave-active {
-  transition: all 0.28s ease;
-}
-.job-list-enter-from,
-.job-list-leave-to {
-  opacity: 0;
-  transform: translateX(-16px);
 }
 </style>

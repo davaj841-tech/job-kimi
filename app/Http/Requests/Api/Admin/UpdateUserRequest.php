@@ -24,6 +24,8 @@ class UpdateUserRequest extends FormRequest
             'national_code' => ['nullable', 'string', 'max:10'],
             'username' => ['nullable', 'regex:/^[a-z0-9_]{3,20}$/', Rule::unique('users', 'username')->ignore($id)],
             'role' => ['sometimes', 'in:jobseeker,employer,operator,admin'],
+            'operator_permissions' => ['sometimes', 'nullable', 'array'],
+            'operator_permissions.*' => ['string'],
             'status' => ['sometimes', 'in:active,blocked'],
             'password' => ['nullable', 'string', 'min:8', 'regex:/[A-Za-z]/', 'regex:/[0-9]/'],
             'is_verified' => ['sometimes', 'boolean'],

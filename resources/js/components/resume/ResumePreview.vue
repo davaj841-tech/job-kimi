@@ -31,6 +31,17 @@
           <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
             <span v-if="data.personal?.email">{{ data.personal.email }}</span>
             <span v-if="data.personal?.mobile">{{ data.personal.mobile }}</span>
+            <span v-if="data.personal?.national_code"
+              >کد ملی: {{ data.personal.national_code }}</span
+            >
+            <span v-if="data.personal?.birth_date"
+              >تولد: {{ data.personal.birth_date }}</span
+            >
+            <span v-if="birthPlace">محل تولد: {{ birthPlace }}</span>
+            <span v-if="maritalLabel">{{ maritalLabel }}</span>
+            <span v-if="data.personal?.field_of_study"
+              >رشته: {{ data.personal.field_of_study }}</span
+            >
             <span v-if="data.personal?.address">{{ data.personal.address }}</span>
           </div>
         </div>
@@ -204,6 +215,21 @@ const props = defineProps({
 const templateStyle = computed(() => {
   if (props.template) return props.template
   return { 1: 'modern', 2: 'minimal', 3: 'classic' }[props.templateId] || 'modern'
+})
+
+const birthPlace = computed(() => {
+  const p = props.data?.personal || {}
+  return [p.birth_province, p.birth_city].filter(Boolean).join(' / ')
+})
+
+const maritalLabel = computed(() => {
+  const map = {
+    single: 'مجرد',
+    married: 'متاهل',
+    divorced: 'مطلقه / متعلقه',
+  }
+  const v = props.data?.personal?.marital_status
+  return v ? map[v] || v : ''
 })
 
 const rootClass = computed(() =>

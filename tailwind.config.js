@@ -13,8 +13,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['"Estedad Variable"', 'Estedad', 'Vazirmatn', 'Tahoma', ...defaultTheme.fontFamily.sans],
-                display: ['"Estedad Variable"', 'Estedad', 'Vazirmatn', 'Tahoma', ...defaultTheme.fontFamily.sans],
+                sans: ['var(--font-site)', 'Tahoma', ...defaultTheme.fontFamily.sans],
+                display: ['var(--font-site)', 'Tahoma', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 primary: {
@@ -35,21 +35,21 @@ export default {
                     dark: 'rgb(var(--c-brand-dark) / <alpha-value>)',
                 },
                 desk: {
-                    dark: 'rgb(var(--c-ink) / <alpha-value>)',
+                    dark: 'rgb(var(--c-navy) / <alpha-value>)',
                     blue: 'rgb(var(--c-ink-2) / <alpha-value>)',
                     orange: 'rgb(var(--c-accent) / <alpha-value>)',
                     green: '#22c55e',
                     gray: 'rgb(var(--c-page) / <alpha-value>)',
-                    text: '#1e293b',
-                    muted: '#64748b',
+                    text: 'rgb(var(--c-text) / <alpha-value>)',
+                    muted: 'rgb(var(--c-muted) / <alpha-value>)',
                 },
                 ink: {
-                    DEFAULT: '#1e293b',
-                    muted: '#64748b',
-                    soft: '#475569',
+                    DEFAULT: 'rgb(var(--c-text) / <alpha-value>)',
+                    muted: 'rgb(var(--c-muted) / <alpha-value>)',
+                    soft: 'rgb(var(--c-soft) / <alpha-value>)',
                 },
                 surface: {
-                    DEFAULT: '#ffffff',
+                    DEFAULT: 'rgb(var(--c-surface) / <alpha-value>)',
                     page: 'rgb(var(--c-page) / <alpha-value>)',
                     line: 'rgb(var(--c-line) / <alpha-value>)',
                 },

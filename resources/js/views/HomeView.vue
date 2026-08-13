@@ -44,11 +44,12 @@ import PlansSection from '../components/home/PlansSection.vue'
 import ResumeFaqRow from '../components/home/ResumeFaqRow.vue'
 import { useSiteTheme } from '../composables/useSiteTheme'
 import { useScrollAnimations } from '../composables/useScrollAnimations'
-import { unwrapList } from '../utils/format'
 
 useScrollAnimations('.home-2026')
 
 const { layout, plansVariant, ensureLoaded } = useSiteTheme()
+
+const CACHE_KEY = 'ja_home_feed_v2'
 
 const jobs = ref<any[]>([])
 const classifications = ref<any[]>([])
@@ -63,7 +64,43 @@ const loadingExams = ref(true)
 const loadingFiles = ref(true)
 const loadingPlans = ref(true)
 
-onMounted(async () => {
+function applyFeed(data: any) {
+  jobs.value = data.jobs || []
+  classifications.value = data.classifications || []
+  posts.value = data.blog_posts || []
+  articles.value = data.articles || []
+  exams.value = data.exams || []
+  files.value = data.files || []
+  plans.value = data.plans || []
+  examsError.value = ''
+  loadingJobs.value = false
+  loadingExams.value = false
+  loadingFiles.value = false
+  loadingPlans.value = false
+}
+
+function hydrateFromCache() {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY)
+    if (!raw) return false
+    const cached = JSON.parse(raw)
+    if (!cached?.data || Date.now() - (cached.at || 0) > 90_000) return false
+    applyFeed(cached.data)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function persistCache(data: any) {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), data }))
+  } catch {
+    /* ignore */
+  }
+}
+
+onMounted(() => {
   setPageMeta({
     title: 'جاب‌آزمون | آمادگی استخدام',
     description:
@@ -72,40 +109,53 @@ onMounted(async () => {
     type: 'website',
   } as any)
 
-  await ensureLoaded()
+  hydrateFromCache()
+  void ensureLoaded()
 
-  const [jobsRes, filtersRes, blogRes, articlesRes, filesRes, examsRes, plansRes] =
-    await Promise.all([
-      api.get('/job-posts', { params: { per_page: 12 } }).catch(() => null),
-      api.get('/job-posts/filters').catch(() => null),
-      api.get('/blog-posts', { params: { per_page: 8 } }).catch(() => null),
-      api.get('/articles', { params: { per_page: 8 } }).catch(() => null),
-      api.get('/pdf-products', { params: { per_page: 12 } }).catch(() => null),
-      api.get('/exams', { params: { per_page: 12 } }).catch((e) => ({ __error: e })),
-      api.get('/subscription-plans').catch(() => null),
-    ])
-
-  jobs.value = unwrapList(jobsRes?.data)
-  const filtersPayload = filtersRes?.data?.data || filtersRes?.data || {}
-  classifications.value = filtersPayload.home_classifications || []
-  posts.value = unwrapList(blogRes?.data)
-  articles.value = unwrapList(articlesRes?.data)
-  files.value = unwrapList(filesRes?.data)
-  plans.value = unwrapList(plansRes?.data)
-
-  if ((examsRes as any)?.__error) {
-    examsError.value =
-      (examsRes as any).__error?.response?.data?.message ||
-      'بارگذاری آزمون‌ها ناموفق بود.'
-    exams.value = []
-  } else {
-    examsError.value = ''
-    exams.value = unwrapList((examsRes as any)?.data)
-  }
-
-  loadingJobs.value = false
-  loadingFiles.value = false
-  loadingExams.value = false
-  loadingPlans.value = false
+  void api
+    .get('/home-feed')
+    .then(({ data }) => {
+      const feed = data?.data || {}
+      applyFeed(feed)
+      persistCache(feed)
+    })
+    .catch(() => {
+      // fallback: parallel calls if aggregate fails
+      void Promise.all([
+        api.get('/job-posts', { params: { per_page: 12 } }).catch(() => null),
+        api.get('/job-posts/filters').catch(() => null),
+        api.get('/blog-posts', { params: { per_page: 8 } }).catch(() => null),
+        api.get('/articles', { params: { per_page: 8 } }).catch(() => null),
+        api.get('/pdf-products', { params: { per_page: 12 } }).catch(() => null),
+        api.get('/exams', { params: { per_page: 12 } }).catch((e) => ({ __error: e })),
+        api.get('/subscription-plans').catch(() => null),
+      ]).then(([jobsRes, filtersRes, blogRes, articlesRes, filesRes, examsRes, plansRes]) => {
+        const unwrap = (payload: any) =>
+          payload?.data?.data ?? payload?.data ?? []
+        const list = (payload: any) => {
+          const v = unwrap(payload)
+          return Array.isArray(v) ? v : v?.data || []
+        }
+        jobs.value = list(jobsRes)
+        classifications.value =
+          filtersRes?.data?.data?.home_classifications ||
+          filtersRes?.data?.data?.classifications ||
+          []
+        posts.value = list(blogRes)
+        articles.value = list(articlesRes)
+        files.value = list(filesRes)
+        plans.value = list(plansRes)
+        if ((examsRes as any)?.__error) {
+          examsError.value = 'بارگذاری آزمون‌ها ناموفق بود.'
+          exams.value = []
+        } else {
+          exams.value = list(examsRes)
+        }
+        loadingJobs.value = false
+        loadingExams.value = false
+        loadingFiles.value = false
+        loadingPlans.value = false
+      })
+    })
 })
 </script>

@@ -22,109 +22,115 @@ const routes = [
     path: '/admin/users',
     name: 'admin-users',
     component: () => import('../views/UsersView.vue'),
-    meta: { title: 'کاربران', auth: true },
+    meta: { title: 'کاربران', auth: true, permission: 'users' },
+  },
+  {
+    path: '/admin/access-levels',
+    name: 'admin-access-levels',
+    component: () => import('../views/AccessLevelsView.vue'),
+    meta: { title: 'سطح دسترسی', auth: true, permission: 'users' },
   },
   {
     path: '/admin/exams',
     name: 'admin-exams',
     component: () => import('../views/ExamsView.vue'),
-    meta: { title: 'آزمون‌ها', auth: true },
+    meta: { title: 'آزمون‌ها', auth: true, permission: 'exams' },
   },
   {
     path: '/admin/exams/:id/take',
     name: 'admin-exam-take',
     component: () => import('../views/ExamTakeView.vue'),
-    meta: { title: 'آزمون‌گیری', auth: true },
+    meta: { title: 'آزمون‌گیری', auth: true, permission: 'exams' },
   },
   {
     path: '/admin/exams/:id/result/:attemptId',
     name: 'admin-exam-result',
     component: () => import('../views/ExamResultView.vue'),
-    meta: { title: 'نتیجه آزمون', auth: true },
+    meta: { title: 'نتیجه آزمون', auth: true, permission: 'exams' },
   },
   {
     path: '/admin/questions',
     name: 'admin-questions',
     component: () => import('../views/QuestionsView.vue'),
-    meta: { title: 'سوالات', auth: true },
+    meta: { title: 'سوالات', auth: true, permission: 'questions' },
   },
   {
     path: '/admin/job-posts',
     name: 'admin-job-posts',
     component: () => import('../views/JobPostsView.vue'),
-    meta: { title: 'آگهی‌ها', auth: true },
+    meta: { title: 'آگهی‌ها', auth: true, permission: 'job_posts' },
   },
   {
     path: '/admin/job-sources',
     name: 'admin-job-sources',
     component: () => import('../views/JobSourcesView.vue'),
-    meta: { title: 'منابع تجمیع', auth: true },
+    meta: { title: 'منابع تجمیع', auth: true, permission: 'aggregation' },
   },
   {
     path: '/admin/aggregation-settings',
     name: 'admin-aggregation-settings',
     component: () => import('../views/AggregationSettingsView.vue'),
-    meta: { title: 'زمان‌بندی تجمیع', auth: true },
+    meta: { title: 'زمان‌بندی تجمیع', auth: true, permission: 'aggregation' },
   },
   {
     path: '/admin/crawl-monitoring',
     name: 'admin-crawl-monitoring',
     component: () => import('../views/CrawlMonitoringView.vue'),
-    meta: { title: 'پایش خزش', auth: true },
+    meta: { title: 'پایش خزش', auth: true, permission: 'aggregation' },
   },
   {
     path: '/admin/aggregated-jobs',
     name: 'admin-aggregated-jobs',
     component: () => import('../views/AggregatedJobsView.vue'),
-    meta: { title: 'بررسی تجمیع', auth: true },
+    meta: { title: 'بررسی تجمیع', auth: true, permission: 'aggregation' },
   },
   {
     path: '/admin/blog-posts',
     name: 'admin-blog-posts',
     component: () => import('../views/BlogPostsView.vue'),
-    meta: { title: 'بلاگ', auth: true },
+    meta: { title: 'بلاگ', auth: true, permission: 'blog' },
   },
   {
     path: '/admin/generated-contents',
     name: 'admin-generated-contents',
     component: () => import('../views/GeneratedContentsView.vue'),
-    meta: { title: 'تولید محتوا', auth: true },
+    meta: { title: 'تولید محتوا', auth: true, permission: 'generated_contents' },
   },
   {
     path: '/admin/pdf-products',
     name: 'admin-pdf-products',
     component: () => import('../views/PDFProductsView.vue'),
-    meta: { title: 'فایل‌ها', auth: true },
+    meta: { title: 'فایل‌ها', auth: true, permission: 'pdf' },
   },
   {
     path: '/admin/subscriptions',
     name: 'admin-subscriptions',
     component: () => import('../views/SubscriptionsView.vue'),
-    meta: { title: 'اشتراک‌ها', auth: true },
+    meta: { title: 'اشتراک‌ها', auth: true, permission: 'subscriptions' },
   },
   {
     path: '/admin/transactions',
     name: 'admin-transactions',
     component: () => import('../views/TransactionsView.vue'),
-    meta: { title: 'تراکنش‌ها', auth: true },
+    meta: { title: 'تراکنش‌ها', auth: true, permission: 'transactions' },
   },
   {
     path: '/admin/coupons',
     name: 'admin-coupons',
     component: () => import('../views/CouponsView.vue'),
-    meta: { title: 'کد تخفیف', auth: true },
+    meta: { title: 'کد تخفیف', auth: true, permission: 'coupons' },
   },
   {
     path: '/admin/wallets',
     name: 'admin-wallets',
     component: () => import('../views/WalletsView.vue'),
-    meta: { title: 'کیف پول‌ها', auth: true },
+    meta: { title: 'کیف پول‌ها', auth: true, permission: 'wallets' },
   },
   {
     path: '/admin/ai',
     name: 'admin-ai',
     component: () => import('../views/AIContentsView.vue'),
-    meta: { title: 'هوش مصنوعی', auth: true },
+    meta: { title: 'هوش مصنوعی', auth: true, permission: 'ai' },
   },
   {
     path: '/admin/settings',
@@ -136,19 +142,19 @@ const routes = [
     path: '/admin/tickets',
     name: 'admin-tickets',
     component: () => import('../views/TicketsView.vue'),
-    meta: { title: 'تیکت‌ها', auth: true },
+    meta: { title: 'تیکت‌ها', auth: true, permission: 'tickets' },
   },
   {
     path: '/admin/banners',
     name: 'admin-banners',
     component: () => import('../views/BannersView.vue'),
-    meta: { title: 'بنرها', auth: true },
+    meta: { title: 'بنرها', auth: true, permission: 'banners' },
   },
   {
     path: '/admin/pages',
     name: 'admin-pages',
     component: () => import('../views/PagesView.vue'),
-    meta: { title: 'صفحات', auth: true },
+    meta: { title: 'صفحات', auth: true, permission: 'pages' },
   },
   {
     path: '/admin/backups',
@@ -197,6 +203,10 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.adminOnly && !auth.isAdmin) {
+    return { name: 'admin-dashboard' };
+  }
+
+  if (to.meta.permission && !auth.can(to.meta.permission)) {
     return { name: 'admin-dashboard' };
   }
 

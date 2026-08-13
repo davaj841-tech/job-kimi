@@ -50,5 +50,7 @@ class Setting extends Model
         );
 
         Cache::forget("setting.{$key}");
+        Cache::forget('public_theme_bootstrap');
+        Cache::forget('public_settings_payload');
     }
 }

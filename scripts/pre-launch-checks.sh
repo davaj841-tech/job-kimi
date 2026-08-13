@@ -1,42 +1,41 @@
 #!/bin/bash
-# JobAzmoon - Phase 11 Step 5.1: Pre-launch final checks (last 5 minutes)
-# Run on production: cd /var/www/jobazmoon && ./scripts/pre-launch-checks.sh
-set -e
+# JobAzmoon - Pre-launch checks (run on the server)
+# Usage: ./scripts/pre-launch-checks.sh
+set -euo pipefail
 
-cd /var/www/jobazmoon
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
 
-echo "=== 1. Maintenance mode (must be UP) ==="
-php artisan up
+fail() { echo "FAIL: $*" >&2; exit 1; }
+ok() { echo "OK: $*"; }
+
+echo "=== JobAzmoon pre-launch ==="
+
+[[ -f .env ]] || fail ".env missing"
+grep -q '^APP_KEY=base64:' .env || fail "APP_KEY not set"
+grep -qE '^APP_ENV=production' .env || echo "WARN: APP_ENV is not production"
+grep -qE '^APP_DEBUG=false' .env || fail "APP_DEBUG must be false"
+grep -qE '^APP_URL=https://' .env || echo "WARN: APP_URL should be https://"
+grep -qE '^TELESCOPE_ENABLED=false' .env || echo "WARN: TELESCOPE_ENABLED should be false"
+grep -qE '^SMS_ALLOW_LOG_FALLBACK=false' .env || echo "WARN: SMS_ALLOW_LOG_FALLBACK should be false in production"
+grep -qE '^TRUSTED_PROXIES=.+' .env || echo "WARN: TRUSTED_PROXIES empty — HTTPS behind proxy may break"
+
+[[ -d public/build ]] || fail "public/build missing — run npm run build"
+[[ -e public/storage ]] || fail "public/storage missing — run php artisan storage:link"
+[[ -w storage ]] || fail "storage not writable"
+[[ -w bootstrap/cache ]] || fail "bootstrap/cache not writable"
+
+php artisan about >/dev/null || fail "artisan about failed"
 
 echo ""
-echo "=== 2. Disk space (need > 20% free) ==="
-df -h /
+echo "=== Health endpoints (local) ==="
+php artisan route:list --path=health >/dev/null && ok "health route registered"
+php artisan route:list --path=up >/dev/null && ok "up route registered"
 
 echo ""
-echo "=== 3. RAM (need > 20% free) ==="
-free -h
-
-echo ""
-echo "=== 4. Services ==="
-sudo systemctl status nginx --no-pager -l || true
-sudo systemctl status php8.3-fpm --no-pager -l || true
-sudo systemctl status redis --no-pager -l || true
-sudo supervisorctl status jobazmoon-worker:* || true
-
-echo ""
-echo "=== 5. Recent Laravel errors (expect empty) ==="
-if [ -f storage/logs/laravel.log ]; then
-  MATCHES=$(tail -n 50 storage/logs/laravel.log | grep -iE "error|critical|emergency" || true)
-  if [ -z "$MATCHES" ]; then
-    echo "OK: no error/critical/emergency in last 50 log lines"
-  else
-    echo "WARN: found issues:"
-    echo "$MATCHES"
-    exit 1
-  fi
-else
-  echo "OK: no laravel.log yet"
-fi
+echo "=== Maintenance ==="
+php artisan up || true
 
 echo ""
 echo "=== Pre-launch checks complete ==="
+echo "Also verify: cron schedule:run, queue/Horizon, SMS + ZarinPal in Admin Settings."

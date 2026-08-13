@@ -204,6 +204,7 @@
       :user="store.selectedUser"
       :loading="store.detailLoading"
       :start-editing="detailStartEdit"
+      :can-manage="auth.isAdmin"
       @close="closeDetail"
       @save="onSaveUser"
     />
@@ -211,6 +212,7 @@
     <UserCreateModal
       ref="createModal"
       :open="createOpen"
+      :can-manage="auth.isAdmin"
       @close="createOpen = false"
       @created="onCreateUser"
     />
@@ -270,10 +272,12 @@ import UserRoleBadge from '../components/ui/UserRoleBadge.vue'
 import UserDetailModal from '../components/users/UserDetailModal.vue'
 import UserCreateModal from '../components/users/UserCreateModal.vue'
 import { useToast } from '../../composables/useToast'
+import { useAdminAuthStore } from '../stores/auth'
 import { useUsersStore } from '../stores/users'
 
 const store = useUsersStore()
 const toast = useToast()
+const auth = useAdminAuthStore()
 
 const detailOpen = ref(false)
 const detailStartEdit = ref(false)
@@ -378,11 +382,10 @@ async function onSaveUser(payload) {
     detailModal.value?.markSaved?.()
     detailStartEdit.value = false
   } catch (e) {
-    const msg = e.response?.data?.errors
-      ? Object.values(e.response.data.errors).flat()[0]
-      : e.response?.data?.message
-    toast.error(msg || 'ذخیره ناموفق بود.')
-    detailModal.value?.markFailed?.(msg || 'ذخیره ناموفق بود.')
+    const { apiErrorMessage } = await import('../../utils/format')
+    const msg = apiErrorMessage(e, 'ذخیره ناموفق بود.')
+    toast.error(msg)
+    detailModal.value?.markFailed?.(msg)
   }
 }
 
@@ -392,10 +395,10 @@ async function onCreateUser(payload) {
     toast.success('کاربر ایجاد شد.')
     createOpen.value = false
   } catch (e) {
-    const msg = e.response?.data?.errors
-      ? Object.values(e.response.data.errors).flat()[0]
-      : e.response?.data?.message
-    createModal.value?.markFailed?.(msg || 'ایجاد کاربر ناموفق بود.')
+    const { apiErrorMessage } = await import('../../utils/format')
+    createModal.value?.markFailed?.(
+      apiErrorMessage(e, 'ایجاد کاربر ناموفق بود.')
+    )
   }
 }
 

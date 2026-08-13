@@ -34,7 +34,7 @@ export function useJobList() {
     total: 0,
     current_page: 1,
     last_page: 1,
-    per_page: 15,
+    per_page: 40,
   })
 
   const filters = reactive({
@@ -99,7 +99,10 @@ export function useJobList() {
       pagination.total = Number(meta.total ?? list.length)
       pagination.current_page = Number(meta.current_page ?? page.value)
       pagination.last_page = Number(meta.last_page ?? 1)
-      pagination.per_page = Number(meta.per_page ?? 15)
+      // Keep client page size; don't shrink to backend default after first load
+      if (meta.per_page) {
+        pagination.per_page = Math.max(pagination.per_page, Number(meta.per_page))
+      }
 
       const flagged = withBookmarkFlag(list)
       jobs.value = reset ? flagged : [...jobs.value, ...flagged]
@@ -156,16 +159,16 @@ export function useJobList() {
     () => fetchJobs(true),
   )
 
-  onMounted(async () => {
-    await loadFilterOptions()
-    await fetchJobs(true)
+  onMounted(() => {
+    // Parallel: don't wait for filters before first jobs page
+    void Promise.all([loadFilterOptions(), fetchJobs(true)])
 
     if (typeof window !== 'undefined') {
       useInfiniteScroll(
         window,
         () => loadMore(),
         {
-          distance: 320,
+          distance: 480,
           canLoadMore: () => hasMore.value && !loadingMore.value && !loading.value,
         },
       )

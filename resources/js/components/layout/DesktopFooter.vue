@@ -1,5 +1,5 @@
 <template>
-  <footer class="mt-auto hidden bg-[#0a1c33] text-white lg:block">
+  <footer class="site-footer mt-auto hidden bg-desk-dark text-white lg:block">
     <div class="desk-container grid grid-cols-4 gap-6 py-6">
       <div>
         <p class="mb-1.5 text-base font-black">جاب‌آزمون</p>

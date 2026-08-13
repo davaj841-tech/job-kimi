@@ -20,7 +20,7 @@
     <div class="flex items-center gap-2 sm:gap-4">
       <div class="hidden items-center gap-2 md:flex">
         <RouterLink
-          v-for="q in quickLinks"
+          v-for="q in visibleQuickLinks"
           :key="q.to"
           :to="q.to"
           class="rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-desk-dark hover:bg-orange-50 hover:text-orange-600"
@@ -73,11 +73,14 @@ let timer
 const clockText = computed(() => formatJalaliDateTime(now.value))
 
 const quickLinks = [
-  { to: '/admin/exams', label: '+ آزمون' },
-  { to: '/admin/users', label: 'کاربران' },
-  { to: '/admin/transactions', label: 'مالی' },
-  { to: '/admin/tickets', label: 'تیکت' },
+  { to: '/admin/exams', label: '+ آزمون', permission: 'exams' },
+  { to: '/admin/users', label: 'کاربران', permission: 'users' },
+  { to: '/admin/transactions', label: 'مالی', permission: 'transactions' },
+  { to: '/admin/tickets', label: 'تیکت', permission: 'tickets' },
 ]
+const visibleQuickLinks = computed(() =>
+  quickLinks.filter((item) => auth.can(item.permission))
+)
 
 onMounted(() => {
   timer = setInterval(() => {

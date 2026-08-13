@@ -1,4 +1,48 @@
 @import '@fontsource-variable/estedad/wght.css';
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
+
+@font-face {
+    font-family: Shabnam;
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/shabnam-font@v5.0.1/dist/Shabnam.woff2') format('woff2');
+}
+@font-face {
+    font-family: Shabnam;
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/shabnam-font@v5.0.1/dist/Shabnam-Bold.woff2') format('woff2');
+}
+@font-face {
+    font-family: Samim;
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/Samim.woff2') format('woff2');
+}
+@font-face {
+    font-family: Samim;
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/samim-font@v4.0.5/dist/Samim-Bold.woff2') format('woff2');
+}
+@font-face {
+    font-family: Sahel;
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/sahel-font@v3.4.0/dist/Sahel.woff2') format('woff2');
+}
+@font-face {
+    font-family: Sahel;
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('https://cdn.jsdelivr.net/gh/rastikerdar/sahel-font@v3.4.0/dist/Sahel-Bold.woff2') format('woff2');
+}
 
 @tailwind base;
 @tailwind components;
@@ -9,15 +53,35 @@
         --c-brand: 239 57 78;
         --c-brand-dark: 211 47 65;
         --c-brand-soft: 255 241 242;
+        --c-navy: 15 39 68;
         --c-ink: 15 39 68;
         --c-ink-2: 30 58 95;
         --c-accent: 249 115 22;
         --c-page: 248 250 252;
         --c-line: 226 232 240;
+        --c-surface: 255 255 255;
+        --c-text: 30 41 59;
+        --c-muted: 100 116 139;
+        --c-soft: 71 85 105;
         --theme-ink: #0f2744;
         --theme-ink-2: #1e3a5f;
         --theme-accent: #f97316;
         --theme-page: #f8fafc;
+        --font-site: 'Estedad Variable', Estedad, Tahoma, sans-serif;
+        color-scheme: light;
+    }
+
+    html.dark {
+        --c-page: 15 23 42;
+        --c-line: 51 65 85;
+        --c-surface: 30 41 59;
+        --c-text: 241 245 249;
+        --c-muted: 148 163 184;
+        --c-soft: 203 213 225;
+        --c-brand-soft: 69 26 33;
+        --c-ink-2: 51 65 85;
+        --theme-page: #0f172a;
+        color-scheme: dark;
     }
 
     html {
@@ -26,15 +90,15 @@
     }
 
     body {
-        @apply bg-surface-page font-sans text-ink antialiased dark:bg-slate-900 dark:text-slate-100;
-        font-family: 'Estedad Variable', Estedad, Vazirmatn, Tahoma, sans-serif;
+        @apply bg-surface-page font-sans text-ink antialiased;
+        font-family: var(--font-site);
         font-feature-settings: 'ss01', 'kern';
         letter-spacing: -0.01em;
         line-height: 1.75;
     }
 
     h1, h2, h3, h4, .font-display {
-        font-family: 'Estedad Variable', Estedad, Vazirmatn, Tahoma, sans-serif;
+        font-family: var(--font-site);
         letter-spacing: -0.02em;
         line-height: 1.35;
     }
@@ -68,7 +132,7 @@
     }
 
     .page-title {
-        @apply text-lg font-black tracking-tight text-desk-dark sm:text-xl;
+        @apply text-lg font-black tracking-tight text-desk-text sm:text-xl;
     }
 
     .page-sub {
@@ -76,11 +140,11 @@
     }
 
     .page-card {
-        @apply rounded-2xl border border-surface-line bg-white;
+        @apply rounded-2xl border border-surface-line bg-surface;
     }
 
     .page-chip {
-        @apply shrink-0 whitespace-nowrap rounded-full border border-surface-line bg-white px-3 py-1.5 text-xs font-bold text-desk-muted transition hover:bg-surface-page;
+        @apply shrink-0 whitespace-nowrap rounded-full border border-surface-line bg-surface px-3 py-1.5 text-xs font-bold text-desk-muted transition hover:bg-surface-page;
     }
 
     .page-chip-on {
@@ -96,11 +160,15 @@
     }
 
     .desk-card {
-        @apply rounded-xl bg-white shadow-sm transition hover:shadow-md;
+        @apply rounded-xl bg-surface shadow-sm transition hover:shadow-md;
     }
 
     .desk-section-title {
-        @apply text-lg font-black text-desk-dark sm:text-xl;
+        @apply text-lg font-black text-desk-text sm:text-xl;
+    }
+
+    .home-rail-card {
+        @apply flex h-[12.5rem] w-[15.5rem] shrink-0 flex-col rounded-2xl border border-surface-line bg-surface p-3.5 text-right shadow-sm transition hover:-translate-y-0.5 hover:shadow-md;
     }
 
     .btn-primary {
@@ -132,7 +200,7 @@
     }
 
     .card-soft {
-        @apply rounded-2xl border border-surface-line bg-white shadow-none dark:border-slate-700 dark:bg-slate-800;
+        @apply rounded-2xl border border-surface-line bg-surface shadow-none;
     }
 
     .section-title {
@@ -225,9 +293,8 @@
     animation-delay: 0.7s;
 }
 
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+html.dark .bg-white {
+    background-color: rgb(var(--c-surface));
 }
 
 .scrollbar-hide::-webkit-scrollbar {

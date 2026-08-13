@@ -1,9 +1,9 @@
 <template>
-  <section class="bg-white py-6 sm:py-7">
+  <section class="bg-surface-page py-6 sm:py-7">
     <div class="mx-auto max-w-7xl px-4">
       <div class="mb-3 flex items-end justify-between gap-3">
         <div>
-          <h2 class="text-lg font-black text-desk-dark sm:text-xl">آخرین استخدام‌ها</h2>
+          <h2 class="text-lg font-black text-desk-text sm:text-xl">💼 آخرین استخدام‌ها</h2>
           <p class="mt-0.5 text-xs text-desk-muted">فرصت‌های تازه، فیلترشده بر اساس رسته</p>
         </div>
         <RouterLink
@@ -49,7 +49,7 @@
           v-for="job in cards"
           :key="job.id"
           type="button"
-          class="w-[15.5rem] shrink-0 rounded-2xl border border-surface-line bg-white p-3.5 text-right shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          class="home-rail-card"
           @click="$router.push(`/jobs/${job.id}`)"
         >
           <div class="mb-2.5 flex items-start justify-between gap-2">
@@ -64,12 +64,13 @@
               >{{ yearLabel }}</span
             >
             <span
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-desk-dark text-sm font-black text-white"
+              class="flex h-10 w-10 items-center justify-center rounded-xl bg-desk-dark text-lg"
+              aria-hidden="true"
             >
-              {{ letter(job) }}
+              💼
             </span>
           </div>
-          <p class="line-clamp-2 text-sm font-bold text-desk-text">
+          <p class="line-clamp-2 flex-1 text-sm font-bold text-desk-text">
             {{ job.classification_name || job.company_name || job.title }}
           </p>
           <p class="mt-1 line-clamp-1 text-[11px] text-desk-muted">{{ job.title }}</p>

@@ -38,7 +38,16 @@
         </div>
         <div class="hidden justify-center lg:flex">
           <div class="relative w-full max-w-sm">
-            <div class="rounded-2xl bg-black/30 p-2 shadow-2xl ring-1 ring-white/10">
+            <BannerSlider
+              v-if="heroBanners.length"
+              position="home_hero"
+              :banners="heroBanners"
+              class="shadow-2xl ring-1 ring-white/10"
+            />
+            <div
+              v-else
+              class="rounded-2xl bg-black/30 p-2 shadow-2xl ring-1 ring-white/10"
+            >
               <div class="rounded-xl bg-white p-3">
                 <div class="mb-2 flex items-center justify-between">
                   <span class="h-2 w-16 rounded bg-desk-dark/15" />
@@ -58,8 +67,21 @@
                 </div>
               </div>
             </div>
-            <div class="absolute -bottom-3 -right-3 h-10 w-10 rounded-full bg-desk-orange/90 shadow-lg" />
+            <div
+              v-if="!heroBanners.length"
+              class="absolute -bottom-3 -right-3 h-10 w-10 rounded-full bg-desk-orange/90 shadow-lg"
+            />
           </div>
+        </div>
+        <div
+          v-if="heroBanners.length"
+          class="mt-4 lg:hidden"
+        >
+          <BannerSlider
+            position="home_hero"
+            :banners="heroBanners"
+            class="overflow-hidden rounded-2xl ring-1 ring-white/15"
+          />
         </div>
       </div>
     </template>
@@ -252,10 +274,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
+import BannerSlider from '../BannerSlider.vue'
+import api from '../../api/client'
 import { themePreset, type SiteThemeId } from '../../theme/presets'
+import { unwrapList } from '../../utils/format'
 
 const props = withDefaults(
   defineProps<{ variant?: SiteThemeId }>(),
@@ -264,8 +289,18 @@ const props = withDefaults(
 
 const router = useRouter()
 const q = ref('')
+const heroBanners = ref<any[]>([])
 const preset = computed(() => themePreset(props.variant))
 const hero = computed(() => preset.value.hero)
+
+onMounted(async () => {
+  try {
+    const { data } = await api.get('/banners', { params: { position: 'home_hero' } })
+    heroBanners.value = unwrapList(data) || data?.data || []
+  } catch {
+    heroBanners.value = []
+  }
+})
 
 const sectionClass = computed(() => {
   if (hero.value === 'navy' || hero.value === 'dark') return 'bg-desk-dark'

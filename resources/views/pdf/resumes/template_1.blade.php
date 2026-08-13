@@ -72,6 +72,27 @@
                 <div class="muted">{{ $personal['address'] ?? '' }}</div>
                 <div class="muted">کد ملی: {{ $personal['national_code'] ?? '' }}</div>
                 <div class="muted">تولد: {{ $personal['birth_date'] ?? '' }}</div>
+                @php
+                    $birthPlace = trim(implode(' / ', array_filter([
+                        $personal['birth_province'] ?? null,
+                        $personal['birth_city'] ?? null,
+                    ])));
+                    $maritalMap = [
+                        'single' => 'مجرد',
+                        'married' => 'متاهل',
+                        'divorced' => 'مطلقه / متعلقه',
+                    ];
+                    $marital = $maritalMap[$personal['marital_status'] ?? ''] ?? ($personal['marital_status'] ?? '');
+                @endphp
+                @if($birthPlace)
+                    <div class="muted">محل تولد: {{ $birthPlace }}</div>
+                @endif
+                @if($marital)
+                    <div class="muted">وضعیت تاهل: {{ $marital }}</div>
+                @endif
+                @if(!empty($personal['field_of_study']))
+                    <div class="muted">رشته: {{ $personal['field_of_study'] }}</div>
+                @endif
             </div>
 
             <h2>مهارت‌ها</h2>

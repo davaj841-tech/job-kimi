@@ -26,6 +26,7 @@ class User extends Authenticatable implements FilamentUser
         'province',
         'avatar',
         'role',
+        'operator_permissions',
         'status',
         'wallet_balance',
         'subscription_plan_id',
@@ -57,6 +58,7 @@ class User extends Authenticatable implements FilamentUser
             'failed_login_attempts' => 'integer',
             'password' => 'hashed',
             'notification_preferences' => 'array',
+            'operator_permissions' => 'array',
         ];
     }
 

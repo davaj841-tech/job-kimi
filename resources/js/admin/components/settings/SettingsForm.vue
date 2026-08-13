@@ -68,6 +68,7 @@
         v-else-if="field.type === 'image'"
         :model-value="modelValue[field.key] || ''"
         :label="field.label"
+        @update:model-value="set(field.key, $event)"
         @file="
           (f) =>
             $emit('upload', {
@@ -83,12 +84,19 @@
         :model-value="modelValue[field.key] || 'atlas'"
         @update:model-value="set(field.key, $event)"
       />
+
+      <FontPicker
+        v-else-if="field.type === 'site-font'"
+        :model-value="modelValue[field.key] || 'estedad'"
+        @update:model-value="set(field.key, $event)"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
 import ColorPicker from '../ui/ColorPicker.vue'
+import FontPicker from './FontPicker.vue'
 import HomepageLayoutPicker from './HomepageLayoutPicker.vue'
 import ImageUpload from '../ui/ImageUpload.vue'
 import StatusToggle from '../ui/StatusToggle.vue'

@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'title' => 'عنوان',
+    'name' => 'نام',
+    'email' => 'ایمیل',
+    'password' => 'رمز عبور',
+    'mobile' => 'موبایل',
+    'username' => 'نام کاربری',
+    'description' => 'توضیحات',
+    'city' => 'شهر',
+    'province' => 'استان',
+    'provinces' => 'استان‌ها',
+    'role' => 'نقش',
+    'status' => 'وضعیت',
+    'job_classification_id' => 'طبقه‌بندی',
+    'registration_deadline' => 'مهلت ثبت‌نام',
+    'exam_date' => 'تاریخ آزمون',
+    'attachment' => 'فایل پیوست',
+    'operator_permissions' => 'دسترسی اپراتور',
+    'national_code' => 'کد ملی',
+    'content' => 'محتوا',
+    'slug' => 'نامک',
+    'price' => 'قیمت',
+    'phone' => 'تلفن',
+    'address' => 'آدرس',
+];

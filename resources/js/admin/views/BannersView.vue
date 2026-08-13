@@ -34,6 +34,7 @@
         />
         <input v-model="form.link" class="field" dir="ltr" placeholder="لینک" />
         <select v-model="form.position" class="field">
+          <option value="home_hero">هیرو صفحه اول</option>
           <option value="home_top">بالای خانه</option>
           <option value="home_middle">وسط خانه</option>
           <option value="exam_sidebar">سایدبار آزمون</option>

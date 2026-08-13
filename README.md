@@ -231,7 +231,10 @@ CI: `.github/workflows/ci.yml` (PHP tests + Pint/PHPStan + Vite build + Scribe g
 
 ## Deploy
 
-فقط روی Linux VPS (از Windows/Laragon اجرا نمی‌شود):
+راهنمای فارسی هاست (Document Root، اشتراکی/VPS، چک‌لیست): [`docs/HOSTING.md`](docs/HOSTING.md)  
+جزئیات سرور: [`deploy/README.md`](deploy/README.md)
+
+فقط اسکریپت `./deploy.sh` روی Linux VPS است (از Windows/Laragon اجرا نمی‌شود):
 
 ```bash
 # Staging
@@ -243,13 +246,14 @@ DEPLOY_SECRET='your-secret-key' ./deploy.sh production
 
 چک‌لیست‌ها:
 
+- [`docs/HOSTING.md`](docs/HOSTING.md) — آماده‌سازی هاست
 - [`docs/PRODUCTION_CHECKLIST.md`](docs/PRODUCTION_CHECKLIST.md)
 - [`docs/STAGING_CHECKLIST.md`](docs/STAGING_CHECKLIST.md)
 - [`docs/MONITORING_CHECKLIST.md`](docs/MONITORING_CHECKLIST.md) — Sentry / Horizon / Telescope / CF / CSP / Zarinpal
 - [`docs/BACKUP.md`](docs/BACKUP.md) — RTO 4h / RPO 24h
 - [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)
 
-Health: `GET /health`
+Health: `GET /health` و `GET /up`
 
 ---
 
@@ -269,6 +273,7 @@ Health: `GET /health`
 
 | سند | موضوع |
 |-----|--------|
+| [HOSTING.md](docs/HOSTING.md) | استقرار روی هاست / VPS |
 | [BACKUP.md](docs/BACKUP.md) | بکاپ و بازیابی |
 | [PERFORMANCE.md](docs/PERFORMANCE.md) | ایندکس و پرفورمنس |
 | [MONITORING_CHECKLIST.md](docs/MONITORING_CHECKLIST.md) | مانیتورینگ بعد از deploy |

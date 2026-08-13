@@ -1,5 +1,5 @@
 <template>
-  <label class="block">
+  <label class="block" :class="$attrs.class">
     <span class="mb-1.5 block text-xs font-medium text-desk-muted">
       {{ label }}
       <span v-if="required" class="text-brand">*</span>
@@ -18,6 +18,7 @@
 </template>
 
 <script setup>
+defineOptions({ inheritAttrs: false })
 defineProps({
   modelValue: { type: [String, Number], default: '' },
   label: { type: String, required: true },

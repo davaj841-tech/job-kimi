@@ -57,7 +57,10 @@ class JobPostRepository
                 ->orderByDesc('created_at');
         }
 
-        return $query->paginate($filters['per_page'] ?? 15);
+        $perPage = (int) ($filters['per_page'] ?? 30);
+        $perPage = max(10, min(50, $perPage ?: 30));
+
+        return $query->paginate($perPage);
     }
 
     public function findApproved(int $id): ?JobPost

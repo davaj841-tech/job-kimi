@@ -125,13 +125,15 @@
 
         <Card class="p-5">
           <h3 class="mb-4 text-lg font-bold text-ink dark:text-white">
-            تحلیل عملکرد
+            📈 تحلیل عملکرد دروس
           </h3>
           <RadarChart :data="skillRadar" />
           <div class="mt-4 space-y-3">
             <div v-for="skill in skills" :key="skill.name">
               <div class="mb-1 flex justify-between text-sm">
-                <span class="text-ink dark:text-slate-200">{{ skill.name }}</span>
+                <span class="text-ink dark:text-slate-200"
+                  >{{ skill.emoji }} {{ skill.name }}</span
+                >
                 <span class="font-medium">{{ toFaDigits(skill.percent) }}٪</span>
               </div>
               <ProgressBar :percent="skill.percent" :color="skill.color" />
@@ -215,10 +217,12 @@ const skillRadar = computed(() =>
 
 const skills = computed(() => {
   const colors = ['brand', 'green', 'amber', 'blue', 'orange']
+  const emojis = ['📖', '📚', '🧠', '🎯', '🔢']
   return progressChart.value.slice(0, 5).map((row, i) => ({
     name: row.subject_label,
     percent: Math.round(row.average_score || 0),
     color: colors[i % colors.length],
+    emoji: emojis[i % emojis.length],
   }))
 })
 

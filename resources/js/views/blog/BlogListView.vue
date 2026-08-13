@@ -1,5 +1,5 @@
 <template>
-  <PageShell title="بلاگ استخدامی" subtitle="نکات و راهنماهای آمادگی آزمون">
+  <PageShell title="✍️ بلاگ استخدامی" subtitle="نکات و راهنماهای آمادگی آزمون">
     <LoadingSpinner v-if="loading" />
     <ul
       v-else
@@ -8,15 +8,18 @@
       <li v-for="post in posts" :key="post.id">
         <RouterLink
           :to="`/blog/${post.slug}`"
-          class="block px-4 py-4 transition hover:bg-surface-page sm:px-5"
+          class="flex gap-3 px-4 py-4 transition hover:bg-surface-page sm:px-5"
         >
-          <p class="text-sm font-bold text-desk-text sm:text-base">{{ post.title }}</p>
-          <p class="mt-1 line-clamp-2 text-sm leading-6 text-desk-muted">
-            {{ post.excerpt }}
-          </p>
-          <p class="mt-2 text-[11px] text-desk-muted">
-            {{ post.category }} · {{ post.author_name }}
-          </p>
+          <span class="mt-0.5 text-xl" aria-hidden="true">✍️</span>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-bold text-desk-text sm:text-base">{{ post.title }}</p>
+            <p class="mt-1 line-clamp-2 text-sm leading-6 text-desk-muted">
+              {{ post.excerpt }}
+            </p>
+            <p class="mt-2 text-[11px] text-desk-muted">
+              {{ post.category }} · {{ post.author_name }}
+            </p>
+          </div>
         </RouterLink>
       </li>
       <li v-if="!posts.length" class="px-4 py-12 text-center text-sm text-desk-muted">

@@ -83,6 +83,19 @@ class ExamController extends BaseController
 
         $data = (new ExamResource($exam))->resolve();
         $data['subjects'] = $this->subjectAssembler->assemble($exam, $user);
+        $active = $user ? $this->examRepository->findInProgress($user, $exam) : null;
+        if ($active) {
+            $ends = $active->started_at?->copy()->addMinutes((int) $exam->duration_minutes);
+            $data['active_attempt'] = [
+                'id' => $active->id,
+                'started_at' => $active->started_at?->toIso8601String(),
+                'ends_at' => $ends?->toIso8601String(),
+                'remaining_seconds' => $ends ? max(0, $ends->getTimestamp() - now()->getTimestamp()) : 0,
+                'answered' => count(array_filter($active->answers ?? [])),
+            ];
+        } else {
+            $data['active_attempt'] = null;
+        }
 
         return $this->successResponse($data);
     }

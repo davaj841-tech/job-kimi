@@ -5,12 +5,11 @@
       v-else-if="pdf"
       class="mx-auto max-w-7xl px-4 py-6 sm:py-8"
     >
-      <div class="grid gap-8 lg:grid-cols-3">
-        <div class="lg:col-span-1">
-          <div class="space-y-5 lg:sticky lg:top-24">
-            <div
-              class="aspect-[3/4] overflow-hidden rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 shadow-2xl dark:from-slate-800 dark:to-slate-700"
-            >
+      <div class="grid gap-5 lg:grid-cols-[11rem_1fr] lg:items-start">
+        <div class="space-y-4">
+          <div
+            class="mx-auto aspect-[3/4] w-36 overflow-hidden rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 shadow-md sm:w-44 dark:from-slate-800 dark:to-slate-700 lg:mx-0 lg:w-full"
+          >
               <img
                 v-if="cover"
                 :src="cover"
@@ -19,17 +18,17 @@
               />
               <div
                 v-else
-                class="flex h-full items-center justify-center text-desk-muted"
+                class="flex h-full items-center justify-center text-3xl text-desk-muted"
               >
-                PDF
+                📄
               </div>
             </div>
 
-            <div class="space-y-3">
+            <div class="space-y-2.5">
               <template v-if="pdf.is_purchased || pdf.is_free">
                 <button
                   type="button"
-                  class="btn-primary flex w-full items-center justify-center gap-2 shadow-lg shadow-brand/25"
+                  class="btn-primary flex w-full items-center justify-center gap-2"
                   @click="openViewer"
                 >
                   <EyeIcon class="h-5 w-5" />
@@ -38,7 +37,7 @@
                 <button
                   v-if="pdf.is_purchased || Number(pdf.price) === 0"
                   type="button"
-                  class="flex w-full items-center justify-center gap-2 rounded-xl border border-surface-line bg-white py-3 font-medium dark:border-slate-700 dark:bg-slate-800"
+                  class="flex w-full items-center justify-center gap-2 rounded-xl border border-surface-line bg-surface py-2.5 text-sm font-medium"
                   @click="downloadPdf"
                 >
                   <ArrowDownTrayIcon class="h-5 w-5" />
@@ -54,10 +53,10 @@
 
               <template v-else>
                 <div
-                  class="rounded-2xl border border-surface-line bg-white p-5 text-center dark:border-slate-800 dark:bg-slate-900"
+                  class="rounded-xl border border-surface-line bg-surface p-4 text-center"
                 >
-                  <p class="mb-1 text-sm text-desk-muted">قیمت این PDF (خرید تکی)</p>
-                  <p class="text-3xl font-black text-brand">{{ formatPrice(displayPrice) }}</p>
+                  <p class="mb-1 text-xs text-desk-muted">قیمت (خرید تکی)</p>
+                  <p class="text-2xl font-black text-brand">{{ formatPrice(displayPrice) }}</p>
                   <p
                     v-if="coupon"
                     class="mt-1 text-xs text-desk-muted line-through"
@@ -73,7 +72,7 @@
                 />
 
                 <div
-                  class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm dark:bg-slate-800/50"
+                  class="flex items-center justify-between rounded-xl bg-surface-page px-3 py-2.5 text-sm"
                 >
                   <span class="text-desk-muted">موجودی کیف پول</span>
                   <span
@@ -112,7 +111,7 @@
 
                 <button
                   type="button"
-                  class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-brand py-3.5 font-bold text-brand hover:bg-brand-soft disabled:opacity-50"
+                  class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-brand py-2.5 text-sm font-bold text-brand hover:bg-brand-soft disabled:opacity-50"
                   :disabled="purchasing"
                   @click="buy(gateway)"
                 >
@@ -130,7 +129,7 @@
             </div>
 
             <div
-              class="space-y-2.5 rounded-xl border border-surface-line bg-white p-4 text-sm dark:border-slate-800 dark:bg-slate-900"
+              class="space-y-2 rounded-xl border border-surface-line bg-surface p-3 text-sm"
             >
               <div class="flex justify-between">
                 <span class="text-desk-muted">فرمت</span>
@@ -150,9 +149,8 @@
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="space-y-6 lg:col-span-2">
+        <div class="space-y-4">
           <div>
             <div class="mb-2 flex flex-wrap items-center gap-2">
               <span
@@ -162,21 +160,21 @@
               >
               <span
                 v-if="pdf.is_new"
-                class="rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                class="rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700"
                 >جدید</span
               >
               <span
-                class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs text-desk-muted dark:bg-slate-800"
+                class="rounded-lg bg-surface-page px-2.5 py-1 text-xs text-desk-muted"
                 >خرید تکی · بدون اشتراک</span
               >
             </div>
-            <h1 class="text-2xl font-black text-desk-text sm:text-3xl dark:text-white">
+            <h1 class="text-xl font-black text-desk-text sm:text-2xl">
               {{ pdf.title }}
             </h1>
           </div>
 
           <div
-            class="rounded-2xl border border-surface-line bg-white p-5 sm:p-6 dark:border-slate-800 dark:bg-slate-900"
+            class="rounded-xl border border-surface-line bg-surface p-4 sm:p-5"
           >
             <h2 class="mb-3 text-lg font-bold">توضیحات</h2>
             <div

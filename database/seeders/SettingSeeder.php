@@ -24,6 +24,7 @@ class SettingSeeder extends Seeder
             ['key' => 'min_wallet_charge', 'value' => '10000', 'group' => 'payment'],
             ['key' => 'site_name', 'value' => 'JobAzmoon', 'group' => 'general'],
             ['key' => 'homepage_layout', 'value' => 'atlas', 'group' => 'homepage'],
+            ['key' => 'site_font', 'value' => 'estedad', 'group' => 'homepage'],
             ['key' => 'default_exam_duration', 'value' => '60', 'group' => 'exam'],
             ['key' => 'ai_daily_limit', 'value' => '50', 'group' => 'ai'],
             ['key' => 'ai_enabled', 'value' => 'true', 'group' => 'ai'],

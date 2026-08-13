@@ -1,16 +1,16 @@
 <template>
   <section
     class="py-6 sm:py-8"
-    :class="variant === 'dark' ? 'bg-[#0f172a]' : variant === 'compact' ? 'bg-slate-100' : 'bg-white'"
+    :class="variant === 'dark' ? 'bg-[#0f172a]' : variant === 'compact' ? 'bg-surface-page' : 'bg-surface'"
   >
     <div class="mx-auto max-w-7xl px-4">
       <div class="mb-4 flex items-end justify-between gap-3">
         <div>
           <h2
             class="text-lg font-black sm:text-xl"
-            :class="variant === 'dark' ? 'text-white' : 'text-desk-dark'"
+            :class="variant === 'dark' ? 'text-white' : 'text-desk-text'"
           >
-            اشتراک ویژه
+            ⭐ اشتراک ویژه
           </h2>
           <p
             class="mt-0.5 text-xs"

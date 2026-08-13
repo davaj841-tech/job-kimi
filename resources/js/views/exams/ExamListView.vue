@@ -1,5 +1,5 @@
 <template>
-  <PageShell title="آزمون‌ها" subtitle="تمرین و سنجش آمادگی استخدام">
+  <PageShell title="📝 آزمون‌ها" subtitle="تمرین و سنجش آمادگی استخدام">
 
     <!-- Search + sort -->
     <div class="mb-3 flex gap-2">
@@ -71,7 +71,10 @@
           @click="goExam(exam)"
         >
           <div class="mb-1.5 flex items-start justify-between gap-2">
-            <h3 class="mobile-card-title line-clamp-2">{{ exam.title }}</h3>
+            <div class="flex min-w-0 items-start gap-2">
+              <span class="mt-0.5 text-xl" aria-hidden="true">📝</span>
+              <h3 class="mobile-card-title line-clamp-2">{{ exam.title }}</h3>
+            </div>
             <span
               class="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold"
               :class="badgeClass(exam)"
@@ -85,6 +88,15 @@
           >
             {{ exam.classification.name }}
           </p>
+          <div class="mb-2">
+            <StarRating
+              :avg="Number(exam.avg_rating) || 0"
+              :count="Number(exam.ratings_count) || 0"
+              readonly
+              show-value
+              compact
+            />
+          </div>
           <div class="flex items-center justify-between text-xs text-ink-muted">
             <span>{{ metaOf(exam) }}</span>
             <span
@@ -117,6 +129,7 @@ import api from '../../api/client'
 import EmptyState from '../../components/EmptyState.vue'
 import PageShell from '../../components/layout/PageShell.vue'
 import SkeletonCard from '../../components/ui/SkeletonCard.vue'
+import StarRating from '../../components/StarRating.vue'
 import { useAuthStore } from '../../stores/auth'
 import { formatPrice, unwrapList } from '../../utils/format'
 
@@ -152,10 +165,7 @@ function setAccess(value) {
 }
 
 function metaOf(exam) {
-  const rating = exam.avg_rating
-    ? `★ ${Number(exam.avg_rating).toFixed(1)} · `
-    : ''
-  return `${rating}${exam.duration_minutes || '-'} دقیقه · ${exam.total_questions || 0} سوال`
+  return `${exam.duration_minutes || '-'} دقیقه · ${exam.total_questions || 0} سوال`
 }
 
 function badgeLabel(exam) {

@@ -81,7 +81,7 @@
               <option value="jobseeker">کارجو</option>
               <option value="employer">کارفرما</option>
               <option value="operator">اپراتور</option>
-              <option value="admin">مدیر</option>
+              <option v-if="canManage || form.role === 'admin'" value="admin">مدیر</option>
             </select>
           </div>
           <div>
@@ -92,6 +92,12 @@
             </select>
           </div>
         </div>
+
+        <OperatorPermissionsPicker
+          v-if="form.role === 'operator' && canManage"
+          v-model="form.operator_permissions"
+          :disabled="!editing"
+        />
 
         <div v-if="editing">
           <label class="label">رمز عبور جدید (اختیاری)</label>
@@ -201,12 +207,15 @@
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
+import { DEFAULT_OPERATOR_PERMISSIONS } from '../../permissions'
+import OperatorPermissionsPicker from './OperatorPermissionsPicker.vue'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
   user: { type: Object, default: null },
   loading: { type: Boolean, default: false },
   startEditing: { type: Boolean, default: false },
+  canManage: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['close', 'save'])
@@ -221,6 +230,7 @@ const form = reactive({
   national_code: '',
   username: '',
   role: 'jobseeker',
+  operator_permissions: [...DEFAULT_OPERATOR_PERMISSIONS],
   status: 'active',
   password: '',
 })
@@ -247,6 +257,9 @@ function syncForm() {
   form.national_code = u.national_code || ''
   form.username = u.username || ''
   form.role = u.role || 'jobseeker'
+  form.operator_permissions = Array.isArray(u.operator_permissions)
+    ? [...u.operator_permissions]
+    : [...DEFAULT_OPERATOR_PERMISSIONS]
   form.status = u.status || 'active'
   form.password = ''
 }
@@ -272,6 +285,9 @@ async function save() {
     username: form.username || null,
     role: form.role,
     status: form.status,
+  }
+  if (form.role === 'operator' && props.canManage) {
+    payload.operator_permissions = form.operator_permissions
   }
   if (form.password) payload.password = form.password
   emit('save', payload)

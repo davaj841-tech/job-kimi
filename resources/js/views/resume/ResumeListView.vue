@@ -75,6 +75,10 @@ function defaultData() {
       email: u.email || 'user@example.com',
       address: u.province || '',
       photo: u.avatar || null,
+      birth_province: u.province || '',
+      birth_city: '',
+      marital_status: '',
+      field_of_study: '',
     },
     education: [
       {

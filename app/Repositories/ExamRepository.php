@@ -114,6 +114,16 @@ class ExamRepository
             ->count();
     }
 
+    public function findInProgress(User $user, Exam $exam): ?ExamAttempt
+    {
+        return ExamAttempt::query()
+            ->where('user_id', $user->id)
+            ->where('exam_id', $exam->id)
+            ->where('status', 'in_progress')
+            ->latest('id')
+            ->first();
+    }
+
     /**
      * @return \Illuminate\Support\Collection<string, int|string>
      */

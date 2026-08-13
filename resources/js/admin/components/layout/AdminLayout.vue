@@ -35,6 +35,7 @@
           داشبورد
         </RouterLink>
         <RouterLink
+          v-if="isAdmin"
           to="/admin/settings"
           class="flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-bold text-slate-500"
         >
@@ -46,9 +47,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useAdminAuthStore } from '../../stores/auth'
 import AdminHeader from './AdminHeader.vue'
 import AdminSidebar from './AdminSidebar.vue'
 
 const sidebarOpen = ref(false)
+const auth = useAdminAuthStore()
+const isAdmin = computed(() => auth.isAdmin)
 </script>

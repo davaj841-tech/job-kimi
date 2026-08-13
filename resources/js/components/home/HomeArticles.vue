@@ -1,11 +1,11 @@
 <template>
   <section
     v-if="items.length"
-    class="border-t border-surface-line bg-white py-6 sm:py-7"
+    class="bg-surface-page py-6 sm:py-7"
   >
     <div class="mx-auto max-w-7xl px-4">
       <div class="mb-3 flex items-end justify-between">
-        <h2 class="text-lg font-black text-desk-dark sm:text-xl">آخرین مقالات</h2>
+        <h2 class="text-lg font-black text-desk-text sm:text-xl">📰 آخرین مقالات</h2>
         <RouterLink
           to="/articles"
           class="text-xs font-bold text-brand hover:underline"
@@ -18,12 +18,17 @@
           v-for="post in items"
           :key="`${post._kind}-${post.id}`"
           :to="post._kind === 'article' ? `/articles/${post.slug}` : `/blog/${post.slug}`"
-          class="w-[16.5rem] shrink-0 rounded-2xl border border-surface-line bg-surface-page p-3.5 text-right transition hover:bg-white hover:shadow-sm"
+          class="home-rail-card"
         >
-          <p class="text-[10px] font-bold text-desk-orange">
-            {{ post._kind === 'article' ? 'مقاله' : 'وبلاگ' }}
-          </p>
-          <p class="mt-1.5 line-clamp-2 text-sm font-bold text-desk-text">{{ post.title }}</p>
+          <div class="mb-1 flex items-center justify-between gap-2">
+            <p class="text-[10px] font-bold text-desk-orange">
+              {{ post._kind === 'article' ? 'مقاله' : 'وبلاگ' }}
+            </p>
+            <span class="text-lg" aria-hidden="true">{{
+              post._kind === 'article' ? '📰' : '✍️'
+            }}</span>
+          </div>
+          <p class="mt-1.5 line-clamp-2 flex-1 text-sm font-bold text-desk-text">{{ post.title }}</p>
           <p
             v-if="post.excerpt"
             class="mt-1 line-clamp-2 text-[11px] leading-5 text-desk-muted"

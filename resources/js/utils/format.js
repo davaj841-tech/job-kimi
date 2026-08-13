@@ -61,7 +61,20 @@ export function apiErrorMessage(error, fallback = 'خطایی رخ داد.') {
     const errors = error?.response?.data?.errors;
     if (errors && typeof errors === 'object') {
         const first = Object.values(errors).flat()[0];
-        if (first) return first;
+        if (first) {
+            const map = {
+                'validation.regex': 'قالب یکی از فیلدها معتبر نیست.',
+                'validation.required': 'پر کردن فیلدهای الزامی ضروری است.',
+                'validation.unique': 'این مقدار قبلاً ثبت شده است.',
+                'validation.email': 'ایمیل معتبر نیست.',
+                'validation.min.string': 'طول مقدار واردشده کافی نیست.',
+            };
+            return map[first] || first;
+        }
     }
-    return error?.response?.data?.message || error?.message || fallback;
+    const msg = error?.response?.data?.message || error?.message || fallback;
+    if (typeof msg === 'string' && msg.startsWith('validation.')) {
+        return 'اطلاعات واردشده معتبر نیست.';
+    }
+    return msg;
 }

@@ -20,11 +20,15 @@
           v-if="b.image"
           :src="b.image"
           :alt="b.title"
-          class="h-40 w-full object-cover md:h-56"
+          class="w-full object-cover"
+          :class="position === 'home_hero' ? 'h-44 md:h-56' : 'h-40 md:h-56'"
+          loading="lazy"
+          decoding="async"
         />
         <div
           v-else
-          class="flex h-40 items-center justify-center bg-[#0a1c33] text-white md:h-56"
+          class="flex items-center justify-center bg-[#0a1c33] text-white"
+          :class="position === 'home_hero' ? 'h-44 md:h-56' : 'h-40 md:h-56'"
         >
           <p class="text-lg font-bold">{{ b.title }}</p>
         </div>

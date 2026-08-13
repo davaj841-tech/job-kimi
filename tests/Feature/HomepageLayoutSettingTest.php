@@ -81,4 +81,15 @@ class HomepageLayoutSettingTest extends TestCase
             ->assertJsonPath('data.primary_color', '#22c55e')
             ->assertJsonPath('data.secondary_color', '#14532d');
     }
+
+    public function test_public_settings_expose_site_font_and_new_themes(): void
+    {
+        Setting::set('homepage_layout', 'blossom', 'homepage');
+        Setting::set('site_font', 'vazirmatn', 'homepage');
+
+        $this->getJson('/api/v1/settings/public')
+            ->assertOk()
+            ->assertJsonPath('data.homepage_layout', 'blossom')
+            ->assertJsonPath('data.site_font', 'vazirmatn');
+    }
 }

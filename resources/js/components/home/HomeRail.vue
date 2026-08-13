@@ -9,7 +9,7 @@
     <button
       v-if="canScroll"
       type="button"
-      class="absolute left-0 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-surface-line bg-white text-desk-dark shadow-md transition hover:bg-desk-dark hover:text-white"
+      class="absolute left-0 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-surface-line bg-surface text-desk-text shadow-md transition hover:bg-desk-dark hover:text-white"
       aria-label="موارد بیشتر"
       @click="scrollMore"
     >

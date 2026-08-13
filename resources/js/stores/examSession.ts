@@ -48,26 +48,41 @@ export const useExamSessionStore = defineStore('examSession', () => {
     set: (v: number) => examStore.setPage(v),
   })
 
-  const QUESTIONS_PER_PAGE = 5
+  const questionsPerPage = ref(5)
+
+  function setQuestionsPerPage(n: number): void {
+    const v = Math.max(1, Math.min(20, Number(n) || 5))
+    questionsPerPage.value = v
+  }
 
   const currentQuestion = computed(
     () => questions.value[currentIndex.value] || null
   )
 
   const pageStart = computed(
-    () => Math.floor(filteredLocalIndex.value / QUESTIONS_PER_PAGE) * QUESTIONS_PER_PAGE
+    () =>
+      Math.floor(filteredLocalIndex.value / questionsPerPage.value) *
+      questionsPerPage.value
   )
 
   const pageQuestions = computed(() =>
-    filteredQuestions.value.slice(pageStart.value, pageStart.value + QUESTIONS_PER_PAGE)
+    filteredQuestions.value.slice(
+      pageStart.value,
+      pageStart.value + questionsPerPage.value
+    )
   )
 
   const totalPages = computed(() =>
-    Math.max(1, Math.ceil((filteredQuestions.value.length || 1) / QUESTIONS_PER_PAGE))
+    Math.max(
+      1,
+      Math.ceil(
+        (filteredQuestions.value.length || 1) / questionsPerPage.value
+      )
+    )
   )
 
   const currentPage = computed(() =>
-    Math.floor(filteredLocalIndex.value / QUESTIONS_PER_PAGE)
+    Math.floor(filteredLocalIndex.value / questionsPerPage.value)
   )
 
   const filteredLocalIndex = computed(() => {
@@ -101,7 +116,9 @@ export const useExamSessionStore = defineStore('examSession', () => {
   )
   const isFirstQuestion = computed(() => currentIndex.value <= 0)
   const isLastInFilter = computed(
-    () => pageStart.value + QUESTIONS_PER_PAGE >= filteredQuestions.value.length
+    () =>
+      pageStart.value + questionsPerPage.value >=
+      filteredQuestions.value.length
   )
   const isFirstInFilter = computed(() => pageStart.value <= 0)
 
@@ -142,7 +159,7 @@ export const useExamSessionStore = defineStore('examSession', () => {
 
   function next(): void {
     const list = filteredQuestions.value
-    const target = pageStart.value + QUESTIONS_PER_PAGE
+    const target = pageStart.value + questionsPerPage.value
     if (target < list.length) {
       navigateToQuestionId(list[target].id)
       return
@@ -152,7 +169,7 @@ export const useExamSessionStore = defineStore('examSession', () => {
 
   function prev(): void {
     const list = filteredQuestions.value
-    const target = pageStart.value - QUESTIONS_PER_PAGE
+    const target = pageStart.value - questionsPerPage.value
     if (target >= 0 && list[target]) {
       navigateToQuestionId(list[target].id)
       return
@@ -215,7 +232,8 @@ export const useExamSessionStore = defineStore('examSession', () => {
     totalPages,
     currentPage,
     pageStart,
-    questionsPerPage: QUESTIONS_PER_PAGE,
+    questionsPerPage,
+    setQuestionsPerPage,
     filteredLocalIndex,
     answeredCount,
     unansweredInFilter,

@@ -30,6 +30,16 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
   )
   const isAdmin = computed(() => user.value?.role === 'admin')
   const isOperator = computed(() => user.value?.role === 'operator')
+  const permissions = computed<string[]>(() => {
+    const list = user.value?.operator_permissions
+    return Array.isArray(list) ? list.map(String) : []
+  })
+
+  function can(permission?: string) {
+    if (isAdmin.value) return true
+    if (!permission) return true
+    return permissions.value.includes(permission)
+  }
 
   function persist() {
     if (token.value) localStorage.setItem('admin_token', token.value)
@@ -135,6 +145,8 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
     isStaff,
     isAdmin,
     isOperator,
+    permissions,
+    can,
     sendOtp,
     verifyOtp,
     loginWithPassword,

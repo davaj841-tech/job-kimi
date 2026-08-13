@@ -52,7 +52,7 @@ class BannerAdminController extends BaseController
         return $request->validate([
             'title' => [$require ? 'required' : 'sometimes', 'string', 'max:200'],
             'link' => ['nullable', 'string', 'max:500'],
-            'position' => [$require ? 'required' : 'sometimes', 'in:home_top,home_middle,exam_sidebar'],
+            'position' => [$require ? 'required' : 'sometimes', 'in:home_top,home_middle,home_hero,exam_sidebar'],
             'is_active' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'image' => ['nullable', 'image', 'max:4096'],

@@ -32,7 +32,7 @@
       />
       <FormInput
         v-model="local.personal.mobile"
-        label="موبایل"
+        label="شماره موبایل"
         placeholder="09123456789"
         required
         maxlength="11"
@@ -50,15 +50,82 @@
         type="date"
         required
       />
+
+      <label class="block">
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted"
+          >استان محل تولد *</span
+        >
+        <select
+          v-model="local.personal.birth_province"
+          class="input-field"
+          required
+          @change="onProvinceChange"
+        >
+          <option value="">انتخاب استان</option>
+          <option
+            v-for="p in IRAN_PROVINCES"
+            :key="p"
+            :value="p"
+          >
+            {{ p }}
+          </option>
+        </select>
+      </label>
+
+      <label class="block">
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted"
+          >شهرستان محل تولد *</span
+        >
+        <select
+          v-model="local.personal.birth_city"
+          class="input-field"
+          required
+          :disabled="!local.personal.birth_province"
+        >
+          <option value="">انتخاب شهرستان</option>
+          <option
+            v-for="c in cityOptions"
+            :key="c"
+            :value="c"
+          >
+            {{ c }}
+          </option>
+        </select>
+      </label>
+
+      <label class="block">
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted"
+          >وضعیت تاهل *</span
+        >
+        <select
+          v-model="local.personal.marital_status"
+          class="input-field"
+          required
+        >
+          <option value="">انتخاب کنید</option>
+          <option value="single">مجرد</option>
+          <option value="married">متاهل</option>
+          <option value="divorced">مطلقه / متعلقه</option>
+        </select>
+      </label>
+
+      <FormInput
+        v-model="local.personal.field_of_study"
+        label="رشته تحصیلی"
+        placeholder="مهندسی کامپیوتر"
+      />
+
       <FormInput
         v-model="local.personal.address"
-        label="آدرس / شهر"
-        placeholder="تهران"
+        label="آدرس محل سکونت"
+        placeholder="تهران، خیابان…"
+        class="md:col-span-2"
       />
       <FormInput
         v-model="local.personal.photo"
         label="آدرس عکس (اختیاری)"
         placeholder="https://..."
+        class="md:col-span-2"
       />
     </div>
   </div>
@@ -67,6 +134,7 @@
 <script setup>
 import { computed } from 'vue'
 import FormInput from '../FormInput.vue'
+import { IRAN_PROVINCES, citiesForProvince } from '../../../utils/iranCities'
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -77,4 +145,13 @@ const local = computed({
   get: () => props.modelValue,
   set: (v) => emit('update:modelValue', v),
 })
+
+const cityOptions = computed(() =>
+  citiesForProvince(local.value?.personal?.birth_province || '')
+)
+
+function onProvinceChange() {
+  if (!local.value?.personal) return
+  local.value.personal.birth_city = ''
+}
 </script>

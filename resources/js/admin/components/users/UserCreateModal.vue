@@ -94,7 +94,7 @@
               <option value="jobseeker">کارجو</option>
               <option value="employer">کارفرما</option>
               <option value="operator">اپراتور</option>
-              <option value="admin">مدیر</option>
+              <option v-if="canManage" value="admin">مدیر</option>
             </select>
           </div>
           <div>
@@ -105,6 +105,11 @@
             </select>
           </div>
         </div>
+
+        <OperatorPermissionsPicker
+          v-if="form.role === 'operator' && canManage"
+          v-model="form.operator_permissions"
+        />
 
         <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
 
@@ -132,8 +137,13 @@
 <script setup>
 import { reactive, ref, watch } from 'vue'
 import { IRAN_PROVINCES } from '../../../utils/provinces'
+import { DEFAULT_OPERATOR_PERMISSIONS } from '../../permissions'
+import OperatorPermissionsPicker from './OperatorPermissionsPicker.vue'
 
-const props = defineProps({ open: Boolean })
+const props = defineProps({
+  open: Boolean,
+  canManage: { type: Boolean, default: false },
+})
 const emit = defineEmits(['close', 'created'])
 
 const saving = ref(false)
@@ -149,6 +159,7 @@ function emptyForm() {
     email: '',
     province: '',
     role: 'jobseeker',
+    operator_permissions: [...DEFAULT_OPERATOR_PERMISSIONS],
     status: 'active',
   }
 }
@@ -189,6 +200,9 @@ async function submit() {
     if (form.mobile.trim()) payload.mobile = form.mobile.trim()
     if (form.email.trim()) payload.email = form.email.trim()
     if (form.province) payload.province = form.province
+    if (form.role === 'operator' && props.canManage) {
+      payload.operator_permissions = form.operator_permissions
+    }
     emit('created', payload)
   } finally {
     saving.value = false

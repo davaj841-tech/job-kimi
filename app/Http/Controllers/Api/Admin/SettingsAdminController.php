@@ -6,10 +6,11 @@ use App\Http\Controllers\Api\BaseController;
 use App\Models\PaymentGateway;
 use App\Models\Setting;
 use App\Services\AuditLogService;
+use App\Support\PublicAsset;
+use App\Support\SiteFonts;
 use App\Support\SiteThemes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class SettingsAdminController extends BaseController
 {
@@ -42,6 +43,7 @@ class SettingsAdminController extends BaseController
         ],
         'homepage' => [
             'homepage_layout',
+            'site_font',
         ],
         'seo' => [
             'meta_title',
@@ -97,6 +99,7 @@ class SettingsAdminController extends BaseController
         ],
         'exam' => [
             'default_exam_duration',
+            'exam_questions_per_page',
         ],
     ];
 
@@ -117,7 +120,11 @@ class SettingsAdminController extends BaseController
             $byGroup[$g] = [];
             foreach ($keys as $key) {
                 $row = $rows->firstWhere('key', $key);
-                $byGroup[$g][$key] = $row?->value ?? $this->defaultFor($key);
+                $value = $row?->value ?? $this->defaultFor($key);
+                if (in_array($key, ['site_logo', 'site_favicon', 'logo_light', 'logo_dark'], true)) {
+                    $value = PublicAsset::url((string) $value);
+                }
+                $byGroup[$g][$key] = $value;
             }
         }
 
@@ -165,11 +172,24 @@ class SettingsAdminController extends BaseController
 
                 continue;
             }
+            if ($key === 'site_font') {
+                $value = SiteFonts::normalize($value);
+            }
+            if ($key === 'exam_questions_per_page') {
+                $value = (string) max(1, min(20, (int) $value));
+            }
             if ($key === 'primary_color') {
                 $value = SiteThemes::sanitizeHex($value, '#f97316');
             }
             if ($key === 'secondary_color') {
                 $value = SiteThemes::sanitizeHex($value, '#0f2744');
+            }
+            // Don't wipe uploaded logos when saving other theme fields with empty strings
+            if (in_array($key, ['site_logo', 'site_favicon', 'logo_light', 'logo_dark'], true)) {
+                if ($value === null || $value === '') {
+                    continue;
+                }
+                $value = PublicAsset::url((string) $value);
             }
             if (is_bool($value)) {
                 $value = $value ? 'true' : 'false';
@@ -210,7 +230,8 @@ class SettingsAdminController extends BaseController
 
         $target = $map[$data['type']];
         $path = $request->file('file')->store('settings', 'public');
-        $url = Storage::disk('public')->url($path);
+        // Root-relative URL so preview works regardless of APP_URL host
+        $url = PublicAsset::url($path);
 
         Setting::set($target['key'], $url, $target['group']);
 
@@ -231,6 +252,7 @@ class SettingsAdminController extends BaseController
             'primary_color' => '#f97316',
             'secondary_color' => '#0f2744',
             'homepage_layout' => 'atlas',
+            'site_font' => 'estedad',
             'payment_gateway' => 'zarinpal',
             'zarinpal_sandbox' => 'false',
             'nextpay_active' => 'false',
@@ -249,6 +271,7 @@ class SettingsAdminController extends BaseController
             'turnstile_enabled' => 'false',
             'free_plan_exam_limit' => '5',
             'default_exam_duration' => '60',
+            'exam_questions_per_page' => '5',
             default => '',
         };
     }

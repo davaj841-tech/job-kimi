@@ -38,6 +38,11 @@ final class IpHelper
             return false;
         }
 
+        // Only use behind a known reverse proxy (Nginx/Cloudflare). Never on a public PHP-FPM.
+        if (in_array('*', $ranges, true)) {
+            return true;
+        }
+
         return IpUtils::checkIp($ip, $ranges);
     }
 

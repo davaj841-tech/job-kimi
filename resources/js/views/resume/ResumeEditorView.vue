@@ -229,6 +229,10 @@ const emptyData = {
     email: '',
     address: '',
     photo: null,
+    birth_province: '',
+    birth_city: '',
+    marital_status: '',
+    field_of_study: '',
   },
   education: [],
   experience: [],
@@ -404,6 +408,7 @@ onMounted(async () => {
     if (!Array.isArray(d.skills)) d.skills = []
     if (!Array.isArray(d.languages)) d.languages = []
     if (!d.personal) d.personal = { ...emptyData.personal }
+    else d.personal = { ...emptyData.personal, ...d.personal }
     resumeData.value = d
   } catch (e) {
     toast.error(apiErrorMessage(e, 'بارگذاری رزومه ناموفق بود.'))

@@ -4,8 +4,12 @@
     :class="open ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'"
   >
     <div class="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-5">
-      <div>
-        <p class="text-lg font-black">جاب‌آزمون</p>
+      <div class="min-w-0">
+        <SiteBrandLogo
+          :for-dark-bg="true"
+          img-class="h-8 w-auto max-w-[8rem]"
+          text-class="text-lg text-white"
+        />
         <p class="mt-1 text-xs text-white/60">
           {{ auth.isAdmin ? 'پنل مدیر' : 'پنل اپراتور' }}
         </p>
@@ -51,6 +55,7 @@
 
     <div class="shrink-0 space-y-2 border-t border-white/10 p-4 text-xs text-white/50">
       <a
+        v-if="auth.isAdmin"
         href="/filament"
         class="block text-desk-orange hover:text-white"
         >Filament ↗</a
@@ -69,6 +74,7 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import SiteBrandLogo from '../../../components/SiteBrandLogo.vue'
 import { useAdminAuthStore } from '../../stores/auth'
 
 defineProps({ open: { type: Boolean, default: false } })
@@ -84,40 +90,41 @@ const groups = [
     title: 'اصلی',
     items: [
       { to: '/admin/dashboard', label: 'داشبورد', icon: '▣' },
-      { to: '/admin/users', label: 'کاربران', icon: '◎' },
-      { to: '/admin/tickets', label: 'تیکت‌ها', icon: '✉' },
+      { to: '/admin/users', label: 'کاربران', icon: '◎', permission: 'users' },
+      { to: '/admin/access-levels', label: 'سطح دسترسی', icon: '🔐', permission: 'users' },
+      { to: '/admin/tickets', label: 'تیکت‌ها', icon: '✉', permission: 'tickets' },
     ],
   },
   {
     title: 'محتوا',
     items: [
-      { to: '/admin/exams', label: 'آزمون‌ها', icon: '☰' },
-      { to: '/admin/questions', label: 'سوالات', icon: '❓' },
-      { to: '/admin/blog-posts', label: 'بلاگ', icon: '◈' },
-      { to: '/admin/generated-contents', label: 'تولید محتوا', icon: '✎' },
-      { to: '/admin/pdf-products', label: 'فایل‌ها', icon: '▤' },
-      { to: '/admin/banners', label: 'بنرها', icon: '▣' },
-      { to: '/admin/pages', label: 'صفحات', icon: '▤' },
-      { to: '/admin/ai', label: 'هوش مصنوعی', icon: '✦' },
+      { to: '/admin/exams', label: 'آزمون‌ها', icon: '☰', permission: 'exams' },
+      { to: '/admin/questions', label: 'سوالات', icon: '❓', permission: 'questions' },
+      { to: '/admin/blog-posts', label: 'بلاگ', icon: '◈', permission: 'blog' },
+      { to: '/admin/generated-contents', label: 'تولید محتوا', icon: '✎', permission: 'generated_contents' },
+      { to: '/admin/pdf-products', label: 'فایل‌ها', icon: '▤', permission: 'pdf' },
+      { to: '/admin/banners', label: 'بنرها', icon: '▣', permission: 'banners' },
+      { to: '/admin/pages', label: 'صفحات', icon: '▤', permission: 'pages' },
+      { to: '/admin/ai', label: 'هوش مصنوعی', icon: '✦', permission: 'ai' },
     ],
   },
   {
     title: 'آگهی و تجمیع',
     items: [
-      { to: '/admin/job-posts', label: 'آگهی‌ها', icon: '▢' },
-      { to: '/admin/job-sources', label: 'منابع تجمیع', icon: '◎' },
-      { to: '/admin/aggregation-settings', label: 'زمان‌بندی تجمیع', icon: '◷' },
-      { to: '/admin/crawl-monitoring', label: 'پایش خزش', icon: '◷' },
-      { to: '/admin/aggregated-jobs', label: 'بررسی تجمیع', icon: '☑' },
+      { to: '/admin/job-posts', label: 'آگهی‌ها', icon: '▢', permission: 'job_posts' },
+      { to: '/admin/job-sources', label: 'منابع تجمیع', icon: '◎', permission: 'aggregation' },
+      { to: '/admin/aggregation-settings', label: 'زمان‌بندی تجمیع', icon: '◷', permission: 'aggregation' },
+      { to: '/admin/crawl-monitoring', label: 'پایش خزش', icon: '◷', permission: 'aggregation' },
+      { to: '/admin/aggregated-jobs', label: 'بررسی تجمیع', icon: '☑', permission: 'aggregation' },
     ],
   },
   {
     title: 'مالی',
     items: [
-      { to: '/admin/subscriptions', label: 'اشتراک‌ها', icon: '★' },
-      { to: '/admin/transactions', label: 'تراکنش‌ها', icon: '₪' },
-      { to: '/admin/coupons', label: 'کد تخفیف', icon: '%' },
-      { to: '/admin/wallets', label: 'کیف پول‌ها', icon: '◈' },
+      { to: '/admin/subscriptions', label: 'اشتراک‌ها', icon: '★', permission: 'subscriptions' },
+      { to: '/admin/transactions', label: 'تراکنش‌ها', icon: '₪', permission: 'transactions' },
+      { to: '/admin/coupons', label: 'کد تخفیف', icon: '%', permission: 'coupons' },
+      { to: '/admin/wallets', label: 'کیف پول‌ها', icon: '◈', permission: 'wallets' },
     ],
   },
   {
@@ -133,7 +140,13 @@ const groups = [
 ]
 
 const visibleGroups = computed(() =>
-  groups.filter((g) => !g.adminOnly || auth.isAdmin)
+  groups
+    .filter((g) => !g.adminOnly || auth.isAdmin)
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((item) => auth.can(item.permission)),
+    }))
+    .filter((g) => g.items.length)
 )
 
 function isActive(path) {

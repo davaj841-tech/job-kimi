@@ -71,6 +71,13 @@
         ],
         "test": [
             "@php artisan test"
+        ],
+        "prod-optimize": [
+            "@php artisan config:cache",
+            "@php artisan route:cache",
+            "@php artisan view:cache",
+            "@php artisan event:cache",
+            "@php artisan optimize"
         ]
     },
     "extra": {

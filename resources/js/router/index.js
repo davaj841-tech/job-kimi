@@ -273,4 +273,28 @@ router.beforeEach((to) => {
     return true;
 });
 
+// Prefetch main nav chunks so bottom nav feels instant
+if (typeof window !== 'undefined') {
+    const warm = ['/', '/exams', '/jobs', '/pdfs', '/profile', '/articles', '/blog']
+    window.addEventListener(
+        'load',
+        () => {
+            warm.forEach((path) => {
+                const match = router.resolve(path).matched
+                match.forEach((r) => {
+                    const comp = r.components?.default
+                    if (typeof comp === 'function') {
+                        try {
+                            comp()
+                        } catch {
+                            /* ignore */
+                        }
+                    }
+                })
+            })
+        },
+        { once: true }
+    )
+}
+
 export default router;

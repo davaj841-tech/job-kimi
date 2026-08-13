@@ -496,6 +496,9 @@ onMounted(async () => {
     return
   }
 
+  const cachedPerPage = Number((examStore.current as any)?.perPage)
+  if (cachedPerPage) session.setQuestionsPerPage(cachedPerPage)
+
   examStore.setOffline(!navigator.onLine)
   window.addEventListener('online', onOnline)
   window.addEventListener('offline', onOffline)

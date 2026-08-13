@@ -77,6 +77,13 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Ensure API validation / auth messages stay Persian
+        app()->setLocale(config('app.locale', 'fa'));
+
+        if ($this->app->environment('production') && config('app.debug')) {
+            report(new \RuntimeException('APP_DEBUG is enabled in production — disable it immediately.'));
+        }
+
         Feature::observe(FeatureObserver::class);
 
         Request::macro('trustedIp', function (): ?string {

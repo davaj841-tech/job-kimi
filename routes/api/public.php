@@ -63,6 +63,8 @@ Route::get('/exams', [ExamController::class, 'index'])->middleware('cache.respon
 Route::get('/exams/{slug}', [ExamController::class, 'show']);
 
 Route::post('/contact', [ContactController::class, 'store']);
+Route::get('/home-feed', \App\Http\Controllers\Api\HomeFeedController::class)
+    ->middleware('cache.response:30');
 Route::get('/settings/public', [PublicSettingsController::class, 'index']);
 Route::get('/banners', [BannerController::class, 'index']);
 Route::get('/pages/{slug}', [PageController::class, 'show']);

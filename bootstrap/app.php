@@ -3,6 +3,7 @@
 use App\Http\Middleware\CacheResponse;
 use App\Http\Middleware\CheckSubscription;
 use App\Http\Middleware\EnsureAuth;
+use App\Http\Middleware\EnsureOperatorPermission;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\FeatureEnabled;
 use App\Http\Middleware\ForceHttps;
@@ -46,6 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.ensure' => EnsureAuth::class,
             'role' => EnsureRole::class,
+            'operator.perm' => EnsureOperatorPermission::class,
             'subscription.check' => CheckSubscription::class,
             'turnstile' => VerifyTurnstileToken::class,
             'track.page' => TrackPageView::class,

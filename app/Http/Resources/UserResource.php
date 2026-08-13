@@ -19,6 +19,9 @@ class UserResource extends JsonResource
             'national_code' => $this->national_code,
             'avatar' => $this->avatar,
             'role' => $this->role,
+            'operator_permissions' => $this->role === 'operator'
+                ? \App\Support\OperatorPermissions::normalize($this->operator_permissions)
+                : null,
             'wallet_balance' => $this->wallet_balance,
             'is_verified' => $this->is_verified,
             'subscription_plan' => $this->whenLoaded('subscriptionPlan', fn () => [

@@ -2,9 +2,18 @@
   <PageShell>
     <LoadingSpinner v-if="loading" />
     <template v-else-if="exam">
-      <h1 class="page-title mb-2 leading-8 sm:text-2xl">{{ exam.title }}</h1>
-      <div class="mb-3 flex items-center gap-3">
+      <div class="mb-2 flex items-start gap-3">
+        <span class="text-3xl" aria-hidden="true">📝</span>
+        <h1 class="page-title mb-0 flex-1 leading-8 sm:text-2xl">{{ exam.title }}</h1>
+      </div>
+      <div class="mb-3 flex flex-wrap items-center gap-3">
         <StarRating :avg="exam.avg_rating || 0" readonly show-value />
+        <span
+          v-if="exam.ratings_count"
+          class="text-xs text-desk-muted"
+        >
+          ({{ exam.ratings_count }} رأی)
+        </span>
         <button class="text-xs font-bold text-brand hover:underline" @click="shareOpen = true">
           اشتراک‌گذاری
         </button>
@@ -50,17 +59,52 @@
         >
       </p>
 
+      <div
+        v-if="exam.active_attempt"
+        class="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4"
+      >
+        <p class="mb-1 text-sm font-bold text-amber-900">
+          ⏳ یک تلاش ناتمام دارید
+        </p>
+        <p class="mb-3 text-xs text-amber-800">
+          {{ exam.active_attempt.answered || 0 }} سوال پاسخ داده شده ·
+          {{ remainingLabel }} باقی‌مانده
+        </p>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            class="btn-primary flex-1"
+            :disabled="busy"
+            @click="goStart({ resume: true })"
+          >
+            ادامه همان آزمون
+          </button>
+          <button
+            type="button"
+            class="flex-1 rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm font-bold text-amber-900"
+            :disabled="busy"
+            @click="goStart({ restart: true })"
+          >
+            شروع مجدد
+          </button>
+        </div>
+      </div>
+
       <button
+        v-else
         class="btn-primary mb-4 w-full sm:w-auto"
         :disabled="auth.isAuthenticated && !(exam.is_eligible || exam.is_free)"
-        @click="start(null)"
+        @click="goStart()"
       >
         شروع آزمون کامل
       </button>
 
-      <!-- Subjects -->
+      <!-- Subjects: stats only -->
       <div v-if="exam.subjects?.length" class="mb-4">
-        <h2 class="mb-2 text-sm font-bold text-desk-dark">دروس این آزمون</h2>
+        <h2 class="mb-2 text-sm font-bold text-desk-dark">دروس این آزمون (آمار)</h2>
+        <p class="mb-3 text-[11px] text-desk-muted">
+          شروع درس به‌صورت جداگانه ممکن نیست؛ پس از شروع آزمون کامل، تب دروس در بالای صفحه در دسترس است.
+        </p>
         <div class="space-y-2">
           <div
             v-for="s in exam.subjects"
@@ -68,7 +112,7 @@
             class="card-soft flex items-center justify-between gap-3 p-3"
           >
             <div class="flex items-center gap-2">
-              <span v-if="s.icon" class="text-lg">{{ s.icon }}</span>
+              <span class="text-lg">{{ s.icon || subjectEmoji(s.slug) }}</span>
               <div>
                 <p class="text-sm font-bold">{{ s.name }}</p>
                 <p class="text-[11px] text-ink-muted">
@@ -76,14 +120,11 @@
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              class="shrink-0 rounded-lg bg-surface-page px-3 py-2 text-xs font-bold text-brand transition active:bg-brand-soft disabled:opacity-50"
-              :disabled="!s.question_count"
-              @click="start(s.slug)"
+            <span
+              class="rounded-lg bg-surface-page px-3 py-1.5 text-[11px] font-bold text-desk-muted"
             >
-              شروع درس {{ s.name }}
-            </button>
+              فقط آمار
+            </span>
           </div>
         </div>
       </div>
@@ -120,6 +161,7 @@ const auth = useAuthStore()
 
 const exam = ref(null)
 const loading = ref(true)
+const busy = ref(false)
 const error = ref('')
 const shareOpen = ref(false)
 const shareUrl = computed(
@@ -131,6 +173,25 @@ const ratioText = computed(() => {
   if (Math.abs(ratio - 1 / 3) < 0.01) return 'یک‌سوم'
   return `${Math.round(ratio * 100)}٪`
 })
+
+const remainingLabel = computed(() => {
+  const sec = Number(exam.value?.active_attempt?.remaining_seconds || 0)
+  const m = Math.floor(sec / 60)
+  const s = sec % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+})
+
+function subjectEmoji(slug) {
+  const map = {
+    islamic: '📖',
+    general: '📚',
+    intelligence: '🧠',
+    specialized: '🎯',
+    math: '🔢',
+    language: '🔤',
+  }
+  return map[slug] || '📘'
+}
 
 onMounted(async () => {
   try {
@@ -144,7 +205,7 @@ onMounted(async () => {
   }
 })
 
-async function start(subjectSlug) {
+function goStart(opts = {}) {
   if (!exam.value) return
   if (!auth.isAuthenticated) {
     router.push({
@@ -153,10 +214,9 @@ async function start(subjectSlug) {
     })
     return
   }
-  const q = subjectSlug ? `?subject=${encodeURIComponent(subjectSlug)}` : ''
-  router.push(`/exams/${exam.value.slug}/start${q}`)
+  const q = {}
+  if (opts.resume) q.resume = '1'
+  if (opts.restart) q.restart = '1'
+  router.push({ path: `/exams/${exam.value.slug}/start`, query: q })
 }
 </script>
-
-
-

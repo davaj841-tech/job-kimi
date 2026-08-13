@@ -55,6 +55,7 @@ class PersianPdfFont
     public function applyOptions(DomPdfWrapper $pdf): DomPdfWrapper
     {
         $this->ensure();
+        $this->purgeSubsetCaches();
         $this->writeInstalledMap();
 
         $options = $pdf->getOptions();
@@ -69,6 +70,25 @@ class PersianPdfFont
         $options->set('isPhpEnabled', false);
 
         return $pdf;
+    }
+
+    public function purgeSubsetCaches(): void
+    {
+        foreach ([storage_path('fonts'), base_path('vendor/dompdf/dompdf/lib/fonts')] as $dir) {
+            if (! is_dir($dir)) {
+                continue;
+            }
+            foreach (glob($dir.DIRECTORY_SEPARATOR.'vazirmatn_*') ?: [] as $file) {
+                @unlink($file);
+            }
+            // Also clear hashed subset files that caused Undefined array key
+            foreach (glob($dir.DIRECTORY_SEPARATOR.'*vazirmatn*') ?: [] as $file) {
+                $base = basename($file);
+                if (preg_match('/vazirmatn/i', $base) && ! preg_match('/Vazirmatn-(Regular|Bold)\.ttf$/i', $base)) {
+                    @unlink($file);
+                }
+            }
+        }
     }
 
     protected function writeInstalledMap(): void

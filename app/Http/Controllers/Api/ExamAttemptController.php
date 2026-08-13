@@ -170,15 +170,40 @@ class ExamAttemptController extends BaseController
             return $this->errorResponse('آزمون یافت نشد یا منتشر نشده است.', 404);
         }
 
-        $subject = $request->input('subject');
-        if (is_string($subject)) {
-            $subject = trim($subject) ?: null;
-        } else {
-            $subject = null;
+        $resume = $request->boolean('resume');
+        $restart = $request->boolean('restart');
+        $existing = $this->examRepository->findInProgress($user, $exam);
+
+        if ($existing && $this->examService->checkExpiry($existing)) {
+            $this->finalizeAttempt($existing, $existing->answers ?? []);
+            $existing = null;
+        }
+
+        if ($existing && $restart) {
+            $existing->update([
+                'status' => 'abandoned',
+                'finished_at' => now(),
+            ]);
+            $this->examService->forgetAttemptCache($existing->id);
+            $existing = null;
+        }
+
+        if ($existing && ($resume || ! $restart)) {
+            if (! $resume && ! $restart) {
+                $ends = $existing->started_at?->copy()->addMinutes((int) $exam->duration_minutes);
+
+                return $this->errorResponse('یک تلاش ناتمام برای این آزمون وجود دارد.', 409, [
+                    'code' => 'IN_PROGRESS',
+                    'attempt_id' => $existing->id,
+                    'remaining_seconds' => $ends ? max(0, $ends->getTimestamp() - now()->getTimestamp()) : 0,
+                ]);
+            }
+
+            return $this->resumeAttempt($exam, $existing, $isRetryWrong);
         }
 
         try {
-            $started = $this->startExamAttempt->handle($user, $exam, $subject, $onlyQuestionIds, $isRetryWrong);
+            $started = $this->startExamAttempt->handle($user, $exam, null, $onlyQuestionIds, $isRetryWrong);
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'SUBSCRIPTION_REQUIRED') {
                 return response()->json($this->examService->subscriptionRequiredPayload(), 403);
@@ -190,16 +215,46 @@ class ExamAttemptController extends BaseController
 
         $attempt = $started['attempt'];
         $questions = $started['questions'];
+        $perPage = max(1, min(20, (int) \App\Models\Setting::get('exam_questions_per_page', 5)));
 
         return $this->successResponse([
             'attempt_id' => $attempt->id,
-            'subject' => $subject,
+            'subject' => null,
             'questions' => $this->examService->formatQuestionsForTaking($questions),
             'end_time' => $started['ends_at']->timestamp,
             'duration_minutes' => $exam->duration_minutes,
             'is_retry_wrong' => $isRetryWrong,
-            'per_page' => 5,
+            'per_page' => $perPage,
+            'answers' => $attempt->answers ?? [],
         ], 'آزمون آغاز شد.', 201);
+    }
+
+    protected function resumeAttempt(\App\Models\Exam $exam, \App\Models\ExamAttempt $attempt, bool $isRetryWrong = false): JsonResponse
+    {
+        $ids = $this->examService->cachedQuestionIds($attempt->id);
+        $questions = Question::query()
+            ->where('exam_id', $exam->id)
+            ->when($ids !== [], fn ($q) => $q->whereIn('id', $ids))
+            ->get();
+        if ($questions->isEmpty()) {
+            $questions = Question::query()->where('exam_id', $exam->id)->get();
+        }
+        $ttl = max(60, (int) $exam->duration_minutes * 60);
+        $this->examService->cacheAttempt($attempt, $questions, $ttl, $isRetryWrong);
+        $ends = $attempt->started_at?->copy()->addMinutes((int) $exam->duration_minutes) ?? now()->addMinutes((int) $exam->duration_minutes);
+        $perPage = max(1, min(20, (int) \App\Models\Setting::get('exam_questions_per_page', 5)));
+
+        return $this->successResponse([
+            'attempt_id' => $attempt->id,
+            'subject' => null,
+            'questions' => $this->examService->formatQuestionsForTaking($questions),
+            'end_time' => $ends->timestamp,
+            'duration_minutes' => $exam->duration_minutes,
+            'is_retry_wrong' => $isRetryWrong,
+            'per_page' => $perPage,
+            'answers' => $attempt->answers ?? [],
+            'resumed' => true,
+        ], 'ادامه آزمون.');
     }
 
     protected function finalizeAttempt(ExamAttempt $attempt, array $answers): array

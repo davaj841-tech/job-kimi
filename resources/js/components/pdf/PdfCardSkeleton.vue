@@ -1,14 +1,14 @@
 <template>
   <div
-    class="overflow-hidden rounded-2xl border border-surface-line bg-white dark:border-slate-800 dark:bg-slate-900"
+    class="flex gap-3 rounded-xl border border-surface-line bg-surface p-3"
   >
     <div
-      class="aspect-[3/4] animate-pulse bg-slate-200 dark:bg-slate-700"
+      class="h-20 w-16 shrink-0 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700"
     />
-    <div class="space-y-2 p-3">
-      <div class="h-3 w-4/5 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
-      <div class="h-3 w-1/2 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
-      <div class="mt-2 h-4 w-1/3 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+    <div class="min-w-0 flex-1 space-y-2 py-1">
+      <div class="h-3.5 w-4/5 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+      <div class="h-3 w-1/3 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+      <div class="h-3 w-1/4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
     </div>
   </div>
 </template>

@@ -1,13 +1,11 @@
 import { ref, watch } from 'vue'
+import { applySiteTheme, useSiteTheme } from './useSiteTheme'
 
 const STORAGE_KEY = 'ja_theme'
 
 function initialDark(): boolean {
   if (typeof window === 'undefined') return false
-  const stored = localStorage.getItem(STORAGE_KEY)
-  // Marketing UI is light-first (trust/motivation); only dark when user chose it.
-  if (stored === 'dark') return true
-  return false
+  return localStorage.getItem(STORAGE_KEY) === 'dark'
 }
 
 const isDark = ref(initialDark())
@@ -22,6 +20,14 @@ function ensureWired(): void {
     (val) => {
       localStorage.setItem(STORAGE_KEY, val ? 'dark' : 'light')
       document.documentElement.classList.toggle('dark', val)
+      // Re-apply brand theme without stomping dark surface tokens
+      const { layout, primary, secondary, font } = useSiteTheme()
+      applySiteTheme({
+        homepage_layout: layout.value,
+        primary_color: primary.value,
+        secondary_color: secondary.value,
+        site_font: font.value,
+      })
     },
     { immediate: true }
   )

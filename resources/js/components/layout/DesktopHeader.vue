@@ -1,20 +1,28 @@
 <template>
   <header
-    class="sticky top-0 z-40 hidden border-b backdrop-blur-xl lg:block"
+    class="sticky top-0 z-40 hidden border-b lg:block"
     :class="
       navy
         ? 'border-white/10 bg-desk-dark/95'
-        : 'border-surface-line/80 bg-white/85'
+        : 'border-surface-line bg-surface'
     "
   >
     <div class="desk-container flex h-16 items-center justify-between gap-6">
       <div class="flex min-w-0 items-center gap-8">
         <RouterLink
           to="/"
-          class="shrink-0 font-display text-xl font-black tracking-tight"
-          :class="navy ? 'text-white' : 'text-desk-dark'"
+          class="shrink-0"
+          aria-label="صفحه اصلی"
         >
-          جاب‌آزمون
+          <SiteBrandLogo
+            :for-dark-bg="navy"
+            img-class="h-9 w-auto max-w-[10rem]"
+            :text-class="
+              navy
+                ? 'text-xl text-white'
+                : 'text-xl text-desk-text'
+            "
+          />
         </RouterLink>
         <nav class="flex items-center gap-0.5">
           <RouterLink
@@ -34,6 +42,7 @@
       </div>
 
       <div class="flex shrink-0 items-center gap-2">
+        <ThemeToggle :inverted="navy" />
         <NotificationBell v-if="auth.isAuthenticated" />
         <RouterLink
           v-if="auth.isAuthenticated"
@@ -76,6 +85,8 @@ import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import GlobalSearch from '../GlobalSearch.vue'
 import NotificationBell from '../NotificationBell.vue'
+import SiteBrandLogo from '../SiteBrandLogo.vue'
+import ThemeToggle from '../ThemeToggle.vue'
 import { useAuthStore } from '../../stores/auth'
 import { useHomepageLayout } from '../../composables/useHomepageLayout'
 
@@ -111,6 +122,6 @@ function navClass(path) {
   }
   return isActive(path)
     ? 'bg-brand-soft text-brand'
-    : 'text-desk-muted hover:bg-slate-50 hover:text-desk-dark'
+    : 'text-desk-muted hover:bg-surface-page hover:text-desk-text'
 }
 </script>
