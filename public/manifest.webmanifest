@@ -1,23 +1,42 @@
 {
+  "id": "/",
   "name": "جاب‌آزمون",
-  "short_name": "JobAzmoon",
+  "short_name": "جاب‌آزمون",
   "description": "آمادگی آزمون‌های استخدامی ایران",
   "lang": "fa",
   "dir": "rtl",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#f5f5f5",
+  "display_override": ["standalone", "minimal-ui"],
+  "prefer_related_applications": false,
+  "orientation": "portrait",
+  "background_color": "#0f2744",
   "theme_color": "#ef394e",
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/maskable-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

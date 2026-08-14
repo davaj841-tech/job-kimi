@@ -25,6 +25,7 @@ class SettingSeeder extends Seeder
             ['key' => 'site_name', 'value' => 'JobAzmoon', 'group' => 'general'],
             ['key' => 'homepage_layout', 'value' => 'atlas', 'group' => 'homepage'],
             ['key' => 'site_font', 'value' => 'estedad', 'group' => 'homepage'],
+            ['key' => 'site_font_size', 'value' => '16', 'group' => 'homepage'],
             ['key' => 'default_exam_duration', 'value' => '60', 'group' => 'exam'],
             ['key' => 'ai_daily_limit', 'value' => '50', 'group' => 'ai'],
             ['key' => 'ai_enabled', 'value' => 'true', 'group' => 'ai'],

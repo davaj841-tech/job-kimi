@@ -1,16 +1,16 @@
 <template>
-  <span class="inline-flex items-center gap-2">
+  <span class="ja-brand shrink-0 overflow-hidden" :class="`size-${size}`">
     <img
       v-if="src"
+      :key="src"
       :src="src"
       :alt="siteName"
-      class="object-contain object-right"
-      :class="imgClass"
+      class="ja-logo"
       @error="broken = true"
     />
     <span
-      v-if="!src || showText"
-      class="font-display font-black tracking-tight"
+      v-if="!src || withText"
+      class="truncate font-display font-black tracking-tight"
       :class="textClass"
     >
       {{ siteName }}
@@ -20,40 +20,96 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { useDarkMode } from '../composables/useDarkMode'
 import { useSiteTheme } from '../composables/useSiteTheme'
 
 const props = defineProps({
-  /** Force logo variant for dark backgrounds (e.g. navy header). null = follow theme */
-  forDarkBg: { type: Boolean, default: undefined },
-  imgClass: { type: String, default: 'h-8 w-auto max-w-[9rem]' },
+  /** mobile: هدر موبایل — desktop: هدر دسکتاپ/پنل */
+  variant: { type: String, default: 'desktop' },
+  size: { type: String, default: 'md' },
   textClass: { type: String, default: 'text-[15px]' },
-  /** Show site name beside logo when image exists */
   withText: { type: Boolean, default: false },
 })
 
 const broken = ref(false)
-const { isDark } = useDarkMode()
-const { siteName, ensureLoaded, resolveBrandLogo } = useSiteTheme()
+const { siteName, siteLogo, logoMobile, logoDark, ensureLoaded } =
+  useSiteTheme()
 
 onMounted(() => {
   void ensureLoaded()
 })
 
-watch([isDark, () => props.forDarkBg], () => {
+watch([() => props.variant, logoMobile, logoDark, siteLogo], () => {
   broken.value = false
-})
-
-const darkBg = computed(() => {
-  if (props.forDarkBg === true) return true
-  if (props.forDarkBg === false) return false
-  return !!isDark.value
 })
 
 const src = computed(() => {
   if (broken.value) return ''
-  return resolveBrandLogo({ forDarkBg: darkBg.value })
+  return siteLogo.value || logoDark.value || logoMobile.value || ''
 })
-
-const showText = computed(() => props.withText || !src.value)
 </script>
+
+<style scoped>
+.ja-brand {
+  display: inline-flex;
+  align-items: center;
+}
+.ja-logo {
+  display: block;
+  width: auto;
+  object-fit: contain;
+  object-position: right center;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+}
+.size-sm {
+  max-width: 7.5rem;
+  height: 2rem;
+}
+.size-sm .ja-logo {
+  height: 2rem;
+  max-width: 7.5rem;
+  max-height: 2rem;
+}
+.size-md {
+  max-width: 11rem;
+  height: 2.75rem;
+}
+.size-md .ja-logo {
+  height: 2.75rem;
+  max-width: 11rem;
+  max-height: 2.75rem;
+}
+.size-lg {
+  max-width: 14rem;
+  height: 3.25rem;
+}
+.size-lg .ja-logo {
+  height: 3.25rem;
+  max-width: 14rem;
+  max-height: 3.25rem;
+}
+@media (min-width: 1024px) {
+  .size-md {
+    max-width: 13rem;
+    height: 3.25rem;
+  }
+  .size-md .ja-logo {
+    height: 3.25rem;
+    max-width: 13rem;
+    max-height: 3.25rem;
+  }
+  .size-lg {
+    max-width: 16rem;
+    height: 3.75rem;
+  }
+  .size-lg .ja-logo {
+    height: 3.75rem;
+    max-width: 16rem;
+    max-height: 3.75rem;
+  }
+}
+</style>

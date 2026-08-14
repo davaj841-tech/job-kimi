@@ -11,13 +11,22 @@ import {
 
 const layout = ref<SiteThemeId>('atlas')
 const font = ref<SiteFontId>('estedad')
+const fontSize = ref(16)
 const primary = ref('#f97316')
 const secondary = ref('#0f2744')
 const siteName = ref('جاب‌آزمون')
 const siteLogo = ref('')
-const logoLight = ref('')
+const logoMobile = ref('')
 const logoDark = ref('')
 const siteFavicon = ref('')
+const instagramUrl = ref('')
+const telegramUrl = ref('')
+const whatsappUrl = ref('')
+const rubikaUrl = ref('')
+const baleUrl = ref('')
+const androidPlayUrl = ref('')
+const androidBazaarUrl = ref('')
+const androidDirectUrl = ref('')
 let loaded = false
 let inflight: Promise<void> | null = null
 
@@ -68,18 +77,39 @@ export function applySiteTheme(input: {
   primary_color?: unknown
   secondary_color?: unknown
   site_font?: unknown
+  site_font_size?: unknown
   site_name?: unknown
   site_logo?: unknown
+  logo_mobile?: unknown
   logo_light?: unknown
   logo_dark?: unknown
   site_favicon?: unknown
+  instagram_url?: unknown
+  telegram_url?: unknown
+  whatsapp_url?: unknown
+  rubika_url?: unknown
+  bale_url?: unknown
+  android_play_url?: unknown
+  android_bazaar_url?: unknown
+  android_direct_url?: unknown
 }): void {
   if (typeof input.site_name === 'string' && input.site_name.trim()) {
     siteName.value = input.site_name.trim()
   }
   if ('site_logo' in input) siteLogo.value = asUrl(input.site_logo)
-  if ('logo_light' in input) logoLight.value = asUrl(input.logo_light)
+  if ('logo_mobile' in input) logoMobile.value = asUrl(input.logo_mobile)
+  if ('logo_light' in input && !asUrl(input.logo_mobile)) {
+    logoMobile.value = asUrl(input.logo_light)
+  }
   if ('logo_dark' in input) logoDark.value = asUrl(input.logo_dark)
+  if ('instagram_url' in input) instagramUrl.value = asUrl(input.instagram_url)
+  if ('telegram_url' in input) telegramUrl.value = asUrl(input.telegram_url)
+  if ('whatsapp_url' in input) whatsappUrl.value = asUrl(input.whatsapp_url)
+  if ('rubika_url' in input) rubikaUrl.value = asUrl(input.rubika_url)
+  if ('bale_url' in input) baleUrl.value = asUrl(input.bale_url)
+  if ('android_play_url' in input) androidPlayUrl.value = asUrl(input.android_play_url)
+  if ('android_bazaar_url' in input) androidBazaarUrl.value = asUrl(input.android_bazaar_url)
+  if ('android_direct_url' in input) androidDirectUrl.value = asUrl(input.android_direct_url)
   if ('site_favicon' in input) {
     siteFavicon.value = asUrl(input.site_favicon)
     applyFavicon(siteFavicon.value)
@@ -90,6 +120,10 @@ export function applySiteTheme(input: {
   }
   if (isSiteFont(input.site_font)) {
     font.value = input.site_font
+  }
+  if ('site_font_size' in input) {
+    const n = Number(input.site_font_size)
+    if (Number.isFinite(n)) fontSize.value = Math.min(20, Math.max(13, Math.round(n)))
   }
 
   const preset = themePreset(layout.value)
@@ -120,6 +154,8 @@ export function applySiteTheme(input: {
   root.dataset.theme = layout.value
   root.dataset.font = nextFont.id
   root.style.setProperty('--font-site', nextFont.family)
+  root.style.setProperty('--font-size-site', `${fontSize.value}px`)
+  root.style.fontSize = `${fontSize.value}px`
   root.style.setProperty('--c-brand', hexToRgb(nextPrimary, '249 115 22'))
   root.style.setProperty('--c-brand-dark', hexToRgb(brandDark, '211 47 65'))
   root.style.setProperty(
@@ -157,20 +193,9 @@ export function applySiteTheme(input: {
   if (meta) meta.setAttribute('content', isDark ? '#0f172a' : nextPrimary)
 }
 
-/**
- * logo_light = for light backgrounds (dark-colored mark)
- * logo_dark  = for dark backgrounds / dark mode (light-colored mark)
- */
-export function resolveBrandLogo(opts?: { forDarkBg?: boolean }): string {
-  const darkBg =
-    opts?.forDarkBg ??
-    (typeof document !== 'undefined' &&
-      document.documentElement.classList.contains('dark'))
-
-  if (darkBg) {
-    return logoDark.value || logoLight.value || siteLogo.value || ''
-  }
-  return logoLight.value || siteLogo.value || logoDark.value || ''
+/** لوگوی سایت از فیلد اصلی؛ در صورت خالی بودن از لوگوهای قدیمی */
+export function resolveBrandLogo(_opts?: { mobile?: boolean }): string {
+  return siteLogo.value || logoDark.value || logoMobile.value || ''
 }
 
 export function useSiteTheme() {
@@ -193,13 +218,22 @@ export function useSiteTheme() {
   return {
     layout,
     font,
+    fontSize,
     primary,
     secondary,
     siteName,
     siteLogo,
-    logoLight,
+    logoMobile,
     logoDark,
     siteFavicon,
+    instagramUrl,
+    telegramUrl,
+    whatsappUrl,
+    rubikaUrl,
+    baleUrl,
+    androidPlayUrl,
+    androidBazaarUrl,
+    androidDirectUrl,
     ensureLoaded,
     applySiteTheme,
     resolveBrandLogo,

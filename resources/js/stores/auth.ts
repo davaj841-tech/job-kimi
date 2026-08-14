@@ -51,15 +51,38 @@ export const useAuthStore = defineStore('auth', () => {
     persist()
   }
 
+  type CaptchaPayload = {
+    turnstile_token?: string
+    captcha_id?: string
+    captcha_answer?: string
+  }
+
+  function withCaptcha(
+    base: Record<string, unknown>,
+    captcha?: CaptchaPayload | string
+  ): Record<string, unknown> {
+    const out = { ...base }
+    if (!captcha) return out
+    if (typeof captcha === 'string') {
+      if (captcha) out.turnstile_token = captcha
+      return out
+    }
+    if (captcha.turnstile_token) out.turnstile_token = captcha.turnstile_token
+    if (captcha.captcha_id) out.captcha_id = captcha.captcha_id
+    if (captcha.captcha_answer) out.captcha_answer = captcha.captcha_answer
+    return out
+  }
+
   async function sendOtp(
     mobile: string,
-    turnstile_token?: string
+    captcha?: CaptchaPayload | string
   ): Promise<unknown> {
     loading.value = true
     try {
-      const payload: Record<string, string> = { mobile }
-      if (turnstile_token) payload.turnstile_token = turnstile_token
-      const { data } = await api.post('/auth/otp/send', payload)
+      const { data } = await api.post(
+        '/auth/otp/send',
+        withCaptcha({ mobile }, captcha)
+      )
       return data
     } finally {
       loading.value = false
@@ -69,13 +92,12 @@ export const useAuthStore = defineStore('auth', () => {
   async function verifyOtp(
     mobile: string,
     code: string,
-    turnstile_token?: string,
+    captcha?: CaptchaPayload | string,
     province?: string
   ): Promise<unknown> {
     loading.value = true
     try {
-      const payload: Record<string, string> = { mobile, code }
-      if (turnstile_token) payload.turnstile_token = turnstile_token
+      const payload = withCaptcha({ mobile, code }, captcha)
       if (province) payload.province = province
       const { data } = await api.post('/auth/otp/verify', payload)
       applyAuthPayload(data)
@@ -88,13 +110,14 @@ export const useAuthStore = defineStore('auth', () => {
   async function loginPassword(
     login: string,
     password: string,
-    turnstile_token?: string
+    captcha?: CaptchaPayload | string
   ): Promise<unknown> {
     loading.value = true
     try {
-      const payload: Record<string, string> = { login, password }
-      if (turnstile_token) payload.turnstile_token = turnstile_token
-      const { data } = await api.post('/auth/login', payload)
+      const { data } = await api.post(
+        '/auth/login',
+        withCaptcha({ login, password }, captcha)
+      )
       applyAuthPayload(data)
       return data
     } finally {
@@ -104,13 +127,11 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function register(
     payload: Record<string, unknown>,
-    turnstile_token?: string
+    captcha?: CaptchaPayload | string
   ): Promise<unknown> {
     loading.value = true
     try {
-      const body: Record<string, unknown> = { ...payload }
-      if (turnstile_token) body.turnstile_token = turnstile_token
-      const { data } = await api.post('/auth/register', body)
+      const { data } = await api.post('/auth/register', withCaptcha(payload, captcha))
       applyAuthPayload(data)
       return data
     } finally {

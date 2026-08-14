@@ -35,8 +35,19 @@
               v-model="form.username"
               class="field text-left"
               dir="ltr"
+              lang="en"
+              inputmode="text"
+              autocomplete="username"
+              autocapitalize="off"
+              spellcheck="false"
               required
               placeholder="username"
+              @input="
+                form.username = String(form.username || '')
+                  .toLowerCase()
+                  .replace(/[^a-z0-9_]/g, '')
+                  .slice(0, 20)
+              "
             />
           </div>
           <div>
@@ -45,9 +56,11 @@
               v-model="form.password"
               type="password"
               class="field"
+              lang="en"
               required
               placeholder="حداقل ۸ کاراکتر"
             />
+            <PasswordRulesHint :password="form.password" />
           </div>
         </div>
 
@@ -58,6 +71,8 @@
               v-model="form.mobile"
               class="field text-left tracking-widest"
               dir="ltr"
+              lang="en"
+              inputmode="numeric"
               maxlength="11"
               placeholder="09123456789"
             />
@@ -69,6 +84,11 @@
               type="email"
               class="field text-left"
               dir="ltr"
+              lang="en"
+              inputmode="email"
+              autocomplete="email"
+              autocapitalize="off"
+              spellcheck="false"
               placeholder="you@example.com"
             />
           </div>
@@ -138,6 +158,7 @@
 import { reactive, ref, watch } from 'vue'
 import { IRAN_PROVINCES } from '../../../utils/provinces'
 import { DEFAULT_OPERATOR_PERMISSIONS } from '../../permissions'
+import PasswordRulesHint from '../../../components/auth/PasswordRulesHint.vue'
 import OperatorPermissionsPicker from './OperatorPermissionsPicker.vue'
 
 const props = defineProps({

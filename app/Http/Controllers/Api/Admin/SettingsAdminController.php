@@ -35,15 +35,12 @@ class SettingsAdminController extends BaseController
             'smtp_from_address',
             'smtp_from_name',
         ],
-        'theme' => [
-            'primary_color',
-            'secondary_color',
-            'logo_dark',
-            'logo_light',
-        ],
         'homepage' => [
             'homepage_layout',
             'site_font',
+            'site_font_size',
+            'primary_color',
+            'secondary_color',
         ],
         'seo' => [
             'meta_title',
@@ -61,6 +58,15 @@ class SettingsAdminController extends BaseController
             'idpay_api_key',
             'idpay_active',
             'idpay_sandbox',
+            'mellat_terminal_id',
+            'mellat_username',
+            'mellat_password',
+            'mellat_active',
+            'shaparak_merchant_id',
+            'shaparak_terminal_id',
+            'shaparak_username',
+            'shaparak_password',
+            'shaparak_active',
             'min_wallet_charge',
         ],
         'sms' => [
@@ -90,9 +96,14 @@ class SettingsAdminController extends BaseController
         'social' => [
             'instagram_url',
             'telegram_url',
-            'linkedin_url',
+            'whatsapp_url',
+            'rubika_url',
+            'bale_url',
             'enamad_url',
             'samandehi_url',
+            'android_play_url',
+            'android_bazaar_url',
+            'android_direct_url',
         ],
         'subscription' => [
             'free_plan_exam_limit',
@@ -121,7 +132,7 @@ class SettingsAdminController extends BaseController
             foreach ($keys as $key) {
                 $row = $rows->firstWhere('key', $key);
                 $value = $row?->value ?? $this->defaultFor($key);
-                if (in_array($key, ['site_logo', 'site_favicon', 'logo_light', 'logo_dark'], true)) {
+                if (in_array($key, ['site_logo', 'site_favicon', 'logo_mobile', 'logo_dark', 'logo_light', 'android_direct_url'], true)) {
                     $value = PublicAsset::url((string) $value);
                 }
                 $byGroup[$g][$key] = $value;
@@ -167,13 +178,16 @@ class SettingsAdminController extends BaseController
                 $value = SiteThemes::normalize($value);
                 Setting::set('homepage_layout', $value, 'homepage');
                 $palette = SiteThemes::colors($value);
-                Setting::set('primary_color', $palette['primary'], 'theme');
-                Setting::set('secondary_color', $palette['secondary'], 'theme');
+                Setting::set('primary_color', $palette['primary'], 'homepage');
+                Setting::set('secondary_color', $palette['secondary'], 'homepage');
 
                 continue;
             }
             if ($key === 'site_font') {
                 $value = SiteFonts::normalize($value);
+            }
+            if ($key === 'site_font_size') {
+                $value = (string) SiteFonts::sanitizeSize($value);
             }
             if ($key === 'exam_questions_per_page') {
                 $value = (string) max(1, min(20, (int) $value));
@@ -184,8 +198,8 @@ class SettingsAdminController extends BaseController
             if ($key === 'secondary_color') {
                 $value = SiteThemes::sanitizeHex($value, '#0f2744');
             }
-            // Don't wipe uploaded logos when saving other theme fields with empty strings
-            if (in_array($key, ['site_logo', 'site_favicon', 'logo_light', 'logo_dark'], true)) {
+            // Don't wipe uploaded files when saving other fields with empty strings
+            if (in_array($key, ['site_logo', 'site_favicon', 'logo_mobile', 'logo_dark', 'logo_light', 'android_direct_url'], true)) {
                 if ($value === null || $value === '') {
                     continue;
                 }
@@ -217,19 +231,38 @@ class SettingsAdminController extends BaseController
     public function uploadLogo(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,svg,ico', 'max:2048'],
-            'type' => ['required', 'in:logo,favicon,logo_dark,logo_light'],
+            'type' => ['required', 'in:logo,favicon,logo_dark,logo_mobile,logo_light,apk'],
+            'file' => ['required', 'file'],
         ]);
+
+        if ($data['type'] === 'apk') {
+            $request->validate([
+                'file' => ['required', 'file', 'max:51200'],
+            ], [
+                'file.max' => 'حداکثر حجم فایل ۵۰ مگابایت است.',
+            ]);
+            $ext = strtolower((string) $request->file('file')->getClientOriginalExtension());
+            if ($ext !== 'apk') {
+                return $this->errorResponse('فقط فایل APK مجاز است.', 422);
+            }
+        } else {
+            $request->validate([
+                'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,svg,ico', 'max:2048'],
+            ]);
+        }
 
         $map = [
             'logo' => ['key' => 'site_logo', 'group' => 'general'],
             'favicon' => ['key' => 'site_favicon', 'group' => 'general'],
-            'logo_dark' => ['key' => 'logo_dark', 'group' => 'theme'],
-            'logo_light' => ['key' => 'logo_light', 'group' => 'theme'],
+            'logo_dark' => ['key' => 'site_logo', 'group' => 'general'],
+            'logo_mobile' => ['key' => 'site_logo', 'group' => 'general'],
+            'logo_light' => ['key' => 'site_logo', 'group' => 'general'],
+            'apk' => ['key' => 'android_direct_url', 'group' => 'social'],
         ];
 
         $target = $map[$data['type']];
-        $path = $request->file('file')->store('settings', 'public');
+        $folder = $data['type'] === 'apk' ? 'apps' : 'settings';
+        $path = $request->file('file')->store($folder, 'public');
         // Root-relative URL so preview works regardless of APP_URL host
         $url = PublicAsset::url($path);
 
@@ -253,11 +286,14 @@ class SettingsAdminController extends BaseController
             'secondary_color' => '#0f2744',
             'homepage_layout' => 'atlas',
             'site_font' => 'estedad',
+            'site_font_size' => '16',
             'payment_gateway' => 'zarinpal',
             'zarinpal_sandbox' => 'false',
             'nextpay_active' => 'false',
             'idpay_active' => 'false',
             'idpay_sandbox' => 'true',
+            'mellat_active' => 'false',
+            'shaparak_active' => 'false',
             'min_wallet_charge' => '10000',
             'sms_gateway' => 'kavenegar',
             'ai_enabled' => 'true',
@@ -310,6 +346,30 @@ class SettingsAdminController extends BaseController
                 'is_active' => filter_var($values['idpay_active'] ?? Setting::get('idpay_active', 'false'), FILTER_VALIDATE_BOOLEAN),
                 'is_default' => $default === 'idpay',
                 'sort_order' => 3,
+            ]
+        );
+
+        PaymentGateway::query()->updateOrCreate(
+            ['name' => 'mellat'],
+            [
+                'display_name' => 'بانک ملت',
+                'merchant_id' => $values['mellat_terminal_id'] ?? Setting::get('mellat_terminal_id'),
+                'api_key' => $values['mellat_username'] ?? Setting::get('mellat_username'),
+                'is_active' => filter_var($values['mellat_active'] ?? Setting::get('mellat_active', 'false'), FILTER_VALIDATE_BOOLEAN),
+                'is_default' => $default === 'mellat',
+                'sort_order' => 4,
+            ]
+        );
+
+        PaymentGateway::query()->updateOrCreate(
+            ['name' => 'shaparak'],
+            [
+                'display_name' => 'شاپرک',
+                'merchant_id' => $values['shaparak_merchant_id'] ?? Setting::get('shaparak_merchant_id'),
+                'api_key' => $values['shaparak_terminal_id'] ?? Setting::get('shaparak_terminal_id'),
+                'is_active' => filter_var($values['shaparak_active'] ?? Setting::get('shaparak_active', 'false'), FILTER_VALIDATE_BOOLEAN),
+                'is_default' => $default === 'shaparak',
+                'sort_order' => 5,
             ]
         );
 

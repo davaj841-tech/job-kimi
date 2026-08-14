@@ -39,8 +39,8 @@ class HomepageLayoutSettingTest extends TestCase
 
     public function test_public_settings_expose_theme_colors(): void
     {
-        Setting::set('primary_color', '#06b6d4', 'theme');
-        Setting::set('secondary_color', '#0e7490', 'theme');
+        Setting::set('primary_color', '#06b6d4', 'homepage');
+        Setting::set('secondary_color', '#0e7490', 'homepage');
 
         $this->getJson('/api/v1/settings/public')
             ->assertOk()
@@ -69,7 +69,7 @@ class HomepageLayoutSettingTest extends TestCase
         Sanctum::actingAs(User::factory()->create(['role' => 'admin', 'status' => 'active']));
 
         $this->putJson('/api/v1/admin/settings', [
-            'group' => 'theme',
+            'group' => 'homepage',
             'values' => [
                 'primary_color' => '#22c55e',
                 'secondary_color' => '#14532d',
@@ -91,5 +91,14 @@ class HomepageLayoutSettingTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.homepage_layout', 'blossom')
             ->assertJsonPath('data.site_font', 'vazirmatn');
+    }
+
+    public function test_public_settings_expose_site_font_size(): void
+    {
+        Setting::set('site_font_size', '18', 'homepage');
+
+        $this->getJson('/api/v1/settings/public')
+            ->assertOk()
+            ->assertJsonPath('data.site_font_size', 18);
     }
 }

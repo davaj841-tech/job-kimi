@@ -16,7 +16,8 @@ class ContactFormMail extends Mailable
         public string $senderName,
         public string $senderEmail,
         public string $subjectKey,
-        public string $messageText
+        public string $messageText,
+        public ?string $trackingCode = null
     ) {}
 
     public function envelope(): Envelope
@@ -40,6 +41,7 @@ class ContactFormMail extends Mailable
                 'email' => $this->senderEmail,
                 'subjectLabel' => $labels[$this->subjectKey] ?? $this->subjectKey,
                 'messageText' => $this->messageText,
+                'trackingCode' => $this->trackingCode,
             ]
         );
     }

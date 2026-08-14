@@ -52,7 +52,7 @@ return new class extends Migration
             $table->string('title');
             $table->string('image')->nullable();
             $table->string('link')->nullable();
-            $table->enum('position', ['home_top', 'home_middle', 'exam_sidebar'])->default('home_top');
+            $table->string('position', 50)->default('home_top');
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();

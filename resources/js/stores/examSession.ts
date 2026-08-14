@@ -17,6 +17,7 @@ export const useExamSessionStore = defineStore('examSession', () => {
   const showSubmitConfirm = ref(false)
   /** null = all subjects */
   const subjectFilter = ref<string | null>(null)
+  const remainingOnly = ref(false)
   /** question text scale: 0.9 | 1 | 1.15 | 1.3 */
   const fontScale = ref(1)
 
@@ -36,11 +37,23 @@ export const useExamSessionStore = defineStore('examSession', () => {
     return Array.from(map.values())
   })
 
-  const filteredQuestions = computed(() => {
+  const subjectFiltered = computed(() => {
     if (!subjectFilter.value) return questions.value
     return questions.value.filter(
       (q) => String(q.subject || 'general') === subjectFilter.value
     )
+  })
+
+  const unansweredInFilter = computed(() =>
+    subjectFiltered.value.filter((q) => {
+      const a = examStore.answers?.[q.id] ?? examStore.answers?.[String(q.id)]
+      return a === null || a === undefined || a === ''
+    })
+  )
+
+  const filteredQuestions = computed(() => {
+    if (remainingOnly.value) return unansweredInFilter.value
+    return subjectFiltered.value
   })
 
   const currentIndex = computed({
@@ -99,13 +112,6 @@ export const useExamSessionStore = defineStore('examSession', () => {
       ).length
   )
 
-  const unansweredInFilter = computed(() =>
-    filteredQuestions.value.filter((q) => {
-      const a = examStore.answers?.[q.id]
-      return a === null || a === undefined || a === ''
-    })
-  )
-
   const flaggedCount = computed(() => flagged.value.length)
   const progressPercent = computed(() => {
     const total = questions.value.length || 1
@@ -147,6 +153,7 @@ export const useExamSessionStore = defineStore('examSession', () => {
 
   function setSubjectFilter(slug: string | null): void {
     subjectFilter.value = slug
+    remainingOnly.value = false
     const list = !slug
       ? questions.value
       : questions.value.filter(
@@ -155,6 +162,14 @@ export const useExamSessionStore = defineStore('examSession', () => {
     if (list.length) {
       navigateToQuestionId(list[0].id)
     }
+  }
+
+  function toggleRemaining(): void {
+    remainingOnly.value = !remainingOnly.value
+    const list = remainingOnly.value
+      ? unansweredInFilter.value
+      : subjectFiltered.value
+    if (list.length) navigateToQuestionId(list[0].id)
   }
 
   function next(): void {
@@ -177,18 +192,8 @@ export const useExamSessionStore = defineStore('examSession', () => {
     navigateTo(currentIndex.value - 1)
   }
 
-  function skip(): void {
-    next()
-  }
-
   function goToUnanswered(): void {
-    const list = unansweredInFilter.value
-    if (!list.length) return
-    const currentId = currentQuestion.value?.id
-    const after = list.findIndex((q) => q.id === currentId)
-    const target =
-      after >= 0 && after < list.length - 1 ? list[after + 1] : list[0]
-    if (target) navigateToQuestionId(target.id)
+    toggleRemaining()
   }
 
   function bumpFont(delta: number): void {
@@ -210,6 +215,7 @@ export const useExamSessionStore = defineStore('examSession', () => {
     showExitConfirm.value = false
     showSubmitConfirm.value = false
     subjectFilter.value = null
+    remainingOnly.value = false
     fontScale.value = 1
   }
 
@@ -222,6 +228,7 @@ export const useExamSessionStore = defineStore('examSession', () => {
     showExitConfirm,
     showSubmitConfirm,
     subjectFilter,
+    remainingOnly,
     fontScale,
     questions,
     subjectTabs,
@@ -248,9 +255,9 @@ export const useExamSessionStore = defineStore('examSession', () => {
     navigateTo,
     navigateToQuestionId,
     setSubjectFilter,
+    toggleRemaining,
     next,
     prev,
-    skip,
     goToUnanswered,
     bumpFont,
     recordTabSwitch,

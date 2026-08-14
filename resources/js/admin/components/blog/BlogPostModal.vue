@@ -42,7 +42,7 @@
           v-model="form.category"
           required
           class="field"
-          placeholder="دسته‌بندی *"
+          placeholder="طبقه‌بندی *"
         />
         <input
           v-model="form.meta_title"

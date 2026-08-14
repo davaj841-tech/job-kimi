@@ -145,6 +145,12 @@ const routes = [
     meta: { title: 'تیکت‌ها', auth: true, permission: 'tickets' },
   },
   {
+    path: '/admin/contact-messages',
+    name: 'admin-contact-messages',
+    component: () => import('../views/ContactMessagesView.vue'),
+    meta: { title: 'پیام‌های تماس', auth: true, permission: 'tickets' },
+  },
+  {
     path: '/admin/banners',
     name: 'admin-banners',
     component: () => import('../views/BannersView.vue'),

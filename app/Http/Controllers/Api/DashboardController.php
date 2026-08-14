@@ -73,6 +73,12 @@ class DashboardController extends BaseController
                 'score' => $attempt->score,
                 'total_correct' => $attempt->total_correct,
                 'total_wrong' => $attempt->total_wrong,
+                'total_unanswered' => max(
+                    0,
+                    (int) ($attempt->exam?->total_questions ?: 0)
+                    - (int) $attempt->total_correct
+                    - (int) $attempt->total_wrong
+                ),
                 'total_marks' => $attempt->exam?->total_marks,
                 'percentage' => round(((float) $attempt->score / $totalMarks) * 100, 2),
                 'created_at' => $attempt->created_at?->toIso8601String(),

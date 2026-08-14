@@ -59,6 +59,7 @@ export const useSettingsStore = defineStore('adminSettings', {
         form,
         {
           headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: type === 'apk' ? 180000 : 30000,
         }
       )
       const key = data.data?.key

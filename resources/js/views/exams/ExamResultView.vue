@@ -11,10 +11,11 @@
           <div class="relative z-10 text-center text-white">
             <p class="mb-2 text-sm text-white/80">نمره شما</p>
             <div class="text-6xl font-black sm:text-7xl">
-              {{ toFaDigits(Math.round(result.percentage || 0)) }}٪
+              {{ toFaDigits(Math.round(displayPercentage)) }}٪
             </div>
             <p class="mt-2 text-sm text-white/80">
-              نمره {{ toFaDigits(result.score) }}
+              {{ toFaDigits(correctCount) }} از
+              {{ toFaDigits(totalQuestions) }} سوال
               <span v-if="analysis?.rank">
                 · رتبه {{ toFaDigits(analysis.rank) }}</span
               >
@@ -32,7 +33,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 p-5 md:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3 md:grid-cols-5">
           <div
             v-for="stat in stats"
             :key="stat.label"
@@ -53,9 +54,9 @@
       >
         <h2 class="mb-4 text-lg font-bold dark:text-white">📊 نمودار عملکرد</h2>
         <ExamResultCharts
-          :percentage="result.percentage || 0"
-          :correct="result.total_correct || 0"
-          :wrong="result.total_wrong || 0"
+          :percentage="displayPercentage"
+          :correct="correctCount"
+          :wrong="wrongCount"
           :blank="blankCount"
           :subjects="chartSubjects"
         />
@@ -132,17 +133,51 @@
       >
         <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 class="text-lg font-bold dark:text-white">مرور پاسخ‌ها</h2>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              v-if="blankCount > 0"
+              type="button"
+              class="rounded-xl bg-slate-700 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+              :disabled="retrying"
+              @click="retry('blank')"
+            >
+              بدون پاسخ
+            </button>
+            <button
+              type="button"
+              class="text-sm font-bold text-brand"
+              @click="showSheet = !showSheet"
+            >
+              {{ showSheet ? 'بستن' : 'نمایش پاسخبرگ' }}
+            </button>
+          </div>
+        </div>
+        <div v-if="showSheet" class="mb-3 flex flex-wrap gap-2">
           <button
+            v-for="f in sheetFilters"
+            :key="f.id"
             type="button"
-            class="text-sm font-bold text-brand"
-            @click="showSheet = !showSheet"
+            class="rounded-xl px-3 py-1.5 text-xs font-bold"
+            :class="
+              sheetFilter === f.id
+                ? 'bg-desk-dark text-white'
+                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+            "
+            @click="sheetFilter = f.id"
           >
-            {{ showSheet ? 'بستن' : 'نمایش پاسخبرگ' }}
+            {{ f.label }}
+            <span class="opacity-70">({{ toFaDigits(f.count) }})</span>
           </button>
         </div>
         <div v-if="showSheet" class="space-y-3">
+          <p
+            v-if="!filteredSheet.length"
+            class="py-6 text-center text-sm text-ink-muted"
+          >
+            موردی در این فیلتر نیست.
+          </p>
           <div
-            v-for="item in sheet"
+            v-for="item in filteredSheet"
             :key="item.id"
             class="rounded-xl border-2 p-4"
             :class="
@@ -205,8 +240,26 @@
 
       <div class="flex flex-col gap-3 sm:flex-row sm:justify-center">
         <button
+          v-if="blankCount > 0"
+          type="button"
+          class="rounded-2xl bg-slate-700 px-8 py-3 font-bold text-white hover:bg-slate-800 disabled:opacity-50"
+          :disabled="retrying"
+          @click="retry('blank')"
+        >
+          {{ retrying ? '...' : 'پاسخ به سوالات بدون پاسخ' }}
+        </button>
+        <button
+          v-if="wrongCount > 0"
           type="button"
           class="rounded-2xl bg-brand px-8 py-3 font-bold text-white hover:bg-brand-dark disabled:opacity-50"
+          :disabled="retrying"
+          @click="retry('wrong')"
+        >
+          {{ retrying ? '...' : 'مرور سوالات غلط' }}
+        </button>
+        <button
+          type="button"
+          class="rounded-2xl bg-desk-dark px-8 py-3 font-bold text-white hover:opacity-90 disabled:opacity-50"
           :disabled="downloading"
           @click="downloadReportCard"
         >
@@ -236,11 +289,12 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import {
   CheckIcon,
   CheckCircleIcon,
   MinusCircleIcon,
+  QuestionMarkCircleIcon,
   ShareIcon,
   TrophyIcon,
   XCircleIcon,
@@ -253,14 +307,21 @@ import StarRating from '../../components/StarRating.vue'
 import ExamResultCharts from '../../components/exam/ExamResultCharts.vue'
 import { toFaDigits } from '../../utils/format'
 import { renderKatexHtml } from '../../utils/renderKatexHtml'
+import { useExamStore } from '../../stores/exam'
+import { useExamSessionStore } from '../../stores/examSession'
 
 const route = useRoute()
+const router = useRouter()
+const examStore = useExamStore()
+const session = useExamSessionStore()
 const loading = ref(true)
 const result = ref<any>(null)
 const analysis = ref<any>(null)
 const sheet = ref<any[]>([])
 const showSheet = ref(true)
+const sheetFilter = ref('all')
 const downloading = ref(false)
+const retrying = ref(false)
 const error = ref('')
 const rating = ref(0)
 const ratingSaving = ref(false)
@@ -274,36 +335,68 @@ const chartSubjects = computed(() =>
     emoji: subjectEmoji(row.subject),
   }))
 )
-const totalCount = computed(
-  () => (result.value?.total_correct || 0) + (result.value?.total_wrong || 0)
-)
-const blankCount = computed(() => {
-  const total = analysis.value?.total_questions ?? totalCount.value
-  return Math.max(
-    0,
-    total -
-      (result.value?.total_correct || 0) -
-      (result.value?.total_wrong || 0)
+const totalQuestions = computed(() => {
+  if (sheet.value.length) return sheet.value.length
+  return Number(
+    analysis.value?.total_questions ||
+      result.value?.exam?.total_questions ||
+      0
   )
 })
+const correctCount = computed(() => {
+  if (sheet.value.length)
+    return sheet.value.filter((i) => i.is_correct && !i.is_blank).length
+  return Number(result.value?.total_correct || analysis.value?.total_correct || 0)
+})
+const wrongCount = computed(() => {
+  if (sheet.value.length)
+    return sheet.value.filter((i) => !i.is_blank && !i.is_correct).length
+  return Number(result.value?.total_wrong || analysis.value?.total_wrong || 0)
+})
+const blankCount = computed(() => {
+  if (sheet.value.length) return sheet.value.filter((i) => i.is_blank).length
+  return Math.max(0, totalQuestions.value - correctCount.value - wrongCount.value)
+})
+const displayPercentage = computed(() => {
+  const total = totalQuestions.value
+  if (!total) return Number(result.value?.percentage || analysis.value?.percentage || 0)
+  return Math.round((correctCount.value / total) * 10000) / 100
+})
+const filteredSheet = computed(() => {
+  if (sheetFilter.value === 'blank') return sheet.value.filter((i) => i.is_blank)
+  if (sheetFilter.value === 'wrong')
+    return sheet.value.filter((i) => !i.is_blank && !i.is_correct)
+  return sheet.value
+})
+const sheetFilters = computed(() => [
+  { id: 'all', label: 'همه', count: sheet.value.length },
+  { id: 'blank', label: 'بدون پاسخ', count: blankCount.value },
+  { id: 'wrong', label: 'غلط', count: wrongCount.value },
+])
 
 const stats = computed(() => [
   {
+    label: 'کل سوال',
+    value: toFaDigits(totalQuestions.value),
+    icon: QuestionMarkCircleIcon,
+    bg: 'bg-slate-50 dark:bg-slate-800',
+  },
+  {
     label: 'درست',
-    value: toFaDigits(result.value?.total_correct),
+    value: toFaDigits(correctCount.value),
     icon: CheckCircleIcon,
     color: 'text-emerald-600',
     bg: 'bg-emerald-50 dark:bg-emerald-900/20',
   },
   {
     label: 'غلط',
-    value: toFaDigits(result.value?.total_wrong),
+    value: toFaDigits(wrongCount.value),
     icon: XCircleIcon,
     color: 'text-brand',
     bg: 'bg-brand-soft dark:bg-brand/10',
   },
   {
-    label: 'نزده',
+    label: 'بدون پاسخ',
     value: toFaDigits(blankCount.value),
     icon: MinusCircleIcon,
     color: 'text-slate-500',
@@ -343,6 +436,8 @@ onMounted(async () => {
     result.value = resultRes.data?.attempt || resultRes.data
     analysis.value = sheetRes.data?.analysis || null
     sheet.value = sheetRes.data?.sheet || []
+    const qf = String(route.query.filter || '')
+    if (qf === 'blank' || qf === 'wrong') sheetFilter.value = qf
 
     if (passed.value) {
       confetti({
@@ -358,6 +453,42 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+async function retry(mode: 'blank' | 'wrong') {
+  retrying.value = true
+  error.value = ''
+  try {
+    const examId = route.params.id
+    const attemptId = route.params.attemptId
+    const { data } = await api.post(`/exams/${examId}/retry-wrong/${attemptId}`, {
+      mode,
+    })
+    const payload = data.data || {}
+    session.resetSessionUx()
+    const perPage = Math.max(1, Math.min(20, Number(payload.per_page) || 5))
+    session.setQuestionsPerPage(perPage)
+    examStore.current = {
+      examId: Number(examId),
+      attemptId: payload.attempt_id || payload.attempt?.id,
+      questions: payload.questions || [],
+      duration: payload.duration_minutes || 20,
+      title: result.value?.exam?.title || result.value?.exam_title || 'آزمون',
+      perPage,
+    }
+    examStore.answers = { ...(payload.answers || {}) }
+    examStore.dirty = false
+    examStore.pageIndex = 0
+    examStore.endsAt = payload.end_time
+      ? payload.end_time * 1000
+      : Date.now() + (payload.duration_minutes || 20) * 60 * 1000
+    examStore.saveCache()
+    router.push(`/exams/${examId}/take`)
+  } catch (e) {
+    error.value = e.response?.data?.message || 'شروع مرور ممکن نشد.'
+  } finally {
+    retrying.value = false
+  }
+}
 
 async function downloadReportCard() {
   downloading.value = true
@@ -398,7 +529,7 @@ async function submitRating() {
 }
 
 async function shareResult() {
-  const text = `نتیجه آزمون جاب‌آزمون: ${Math.round(result.value?.percentage || 0)}٪`
+  const text = `نتیجه آزمون جاب‌آزمون: ${Math.round(displayPercentage.value || 0)}٪ (${correctCount.value} درست از ${totalQuestions.value} سوال)`
   const url = window.location.href
   try {
     if (navigator.share) {

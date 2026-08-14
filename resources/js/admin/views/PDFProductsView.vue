@@ -17,7 +17,7 @@
           <input
             v-model="store.filters.category"
             class="field"
-            placeholder="دسته‌بندی"
+            placeholder="طبقه‌بندی"
           />
           <select v-model="store.filters.is_active" class="field">
             <option value="">همه وضعیت‌ها</option>
@@ -115,7 +115,7 @@ const confirm = reactive({ open: false, title: '', message: '', action: null })
 const columns = [
   { key: 'index', label: '#' },
   { key: 'title', label: 'عنوان' },
-  { key: 'category', label: 'دسته' },
+  { key: 'category', label: 'طبقه‌بندی' },
   { key: 'price', label: 'قیمت' },
   { key: 'download_count', label: 'تعداد دانلود' },
   { key: 'is_active', label: 'وضعیت' },

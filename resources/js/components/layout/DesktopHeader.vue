@@ -1,13 +1,10 @@
 <template>
   <header
     class="sticky top-0 z-40 hidden border-b lg:block"
-    :class="
-      navy
-        ? 'border-white/10 bg-desk-dark/95'
-        : 'border-surface-line bg-surface'
-    "
+    :class="navy ? 'border-white/10' : 'border-surface-line bg-surface'"
+    :style="navy ? { backgroundColor: 'color-mix(in srgb, var(--theme-ink) 96%, transparent)' } : undefined"
   >
-    <div class="desk-container flex h-16 items-center justify-between gap-6">
+    <div class="desk-container flex h-[4.5rem] items-center justify-between gap-6">
       <div class="flex min-w-0 items-center gap-8">
         <RouterLink
           to="/"
@@ -15,12 +12,12 @@
           aria-label="صفحه اصلی"
         >
           <SiteBrandLogo
-            :for-dark-bg="navy"
-            img-class="h-9 w-auto max-w-[10rem]"
+            variant="desktop"
+            size="lg"
             :text-class="
               navy
                 ? 'text-xl text-white'
-                : 'text-xl text-desk-text'
+                : 'text-xl text-desk-text dark:text-white'
             "
           />
         </RouterLink>
@@ -93,7 +90,7 @@ import { useHomepageLayout } from '../../composables/useHomepageLayout'
 const route = useRoute()
 const auth = useAuthStore()
 const { ensureLoaded, isDarkHero } = useHomepageLayout()
-const navy = computed(() => route.path === '/' && isDarkHero.value)
+const navy = computed(() => isDarkHero.value)
 
 onMounted(() => {
   ensureLoaded()

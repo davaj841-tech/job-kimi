@@ -52,23 +52,16 @@
           class="home-rail-card"
           @click="$router.push(`/jobs/${job.id}`)"
         >
-          <div class="mb-2.5 flex items-start justify-between gap-2">
+          <div class="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xl" aria-hidden="true">💼</span>
             <span
               v-if="job.is_new || isRecent(job)"
               class="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600"
               >جدید</span
             >
-            <span
-              v-else
-              class="text-[10px] text-desk-muted"
-              >{{ yearLabel }}</span
-            >
-            <span
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-desk-dark text-lg"
-              aria-hidden="true"
-            >
-              💼
-            </span>
+            <span v-else class="text-[10px] font-bold text-desk-muted">{{
+              yearLabel
+            }}</span>
           </div>
           <p class="line-clamp-2 flex-1 text-sm font-bold text-desk-text">
             {{ job.classification_name || job.company_name || job.title }}

@@ -57,4 +57,14 @@ final class SiteFonts
     {
         return self::isValid($id) ? (string) $id : self::DEFAULT;
     }
+
+    public static function sanitizeSize(mixed $value): int
+    {
+        $n = (int) $value;
+        if ($n < 13 || $n > 20) {
+            return 16;
+        }
+
+        return $n;
+    }
 }

@@ -7,14 +7,31 @@
         type="button"
         class="rounded-lg px-2 py-1 text-xs font-bold text-slate-700 hover:bg-white"
         :title="btn.title"
-        @click.prevent="run(btn)"
+        @mousedown.prevent="run(btn)"
       >
         {{ btn.label }}
       </button>
+      <button
+        type="button"
+        class="mr-auto rounded-lg px-2 py-1 text-xs font-bold text-orange-600 hover:bg-white"
+        @mousedown.prevent="htmlMode = !htmlMode"
+      >
+        {{ htmlMode ? 'نمایش دیداری' : 'HTML' }}
+      </button>
     </div>
+    <textarea
+      v-if="htmlMode"
+      class="w-full p-3 text-sm outline-none"
+      :class="sizeClass"
+      dir="ltr"
+      :value="modelValue"
+      @input="$emit('update:modelValue', $event.target.value)"
+    />
     <div
+      v-else
       ref="editor"
-      class="prose prose-sm min-h-48 max-w-none px-3 py-2 text-sm leading-7 outline-none [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:p-2"
+      class="prose prose-sm max-w-none px-3 py-2 text-sm leading-7 outline-none [&_a]:text-orange-600 [&_h2]:text-lg [&_h2]:font-black [&_h3]:text-base [&_h3]:font-bold [&_img]:max-w-full [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:p-2"
+      :class="sizeClass"
       contenteditable="true"
       @input="onInput"
     />
@@ -22,27 +39,37 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
+  size: { type: String, default: 'default' },
 })
 const emit = defineEmits(['update:modelValue'])
 
 const editor = ref(null)
+const htmlMode = ref(false)
 let syncing = false
 
+const sizeClass = computed(() =>
+  props.size === 'page' ? 'min-h-[min(62vh,640px)]' : 'min-h-48'
+)
+
 const buttons = [
+  { label: 'برگردان', cmd: 'undo', title: 'واگرد' },
+  { label: 'ازنو', cmd: 'redo', title: 'ازنو' },
   { label: 'پررنگ', cmd: 'bold', title: 'پررنگ' },
   { label: 'ایتالیک', cmd: 'italic', title: 'ایتالیک' },
   { label: 'زیرخط', cmd: 'underline', title: 'زیرخط' },
   { label: 'H2', cmd: 'formatBlock', value: 'h2', title: 'عنوان' },
   { label: 'H3', cmd: 'formatBlock', value: 'h3', title: 'زیرعنوان' },
+  { label: 'نقل‌قول', cmd: 'formatBlock', value: 'blockquote', title: 'نقل‌قول' },
   { label: '• لیست', cmd: 'insertUnorderedList', title: 'لیست نقطه‌ای' },
   { label: '۱. لیست', cmd: 'insertOrderedList', title: 'لیست شماره‌دار' },
   { label: 'راست‌چین', cmd: 'justifyRight', title: 'راست‌چین' },
   { label: 'وسط', cmd: 'justifyCenter', title: 'وسط‌چین' },
   { label: 'لینک', action: 'link', title: 'درج لینک' },
+  { label: 'تصویر', action: 'image', title: 'درج تصویر' },
   { label: 'فرمول', action: 'formula', title: 'درج فرمول ریاضی' },
   { label: 'جدول', action: 'table', title: 'درج جدول' },
   { label: 'پاک‌سازی', cmd: 'removeFormat', title: 'حذف قالب' },
@@ -55,12 +82,19 @@ onMounted(() => {
 watch(
   () => props.modelValue,
   (val) => {
-    if (!editor.value || syncing) return
+    if (htmlMode.value || !editor.value || syncing) return
     if (editor.value.innerHTML !== (val || '')) {
       editor.value.innerHTML = val || ''
     }
   }
 )
+
+watch(htmlMode, async (on) => {
+  if (!on) {
+    await nextTick()
+    if (editor.value) editor.value.innerHTML = props.modelValue || ''
+  }
+})
 
 function onInput() {
   syncing = true
@@ -75,6 +109,9 @@ function run(btn) {
   if (btn.action === 'link') {
     const url = window.prompt('آدرس لینک:')
     if (url) document.execCommand('createLink', false, url)
+  } else if (btn.action === 'image') {
+    const url = window.prompt('آدرس تصویر:')
+    if (url) document.execCommand('insertImage', false, url)
   } else if (btn.action === 'formula') {
     insertFormula()
   } else if (btn.action === 'table') {

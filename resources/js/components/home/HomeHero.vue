@@ -2,6 +2,7 @@
   <section
     class="hero-bleed relative isolate overflow-hidden"
     :class="sectionClass"
+    :style="heroInkStyle"
   >
     <!-- navy / ocean / royal -->
     <template v-if="hero === 'navy'">
@@ -303,11 +304,17 @@ onMounted(async () => {
 })
 
 const sectionClass = computed(() => {
-  if (hero.value === 'navy' || hero.value === 'dark') return 'bg-desk-dark'
+  if (hero.value === 'navy' || hero.value === 'dark') return ''
   if (hero.value === 'paper') return 'border-b border-surface-line bg-surface-page'
   if (hero.value === 'split') return 'bg-surface-page'
   return 'border-b border-surface-line bg-surface-page'
 })
+
+const heroInkStyle = computed(() =>
+  hero.value === 'navy' || hero.value === 'dark'
+    ? { backgroundColor: 'var(--theme-ink)' }
+    : undefined
+)
 
 const navyBg = {
   background:

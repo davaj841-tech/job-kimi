@@ -41,9 +41,18 @@
             v-model="username"
             class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
             dir="ltr"
+            lang="en"
+            inputmode="text"
             autocomplete="username"
+            autocapitalize="off"
+            spellcheck="false"
             maxlength="20"
             placeholder="admin"
+            @input="
+              username = String(username || '')
+                .toLowerCase()
+                .replace(/[^a-z0-9_]/g, '')
+            "
           />
         </div>
         <div>
@@ -55,6 +64,7 @@
             type="password"
             class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
             dir="ltr"
+            lang="en"
             autocomplete="current-password"
             placeholder="••••••••"
             @keyup.enter="onPasswordLogin"
@@ -90,6 +100,11 @@
             type="email"
             class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
             dir="ltr"
+            lang="en"
+            inputmode="email"
+            autocomplete="email"
+            autocapitalize="off"
+            spellcheck="false"
             placeholder="admin@example.com"
             @keyup.enter="onForgot"
           />

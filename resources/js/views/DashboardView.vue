@@ -113,6 +113,12 @@
                 </p>
                 <p class="text-xs text-ink-muted dark:text-slate-400">
                   {{ formatDate(exam.finished_at || exam.created_at) }}
+                  <span v-if="exam.total_wrong" class="mr-2 font-bold text-brand">
+                    {{ toFaDigits(exam.total_wrong) }} غلط
+                  </span>
+                  <span v-if="exam.total_unanswered" class="mr-2 font-bold text-slate-500">
+                    {{ toFaDigits(exam.total_unanswered) }} بدون پاسخ
+                  </span>
                 </p>
               </div>
               <Badge :variant="scoreVariant(exam.percentage)">

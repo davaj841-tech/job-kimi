@@ -1,24 +1,25 @@
 <template>
-  <footer class="site-footer mt-auto hidden bg-desk-dark text-white lg:block">
-    <div class="desk-container grid grid-cols-4 gap-6 py-6">
+  <footer class="site-footer mt-auto hidden text-white lg:block" style="background: var(--theme-ink)">
+    <div class="desk-container grid grid-cols-4 gap-6 py-6 text-sm">
       <div>
-        <p class="mb-1.5 text-base font-black">جاب‌آزمون</p>
-        <p class="mb-3 text-xs leading-6 text-white/65">
+        <p class="mb-1.5 text-lg font-black">جاب‌آزمون</p>
+        <p class="mb-3 leading-7 text-white/70">
           آزمون استخدامی، رزومه‌ساز و آگهی شغلی در یک مسیر.
         </p>
         <TrustBadges
           dark
           compact
         />
+        <SocialLinks wrap-class="mt-3" />
       </div>
 
       <div v-for="col in columns" :key="col.title">
-        <h3 class="mb-2 text-sm font-bold">{{ col.title }}</h3>
+        <h3 class="mb-2 font-bold">{{ col.title }}</h3>
         <ul class="space-y-1.5">
           <li v-for="link in col.links" :key="link.to + link.label">
             <RouterLink
               :to="link.to"
-              class="text-xs text-white/65 transition hover:text-desk-orange"
+              class="text-white/70 transition hover:text-desk-orange"
             >
               {{ link.label }}
             </RouterLink>
@@ -29,7 +30,7 @@
 
     <div class="border-t border-white/10">
       <div
-        class="desk-container flex items-center justify-between py-2.5 text-[11px] text-white/50"
+        class="desk-container flex items-center justify-between py-2.5 text-xs text-white/50"
       >
         <p>تمامی حقوق محفوظ است © {{ faYear }} جاب‌آزمون</p>
         <p>آمادگی آزمون‌های استخدامی</p>
@@ -39,6 +40,7 @@
 </template>
 
 <script setup>
+import SocialLinks from '../SocialLinks.vue'
 import TrustBadges from '../TrustBadges.vue'
 
 const faYear = new Intl.DateTimeFormat('fa-IR', { year: 'numeric' }).format(

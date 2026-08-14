@@ -76,6 +76,8 @@
               <th class="p-3 font-medium">آزمون</th>
               <th class="p-3 font-medium">درصد</th>
               <th class="p-3 font-medium">نمره</th>
+              <th class="p-3 font-medium">غلط</th>
+              <th class="p-3 font-medium">بدون پاسخ</th>
               <th class="p-3 font-medium">تاریخ</th>
               <th class="p-3 font-medium"></th>
             </tr>
@@ -103,6 +105,26 @@
               </td>
               <td class="p-3 dark:text-slate-200">
                 {{ toFaDigits(row.score ?? '—') }}
+              </td>
+              <td class="p-3">
+                <RouterLink
+                  v-if="row.total_wrong"
+                  :to="`/exams/${row.exam_id}/result/${row.id}?filter=wrong`"
+                  class="inline-flex rounded-lg bg-brand/10 px-2 py-1 text-xs font-bold text-brand"
+                >
+                  {{ toFaDigits(row.total_wrong) }} غلط
+                </RouterLink>
+                <span v-else class="text-ink-muted">۰</span>
+              </td>
+              <td class="p-3">
+                <RouterLink
+                  v-if="row.total_unanswered"
+                  :to="`/exams/${row.exam_id}/result/${row.id}?filter=blank`"
+                  class="inline-flex rounded-lg bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                >
+                  {{ toFaDigits(row.total_unanswered) }} بدون پاسخ
+                </RouterLink>
+                <span v-else class="text-ink-muted">۰</span>
               </td>
               <td class="p-3 text-ink-muted">
                 {{ formatDate(row.finished_at || row.created_at) }}

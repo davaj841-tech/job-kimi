@@ -97,6 +97,7 @@ final class OperatorPermissions
         $map = [
             'users' => 'users',
             'tickets' => 'tickets',
+            'contact-messages' => 'tickets',
             'exams' => 'exams',
             'questions' => 'questions',
             'blog-posts' => 'blog',

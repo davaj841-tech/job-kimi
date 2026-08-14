@@ -101,31 +101,19 @@
 
       <!-- Subjects: stats only -->
       <div v-if="exam.subjects?.length" class="mb-4">
-        <h2 class="mb-2 text-sm font-bold text-desk-dark">دروس این آزمون (آمار)</h2>
-        <p class="mb-3 text-[11px] text-desk-muted">
-          شروع درس به‌صورت جداگانه ممکن نیست؛ پس از شروع آزمون کامل، تب دروس در بالای صفحه در دسترس است.
-        </p>
-        <div class="space-y-2">
-          <div
+        <h2 class="mb-2 text-sm font-bold text-desk-dark">دروس این آزمون</h2>
+        <div class="flex flex-wrap gap-1.5">
+          <span
             v-for="s in exam.subjects"
             :key="s.slug"
-            class="card-soft flex items-center justify-between gap-3 p-3"
+            class="inline-flex items-center gap-1 rounded-full bg-surface-page px-2.5 py-1 text-[11px] font-bold text-desk-text"
           >
-            <div class="flex items-center gap-2">
-              <span class="text-lg">{{ s.icon || subjectEmoji(s.slug) }}</span>
-              <div>
-                <p class="text-sm font-bold">{{ s.name }}</p>
-                <p class="text-[11px] text-ink-muted">
-                  {{ s.question_count }} سوال
-                </p>
-              </div>
-            </div>
-            <span
-              class="rounded-lg bg-surface-page px-3 py-1.5 text-[11px] font-bold text-desk-muted"
+            <span>{{ s.icon || subjectEmoji(s.slug) }}</span>
+            {{ s.name }}
+            <span class="font-medium text-desk-muted"
+              >({{ s.question_count }})</span
             >
-              فقط آمار
-            </span>
-          </div>
+          </span>
         </div>
       </div>
 

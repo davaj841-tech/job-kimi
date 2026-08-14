@@ -229,15 +229,16 @@ class ExamService
         $attempt->loadMissing(['exam', 'user']);
 
         $questionIds = $this->cachedQuestionIds($attempt->id);
-        $answerKeys = array_keys($attempt->answers ?? []);
+        $answerKeys = array_map('intval', array_keys($attempt->answers ?? []));
+        $ids = $questionIds !== [] ? $questionIds : $answerKeys;
 
         $questions = Question::query()
             ->where('exam_id', $attempt->exam_id)
-            ->when($questionIds !== [], fn ($q) => $q->whereIn('id', $questionIds))
-            ->when($questionIds === [] && $answerKeys !== [], fn ($q) => $q->whereIn('id', $answerKeys))
+            ->when($ids !== [], fn ($q) => $q->whereIn('id', $ids))
             ->get();
 
-        if ($questions->isEmpty()) {
+        $expected = (int) ($attempt->exam?->total_questions ?: 0);
+        if ($questions->isEmpty() || (! $attempt->exam?->is_random && $expected > 0 && $questions->count() < $expected)) {
             $questions = Question::query()->where('exam_id', $attempt->exam_id)->get();
         }
 
@@ -309,10 +310,20 @@ class ExamService
         }
         unset($row);
 
-        $totalMarks = (float) ($attempt->exam->total_marks ?: max($questions->count(), 1));
-        $percentage = $totalMarks > 0
-            ? round(((float) $attempt->score / $totalMarks) * 100, 2)
-            : 0;
+        $correct = 0;
+        $wrong = 0;
+        $blank = 0;
+        foreach ($sheet as $row) {
+            if ($row['is_blank']) {
+                $blank++;
+            } elseif ($row['is_correct']) {
+                $correct++;
+            } else {
+                $wrong++;
+            }
+        }
+        $totalQuestions = max(count($sheet), 1);
+        $percentage = round(($correct / $totalQuestions) * 100, 2);
 
         return [
             'attempt' => $attempt,
@@ -320,8 +331,9 @@ class ExamService
             'analysis' => [
                 'score' => $attempt->score,
                 'percentage' => $percentage,
-                'total_correct' => $attempt->total_correct,
-                'total_wrong' => $attempt->total_wrong,
+                'total_correct' => $correct,
+                'total_wrong' => $wrong,
+                'total_unanswered' => $blank,
                 'total_questions' => count($sheet),
                 'rank' => $this->calculateRank($attempt),
                 'by_subject' => array_values($bySubject),

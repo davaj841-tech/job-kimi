@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\ContactMessage;
 use App\Services\MailConfigService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,8 +22,25 @@ class ContactController extends BaseController
             'message' => ['required', 'string', 'max:5000'],
         ]);
 
-        $this->mailConfigService->sendContactForm($data);
+        $tracking = ContactMessage::generateTrackingCode();
 
-        return $this->successResponse(null, 'پیام شما ارسال شد.');
+        $row = ContactMessage::query()->create([
+            'tracking_code' => $tracking,
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'subject' => $data['subject'],
+            'message' => $data['message'],
+            'status' => 'open',
+        ]);
+
+        $this->mailConfigService->sendContactForm([
+            ...$data,
+            'tracking_code' => $row->tracking_code,
+        ]);
+
+        return $this->successResponse(
+            ['tracking_code' => $row->tracking_code],
+            'پیام شما ارسال شد. شماره پیگیری: '.$row->tracking_code
+        );
     }
 }

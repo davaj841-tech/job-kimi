@@ -4,6 +4,11 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+$phpTimeLimit = (int) ini_get('max_execution_time');
+if ($phpTimeLimit > 0 && $phpTimeLimit < 60) {
+    @set_time_limit(120);
+}
+
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
     require $maintenance;

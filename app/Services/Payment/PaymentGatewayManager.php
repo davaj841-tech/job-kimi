@@ -13,6 +13,8 @@ class PaymentGatewayManager
         'zarinpal' => ZarinPalGateway::class,
         'nextpay' => NextPayGateway::class,
         'idpay' => IdPayGateway::class,
+        'mellat' => MellatGateway::class,
+        'shaparak' => ShaparakGateway::class,
     ];
 
     public function driver(?string $name = null): PaymentGatewayInterface

@@ -21,12 +21,13 @@ function ensureWired(): void {
       localStorage.setItem(STORAGE_KEY, val ? 'dark' : 'light')
       document.documentElement.classList.toggle('dark', val)
       // Re-apply brand theme without stomping dark surface tokens
-      const { layout, primary, secondary, font } = useSiteTheme()
+      const { layout, primary, secondary, font, fontSize } = useSiteTheme()
       applySiteTheme({
         homepage_layout: layout.value,
         primary_color: primary.value,
         secondary_color: secondary.value,
         site_font: font.value,
+        site_font_size: fontSize.value,
       })
     },
     { immediate: true }

@@ -40,10 +40,10 @@
         </button>
       </div>
 
-      <p class="mb-3 text-sm text-slate-500">
-        فرمت‌های مجاز: <b>xlsx</b> و <b>csv</b>. ستون‌ها: question_text,
-        option_a..d, correct_answer, explanation, difficulty (اختیاری → متوسط),
-        subject
+      <p class="mb-3 text-sm leading-6 text-slate-500">
+        ۱) آزمون را انتخاب کنید ۲) نمونه را دانلود و پر کنید ۳) فایل را آپلود کنید.
+        ستون‌های فارسی مجاز: نام‌آزمون، درس، متن‌سوال، گزینه‌ها، پاسخ‌صحیح، توضیحات، سطح، سال، منبع.
+        پاسخ: الف/ب/ج/د — سطح خالی = متوسط.
       </p>
 
       <input

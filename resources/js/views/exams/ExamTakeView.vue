@@ -67,10 +67,11 @@
           <button
             type="button"
             class="exam-tool"
-            :disabled="!session.unansweredInFilter.length"
-            @click="session.goToUnanswered()"
+            :class="session.remainingOnly ? 'exam-tool-on' : ''"
+            :disabled="!session.unansweredInFilter.length && !session.remainingOnly"
+            @click="session.toggleRemaining()"
           >
-            مانده
+            مانده‌ها
             <span
               v-if="session.unansweredInFilter.length"
               class="rounded bg-amber-100 px-1.5 text-[10px] text-amber-800"
@@ -79,7 +80,6 @@
           <button type="button" class="exam-tool" @click="session.showAnswerSheet = true">
             پاسخبرگ
           </button>
-          <button type="button" class="exam-tool" @click="session.skip()">رد شدن</button>
           <div class="mr-auto flex overflow-hidden rounded-lg border border-slate-200 bg-white">
             <button type="button" class="exam-font-btn" aria-label="کوچک‌تر" @click="session.bumpFont(-1)">−</button>
             <span class="border-x border-slate-200 px-2 py-1 text-[10px] text-slate-400">قلم</span>
@@ -90,7 +90,7 @@
     </header>
 
     <main
-      class="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 gap-4 px-3 py-4 sm:px-5 lg:grid-cols-[minmax(0,1fr)_220px]"
+      class="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 gap-4 px-3 py-4 pb-28 sm:px-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:pb-4"
       @touchstart.passive="onTouchStart"
       @touchend.passive="onTouchEnd"
     >
@@ -108,8 +108,9 @@
 
         <article
           v-for="(item, localIdx) in session.pageQuestions"
+          :id="`exam-q-${item.id}`"
           :key="item.id"
-          class="exam-paper"
+          class="exam-paper scroll-mt-4"
         >
           <div class="mb-4 flex items-start justify-between gap-3">
             <div>
@@ -166,29 +167,31 @@
           </div>
         </article>
 
-        <div class="flex items-center justify-between gap-2">
+        <div
+          class="exam-action-bar sticky bottom-3 z-30 flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-lg backdrop-blur lg:static lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none"
+        >
           <button
             type="button"
             class="exam-nav-btn"
             :disabled="session.isFirstInFilter"
-            @click="session.prev()"
+            @click="session.prev(); scrollCurrent()"
           >
             <ArrowRightIcon class="h-5 w-5" />
             قبلی
           </button>
           <button
-            v-if="!session.isLastInFilter"
             type="button"
-            class="exam-nav-btn exam-nav-btn-primary"
-            @click="session.next()"
+            class="exam-nav-btn"
+            :class="session.isLastInFilter ? '' : 'exam-nav-btn-primary'"
+            :disabled="session.isLastInFilter"
+            @click="session.next(); scrollCurrent()"
           >
             بعدی
             <ArrowLeftIcon class="h-5 w-5" />
           </button>
           <button
-            v-else
             type="button"
-            class="exam-nav-btn exam-nav-btn-primary"
+            class="exam-nav-btn exam-nav-btn-submit"
             @click="session.showSubmitConfirm = true"
           >
             ثبت آزمون
@@ -197,7 +200,7 @@
       </section>
 
       <aside class="hidden lg:block">
-        <div class="exam-nav-panel sticky top-40">
+        <div class="exam-nav-panel">
           <div class="mb-3 flex items-center justify-between">
             <h3 class="text-sm font-bold text-[#0f2744]">پیمایش</h3>
             <button
@@ -214,8 +217,8 @@
               :key="item.id"
               type="button"
               class="relative h-9 rounded-md text-sm font-medium transition"
-              :class="navigatorClass(item, idx)"
-              @click="session.navigateToQuestionId(item.id)"
+              :class="navigatorClass(item)"
+              @click="jumpTo(item.id)"
             >
               {{ toFaDigits(idx + 1) }}
               <span
@@ -242,16 +245,6 @@
       </template>
     </div>
 
-    <div
-      v-if="session.tabSwitchCount > 0"
-      class="fixed bottom-20 right-4 z-40 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 shadow-sm lg:bottom-4"
-    >
-      <div class="flex items-center gap-2">
-        <ExclamationTriangleIcon class="h-5 w-5" />
-        {{ toFaDigits(session.tabSwitchCount) }} بار تب را ترک کردید
-      </div>
-    </div>
-
     <p v-if="submitError" class="fixed inset-x-0 bottom-20 z-40 px-4 text-center text-xs text-[#ef394e]">
       {{ submitError }}
     </p>
@@ -269,7 +262,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   ArrowLeftIcon,
@@ -279,10 +272,9 @@ import {
   CheckIcon,
   ClockIcon,
   CloudArrowUpIcon,
-  ExclamationTriangleIcon,
   XMarkIcon,
 } from '@heroicons/vue/24/outline'
-import { useDocumentVisibility, useMagicKeys } from '@vueuse/core'
+import { useMagicKeys } from '@vueuse/core'
 import screenfull from 'screenfull'
 import api from '../../api/client'
 import AnswerSheetModal from '../../components/exam/AnswerSheetModal.vue'
@@ -362,13 +354,33 @@ function optionsFor(question: any) {
   return shuffled
 }
 
-function navigatorClass(item: any, idx: number) {
-  const answered = Boolean(examStore.answers[item?.id])
-  const onPage =
-    idx >= session.pageStart && idx < session.pageStart + session.questionsPerPage
-  if (onPage) return 'ring-2 ring-[#ef394e] bg-[#fff1f2] text-[#ef394e]'
+function navigatorClass(item: any) {
+  const answered = isAnswered(item?.id)
+  const current = Number(session.currentQuestion?.id) === Number(item?.id)
+  if (current) return 'ring-2 ring-[#ef394e] bg-[#fff1f2] text-[#ef394e]'
   if (answered) return 'bg-[#ef394e] text-white'
   return 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+}
+
+function isAnswered(id: number | string) {
+  const a = examStore.answers[id] ?? examStore.answers[String(id)]
+  return a !== null && a !== undefined && a !== ''
+}
+
+function scrollCurrent() {
+  const id = session.currentQuestion?.id ?? session.pageQuestions[0]?.id
+  if (id == null) return
+  void nextTick(() => {
+    document.getElementById(`exam-q-${id}`)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  })
+}
+
+function jumpTo(id: number) {
+  session.navigateToQuestionId(id)
+  scrollCurrent()
 }
 
 function selectAnswer(questionId: number, key: string) {
@@ -440,16 +452,14 @@ function onTouchEnd(e: TouchEvent) {
   const x = e.changedTouches[0]?.clientX || 0
   const dx = x - touchX
   if (Math.abs(dx) < 60) return
-  if (dx > 0) session.next()
-  else session.prev()
-}
-
-const visibility = useDocumentVisibility()
-watch(visibility, (current, previous) => {
-  if (previous === 'visible' && current === 'hidden') {
-    session.recordTabSwitch()
+  if (dx > 0) {
+    session.next()
+    scrollCurrent()
+  } else {
+    session.prev()
+    scrollCurrent()
   }
-})
+}
 
 const keys = useMagicKeys()
 watch(
@@ -548,6 +558,13 @@ watch(
   () => examStore.answers,
   () => examStore.saveCache(),
   { deep: true }
+)
+
+watch(
+  () => session.unansweredInFilter.length,
+  (n) => {
+    if (n === 0 && session.remainingOnly) session.remainingOnly = false
+  }
 )
 
 async function submit() {
@@ -667,6 +684,11 @@ async function submit() {
 .exam-tool:hover:not(:disabled) {
   background: #f8fafc;
 }
+.exam-tool-on {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
+}
 
 .exam-font-btn {
   padding: 0.3rem 0.65rem;
@@ -754,6 +776,19 @@ async function submit() {
 }
 .exam-nav-btn-primary:hover {
   background: #d92f43;
+}
+.exam-nav-btn-submit {
+  margin-right: auto;
+  border-color: #0f2744;
+  background: #0f2744;
+  color: #fff;
+}
+.exam-nav-btn-submit:hover {
+  background: #1a3a5c;
+}
+.exam-action-bar .exam-nav-btn {
+  min-height: 2.75rem;
+  padding: 0.65rem 0.85rem;
 }
 
 .exam-nav-panel {

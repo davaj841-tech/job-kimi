@@ -104,6 +104,11 @@
               type="email"
               class="input-field text-left"
               dir="ltr"
+              lang="en"
+              inputmode="email"
+              autocomplete="email"
+              autocapitalize="off"
+              spellcheck="false"
               placeholder="you@example.com"
             />
           </div>
@@ -143,8 +148,10 @@
               v-model="passwordForm.password"
               type="password"
               class="input-field"
+              lang="en"
               autocomplete="new-password"
             />
+            <PasswordRulesHint :password="passwordForm.password" />
           </div>
           <div>
             <label class="mb-1 block text-xs text-ink-muted">تکرار رمز جدید</label>
@@ -214,6 +221,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../api/client'
+import PasswordRulesHint from '../../components/auth/PasswordRulesHint.vue'
 import EmptyState from '../../components/EmptyState.vue'
 import Badge from '../../components/ui/Badge.vue'
 import Card from '../../components/ui/Card.vue'

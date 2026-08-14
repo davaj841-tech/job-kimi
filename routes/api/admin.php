@@ -12,7 +12,7 @@ use App\Http\Controllers\Api\Admin\AuditLogAdminController;
 use App\Http\Controllers\Api\Admin\BackupAdminController;
 use App\Http\Controllers\Api\Admin\BannerAdminController;
 use App\Http\Controllers\Api\Admin\BlogPostAdminController;
-use App\Http\Controllers\Api\Admin\CouponAdminController;
+use App\Http\Controllers\Api\Admin\ContactMessageAdminController;
 use App\Http\Controllers\Api\Admin\CrawlerRunAdminController;
 use App\Http\Controllers\Api\Admin\ExamSubjectAdminController;
 use App\Http\Controllers\Api\Admin\JobClassificationAdminController;
@@ -169,6 +169,10 @@ Route::middleware(['auth:sanctum', 'subscription.check', 'role:admin,operator', 
     Route::get('/tickets', [TicketAdminController::class, 'index']);
     Route::put('/tickets/{id}/status', [TicketAdminController::class, 'updateStatus'])->whereNumber('id');
 
+    Route::get('/contact-messages', [ContactMessageAdminController::class, 'index']);
+    Route::get('/contact-messages/{id}', [ContactMessageAdminController::class, 'show'])->whereNumber('id');
+    Route::post('/contact-messages/{id}/reply', [ContactMessageAdminController::class, 'reply'])->whereNumber('id');
+
     Route::get('/banners', [BannerAdminController::class, 'index']);
     Route::post('/banners', [BannerAdminController::class, 'store']);
     Route::put('/banners/{id}', [BannerAdminController::class, 'update'])->whereNumber('id');
@@ -185,6 +189,7 @@ Route::middleware(['auth:sanctum', 'subscription.check', 'role:admin,operator', 
 
     Route::get('/backups', [BackupAdminController::class, 'index']);
     Route::post('/backups', [BackupAdminController::class, 'store']);
+    Route::post('/backups/restore', [BackupAdminController::class, 'restore']);
     Route::get('/backups/download', [BackupAdminController::class, 'download']);
     Route::delete('/backups', [BackupAdminController::class, 'destroy']);
 

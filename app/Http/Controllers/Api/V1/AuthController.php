@@ -167,7 +167,7 @@ class AuthController extends BaseController
             'password' => ['required', 'string', 'confirmed', Password::min(8)],
             'mobile' => ['nullable', 'regex:/^09\d{9}$/', 'unique:users,mobile'],
             'email' => ['nullable', 'email', 'max:191', 'unique:users,email'],
-            'province' => ['required', 'string', 'max:100'],
+            'province' => ['nullable', 'string', 'max:100'],
         ], [
             'username.regex' => 'نام کاربری فقط حروف انگلیسی، عدد و _ (۳ تا ۲۰ کاراکتر).',
             'username.unique' => 'این نام کاربری قبلاً ثبت شده است.',
@@ -175,7 +175,6 @@ class AuthController extends BaseController
             'mobile.unique' => 'این شماره موبایل قبلاً ثبت شده است.',
             'email.unique' => 'این ایمیل قبلاً ثبت شده است.',
             'password.confirmed' => 'تکرار رمز عبور مطابقت ندارد.',
-            'province.required' => 'انتخاب استان الزامی است.',
         ]);
 
         if (empty($data['mobile']) && empty($data['email'])) {
@@ -188,7 +187,7 @@ class AuthController extends BaseController
             'password' => $data['password'],
             'mobile' => $data['mobile'] ?? null,
             'email' => $data['email'] ?? null,
-            'province' => $data['province'],
+            'province' => $data['province'] ?? null,
             'role' => 'jobseeker',
             'status' => 'active',
             'is_verified' => true,

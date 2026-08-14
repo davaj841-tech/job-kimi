@@ -5,12 +5,24 @@
         <div>
           <h1 class="text-2xl font-bold">بکاپ‌ها</h1>
           <p class="mt-1 text-sm text-slate-500">
-            بکاپ خودکار هر روز ساعت ۳ صبح
+            بکاپ خودکار هر روز ساعت ۳ صبح — فایل دانلودشده را می‌توانید دوباره وارد کنید
           </p>
         </div>
-        <button class="btn-dark" :disabled="creating" @click="create">
-          بکاپ دستی
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+          <button class="btn-dark" :disabled="creating" @click="create">
+            بکاپ دستی
+          </button>
+          <label class="btn-orange cursor-pointer" :class="restoring ? 'opacity-50' : ''">
+            {{ restoring ? 'در حال بازگردانی...' : 'بازگردانی بکاپ' }}
+            <input
+              type="file"
+              accept=".zip,application/zip"
+              class="hidden"
+              :disabled="restoring"
+              @change="restore"
+            />
+          </label>
+        </div>
       </div>
 
       <DataTable :columns="columns" :rows="rows" :loading="loading" actions>
@@ -39,6 +51,7 @@ const toast = useToast()
 const rows = ref([])
 const loading = ref(false)
 const creating = ref(false)
+const restoring = ref(false)
 const message = ref('')
 const columns = [
   { key: 'index', label: '#' },
@@ -74,6 +87,35 @@ async function create() {
   }
 }
 
+async function restore(e) {
+  const file = e.target.files?.[0]
+  e.target.value = ''
+  if (!file) return
+  if (
+    !confirm(
+      'بازگردانی بکاپ، داده‌های فعلی سایت را جایگزین می‌کند. قبل از ادامه یک بکاپ تازه گرفته می‌شود. ادامه می‌دهید؟'
+    )
+  ) {
+    return
+  }
+  restoring.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    const { data } = await adminApi.post('/admin/backups/restore', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 180000,
+    })
+    message.value = data.message || 'بازگردانی انجام شد.'
+    toast.success(message.value)
+    await load()
+  } catch (err) {
+    toast.error(apiErrorMessage(err))
+  } finally {
+    restoring.value = false
+  }
+}
+
 async function download(row) {
   try {
     const { data } = await adminApi.get('/admin/backups/download', {
@@ -101,6 +143,9 @@ async function remove(row) {
 <style scoped>
 .btn-dark {
   @apply rounded-xl bg-[#0f2744] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50;
+}
+.btn-orange {
+  @apply rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-bold text-white;
 }
 .act {
   @apply rounded-lg px-2 py-1 text-xs font-bold text-slate-600 hover:bg-slate-100;

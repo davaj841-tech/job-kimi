@@ -14,8 +14,8 @@
       >
         <p class="mb-2 font-bold text-orange-700">نمونه فایل XLSX</p>
         <p class="mb-3 text-xs text-slate-600">
-          ستون‌ها: title, seo_tag, classification, description, provinces, city,
-          registration_deadline, exam_date, registration_link, is_featured
+          ستون‌ها: عنوان، برچسب سئو، طبقه‌بندی، شرح، استان‌ها، شهر،
+          مهلت ثبت‌نام، تاریخ آزمون، لینک ثبت‌نام، ویژه
         </p>
         <button
           type="button"

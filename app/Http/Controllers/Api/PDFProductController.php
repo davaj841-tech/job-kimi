@@ -82,7 +82,7 @@ class PDFProductController extends BaseController
         $data = $request->validate([
             'payment_method' => ['required', 'in:wallet,zarinpal,nextpay,idpay'],
             'coupon_code' => ['nullable', 'string', 'max:50'],
-            'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay'],
+            'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay,mellat,shaparak'],
         ]);
 
         $pdf = $this->pdfProductRepository->findActive($id);

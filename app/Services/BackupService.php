@@ -2,6 +2,10 @@
 
 namespace App\Services;
 
+use App\Support\ThemeBootstrap;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
@@ -189,6 +193,151 @@ class BackupService
     {
         $full = $this->resolvePath($path);
         @unlink($full);
+    }
+
+    public function storeUploaded(UploadedFile $file): string
+    {
+        $stamp = now()->format('Y-m-d_His');
+        $name = 'backup-'.$stamp.'.zip';
+        $dest = $this->backupDir().DIRECTORY_SEPARATOR.$name;
+        $file->move($this->backupDir(), $name);
+
+        return $dest;
+    }
+
+    public function restoreFromUpload(UploadedFile $file): void
+    {
+        $path = $this->storeUploaded($file);
+        $this->restore($path);
+    }
+
+    public function restore(string $zipPath): void
+    {
+        if (! is_file($zipPath) || ! Str::endsWith(strtolower($zipPath), '.zip')) {
+            throw new \InvalidArgumentException('فایل بکاپ نامعتبر است.');
+        }
+
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath) !== true) {
+            throw new \RuntimeException('امکان خواندن فایل بکاپ وجود ندارد.');
+        }
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = (string) $zip->getNameIndex($i);
+            if ($name === '' || str_contains($name, '..') || str_starts_with($name, '/') || str_contains($name, ':')) {
+                $zip->close();
+                throw new \InvalidArgumentException('ساختار فایل بکاپ نامعتبر است.');
+            }
+        }
+
+        $work = storage_path('app/restore-tmp-'.now()->format('YmdHis'));
+        File::ensureDirectoryExists($work);
+        $zip->extractTo($work);
+        $zip->close();
+
+        try {
+            $this->createBackup();
+            $this->restoreDatabase($work);
+            $this->restoreDir($work.'/pdfs', storage_path('app/pdfs'));
+            $this->restoreDir($work.'/resumes', storage_path('app/resumes'));
+            $this->restoreDir($work.'/public', storage_path('app/public'));
+            ThemeBootstrap::forget();
+            try {
+                Artisan::call('cache:clear');
+            } catch (\Throwable) {
+                // ignore cache driver issues
+            }
+        } finally {
+            File::deleteDirectory($work);
+        }
+    }
+
+    protected function restoreDatabase(string $work): void
+    {
+        $sqliteFiles = File::glob($work.DIRECTORY_SEPARATOR.'*.sqlite') ?: [];
+        if (config('database.default') === 'sqlite' && $sqliteFiles !== []) {
+            $target = config('database.connections.sqlite.database');
+            if (! is_string($target) || $target === '' || $target === ':memory:') {
+                throw new \RuntimeException('مسیر پایگاه SQLite برای بازگردانی مشخص نیست.');
+            }
+            DB::purge();
+            File::ensureDirectoryExists(dirname($target));
+            if (! @copy($sqliteFiles[0], $target)) {
+                throw new \RuntimeException('کپی پایگاه SQLite انجام نشد. احتمالاً فایل در حال استفاده است.');
+            }
+            DB::reconnect();
+
+            return;
+        }
+
+        $sqlFile = $work.DIRECTORY_SEPARATOR.'database.sql';
+        if (! is_file($sqlFile) || config('database.default') !== 'mysql') {
+            return;
+        }
+
+        $sql = (string) file_get_contents($sqlFile);
+        if ($sql === '' || str_contains($sql, 'mysqldump unavailable') || str_contains($sql, 'SQLite binary copied')) {
+            return;
+        }
+
+        $mysql = $this->findMysqlClient();
+        if (! $mysql) {
+            throw new \RuntimeException('برنامه mysql برای بازگردانی یافت نشد.');
+        }
+
+        $host = config('database.connections.mysql.host');
+        $port = config('database.connections.mysql.port', 3306);
+        $db = config('database.connections.mysql.database');
+        $user = config('database.connections.mysql.username');
+        $pass = (string) config('database.connections.mysql.password');
+
+        $args = [
+            $mysql,
+            '--host='.$host,
+            '--port='.(string) $port,
+            '--user='.$user,
+            $db,
+        ];
+
+        $result = Process::timeout(300)
+            ->env($pass !== '' ? ['MYSQL_PWD' => $pass] : [])
+            ->input($sql)
+            ->run($args);
+
+        if (! $result->successful()) {
+            throw new \RuntimeException('بازگردانی پایگاه داده ناموفق بود.');
+        }
+    }
+
+    protected function restoreDir(string $from, string $to): void
+    {
+        if (! is_dir($from)) {
+            return;
+        }
+        File::ensureDirectoryExists($to);
+        File::copyDirectory($from, $to);
+    }
+
+    protected function findMysqlClient(): ?string
+    {
+        $candidates = [
+            'C:\\laragon\\bin\\mysql\\mysql-8.4.3-winx64\\bin\\mysql.exe',
+            'C:\\laragon\\bin\\mysql\\mysql-8.0.30-winx64\\bin\\mysql.exe',
+            'mysql',
+        ];
+        foreach (glob('C:\\laragon\\bin\\mysql\\*\\bin\\mysql.exe') ?: [] as $path) {
+            array_unshift($candidates, $path);
+        }
+        foreach ($candidates as $bin) {
+            if ($bin === 'mysql') {
+                return $bin;
+            }
+            if (is_file($bin)) {
+                return $bin;
+            }
+        }
+
+        return null;
     }
 
     public function cleanupOldBackups(int $keep = 7): void

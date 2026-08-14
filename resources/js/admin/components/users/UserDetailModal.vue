@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div v-if="open" class="fixed inset-0 z-50 flex justify-end bg-black/40">
     <aside class="flex h-full w-full max-w-md flex-col bg-white shadow-2xl">
       <div

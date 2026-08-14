@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
             PilotJobSourceSeeder::class,
             FeatureSeeder::class,
             ContentTemplateSeeder::class,
+            CmsLegalPagesSeeder::class,
+            HomeBannerSeeder::class,
         ]);
     }
 }

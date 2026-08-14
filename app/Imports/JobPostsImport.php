@@ -28,16 +28,16 @@ class JobPostsImport implements ToCollection, WithHeadingRow
         foreach ($rows as $index => $row) {
             $rowNumber = $index + 2;
 
-            $title = trim((string) ($row['title'] ?? ''));
-            $seoTag = trim((string) ($row['seo_tag'] ?? ''));
-            $classificationName = trim((string) ($row['classification'] ?? $row['company_name'] ?? ''));
-            $description = trim((string) ($row['description'] ?? ''));
-            $provincesRaw = trim((string) ($row['provinces'] ?? $row['province'] ?? ''));
-            $city = trim((string) ($row['city'] ?? ''));
-            $deadlineRaw = $row['registration_deadline'] ?? null;
-            $examRaw = $row['exam_date'] ?? null;
-            $link = trim((string) ($row['registration_link'] ?? ''));
-            $featured = $row['is_featured'] ?? false;
+            $title = trim((string) ($row['title'] ?? $row['عنوان'] ?? ''));
+            $seoTag = trim((string) ($row['seo_tag'] ?? $row['برچسب_سئو'] ?? $row['برچسب سئو'] ?? ''));
+            $classificationName = trim((string) ($row['classification'] ?? $row['طبقه‌بندی'] ?? $row['طبقه_بندی'] ?? $row['company_name'] ?? ''));
+            $description = trim((string) ($row['description'] ?? $row['شرح'] ?? ''));
+            $provincesRaw = trim((string) ($row['provinces'] ?? $row['province'] ?? $row['استان‌ها'] ?? $row['استان'] ?? ''));
+            $city = trim((string) ($row['city'] ?? $row['شهر'] ?? ''));
+            $deadlineRaw = $row['registration_deadline'] ?? $row['مهلت_ثبت_نام'] ?? $row['مهلت ثبت‌نام'] ?? null;
+            $examRaw = $row['exam_date'] ?? $row['تاریخ_آزمون'] ?? $row['تاریخ آزمون'] ?? null;
+            $link = trim((string) ($row['registration_link'] ?? $row['لینک_ثبت_نام'] ?? $row['لینک ثبت‌نام'] ?? ''));
+            $featured = $row['is_featured'] ?? $row['ویژه'] ?? false;
 
             if ($title === '' || $classificationName === '' || $description === '') {
                 $this->skipped++;

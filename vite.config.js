@@ -27,6 +27,8 @@ export default defineConfig({
         }),
         VitePWA({
             registerType: 'autoUpdate',
+            injectRegister: false,
+            scope: '/',
             includeAssets: [
                 'offline.html',
                 'offline.svg',
@@ -37,15 +39,19 @@ export default defineConfig({
                 'icons/maskable-icon-512.png',
             ],
             manifest: {
+                id: '/',
                 name: 'جاب‌آزمون',
-                short_name: 'JobAzmoon',
+                short_name: 'جاب‌آزمون',
                 description: 'آمادگی آزمون‌های استخدامی ایران',
                 lang: 'fa',
                 dir: 'rtl',
                 theme_color: '#ef394e',
-                background_color: '#f5f5f5',
+                background_color: '#0f2744',
                 display: 'standalone',
+                display_override: ['standalone', 'minimal-ui'],
                 start_url: '/',
+                scope: '/',
+                prefer_related_applications: false,
                 icons: [
                     {
                         src: '/icons/icon-192.png',

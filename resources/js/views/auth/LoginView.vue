@@ -3,32 +3,33 @@
     class="flex min-h-dvh items-center justify-center bg-surface-page px-4 py-6"
     dir="rtl"
   >
-    <div class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-xl">
-      <!-- Soft gradient header -->
-      <div
-        class="relative bg-desk-dark px-6 py-5 text-center text-white"
-      >
+    <div class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-xl dark:bg-slate-900">
+      <div class="relative bg-desk-dark px-6 py-5 text-center text-white">
         <div
           class="pointer-events-none absolute -left-6 -top-6 h-24 w-24 rounded-full bg-white/10"
         />
         <div
           class="pointer-events-none absolute -bottom-8 -right-4 h-20 w-20 rounded-full bg-white/10"
         />
-        <h1 class="relative text-2xl font-black">جاب‌آزمون</h1>
-        <p class="relative mt-1 text-xs text-white/80">
+        <div class="relative flex justify-center">
+          <SiteBrandLogo
+            variant="desktop"
+            text-class="text-2xl text-white"
+          />
+        </div>
+        <p class="relative mt-2 text-xs text-white/80">
           ورود یا عضویت در حساب کاربری
         </p>
       </div>
 
       <div class="px-5 pt-4">
-        <!-- Tabs -->
-        <div class="mb-4 flex rounded-2xl bg-surface-page p-1">
+        <div class="mb-4 flex rounded-2xl bg-surface-page p-1 dark:bg-slate-800">
           <button
             type="button"
             class="flex-1 rounded-xl py-2 text-xs font-bold transition"
             :class="
               tab === 'login'
-                ? 'bg-white text-brand shadow-sm'
+                ? 'bg-white text-brand shadow-sm dark:bg-slate-700'
                 : 'text-ink-muted'
             "
             @click="tab = 'login'"
@@ -40,7 +41,7 @@
             class="flex-1 rounded-xl py-2 text-xs font-bold transition"
             :class="
               tab === 'register'
-                ? 'bg-white text-brand shadow-sm'
+                ? 'bg-white text-brand shadow-sm dark:bg-slate-700'
                 : 'text-ink-muted'
             "
             @click="tab = 'register'"
@@ -51,7 +52,9 @@
             type="button"
             class="flex-1 rounded-xl py-2 text-xs font-bold transition"
             :class="
-              tab === 'otp' ? 'bg-white text-brand shadow-sm' : 'text-ink-muted'
+              tab === 'otp'
+                ? 'bg-white text-brand shadow-sm dark:bg-slate-700'
+                : 'text-ink-muted'
             "
             @click="tab = 'otp'"
           >
@@ -59,7 +62,6 @@
           </button>
         </div>
 
-        <!-- Password login -->
         <form
           v-if="tab === 'login'"
           class="space-y-3"
@@ -71,11 +73,18 @@
             >
             <input
               v-model="loginForm.login"
+              type="text"
               class="input-field text-left"
               dir="ltr"
+              lang="en"
+              inputmode="email"
               autocomplete="username"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
               required
-              placeholder="username یا email"
+              placeholder="username یا you@email.com"
+              @input="onLoginIdInput"
             />
           </div>
           <div>
@@ -86,26 +95,21 @@
               v-model="loginForm.password"
               type="password"
               class="input-field"
+              lang="en"
               autocomplete="current-password"
               required
               placeholder="رمز عبور"
             />
           </div>
-          <div
-            v-if="turnstileEnabled && turnstileSiteKey"
-            class="flex justify-center"
-          >
-            <div ref="turnstileEl" class="cf-turnstile"></div>
-          </div>
+          <AuthCaptchaField
+            :mode="captchaMode"
+            :site-key="turnstileSiteKey"
+            @update="onCaptcha"
+          />
           <button
             type="submit"
             class="btn-primary"
-            :disabled="
-              auth.loading ||
-              !loginForm.login ||
-              !loginForm.password ||
-              (turnstileEnabled && !turnstileToken)
-            "
+            :disabled="auth.loading || !loginForm.login || !loginForm.password || !captchaReady"
           >
             {{ auth.loading ? '...' : 'ورود' }}
           </button>
@@ -117,7 +121,6 @@
           </RouterLink>
         </form>
 
-        <!-- Register -->
         <form
           v-else-if="tab === 'register'"
           class="space-y-3"
@@ -136,16 +139,27 @@
           </div>
           <div>
             <label class="mb-1 block text-xs font-bold text-ink-soft"
-              >👤 نام کاربری</label
+              >👤 نام کاربری (انگلیسی)</label
             >
             <input
               v-model="registerForm.username"
+              type="text"
               class="input-field text-left"
               dir="ltr"
+              lang="en"
+              inputmode="text"
+              pattern="[a-z0-9_]{3,20}"
               required
               autocomplete="username"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
               placeholder="username"
+              @input="onUsernameInput"
             />
+            <p class="mt-1 text-[10px] text-ink-muted">
+              فقط حروف کوچک انگلیسی، عدد و ـ (۳ تا ۲۰ کاراکتر)
+            </p>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
@@ -156,10 +170,12 @@
                 v-model="registerForm.password"
                 type="password"
                 class="input-field"
+                lang="en"
                 required
                 autocomplete="new-password"
                 placeholder="حداقل ۸ کاراکتر"
               />
+              <PasswordRulesHint :password="registerForm.password" />
             </div>
             <div>
               <label class="mb-1 block text-xs font-bold text-ink-soft"
@@ -169,26 +185,12 @@
                 v-model="registerForm.password_confirmation"
                 type="password"
                 class="input-field"
+                lang="en"
                 required
                 autocomplete="new-password"
                 placeholder="تکرار رمز عبور"
               />
             </div>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs font-bold text-ink-soft"
-              >📍 استان *</label
-            >
-            <select
-              v-model="registerForm.province"
-              class="input-field"
-              required
-            >
-              <option value="" disabled>انتخاب استان</option>
-              <option v-for="p in IRAN_PROVINCES" :key="p" :value="p">
-                {{ p }}
-              </option>
-            </select>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
@@ -199,6 +201,7 @@
                 v-model="registerForm.mobile"
                 class="input-field text-left tracking-widest"
                 dir="ltr"
+                lang="en"
                 inputmode="numeric"
                 maxlength="11"
                 placeholder="09123456789"
@@ -213,6 +216,12 @@
                 type="email"
                 class="input-field text-left"
                 dir="ltr"
+                lang="en"
+                inputmode="email"
+                autocomplete="email"
+                autocapitalize="off"
+                autocorrect="off"
+                spellcheck="false"
                 placeholder="you@example.com"
               />
             </div>
@@ -220,26 +229,20 @@
           <p class="text-[11px] text-ink-muted">
             حداقل یکی از موبایل یا ایمیل الزامی است.
           </p>
-          <div
-            v-if="turnstileEnabled && turnstileSiteKey"
-            class="flex justify-center"
-          >
-            <div ref="turnstileElReg" class="cf-turnstile"></div>
-          </div>
+          <AuthCaptchaField
+            :mode="captchaMode"
+            :site-key="turnstileSiteKey"
+            @update="onCaptcha"
+          />
           <button
             type="submit"
             class="btn-primary"
-            :disabled="
-              auth.loading ||
-              !registerForm.province ||
-              (turnstileEnabled && !turnstileToken)
-            "
+            :disabled="auth.loading || !captchaReady"
           >
             {{ auth.loading ? '...' : 'ثبت‌نام' }}
           </button>
         </form>
 
-        <!-- OTP -->
         <div v-else class="space-y-3">
           <div v-if="otpStep === 1" class="space-y-3">
             <div>
@@ -250,23 +253,21 @@
                 v-model="mobile"
                 class="input-field text-left tracking-widest"
                 dir="ltr"
+                lang="en"
                 inputmode="numeric"
                 maxlength="11"
                 placeholder="09123456789"
               />
             </div>
-            <div
-              v-if="turnstileEnabled && turnstileSiteKey"
-              class="flex justify-center"
-            >
-              <div ref="turnstileElOtp1" class="cf-turnstile"></div>
-            </div>
+            <AuthCaptchaField
+              :mode="captchaMode"
+              :site-key="turnstileSiteKey"
+              @update="onCaptcha"
+            />
             <button
               class="btn-primary"
               :disabled="
-                auth.loading ||
-                mobile.length !== 11 ||
-                (turnstileEnabled && !turnstileToken)
+                auth.loading || mobile.length !== 11 || !captchaReady
               "
               @click="onSendOtp"
             >
@@ -281,34 +282,19 @@
               v-model="code"
               class="input-field text-center text-lg tracking-[0.4em]"
               dir="ltr"
+              lang="en"
               inputmode="numeric"
               maxlength="6"
               placeholder="------"
             />
-            <div>
-              <label class="mb-1 block text-xs font-bold text-ink-soft"
-                >📍 استان (برای کاربران جدید)</label
-              >
-              <select v-model="otpProvince" class="input-field">
-                <option value="">انتخاب استان</option>
-                <option v-for="p in IRAN_PROVINCES" :key="p" :value="p">
-                  {{ p }}
-                </option>
-              </select>
-            </div>
-            <div
-              v-if="turnstileEnabled && turnstileSiteKey"
-              class="flex justify-center"
-            >
-              <div ref="turnstileElOtp2" class="cf-turnstile"></div>
-            </div>
+            <AuthCaptchaField
+              :mode="captchaMode"
+              :site-key="turnstileSiteKey"
+              @update="onCaptcha"
+            />
             <button
               class="btn-primary"
-              :disabled="
-                auth.loading ||
-                code.length < 4 ||
-                (turnstileEnabled && !turnstileToken)
-              "
+              :disabled="auth.loading || code.length < 4 || !captchaReady"
               @click="onVerifyOtp"
             >
               ورود
@@ -338,12 +324,14 @@
 </template>
 
 <script setup>
-import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../api/client'
+import AuthCaptchaField from '../../components/auth/AuthCaptchaField.vue'
+import PasswordRulesHint from '../../components/auth/PasswordRulesHint.vue'
+import SiteBrandLogo from '../../components/SiteBrandLogo.vue'
 import TrustBadges from '../../components/TrustBadges.vue'
 import { useAuthStore } from '../../stores/auth'
-import { IRAN_PROVINCES } from '../../utils/provinces'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -353,7 +341,6 @@ const tab = ref('login')
 const otpStep = ref(1)
 const mobile = ref('')
 const code = ref('')
-const otpProvince = ref('')
 const error = ref('')
 
 const loginForm = reactive({ login: '', password: '' })
@@ -364,27 +351,49 @@ const registerForm = reactive({
   password_confirmation: '',
   mobile: '',
   email: '',
-  province: '',
 })
 
-const turnstileEnabled = ref(false)
+const captchaMode = ref('math')
 const turnstileSiteKey = ref('')
-const turnstileToken = ref('')
-const turnstileEl = ref(null)
-const turnstileElReg = ref(null)
-const turnstileElOtp1 = ref(null)
-const turnstileElOtp2 = ref(null)
-let scriptLoaded = false
+const captcha = reactive({
+  turnstile_token: '',
+  captcha_id: '',
+  captcha_answer: '',
+})
 
-function onTurnstileSuccess(token) {
-  turnstileToken.value = token
-}
-function onTurnstileExpired() {
-  turnstileToken.value = ''
+const captchaReady = computed(() => {
+  if (captchaMode.value === 'turnstile') return !!captcha.turnstile_token
+  return !!(captcha.captcha_id && captcha.captcha_answer)
+})
+
+function onCaptcha(payload) {
+  captcha.turnstile_token = payload.turnstile_token || ''
+  captcha.captcha_id = payload.captcha_id || ''
+  captcha.captcha_answer = payload.captcha_answer || ''
 }
 
-window.onTurnstileSuccess = onTurnstileSuccess
-window.onTurnstileExpired = onTurnstileExpired
+function captchaPayload() {
+  if (captchaMode.value === 'turnstile') {
+    return { turnstile_token: captcha.turnstile_token }
+  }
+  return {
+    captcha_id: captcha.captcha_id,
+    captcha_answer: captcha.captcha_answer,
+  }
+}
+
+function onLoginIdInput(e) {
+  const v = String(e.target.value || '')
+  // keep latin/email chars
+  loginForm.login = v.replace(/[^\w.@+-]/g, '')
+}
+
+function onUsernameInput(e) {
+  registerForm.username = String(e.target.value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '')
+    .slice(0, 20)
+}
 
 function redirectAfterAuth() {
   router.replace(route.query.redirect || '/dashboard')
@@ -394,69 +403,21 @@ async function loadSettings() {
   try {
     const { data } = await api.get('/settings/public')
     const s = data.data || {}
-    turnstileEnabled.value = !!(s.turnstile_enabled || s.captcha_enabled)
+    captchaMode.value = s.captcha_mode === 'turnstile' ? 'turnstile' : 'math'
     turnstileSiteKey.value = s.turnstile_site_key || ''
   } catch {
-    // ignore
+    captchaMode.value = 'math'
   }
 }
 
-function loadTurnstileScript() {
-  if (scriptLoaded || document.getElementById('cf-turnstile-script')) {
-    scriptLoaded = true
-    renderWidgets()
-    return
-  }
-  const s = document.createElement('script')
-  s.id = 'cf-turnstile-script'
-  s.src =
-    'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
-  s.async = true
-  s.onload = () => {
-    scriptLoaded = true
-    renderWidgets()
-  }
-  document.head.appendChild(s)
-}
-
-function renderWidgets() {
-  nextTick(() => {
-    if (!window.turnstile || !turnstileSiteKey.value) return
-    const targets = [
-      turnstileEl.value,
-      turnstileElReg.value,
-      turnstileElOtp1.value,
-      turnstileElOtp2.value,
-    ].filter(Boolean)
-    targets.forEach((el) => {
-      if (el.dataset.rendered) return
-      window.turnstile.render(el, {
-        sitekey: turnstileSiteKey.value,
-        callback: onTurnstileSuccess,
-        'expired-callback': onTurnstileExpired,
-      })
-      el.dataset.rendered = '1'
-    })
-  })
-}
-
-onMounted(async () => {
-  await loadSettings()
-  if (turnstileEnabled.value && turnstileSiteKey.value) {
-    loadTurnstileScript()
-  }
+onMounted(() => {
+  void loadSettings()
 })
 
 watch([tab, otpStep], () => {
-  turnstileToken.value = ''
-  if (turnstileEnabled.value) {
-    nextTick(() => renderWidgets())
-  }
-})
-
-onUnmounted(() => {
-  delete window.onTurnstileSuccess
-  delete window.onTurnstileExpired
+  captcha.turnstile_token = ''
+  captcha.captcha_id = ''
+  captcha.captcha_answer = ''
 })
 
 async function onLogin() {
@@ -465,7 +426,7 @@ async function onLogin() {
     await auth.loginPassword(
       loginForm.login.trim(),
       loginForm.password,
-      turnstileToken.value || undefined
+      captchaPayload()
     )
     redirectAfterAuth()
   } catch (e) {
@@ -479,8 +440,8 @@ async function onRegister() {
     error.value = 'حداقل یکی از موبایل یا ایمیل الزامی است.'
     return
   }
-  if (!registerForm.province) {
-    error.value = 'انتخاب استان الزامی است.'
+  if (!/^[a-z0-9_]{3,20}$/.test(registerForm.username)) {
+    error.value = 'نام کاربری باید ۳ تا ۲۰ کاراکتر انگلیسی باشد.'
     return
   }
   try {
@@ -489,11 +450,10 @@ async function onRegister() {
       username: registerForm.username.trim(),
       password: registerForm.password,
       password_confirmation: registerForm.password_confirmation,
-      province: registerForm.province,
     }
     if (registerForm.mobile.trim()) payload.mobile = registerForm.mobile.trim()
     if (registerForm.email.trim()) payload.email = registerForm.email.trim()
-    await auth.register(payload, turnstileToken.value || undefined)
+    await auth.register(payload, captchaPayload())
     redirectAfterAuth()
   } catch (e) {
     const errors = e.response?.data?.errors
@@ -508,7 +468,7 @@ async function onRegister() {
 async function onSendOtp() {
   error.value = ''
   try {
-    await auth.sendOtp(mobile.value, turnstileToken.value || undefined)
+    await auth.sendOtp(mobile.value, captchaPayload())
     otpStep.value = 2
   } catch (e) {
     error.value = e.response?.data?.message || 'ارسال کد ناموفق بود.'
@@ -518,18 +478,10 @@ async function onSendOtp() {
 async function onVerifyOtp() {
   error.value = ''
   try {
-    await auth.verifyOtp(
-      mobile.value,
-      code.value,
-      turnstileToken.value || undefined,
-      otpProvince.value || undefined
-    )
+    await auth.verifyOtp(mobile.value, code.value, captchaPayload())
     redirectAfterAuth()
   } catch (e) {
     error.value = e.response?.data?.message || 'کد نامعتبر است.'
-    if (e.response?.data?.code === 'PROVINCE_REQUIRED' && !otpProvince.value) {
-      error.value = 'لطفاً استان خود را انتخاب کنید.'
-    }
   }
 }
 </script>

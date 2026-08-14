@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Api\BaseController;
 use App\Models\CmsPage;
+use App\Support\LegalPages;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -12,6 +13,8 @@ class PageAdminController extends BaseController
 {
     public function index(): JsonResponse
     {
+        LegalPages::ensure();
+
         return $this->successResponse(CmsPage::query()->latest()->get());
     }
 

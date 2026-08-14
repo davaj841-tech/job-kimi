@@ -25,7 +25,7 @@
           <input
             v-model="store.filters.category"
             class="field"
-            placeholder="دسته‌بندی"
+            placeholder="طبقه‌بندی"
           />
         </div>
         <div class="mt-3 flex gap-2">
@@ -136,7 +136,7 @@ const columns = [
   { key: 'index', label: '#' },
   { key: 'title', label: 'عنوان' },
   { key: 'author_name', label: 'نویسنده' },
-  { key: 'category', label: 'دسته' },
+  { key: 'category', label: 'طبقه‌بندی' },
   { key: 'status', label: 'وضعیت' },
   { key: 'created_at', label: 'تاریخ' },
 ]

@@ -75,7 +75,7 @@ class WalletController extends BaseController
 
         $data = $request->validate([
             'amount' => ['required', 'integer', 'min:'.$minCharge],
-            'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay'],
+            'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay,mellat,shaparak'],
         ]);
 
         $amount = (int) $data['amount'];

@@ -114,18 +114,8 @@ class OtpAuthService
         }
 
         $wasUnverified = ! $user->is_verified;
-        $needsProvince = blank($user->province);
-        if ($needsProvince && blank($province)) {
-            return [
-                'success' => false,
-                'message' => 'برای ورود اولیه انتخاب استان الزامی است.',
-                'code' => 'PROVINCE_REQUIRED',
-                'token' => null,
-                'user' => null,
-            ];
-        }
 
-        DB::transaction(function () use ($user, $province, $needsProvince) {
+        DB::transaction(function () use ($user, $province) {
             $payload = [
                 'is_verified' => true,
                 'otp_code' => null,
@@ -133,7 +123,7 @@ class OtpAuthService
                 'failed_login_attempts' => 0,
                 'locked_until' => null,
             ];
-            if ($needsProvince || (filled($province) && blank($user->province))) {
+            if (filled($province) && blank($user->province)) {
                 $payload['province'] = $province;
             }
             $user->update($payload);

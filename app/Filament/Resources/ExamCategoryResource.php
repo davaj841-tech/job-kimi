@@ -16,18 +16,18 @@ class ExamCategoryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
 
-    protected static ?string $navigationLabel = 'دسته‌بندی آزمون';
+    protected static ?string $navigationLabel = 'طبقه‌بندی آزمون';
 
-    protected static ?string $modelLabel = 'دسته آزمون';
+    protected static ?string $modelLabel = 'طبقه‌بندی آزمون';
 
-    protected static ?string $pluralModelLabel = 'دسته‌های آزمون';
+    protected static ?string $pluralModelLabel = 'طبقه‌بندی‌های آزمون';
 
     protected static ?string $navigationGroup = 'آزمون‌ها';
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('name')->label('نام')->required()->helperText('نام دسته‌بندی آزمون'),
+            Forms\Components\TextInput::make('name')->label('نام')->required()->helperText('نام طبقه‌بندی آزمون'),
             Forms\Components\TextInput::make('slug')->label('اسلاگ')->helperText('شناسه URL — در صورت خالی بودن خودکار ساخته می‌شود'),
             Forms\Components\TextInput::make('icon')->label('آیکون')->helperText('نام آیکون یا مسیر تصویر'),
         ]);

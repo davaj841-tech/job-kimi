@@ -20,13 +20,13 @@
           :to="post._kind === 'article' ? `/articles/${post.slug}` : `/blog/${post.slug}`"
           class="home-rail-card"
         >
-          <div class="mb-1 flex items-center justify-between gap-2">
-            <p class="text-[10px] font-bold text-desk-orange">
-              {{ post._kind === 'article' ? 'مقاله' : 'وبلاگ' }}
-            </p>
-            <span class="text-lg" aria-hidden="true">{{
+          <div class="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xl" aria-hidden="true">{{
               post._kind === 'article' ? '📰' : '✍️'
             }}</span>
+            <span class="text-[10px] font-bold text-desk-orange">
+              {{ post._kind === 'article' ? 'مقاله' : 'وبلاگ' }}
+            </span>
           </div>
           <p class="mt-1.5 line-clamp-2 flex-1 text-sm font-bold text-desk-text">{{ post.title }}</p>
           <p

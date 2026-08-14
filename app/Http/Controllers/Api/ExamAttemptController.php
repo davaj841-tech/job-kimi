@@ -93,7 +93,8 @@ class ExamAttemptController extends BaseController
             ->when(empty($ids), fn ($q) => $q->where('exam_id', $id))
             ->get();
 
-        if ($questions->isEmpty() && ! $attempt->exam?->is_random) {
+        $expected = (int) ($attempt->exam?->total_questions ?: 0);
+        if ($questions->isEmpty() || (! $attempt->exam?->is_random && $expected > 0 && $questions->count() < $expected)) {
             $questions = Question::query()->where('exam_id', $id)->get();
         }
 
@@ -107,13 +108,11 @@ class ExamAttemptController extends BaseController
                 'question_text' => $question->question_text,
                 'user_answer' => $userAnswer,
                 'correct_answer' => $question->correct_answer,
-                'is_correct' => $userAnswer !== null && strtolower((string) $userAnswer) === strtolower($question->correct_answer),
+                'is_correct' => $userAnswer !== null && $userAnswer !== '' && strtolower((string) $userAnswer) === strtolower($question->correct_answer),
                 'explanation' => $question->explanation,
             ];
         })->values()->all();
 
-        $totalMarks = (float) ($attempt->exam->total_marks ?: 1);
-        $attempt->percentage = round(((float) $attempt->score / $totalMarks) * 100, 2);
         $attempt->rank = $this->examService->calculateRank($attempt);
         $attempt->result_questions = $resultQuestions;
 
@@ -142,20 +141,31 @@ class ExamAttemptController extends BaseController
             return $this->errorResponse('یک تلاش ناتمام برای این آزمون وجود دارد.', 422);
         }
 
+        $mode = $request->input('mode', 'missed');
         $answers = $previous->answers ?? [];
         $wrongIds = Question::query()
             ->where('exam_id', $exam->id)
             ->get()
-            ->filter(function (Question $question) use ($answers) {
+            ->filter(function (Question $question) use ($answers, $mode) {
                 $userAnswer = $answers[(string) $question->id] ?? $answers[$question->id] ?? null;
+                $blank = $userAnswer === null || $userAnswer === '';
+                $wrong = ! $blank && strtolower((string) $userAnswer) !== strtolower($question->correct_answer);
 
-                return $userAnswer === null || strtolower((string) $userAnswer) !== strtolower($question->correct_answer);
+                return match ($mode) {
+                    'blank' => $blank,
+                    'wrong' => $wrong,
+                    default => $blank || $wrong,
+                };
             })
             ->pluck('id')
             ->all();
 
         if ($wrongIds === []) {
-            return $this->errorResponse('سوال غلطی برای مرور وجود ندارد.', 422);
+            $msg = $mode === 'blank'
+                ? 'سوال بدون پاسخی برای پاسخ‌دادن وجود ندارد.'
+                : 'سوال غلطی برای مرور وجود ندارد.';
+
+            return $this->errorResponse($msg, 422);
         }
 
         return $this->beginAttempt($request, $id, $wrongIds, true);
@@ -270,6 +280,13 @@ class ExamAttemptController extends BaseController
 
             $scoreData = $this->examService->calculateScore($attempt, $answers, $questions);
 
+            foreach ($questions as $question) {
+                $qid = (string) $question->id;
+                if (! array_key_exists($qid, $answers) && ! array_key_exists($question->id, $answers)) {
+                    $answers[$qid] = null;
+                }
+            }
+
             $attempt->update([
                 'status' => 'completed',
                 'finished_at' => now(),
@@ -302,6 +319,7 @@ class ExamAttemptController extends BaseController
                 'score' => $scoreData['score'],
                 'total_correct' => $scoreData['total_correct'],
                 'total_wrong' => $scoreData['total_wrong'],
+                'total_unanswered' => $scoreData['total_unanswered'],
                 'percentage' => $scoreData['percentage'],
             ];
         });

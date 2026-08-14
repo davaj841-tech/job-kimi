@@ -32,7 +32,7 @@ class BlogPostResource extends Resource
             Forms\Components\RichEditor::make('content')->label('محتوا')->columnSpanFull()->helperText('متن کامل مطلب'),
             Forms\Components\Textarea::make('excerpt')->label('خلاصه')->helperText('خلاصه کوتاه برای لیست'),
             Forms\Components\TextInput::make('featured_image')->label('تصویر شاخص')->helperText('مسیر تصویر'),
-            Forms\Components\TextInput::make('category')->label('دسته‌بندی')->helperText('دسته مطلب'),
+            Forms\Components\TextInput::make('category')->label('طبقه‌بندی')->helperText('طبقه‌بندی مطلب'),
             Forms\Components\TextInput::make('meta_title')->label('عنوان سئو')->maxLength(255),
             Forms\Components\Textarea::make('meta_description')->label('توضیح سئو')->maxLength(500),
             Forms\Components\Select::make('status')->label('وضعیت')->options([

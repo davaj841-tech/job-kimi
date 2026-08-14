@@ -54,35 +54,19 @@
         </div>
 
         <div v-if="subjects.length" class="px-6 pb-4">
-          <h3 class="mb-3 font-bold text-ink dark:text-white">
-            درس‌ها (فقط آمار)
-          </h3>
-          <p class="mb-3 text-xs text-ink-muted">
-            پس از شروع، تب دروس در بالای صفحه آزمون در دسترس است.
-          </p>
-          <div class="space-y-2">
-            <div
+          <h3 class="mb-2 text-sm font-bold text-ink dark:text-white">دروس</h3>
+          <div class="flex flex-wrap gap-1.5">
+            <span
               v-for="subject in subjects"
               :key="subject.slug || subject.name"
-              class="flex items-center gap-3"
+              class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200"
             >
-              <span class="text-base">{{ subject.icon || '📘' }}</span>
-              <span class="flex-1 truncate text-sm dark:text-slate-200">{{
-                subject.name || subject.label
-              }}</span>
-              <span class="text-xs text-ink-muted"
-                >{{ toFaDigits(subject.question_count || subject.count || 0) }}
-                سوال</span
+              <span>{{ subject.icon || '📘' }}</span>
+              {{ subject.name || subject.label }}
+              <span class="font-medium text-ink-muted"
+                >({{ toFaDigits(subject.question_count || subject.count || 0) }})</span
               >
-              <div
-                class="h-2 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700"
-              >
-                <div
-                  class="h-full rounded-full bg-brand"
-                  :style="{ width: `${subjectPercent(subject)}%` }"
-                />
-              </div>
-            </div>
+            </span>
           </div>
         </div>
 
@@ -131,7 +115,7 @@
             <span>{{ isStarting ? 'در حال آماده‌سازی...' : 'شروع آزمون کامل' }}</span>
           </button>
           <p class="mt-3 text-center text-xs text-ink-muted">
-            با زدن دکمه شروع، تایمر آغاز می‌شود. در طول آزمون می‌توانید درس‌ها را از تب‌ها فیلتر کنید، سوالات مانده را ببینید یا رد شوید.
+            با زدن دکمه شروع، تایمر آغاز می‌شود. در طول آزمون می‌توانید درس‌ها را فیلتر کنید و سوالات مانده را ببینید.
           </p>
           <RouterLink
             :to="`/exams/${exam.slug}`"
@@ -177,7 +161,7 @@ const error = ref('')
 const rules = [
   'پس از شروع آزمون، تایمر به صورت خودکار شروع می‌شود و قابل توقف نیست.',
   'در بالای صفحه تب دروس دارید؛ می‌توانید همه دروس یا یک درس را انتخاب کنید.',
-  'سوالات مانده، علامت‌گذاری، رد شدن و بررسی مجدد در دسترس است.',
+  'سوالات مانده و علامت‌گذاری در دسترس است.',
   'پاسخ‌ها به صورت خودکار ذخیره می‌شوند (حتی آفلاین).',
   'پس از اتمام زمان، آزمون به صورت خودکار ارسال می‌شود.',
 ]
@@ -227,12 +211,6 @@ const infoItems = computed(() => [
     icon: StarIcon,
   },
 ])
-
-function subjectPercent(subject: any) {
-  const total = Number(questionCount.value) || 1
-  const count = Number(subject.question_count || subject.count || 0)
-  return Math.min(100, Math.round((count / total) * 100))
-}
 
 onMounted(async () => {
   try {

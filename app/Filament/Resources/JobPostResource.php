@@ -32,7 +32,7 @@ class JobPostResource extends Resource
             Forms\Components\Textarea::make('description')->label('توضیحات')->columnSpanFull()->helperText('شرح کامل آگهی'),
             Forms\Components\TextInput::make('province')->label('استان')->helperText('استان محل خدمت'),
             Forms\Components\TextInput::make('city')->label('شهر')->helperText('شهر محل خدمت'),
-            Forms\Components\TextInput::make('job_category')->label('دسته شغلی')->helperText('دسته‌بندی شغل'),
+            Forms\Components\TextInput::make('job_category')->label('طبقه‌بندی')->helperText('طبقه‌بندی شغل'),
             Forms\Components\DateTimePicker::make('registration_deadline')->label('مهلت ثبت‌نام')->helperText('آخرین مهلت ثبت‌نام'),
             Forms\Components\DateTimePicker::make('exam_date')->label('تاریخ آزمون')->helperText('زمان برگزاری آزمون'),
             Forms\Components\TextInput::make('registration_link')->label('لینک ثبت‌نام')->url()->helperText('لینک ثبت‌نام رسمی'),

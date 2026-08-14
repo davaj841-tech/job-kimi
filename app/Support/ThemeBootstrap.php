@@ -56,6 +56,7 @@ final class ThemeBootstrap
             $primary = SiteThemes::sanitizeHex(Setting::get('primary_color', $preset['primary']), $preset['primary']);
             $secondary = SiteThemes::sanitizeHex(Setting::get('secondary_color', $preset['secondary']), $preset['secondary']);
             $font = SiteFonts::normalize(Setting::get('site_font', SiteFonts::DEFAULT));
+            $fontSize = SiteFonts::sanitizeSize(Setting::get('site_font_size', 16));
             $page = $preset['page'];
             $darkHero = (bool) (SiteThemes::all()[$layout]['dark_hero'] ?? false);
             $ink2 = self::mix($secondary, '#ffffff', 0.12);
@@ -66,6 +67,7 @@ final class ThemeBootstrap
             return [
                 'layout' => $layout,
                 'font' => $font,
+                'fontSize' => $fontSize,
                 'family' => self::cssFamily($font),
                 'primary' => $primary,
                 'secondary' => $secondary,
@@ -103,8 +105,9 @@ final class ThemeBootstrap
             '--theme-accent:'.$p['primary'].';',
             '--theme-page:'.$p['page'].';',
             '--font-site:'.$p['family'].';',
+            '--font-size-site:'.$p['fontSize'].'px;',
             '}',
-            'html{font-family:'.$p['family'].';}',
+            'html{font-family:'.$p['family'].';font-size:'.$p['fontSize'].'px;}',
             'body{background:'.$p['page'].';font-family:'.$p['family'].';}',
         ]);
     }

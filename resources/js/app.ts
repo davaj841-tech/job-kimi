@@ -10,12 +10,21 @@ import router from './router'
 import { useFeatureStore } from './stores/feature'
 import { useSiteTheme } from './composables/useSiteTheme'
 
-registerSW({
-  immediate: true,
-  onOfflineReady() {
-    console.log('App ready to work offline')
-  },
-})
+function registerPwa() {
+  if (!('serviceWorker' in navigator)) return
+  // SW lives under /build so precache paths resolve correctly; scope is whole site.
+  navigator.serviceWorker
+    .register('/build/sw.js', { scope: '/' })
+    .catch(() => {
+      registerSW({
+        immediate: true,
+        onOfflineReady() {
+          console.log('App ready to work offline')
+        },
+      })
+    })
+}
+registerPwa()
 
 const app = createApp(App)
 

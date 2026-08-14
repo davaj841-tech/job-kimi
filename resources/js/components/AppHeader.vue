@@ -1,23 +1,32 @@
 <template>
-  <header class="sticky top-0 z-30 border-b border-surface-line bg-surface">
+  <header
+    class="sticky top-0 z-30 border-b"
+    :class="navy ? 'border-white/10' : 'border-surface-line bg-surface'"
+    :style="navy ? { backgroundColor: 'color-mix(in srgb, var(--theme-ink) 96%, transparent)' } : undefined"
+  >
     <div
-      class="mx-auto flex h-13 max-w-app items-center gap-2.5 px-3 pt-[env(safe-area-inset-top)]"
-      style="height: 3.25rem"
+      class="mx-auto flex max-w-app items-center gap-2.5 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]"
     >
       <RouterLink
         to="/"
-        class="shrink-0"
+        class="shrink-0 overflow-hidden"
         aria-label="صفحه اصلی"
       >
         <SiteBrandLogo
-          img-class="h-8 w-auto max-w-[8.5rem]"
-          text-class="text-[15px] text-desk-text"
+          variant="mobile"
+          size="md"
+          :text-class="navy ? 'text-[15px] text-white' : 'text-[15px] text-desk-text'"
         />
       </RouterLink>
 
       <button
         type="button"
-        class="flex min-w-0 flex-1 items-center justify-start gap-2 rounded-xl border border-surface-line bg-surface-page px-3 py-2 text-right text-xs text-desk-muted transition active:opacity-80"
+        class="flex min-w-0 flex-1 items-center justify-start gap-2 rounded-xl border px-3 py-2 text-right text-xs transition active:opacity-80"
+        :class="
+          navy
+            ? 'border-white/15 bg-white/10 text-white/70'
+            : 'border-surface-line bg-surface-page text-desk-muted'
+        "
         @click="openSearch"
       >
         <svg
@@ -37,7 +46,7 @@
       </button>
 
       <div class="flex shrink-0 items-center gap-1.5">
-        <ThemeToggle />
+        <ThemeToggle :inverted="navy" />
         <NotificationBell v-if="auth.isAuthenticated" />
         <RouterLink
           v-if="auth.isAuthenticated"
@@ -105,14 +114,21 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import { useHomepageLayout } from '../composables/useHomepageLayout'
 import GlobalSearch from './GlobalSearch.vue'
 import NotificationBell from './NotificationBell.vue'
 import SiteBrandLogo from './SiteBrandLogo.vue'
 import ThemeToggle from './ThemeToggle.vue'
 
 const auth = useAuthStore()
+const { ensureLoaded, isDarkHero } = useHomepageLayout()
+const navy = computed(() => isDarkHero.value)
+
+onMounted(() => {
+  ensureLoaded()
+})
 const searchOpen = ref(false)
 const searchRef = ref(null)
 

@@ -9,14 +9,13 @@
 
     <DesktopHeader v-if="!hideChrome" />
 
-    <main class="min-h-[70dvh] flex-1" :class="hideChrome ? '' : 'lg:pb-0'">
-      <div class="pb-20 lg:pb-0">
-        <slot />
-      </div>
+    <main class="flex-1">
+      <slot />
     </main>
 
     <DesktopFooter v-if="!hideChrome" />
     <MobileFooter v-if="!hideChrome" />
+    <InstallPwaBanner v-if="!hideChrome" />
 
     <div class="lg:hidden">
       <BottomNav />
@@ -35,6 +34,7 @@ import AppToast from '../AppToast.vue'
 import BottomNav from '../BottomNav.vue'
 import DesktopFooter from './DesktopFooter.vue'
 import DesktopHeader from './DesktopHeader.vue'
+import InstallPwaBanner from '../InstallPwaBanner.vue'
 import MobileFooter from '../MobileFooter.vue'
 import OnboardingTour from '../OnboardingTour.vue'
 import UserLayout from '../../layouts/UserLayout.vue'

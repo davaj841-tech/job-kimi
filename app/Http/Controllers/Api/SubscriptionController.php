@@ -64,7 +64,7 @@ class SubscriptionController extends BaseController
             'plan_id' => ['required', 'integer', 'exists:subscription_plans,id'],
             'payment_method' => ['required', 'in:wallet,zarinpal,nextpay,idpay'],
             'coupon_code' => ['nullable', 'string', 'max:50'],
-            'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay'],
+            'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay,mellat,shaparak'],
         ]);
 
         $plan = SubscriptionPlan::query()->findOrFail($data['plan_id']);

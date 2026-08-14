@@ -27,7 +27,8 @@
           :to="`/pdfs/${file.id}`"
           class="home-rail-card"
         >
-          <div class="mb-2.5 flex items-start justify-between gap-2">
+          <div class="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xl" aria-hidden="true">📄</span>
             <span
               v-if="file.is_new"
               class="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600"
@@ -35,15 +36,9 @@
             >
             <span
               v-else
-              class="rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-bold text-red-600"
+              class="rounded-md bg-surface-page px-1.5 py-0.5 text-[10px] font-bold text-desk-muted"
               >PDF</span
             >
-            <span
-              class="flex h-10 w-10 items-center justify-center rounded-xl bg-desk-dark text-lg"
-              aria-hidden="true"
-            >
-              📄
-            </span>
           </div>
           <p class="line-clamp-2 flex-1 text-sm font-bold text-desk-text">{{ file.title }}</p>
           <p class="mt-1 text-[11px] font-bold text-desk-orange">

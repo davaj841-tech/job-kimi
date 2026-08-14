@@ -10,6 +10,7 @@ use App\Http\Middleware\ForceHttps;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\TrackPageView;
 use App\Http\Middleware\TrustProxies;
+use App\Http\Middleware\VerifyAuthCaptcha;
 use App\Http\Middleware\VerifyTurnstileToken;
 use App\Services\SiteErrorLogger;
 use Illuminate\Foundation\Application;
@@ -50,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'operator.perm' => EnsureOperatorPermission::class,
             'subscription.check' => CheckSubscription::class,
             'turnstile' => VerifyTurnstileToken::class,
+            'auth.captcha' => VerifyAuthCaptcha::class,
             'track.page' => TrackPageView::class,
             'cache.response' => CacheResponse::class,
             'feature' => FeatureEnabled::class,

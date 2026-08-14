@@ -68,6 +68,7 @@
         --theme-accent: #f97316;
         --theme-page: #f8fafc;
         --font-site: 'Estedad Variable', Estedad, Tahoma, sans-serif;
+        --font-size-site: 16px;
         color-scheme: light;
     }
 
@@ -87,6 +88,7 @@
     html {
         direction: rtl;
         -webkit-tap-highlight-color: transparent;
+        font-size: var(--font-size-site, 16px);
     }
 
     body {
@@ -156,7 +158,8 @@
     }
 
     .page-banner {
-        @apply relative overflow-hidden bg-desk-dark text-white;
+        @apply relative overflow-hidden text-white;
+        background: var(--theme-ink);
     }
 
     .desk-card {

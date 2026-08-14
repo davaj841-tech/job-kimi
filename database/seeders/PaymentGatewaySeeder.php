@@ -47,5 +47,29 @@ class PaymentGatewaySeeder extends Seeder
                 'sort_order' => 3,
             ]
         );
+
+        PaymentGateway::query()->updateOrCreate(
+            ['name' => 'mellat'],
+            [
+                'display_name' => 'بانک ملت',
+                'merchant_id' => Setting::get('mellat_terminal_id', '') ?: null,
+                'api_key' => Setting::get('mellat_username', '') ?: null,
+                'is_active' => filter_var(Setting::get('mellat_active', 'false'), FILTER_VALIDATE_BOOLEAN),
+                'is_default' => false,
+                'sort_order' => 4,
+            ]
+        );
+
+        PaymentGateway::query()->updateOrCreate(
+            ['name' => 'shaparak'],
+            [
+                'display_name' => 'شاپرک',
+                'merchant_id' => Setting::get('shaparak_merchant_id', '') ?: null,
+                'api_key' => Setting::get('shaparak_terminal_id', '') ?: null,
+                'is_active' => filter_var(Setting::get('shaparak_active', 'false'), FILTER_VALIDATE_BOOLEAN),
+                'is_default' => false,
+                'sort_order' => 5,
+            ]
+        );
     }
 }

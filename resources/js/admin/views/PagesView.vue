@@ -2,7 +2,12 @@
   <AdminLayout>
     <div class="space-y-5">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">صفحات CMS</h1>
+        <div>
+          <h1 class="text-2xl font-bold">صفحات CMS</h1>
+          <p class="mt-1 text-sm text-slate-500">
+            صفحات با اسلاگ terms، privacy، about و contact در فوتر و سایت نمایش داده می‌شوند.
+          </p>
+        </div>
         <button class="btn-dark" @click="openCreate">صفحه جدید</button>
       </div>
       <DataTable :columns="columns" :rows="rows" :loading="loading" actions>
@@ -17,51 +22,77 @@
       </DataTable>
     </div>
 
-    <div
-      v-if="modal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-    >
-      <form
-        class="max-h-[92vh] w-full max-w-2xl space-y-3 overflow-y-auto rounded-2xl bg-white p-5"
-        @submit.prevent="save"
+    <Teleport to="body">
+      <div
+        v-if="modal"
+        class="fixed inset-0 z-[80] flex flex-col bg-slate-100"
       >
-        <h3 class="font-bold">{{ form.id ? 'ویرایش صفحه' : 'صفحه جدید' }}</h3>
-        <input
-          v-model="form.title"
-          required
-          class="field"
-          placeholder="عنوان"
-        />
-        <input v-model="form.slug" class="field" dir="ltr" placeholder="slug" />
-        <textarea
-          v-model="form.content"
-          rows="10"
-          class="field min-h-[180px] py-2"
-          placeholder="محتوا (HTML)"
-        />
-        <input
-          v-model="form.meta_title"
-          class="field"
-          placeholder="meta title"
-        />
-        <textarea
-          v-model="form.meta_description"
-          rows="2"
-          class="field py-2"
-          placeholder="meta description"
-        />
-        <label class="flex items-center gap-2 text-sm"
-          ><input v-model="form.is_published" type="checkbox" /> منتشر
-          شده</label
+        <header
+          class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3"
         >
-        <div class="flex justify-end gap-2">
-          <button type="button" class="btn-muted" @click="modal = false">
-            انصراف
-          </button>
-          <button class="btn-orange">ذخیره</button>
+          <div class="min-w-0">
+            <p class="text-xs font-bold text-slate-400">ویرایشگر صفحه</p>
+            <h3 class="truncate text-lg font-black text-slate-800">
+              {{ form.title || (form.id ? 'ویرایش صفحه' : 'صفحه جدید') }}
+            </h3>
+          </div>
+          <div class="flex shrink-0 items-center gap-2">
+            <button type="button" class="btn-muted" @click="modal = false">
+              انصراف
+            </button>
+            <button type="button" class="btn-orange" :disabled="saving" @click="save">
+              {{ saving ? '...' : 'ذخیره صفحه' }}
+            </button>
+          </div>
+        </header>
+
+        <div class="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-4 overflow-hidden p-4 lg:flex-row">
+          <aside
+            class="w-full shrink-0 space-y-3 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 lg:w-72"
+          >
+            <label class="block text-xs font-bold text-slate-500">عنوان</label>
+            <input
+              v-model="form.title"
+              required
+              class="field"
+              placeholder="عنوان صفحه"
+            />
+            <label class="block text-xs font-bold text-slate-500">اسلاگ</label>
+            <input
+              v-model="form.slug"
+              class="field"
+              dir="ltr"
+              placeholder="about"
+            />
+            <label class="block text-xs font-bold text-slate-500">عنوان سئو</label>
+            <input
+              v-model="form.meta_title"
+              class="field"
+              placeholder="meta title"
+            />
+            <label class="block text-xs font-bold text-slate-500">توضیح سئو</label>
+            <textarea
+              v-model="form.meta_description"
+              rows="3"
+              class="field h-auto py-2"
+              placeholder="meta description"
+            />
+            <label class="flex items-center gap-2 text-sm font-bold text-slate-700">
+              <input v-model="form.is_published" type="checkbox" />
+              منتشر شده
+            </label>
+            <p class="text-[11px] leading-5 text-slate-400">
+              از نوار ابزار برای تیتر، فهرست، لینک، جدول و تصویر استفاده کنید. حالت HTML برای ویرایش دقیق است.
+            </p>
+          </aside>
+
+          <div class="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3">
+            <p class="mb-2 text-xs font-bold text-slate-500">محتوای صفحه</p>
+            <RichEditor v-model="form.content" size="page" />
+          </div>
         </div>
-      </form>
-    </div>
+      </div>
+    </Teleport>
   </AdminLayout>
 </template>
 
@@ -70,12 +101,14 @@ import { onMounted, reactive, ref } from 'vue'
 import adminApi from '../api/client'
 import AdminLayout from '../components/layout/AdminLayout.vue'
 import DataTable from '../components/ui/DataTable.vue'
+import RichEditor from '../components/ui/RichEditor.vue'
 import { unwrapList, apiErrorMessage } from '../../utils/format'
 import { useToast } from '../../composables/useToast'
 
 const toast = useToast()
 const rows = ref([])
 const loading = ref(false)
+const saving = ref(false)
 const modal = ref(false)
 const form = reactive({
   id: null,
@@ -120,6 +153,11 @@ function edit(row) {
   modal.value = true
 }
 async function save() {
+  if (!form.title?.trim()) {
+    toast.error('عنوان را وارد کنید')
+    return
+  }
+  saving.value = true
   try {
     const payload = { ...form }
     delete payload.id
@@ -130,6 +168,8 @@ async function save() {
     load()
   } catch (e) {
     toast.error(apiErrorMessage(e))
+  } finally {
+    saving.value = false
   }
 }
 async function remove(row) {
@@ -150,7 +190,7 @@ async function remove(row) {
   @apply rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-bold;
 }
 .btn-orange {
-  @apply rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-bold text-white;
+  @apply rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50;
 }
 .act {
   @apply rounded-lg px-2 py-1 text-xs font-bold text-slate-600 hover:bg-slate-100;

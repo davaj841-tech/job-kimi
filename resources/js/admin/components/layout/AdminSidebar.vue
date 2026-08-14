@@ -3,14 +3,14 @@
     class="flex h-dvh w-64 shrink-0 flex-col bg-desk-dark text-white transition-transform duration-300 lg:translate-x-0"
     :class="open ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'"
   >
-    <div class="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-5">
-      <div class="min-w-0">
+    <div class="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 px-4 py-4">
+      <div class="flex min-w-0 items-center gap-2.5">
         <SiteBrandLogo
-          :for-dark-bg="true"
-          img-class="h-8 w-auto max-w-[8rem]"
-          text-class="text-lg text-white"
+          variant="desktop"
+          size="sm"
+          text-class="text-sm text-white"
         />
-        <p class="mt-1 text-xs text-white/60">
+        <p class="truncate text-sm font-bold text-white/80">
           {{ auth.isAdmin ? 'پنل مدیر' : 'پنل اپراتور' }}
         </p>
       </div>
@@ -93,6 +93,7 @@ const groups = [
       { to: '/admin/users', label: 'کاربران', icon: '◎', permission: 'users' },
       { to: '/admin/access-levels', label: 'سطح دسترسی', icon: '🔐', permission: 'users' },
       { to: '/admin/tickets', label: 'تیکت‌ها', icon: '✉', permission: 'tickets' },
+      { to: '/admin/contact-messages', label: 'پیام‌های تماس', icon: '✉', permission: 'tickets' },
     ],
   },
   {

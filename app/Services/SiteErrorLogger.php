@@ -67,7 +67,9 @@ class SiteErrorLogger
         return str_contains($hay, 'telescope_entries')
             || str_contains($hay, 'vendor'.DIRECTORY_SEPARATOR.'psy'.DIRECTORY_SEPARATOR.'psysh')
             || str_contains($hay, 'ParseErrorException')
-            || str_contains($hay, 'The "--columns" option does not exist');
+            || str_contains($hay, 'The "--columns" option does not exist')
+            || (stripos($e->getMessage(), 'Maximum execution time') !== false
+                && str_contains($e->getFile(), 'ClassLoader.php'));
     }
 
     protected function translate(Throwable $e, string $message): string

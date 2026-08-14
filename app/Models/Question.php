@@ -22,6 +22,8 @@ class Question extends Model
         'explanation',
         'difficulty',
         'subject',
+        'source',
+        'exam_year',
         'times_served',
     ];
 

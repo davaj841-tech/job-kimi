@@ -26,13 +26,12 @@
       <div
         class="flex h-16 items-center gap-2 border-b border-surface-line px-5 dark:border-slate-700"
       >
-        <div
-          class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-desk-dark to-brand text-sm font-black text-white"
-        >
-          جآ
-        </div>
-        <div>
-          <p class="text-sm font-black text-ink dark:text-white">جاب‌آزمون</p>
+        <SiteBrandLogo
+          variant="desktop"
+          size="sm"
+        />
+        <div class="min-w-0">
+          <p class="truncate text-sm font-black text-ink dark:text-white">{{ siteName }}</p>
           <p class="text-[10px] text-ink-muted dark:text-slate-400">پنل کاربری</p>
         </div>
       </div>
@@ -151,8 +150,10 @@ import {
 } from '@heroicons/vue/24/outline'
 import AppToast from '../components/AppToast.vue'
 import BottomNav from '../components/BottomNav.vue'
+import SiteBrandLogo from '../components/SiteBrandLogo.vue'
 import NavItem from '../components/user/NavItem.vue'
 import { useDarkMode } from '../composables/useDarkMode'
+import { useSiteTheme } from '../composables/useSiteTheme'
 import { useAuthStore } from '../stores/auth'
 import { useNotificationsStore } from '../stores/notifications'
 
@@ -160,6 +161,7 @@ const route = useRoute()
 const auth = useAuthStore()
 const notifications = useNotificationsStore()
 const { isDark, toggle: toggleDark } = useDarkMode()
+const { siteName } = useSiteTheme()
 const sidebarOpen = ref(false)
 
 const user = computed(() => auth.user)

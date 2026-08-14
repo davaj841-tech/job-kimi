@@ -6,6 +6,7 @@
 2. PHP **۸.۲ یا ۸.۳**، MySQL/MariaDB، دسترسی SSH ترجیحاً.
 3. روی هاست بسازید: `npm ci && npm run build` (یا بیلد لوکال را آپلود کنید چون `public/build` در گیت نیست).
 4. بعد از آپلود: `php artisan storage:link` — بدون آن لوگو/پیوست‌ها 404 می‌شوند.
+5. برای آپلود APK در تنظیمات: `upload_max_filesize` و `post_max_size` حداقل `64M`؛ در Nginx هم `client_max_body_size 64M`.
 
 ---
 

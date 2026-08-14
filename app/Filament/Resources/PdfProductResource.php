@@ -66,7 +66,7 @@ class PdfProductResource extends Resource
                     ->height(48)
                     ->width(36),
                 Tables\Columns\TextColumn::make('title')->label('عنوان')->searchable()->weight('bold')->limit(40),
-                Tables\Columns\TextColumn::make('category')->label('دسته')->badge()->toggleable(),
+                Tables\Columns\TextColumn::make('category')->label('طبقه‌بندی')->badge()->toggleable(),
                 Tables\Columns\TextColumn::make('price')
                     ->label('قیمت')
                     ->numeric(decimalPlaces: 0)

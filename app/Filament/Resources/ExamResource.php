@@ -36,7 +36,7 @@ class ExamResource extends Resource
                         ->schema([
                             Forms\Components\TextInput::make('title')->label('عنوان')->required(),
                             Forms\Components\TextInput::make('slug')->label('اسلاگ'),
-                            Forms\Components\Select::make('category_id')->label('دسته')->relationship('category', 'name')->required()->searchable()->preload(),
+                            Forms\Components\Select::make('category_id')->label('طبقه‌بندی')->relationship('category', 'name')->required()->searchable()->preload(),
                             Forms\Components\Select::make('job_post_id')->label('آگهی مرتبط')->relationship('jobPost', 'title')->searchable()->preload(),
                             Forms\Components\Select::make('status')->label('وضعیت')->options([
                                 'draft' => 'پیش‌نویس',
@@ -91,7 +91,7 @@ class ExamResource extends Resource
                     ->limit(40)
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('category.name')
-                    ->label('دسته')
+                    ->label('طبقه‌بندی')
                     ->badge()
                     ->color('primary'),
                 Tables\Columns\TextColumn::make('questions_count')
@@ -129,7 +129,7 @@ class ExamResource extends Resource
                         'archived' => 'بایگانی',
                     ]),
                 Tables\Filters\SelectFilter::make('category_id')
-                    ->label('دسته‌بندی')
+                    ->label('طبقه‌بندی')
                     ->relationship('category', 'name')
                     ->searchable()
                     ->preload(),

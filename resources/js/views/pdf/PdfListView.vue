@@ -22,7 +22,7 @@
     </div>
 
     <div
-      class="sticky top-0 z-30 border-b border-surface-line bg-surface/95 lg:top-16"
+      class="sticky z-20 border-b border-surface-line bg-surface/95 top-[calc(3.65rem+env(safe-area-inset-top))] lg:top-[4.5rem]"
     >
       <div class="mx-auto max-w-7xl px-4 py-3">
         <div class="scrollbar-hide flex items-center gap-2 overflow-x-auto">

@@ -1,5 +1,8 @@
 @component('emails.layout', ['subject' => 'پیام جدید از فرم تماس'])
   <p>یک پیام جدید از فرم تماس دریافت شد:</p>
+  @if (!empty($trackingCode))
+    <p><strong>شماره پیگیری:</strong> <span dir="ltr">{{ $trackingCode }}</span></p>
+  @endif
   <p><strong>نام:</strong> {{ $name }}</p>
   <p><strong>ایمیل:</strong> {{ $email }}</p>
   <p><strong>موضوع:</strong> {{ $subjectLabel }}</p>

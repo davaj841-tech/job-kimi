@@ -63,7 +63,6 @@ const form = reactive({})
 const sections = [
   { key: 'general', label: 'عمومی' },
   { key: 'mail', label: 'ایمیل SMTP' },
-  { key: 'theme', label: 'رنگ و تم' },
   { key: 'homepage', label: 'طرح، تم و فونت سایت' },
   { key: 'seo', label: 'سئو' },
   { key: 'payment', label: 'پرداخت' },
@@ -71,17 +70,17 @@ const sections = [
   { key: 'ai', label: 'هوش مصنوعی' },
   { key: 'exam', label: 'آزمون' },
   { key: 'security', label: 'امنیت' },
-  { key: 'social', label: 'شبکه‌های اجتماعی' },
+  { key: 'social', label: 'شبکه‌های اجتماعی و اپ' },
 ]
 
 const fieldMap = {
   general: [
     { key: 'site_name', label: 'نام سایت', type: 'text' },
     { key: 'site_description', label: 'توضیحات سایت', type: 'textarea' },
-    { key: 'site_logo', label: 'لوگو', type: 'image', uploadType: 'logo' },
+    { key: 'site_logo', label: 'لوگوی سایت', type: 'image', uploadType: 'logo' },
     {
       key: 'site_favicon',
-      label: 'فاوآیکون',
+      label: 'فاوآیکون / آیکون سایت',
       type: 'image',
       uploadType: 'favicon',
     },
@@ -102,30 +101,6 @@ const fieldMap = {
     },
     { key: 'smtp_from_name', label: 'From Name', type: 'text' },
   ],
-  theme: [
-    {
-      key: 'primary_color',
-      label: 'رنگ اصلی (دکمه‌ها، تأکید، نوار فعال)',
-      type: 'color',
-    },
-    {
-      key: 'secondary_color',
-      label: 'رنگ ثانویه (هدر، سایدبار، تیترها)',
-      type: 'color',
-    },
-    {
-      key: 'logo_light',
-      label: 'لوگوی روشن',
-      type: 'image',
-      uploadType: 'logo_light',
-    },
-    {
-      key: 'logo_dark',
-      label: 'لوگوی تاریک',
-      type: 'image',
-      uploadType: 'logo_dark',
-    },
-  ],
   homepage: [
     {
       key: 'homepage_layout',
@@ -136,6 +111,21 @@ const fieldMap = {
       key: 'site_font',
       label: 'فونت فارسی سایت',
       type: 'site-font',
+    },
+    {
+      key: 'site_font_size',
+      label: 'اندازه فونت سایت',
+      type: 'site-font-size',
+    },
+    {
+      key: 'primary_color',
+      label: 'رنگ اصلی (دکمه‌ها، تأکید، نوار فعال)',
+      type: 'color',
+    },
+    {
+      key: 'secondary_color',
+      label: 'رنگ ثانویه (هدر، سایدبار، تیترها)',
+      type: 'color',
     },
   ],
   seo: [
@@ -164,6 +154,8 @@ const fieldMap = {
         { value: 'zarinpal', label: 'زرین‌پال' },
         { value: 'nextpay', label: 'نکست‌پی' },
         { value: 'idpay', label: 'آیدی‌پی' },
+        { value: 'mellat', label: 'بانک ملت' },
+        { value: 'shaparak', label: 'شاپرک' },
       ],
     },
     {
@@ -183,6 +175,50 @@ const fieldMap = {
     { key: 'idpay_api_key', label: 'API Key آیدی‌پی', type: 'text', ltr: true },
     { key: 'idpay_active', label: 'فعال بودن آیدی‌پی', type: 'toggle' },
     { key: 'idpay_sandbox', label: 'Sandbox آیدی‌پی', type: 'toggle' },
+    {
+      key: 'mellat_terminal_id',
+      label: 'شماره ترمینال بانک ملت',
+      type: 'text',
+      ltr: true,
+    },
+    {
+      key: 'mellat_username',
+      label: 'نام کاربری درگاه ملت',
+      type: 'text',
+      ltr: true,
+    },
+    {
+      key: 'mellat_password',
+      label: 'رمز درگاه ملت',
+      type: 'text',
+      ltr: true,
+    },
+    { key: 'mellat_active', label: 'فعال بودن درگاه بانک ملت', type: 'toggle' },
+    {
+      key: 'shaparak_merchant_id',
+      label: 'شناسه پذیرنده شاپرک',
+      type: 'text',
+      ltr: true,
+    },
+    {
+      key: 'shaparak_terminal_id',
+      label: 'شماره ترمینال شاپرک',
+      type: 'text',
+      ltr: true,
+    },
+    {
+      key: 'shaparak_username',
+      label: 'نام کاربری شاپرک',
+      type: 'text',
+      ltr: true,
+    },
+    {
+      key: 'shaparak_password',
+      label: 'رمز شاپرک',
+      type: 'text',
+      ltr: true,
+    },
+    { key: 'shaparak_active', label: 'فعال بودن درگاه شاپرک', type: 'toggle' },
     { key: 'min_wallet_charge', label: 'حداقل شارژ کیف پول', type: 'number' },
   ],
   sms: [
@@ -265,9 +301,32 @@ const fieldMap = {
   social: [
     { key: 'instagram_url', label: 'اینستاگرام', type: 'url', ltr: true },
     { key: 'telegram_url', label: 'تلگرام', type: 'url', ltr: true },
-    { key: 'linkedin_url', label: 'لینکدین', type: 'url', ltr: true },
+    { key: 'whatsapp_url', label: 'واتساپ', type: 'url', ltr: true },
+    { key: 'rubika_url', label: 'روبیکا', type: 'url', ltr: true },
+    { key: 'bale_url', label: 'بله', type: 'url', ltr: true },
     { key: 'enamad_url', label: 'لینک نماد اعتماد', type: 'url', ltr: true },
     { key: 'samandehi_url', label: 'لینک ساماندهی', type: 'url', ltr: true },
+    {
+      key: 'android_play_url',
+      label: 'لینک گوگل پلی (اپ اندروید)',
+      type: 'url',
+      ltr: true,
+    },
+    {
+      key: 'android_bazaar_url',
+      label: 'لینک کافه بازار (اپ اندروید)',
+      type: 'url',
+      ltr: true,
+    },
+    {
+      key: 'android_direct_url',
+      label: 'فایل APK اپ سایت',
+      type: 'file',
+      uploadType: 'apk',
+      accept: '.apk',
+      maxSizeMb: 50,
+      hint: 'فایل APK را اینجا آپلود کنید — حداکثر ۵۰ مگابایت',
+    },
   ],
 }
 
@@ -295,6 +354,7 @@ watch(
       primary_color: preset.primary,
       secondary_color: preset.secondary,
       site_font: form.site_font,
+      site_font_size: form.site_font_size,
     })
   }
 )
@@ -305,9 +365,24 @@ watch(
     if (active.value !== 'homepage' || !id) return
     applySiteTheme({
       homepage_layout: form.homepage_layout,
-      primary_color: store.groups.theme?.primary_color,
-      secondary_color: store.groups.theme?.secondary_color,
+      primary_color: form.primary_color,
+      secondary_color: form.secondary_color,
       site_font: id,
+      site_font_size: form.site_font_size,
+    })
+  }
+)
+
+watch(
+  () => form.site_font_size,
+  (size) => {
+    if (active.value !== 'homepage' || !size) return
+    applySiteTheme({
+      homepage_layout: form.homepage_layout,
+      primary_color: form.primary_color,
+      secondary_color: form.secondary_color,
+      site_font: form.site_font,
+      site_font_size: size,
     })
   }
 )
@@ -315,11 +390,13 @@ watch(
 watch(
   () => [form.primary_color, form.secondary_color],
   ([primaryColor, secondaryColor]) => {
-    if (active.value !== 'theme') return
+    if (active.value !== 'homepage') return
     applySiteTheme({
-      homepage_layout: store.groups.homepage?.homepage_layout,
+      homepage_layout: form.homepage_layout,
       primary_color: primaryColor,
       secondary_color: secondaryColor,
+      site_font: form.site_font,
+      site_font_size: form.site_font_size,
     })
   }
 )
@@ -362,15 +439,18 @@ function switchSection(key) {
 async function save() {
   try {
     await store.updateSettings(active.value, { ...form })
-    if (active.value === 'homepage' || active.value === 'theme') {
+    if (active.value === 'homepage' || active.value === 'general') {
       await store.fetchSettings()
       loadForm()
     }
     applySiteTheme({
       homepage_layout: store.groups.homepage?.homepage_layout,
-      primary_color: store.groups.theme?.primary_color,
-      secondary_color: store.groups.theme?.secondary_color,
+      primary_color: store.groups.homepage?.primary_color,
+      secondary_color: store.groups.homepage?.secondary_color,
       site_font: store.groups.homepage?.site_font,
+      site_font_size: store.groups.homepage?.site_font_size,
+      site_logo: store.groups.general?.site_logo,
+      site_favicon: store.groups.general?.site_favicon,
     })
     toast.success('تنظیمات ذخیره شد و روی کل سایت اعمال شد')
   } catch (e) {

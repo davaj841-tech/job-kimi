@@ -31,6 +31,11 @@
             v-model="identifier"
             class="input-field text-left"
             dir="ltr"
+            lang="en"
+            inputmode="email"
+            autocomplete="username"
+            autocapitalize="off"
+            spellcheck="false"
             required
             placeholder="09123456789 یا you@example.com"
           />

@@ -79,6 +79,33 @@
         "
       />
 
+      <div v-else-if="field.type === 'file'" class="space-y-2">
+        <FileUploader
+          label="انتخاب فایل"
+          :hint="field.hint || 'کشیدن و رها کردن یا کلیک'"
+          :accept="field.accept || '*/*'"
+          :max-size-mb="field.maxSizeMb || 20"
+          @update:model-value="
+            (f) =>
+              $emit('upload', {
+                key: field.key,
+                type: field.uploadType || 'apk',
+                file: f,
+              })
+          "
+        />
+        <a
+          v-if="modelValue[field.key]"
+          :href="modelValue[field.key]"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-block text-xs font-bold text-orange-600 hover:underline"
+          dir="ltr"
+        >
+          فایل فعلی آپلود شده
+        </a>
+      </div>
+
       <HomepageLayoutPicker
         v-else-if="field.type === 'homepage-layout'"
         :model-value="modelValue[field.key] || 'atlas'"
@@ -90,12 +117,33 @@
         :model-value="modelValue[field.key] || 'estedad'"
         @update:model-value="set(field.key, $event)"
       />
+
+      <div
+        v-else-if="field.type === 'site-font-size'"
+        class="flex flex-wrap gap-2"
+      >
+        <button
+          v-for="size in [13, 14, 15, 16, 17, 18, 20]"
+          :key="size"
+          type="button"
+          class="rounded-xl border-2 px-3 py-2 text-sm font-bold"
+          :class="
+            Number(modelValue[field.key] || 16) === size
+              ? 'border-orange-500 bg-orange-50 text-orange-700'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+          "
+          @click="set(field.key, String(size))"
+        >
+          {{ size }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import ColorPicker from '../ui/ColorPicker.vue'
+import FileUploader from '../ui/FileUploader.vue'
 import FontPicker from './FontPicker.vue'
 import HomepageLayoutPicker from './HomepageLayoutPicker.vue'
 import ImageUpload from '../ui/ImageUpload.vue'

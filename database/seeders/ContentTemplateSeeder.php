@@ -91,7 +91,7 @@ HTML
                 'content_template' => <<<'HTML'
 <h2>خلاصه آگهی {organization}</h2>
 <p>عنوان: {title}</p>
-<p>دسته‌بندی: {job_category}</p>
+<p>طبقه‌بندی: {job_category}</p>
 <p>شروع ثبت‌نام: {registration_starts_at}</p>
 <p>مهلت: {registration_deadline}</p>
 <p>آزمون: {exam_date}</p>

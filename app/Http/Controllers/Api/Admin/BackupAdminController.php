@@ -38,6 +38,29 @@ class BackupAdminController extends BaseController
         return response()->download($full, basename($full));
     }
 
+    public function restore(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:102400'],
+        ], [
+            'file.max' => 'حداکثر حجم فایل بکاپ ۱۰۰ مگابایت است.',
+        ]);
+
+        $file = $request->file('file');
+        $ext = strtolower((string) $file->getClientOriginalExtension());
+        if ($ext !== 'zip') {
+            return $this->errorResponse('فقط فایل ZIP بکاپ مجاز است.', 422);
+        }
+
+        try {
+            $this->backups->restoreFromUpload($file);
+        } catch (\Throwable $e) {
+            return $this->errorResponse($e->getMessage() ?: 'بازگردانی بکاپ ناموفق بود.', 422);
+        }
+
+        return $this->successResponse(null, 'بکاپ با موفقیت بازگردانی شد. صفحه را تازه کنید.');
+    }
+
     public function destroy(Request $request): JsonResponse
     {
         $data = $request->validate(['path' => ['required', 'string']]);

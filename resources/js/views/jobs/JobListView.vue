@@ -1,19 +1,13 @@
 <template>
   <div class="min-h-screen bg-surface-page dark:bg-slate-950">
     <div
-      class="sticky top-0 z-30 border-b border-surface-line bg-white/92 backdrop-blur-md lg:top-16"
+      class="sticky z-20 border-b border-surface-line bg-white/92 backdrop-blur-md top-[calc(3.65rem+env(safe-area-inset-top))] lg:top-[4.5rem]"
     >
       <div class="mx-auto max-w-7xl px-4 py-3">
         <div class="mb-2 flex items-center justify-between gap-2">
           <h1 class="page-title">
             آگهی‌های شغلی
           </h1>
-          <RouterLink
-            to="/jobs/submit"
-            class="text-xs font-bold text-brand"
-          >
-            + ثبت آگهی
-          </RouterLink>
         </div>
 
         <div class="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-1">

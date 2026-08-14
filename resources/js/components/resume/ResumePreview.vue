@@ -264,10 +264,10 @@ const classicBlocks = computed(() => {
   const langs = (d.languages || []).map((l) => `${l.name}${l.level ? ` (${l.level})` : ''}`).join('، ')
 
   return [
-    { title: 'Experience', show: !!(d.experience || []).length, html: expHtml },
-    { title: 'Education', show: !!(d.education || []).length, html: eduHtml },
-    { title: 'Skills', show: !!skills, html: `<p>${skills}</p>` },
-    { title: 'Languages', show: !!langs, html: `<p>${langs}</p>` },
+    { title: 'سوابق شغلی', show: !!(d.experience || []).length, html: expHtml },
+    { title: 'تحصیلات', show: !!(d.education || []).length, html: eduHtml },
+    { title: 'مهارت‌ها', show: !!skills, html: `<p>${skills}</p>` },
+    { title: 'زبان‌ها', show: !!langs, html: `<p>${langs}</p>` },
   ]
 })
 </script>

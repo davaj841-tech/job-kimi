@@ -70,7 +70,8 @@ class MailConfigService
             $data['name'],
             $data['email'],
             $data['subject'],
-            $data['message']
+            $data['message'],
+            $data['tracking_code'] ?? null
         ));
     }
 }

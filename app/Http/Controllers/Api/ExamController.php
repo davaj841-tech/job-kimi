@@ -32,8 +32,8 @@ class ExamController extends BaseController
      *
      * @unauthenticated
      *
-     * @queryParam category_id integer فیلتر بر اساس دسته‌بندی. Example: 1
-     * @queryParam job_classification_id integer فیلتر رسته شغلی. Example: 2
+     * @queryParam category_id integer فیلتر بر اساس طبقه‌بندی. Example: 1
+     * @queryParam job_classification_id integer فیلتر طبقه‌بندی شغلی. Example: 2
      * @queryParam search string جستجو در عنوان. Example: استخدامی
      * @queryParam is_free boolean فقط آزمون‌های رایگان. Example: 1
      * @queryParam per_page integer تعداد در هر صفحه. Example: 15
