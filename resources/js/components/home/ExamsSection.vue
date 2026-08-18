@@ -45,13 +45,6 @@
             {{ exam.title }}
           </h3>
           <div class="mt-auto pt-1.5">
-            <StarRating
-              :avg="Number(exam.avg_rating) || 0"
-              :count="Number(exam.ratings_count) || 0"
-              readonly
-              show-value
-              compact
-            />
             <p class="mt-1 text-[11px] text-desk-muted">
               {{ exam.duration_minutes }} دقیقه ·
               {{ exam.total_questions }} سوال
@@ -89,7 +82,6 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import HomeRail from './HomeRail.vue'
-import StarRating from '../StarRating.vue'
 
 const props = defineProps({
   exams: { type: Array, default: () => [] },
@@ -104,7 +96,7 @@ const displayExams = computed(() => (props.exams || []).slice(0, 12))
 
 function examPath(exam) {
   const slug = exam.slug || exam.id
-  return `/exams/${slug}`
+  return `/exams/${slug}/start`
 }
 
 function goExam(exam) {

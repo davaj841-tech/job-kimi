@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Api\BaseController;
 use App\Models\GeneratedContent;
+use App\Services\CatalogAttachService;
 use App\Services\SEOService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -45,7 +46,7 @@ class GeneratedContentPublicController extends BaseController
     public function show(string $slug): JsonResponse
     {
         $c = GeneratedContent::query()
-            ->with(['jobPost:id,title,company_name,province,city,status', 'jobPost.source:id,name,domain'])
+            ->with(['jobPost:id,title,company_name,province,city,status,job_classification_id', 'jobPost.source:id,name,domain'])
             ->where('slug', $slug)
             ->first();
 
@@ -93,6 +94,16 @@ class GeneratedContentPublicController extends BaseController
                 'city' => $c->jobPost->city,
                 'url' => url('/jobs/'.$c->jobPost->id),
             ] : null;
+            $catalog = app(CatalogAttachService::class)->resolve(
+                $c->job_classification_id
+                    ? (int) $c->job_classification_id
+                    : ($c->jobPost?->job_classification_id ? (int) $c->jobPost->job_classification_id : null),
+                (bool) ($c->auto_catalog ?? true),
+                $c->exam_ids ?? [],
+                $c->pdf_ids ?? []
+            );
+            $row['catalog_exams'] = $catalog['exams'];
+            $row['catalog_pdfs'] = $catalog['pdfs'];
         }
 
         return $row;

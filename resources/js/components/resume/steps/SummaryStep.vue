@@ -1,32 +1,46 @@
 <template>
   <div class="space-y-5">
-    <div class="flex items-center justify-between gap-2">
+    <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 class="text-lg font-bold text-desk-text dark:text-white">معرفی حرفه‌ای</h2>
-      <button
-        type="button"
-        class="inline-flex items-center gap-2 rounded-xl bg-brand px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-        :disabled="aiLoading"
-        @click="generateAiSummary"
-      >
-        <SparklesIcon
-          class="h-4 w-4"
-          :class="{ 'animate-spin': aiLoading }"
-        />
-        {{ aiLoading ? 'در حال نوشتن...' : 'نوشتن با AI' }}
-      </button>
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-xl border border-brand/30 bg-white px-3 py-2 text-sm font-medium text-brand disabled:opacity-50 dark:bg-slate-800"
+          :disabled="aiLoading"
+          @click="generateAiSummary('job')"
+        >
+          <SparklesIcon
+            class="h-4 w-4"
+            :class="{ 'animate-spin': aiLoading === 'job' }"
+          />
+          {{ aiLoading === 'job' ? 'در حال نوشتن…' : 'معرفی شغل با AI' }}
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-xl bg-brand px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+          :disabled="aiLoading"
+          @click="generateAiSummary('summary')"
+        >
+          <SparklesIcon
+            class="h-4 w-4"
+            :class="{ 'animate-spin': aiLoading === 'summary' }"
+          />
+          {{ aiLoading === 'summary' ? 'در حال نوشتن…' : 'نوشتن درباره من' }}
+        </button>
+      </div>
     </div>
 
     <p class="text-sm text-desk-muted">
-      خلاصه‌ای ۲–۳ خطی بنویسید. می‌توانید از هوش مصنوعی کمک بگیرید.
+      بر اساس عنوان / شغل هدف، هوش مصنوعی می‌تواند معرفی شغل و متن «درباره من» را بنویسد.
     </p>
 
     <div class="relative">
       <textarea
         v-model="local.summary"
-        rows="5"
+        rows="6"
         maxlength="1000"
-        class="input-field min-h-[120px] resize-none py-3"
-        placeholder="کارشناس با تجربه در …"
+        class="input-field min-h-[140px] resize-none py-3"
+        placeholder="درباره شغل هدف و توانمندی‌های خود بنویسید…"
       />
       <span class="absolute bottom-3 left-3 text-xs text-desk-muted">
         {{ toFaDigits((local.summary || '').length) }}/۱۰۰۰
@@ -37,7 +51,7 @@
       v-if="aiSuggestions.length"
       class="space-y-2"
     >
-      <p class="text-sm font-medium text-desk-text dark:text-slate-200">پیشنهادات AI:</p>
+      <p class="text-sm font-medium text-desk-text dark:text-slate-200">پیشنهادات AI — برای استفاده کلیک کنید:</p>
       <button
         v-for="(suggestion, i) in aiSuggestions"
         :key="i"
@@ -69,13 +83,13 @@ const local = computed({
 const aiLoading = ref(false)
 const aiSuggestions = ref([])
 
-async function generateAiSummary() {
-  aiLoading.value = true
+async function generateAiSummary(mode) {
+  aiLoading.value = mode
   try {
     const suggestion = await new Promise((resolve, reject) => {
-      emit('ai-summary', { resolve, reject })
+      emit('ai-summary', { mode, resolve, reject })
     })
-    if (suggestion) aiSuggestions.value = [suggestion]
+    if (suggestion) aiSuggestions.value = [suggestion, ...aiSuggestions.value.filter((s) => s !== suggestion)].slice(0, 3)
   } catch (_) {
     /* parent shows toast */
   } finally {

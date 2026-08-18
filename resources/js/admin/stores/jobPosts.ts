@@ -26,11 +26,8 @@ function toFormData(payload: Record<string, unknown> | null | undefined) {
       return
     }
     if (key === 'attachment') return
-    if (key === 'provinces') {
-      form.append(
-        'provinces',
-        JSON.stringify(Array.isArray(value) ? value : [])
-      )
+    if (key === 'provinces' || key === 'exam_ids' || key === 'pdf_ids') {
+      form.append(key, JSON.stringify(Array.isArray(value) ? value : []))
       return
     }
     if (typeof value === 'boolean') {

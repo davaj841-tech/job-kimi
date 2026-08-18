@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="space-y-5">
+      <div class="space-y-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-bold text-gray-800">مدیریت اشتراک‌ها</h1>
         <div class="flex gap-2">
@@ -177,12 +176,10 @@
       @cancel="confirm.open = false"
       @confirm="runConfirm"
     />
-  </AdminLayout>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import AdminLayout from '../components/layout/AdminLayout.vue'
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
 import DataTable from '../components/ui/DataTable.vue'
 import PaginationBar from '../components/ui/PaginationBar.vue'

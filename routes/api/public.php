@@ -64,9 +64,9 @@ Route::get('/exams/{slug}', [ExamController::class, 'show']);
 
 Route::post('/contact', [ContactController::class, 'store']);
 Route::get('/home-feed', \App\Http\Controllers\Api\HomeFeedController::class)
-    ->middleware('cache.response:30');
-Route::get('/settings/public', [PublicSettingsController::class, 'index']);
-Route::get('/banners', [BannerController::class, 'index']);
+    ->middleware('cache.response:120');
+Route::get('/settings/public', [PublicSettingsController::class, 'index'])->middleware('cache.response:300');
+Route::get('/banners', [BannerController::class, 'index'])->middleware('cache.response:300');
 Route::get('/pages/{slug}', [PageController::class, 'show']);
 Route::get('/leaderboard', [LeaderboardController::class, 'index']);
 Route::get('/blog-posts/{id}/comments', [CommentController::class, 'index'])->whereNumber('id');

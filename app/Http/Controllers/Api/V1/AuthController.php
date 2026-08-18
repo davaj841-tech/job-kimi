@@ -11,6 +11,7 @@ use App\Services\Auth\OtpAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends BaseController
@@ -255,12 +256,52 @@ class AuthController extends BaseController
         $user = $request->user();
         $data = $request->validate([
             'name' => ['sometimes', 'nullable', 'string', 'max:100'],
-            'province' => ['sometimes', 'required', 'string', 'max:100'],
+            'province' => ['sometimes', 'nullable', 'string', 'max:100'],
             'email' => ['sometimes', 'nullable', 'email', 'max:191', 'unique:users,email,'.$user->id],
+            'national_code' => ['sometimes', 'nullable', 'string', 'regex:/^\d{10}$/'],
+            'home_phone' => ['sometimes', 'nullable', 'string', 'max:11'],
+            'military_status' => ['sometimes', 'nullable', 'string', 'max:40'],
+            'insurance_history' => ['sometimes', 'nullable', 'string', 'max:80'],
+            'birth_date' => ['sometimes', 'nullable', 'string', 'regex:/^\d{2}\/\d{2}\/\d{4}$/'],
+            'birth_province' => ['sometimes', 'nullable', 'string', 'max:80'],
+            'birth_city' => ['sometimes', 'nullable', 'string', 'max:80'],
+            'marital_status' => ['sometimes', 'nullable', 'string', 'max:30'],
+            'field_of_study' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'address' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'postal_code' => ['sometimes', 'nullable', 'string', 'regex:/^\d{10}$/'],
+            'photo' => ['sometimes', 'nullable', 'string', 'max:400000'],
         ], [
-            'province.required' => 'انتخاب استان الزامی است.',
             'email.unique' => 'این ایمیل قبلاً ثبت شده است.',
+            'national_code.regex' => 'کد ملی باید ۱۰ رقم باشد.',
+            'postal_code.regex' => 'کد پستی باید ۱۰ رقم باشد.',
+            'birth_date.regex' => 'تاریخ تولد را کامل وارد کنید.',
         ]);
+
+        if (empty($data['province']) && ! empty($data['birth_province'])) {
+            $data['province'] = $data['birth_province'];
+        }
+
+        if (array_key_exists('photo', $data)) {
+            $photo = $data['photo'];
+            unset($data['photo']);
+            if (is_string($photo) && preg_match('#^data:image/(png|jpe?g|gif|webp);base64,#i', $photo, $m)) {
+                $raw = base64_decode(substr($photo, (int) strpos($photo, ',') + 1), true);
+                if ($raw) {
+                    $ext = str_contains(strtolower($m[1]), 'png') ? 'png' : 'jpg';
+                    $rel = 'avatars/'.$user->id.'.'.$ext;
+                    if ($user->avatar && $user->avatar !== $rel) {
+                        Storage::disk('public')->delete($user->avatar);
+                    }
+                    Storage::disk('public')->put($rel, $raw);
+                    $data['avatar'] = $rel;
+                }
+            } elseif ($photo === '' || $photo === null) {
+                if ($user->avatar) {
+                    Storage::disk('public')->delete($user->avatar);
+                }
+                $data['avatar'] = null;
+            }
+        }
 
         $user->update($data);
 

@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="space-y-5">
+      <div class="space-y-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-bold text-gray-800">تنظیمات سیستم</h1>
         <div class="flex items-center gap-2">
@@ -41,13 +40,11 @@
         />
       </div>
     </div>
-  </AdminLayout>
 </template>
 
 <script setup>
 import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
-import AdminLayout from '../components/layout/AdminLayout.vue'
 import SettingsForm from '../components/settings/SettingsForm.vue'
 import { apiErrorMessage } from '../../utils/format'
 import { useToast } from '../../composables/useToast'
@@ -158,68 +155,6 @@ const fieldMap = {
         { value: 'shaparak', label: 'شاپرک' },
       ],
     },
-    {
-      key: 'zarinpal_merchant_id',
-      label: 'شناسه پذیرنده زرین‌پال',
-      type: 'text',
-      ltr: true,
-    },
-    { key: 'zarinpal_sandbox', label: 'Sandbox زرین‌پال', type: 'toggle' },
-    {
-      key: 'nextpay_api_key',
-      label: 'API Key نکست‌پی',
-      type: 'text',
-      ltr: true,
-    },
-    { key: 'nextpay_active', label: 'فعال بودن نکست‌پی', type: 'toggle' },
-    { key: 'idpay_api_key', label: 'API Key آیدی‌پی', type: 'text', ltr: true },
-    { key: 'idpay_active', label: 'فعال بودن آیدی‌پی', type: 'toggle' },
-    { key: 'idpay_sandbox', label: 'Sandbox آیدی‌پی', type: 'toggle' },
-    {
-      key: 'mellat_terminal_id',
-      label: 'شماره ترمینال بانک ملت',
-      type: 'text',
-      ltr: true,
-    },
-    {
-      key: 'mellat_username',
-      label: 'نام کاربری درگاه ملت',
-      type: 'text',
-      ltr: true,
-    },
-    {
-      key: 'mellat_password',
-      label: 'رمز درگاه ملت',
-      type: 'text',
-      ltr: true,
-    },
-    { key: 'mellat_active', label: 'فعال بودن درگاه بانک ملت', type: 'toggle' },
-    {
-      key: 'shaparak_merchant_id',
-      label: 'شناسه پذیرنده شاپرک',
-      type: 'text',
-      ltr: true,
-    },
-    {
-      key: 'shaparak_terminal_id',
-      label: 'شماره ترمینال شاپرک',
-      type: 'text',
-      ltr: true,
-    },
-    {
-      key: 'shaparak_username',
-      label: 'نام کاربری شاپرک',
-      type: 'text',
-      ltr: true,
-    },
-    {
-      key: 'shaparak_password',
-      label: 'رمز شاپرک',
-      type: 'text',
-      ltr: true,
-    },
-    { key: 'shaparak_active', label: 'فعال بودن درگاه شاپرک', type: 'toggle' },
-    { key: 'min_wallet_charge', label: 'حداقل شارژ کیف پول', type: 'number' },
   ],
   sms: [
     {
@@ -330,7 +265,44 @@ const fieldMap = {
   ],
 }
 
-const currentFields = computed(() => fieldMap[active.value] || [])
+const paymentFieldsByGateway = {
+  zarinpal: [
+    { key: 'zarinpal_merchant_id', label: 'شناسه پذیرنده', type: 'text', ltr: true },
+    { key: 'zarinpal_sandbox', label: 'حالت آزمایشی (Sandbox)', type: 'toggle' },
+  ],
+  nextpay: [
+    { key: 'nextpay_api_key', label: 'کلید API', type: 'text', ltr: true },
+    { key: 'nextpay_active', label: 'فعال بودن درگاه', type: 'toggle' },
+  ],
+  idpay: [
+    { key: 'idpay_api_key', label: 'کلید API', type: 'text', ltr: true },
+    { key: 'idpay_active', label: 'فعال بودن درگاه', type: 'toggle' },
+    { key: 'idpay_sandbox', label: 'حالت آزمایشی (Sandbox)', type: 'toggle' },
+  ],
+  mellat: [
+    { key: 'mellat_terminal_id', label: 'شماره ترمینال', type: 'text', ltr: true },
+    { key: 'mellat_username', label: 'نام کاربری', type: 'text', ltr: true },
+    { key: 'mellat_password', label: 'رمز درگاه', type: 'text', ltr: true },
+    { key: 'mellat_active', label: 'فعال بودن درگاه', type: 'toggle' },
+  ],
+  shaparak: [
+    { key: 'shaparak_merchant_id', label: 'شناسه پذیرنده', type: 'text', ltr: true },
+    { key: 'shaparak_terminal_id', label: 'شماره ترمینال', type: 'text', ltr: true },
+    { key: 'shaparak_username', label: 'نام کاربری', type: 'text', ltr: true },
+    { key: 'shaparak_password', label: 'رمز درگاه', type: 'text', ltr: true },
+    { key: 'shaparak_active', label: 'فعال بودن درگاه', type: 'toggle' },
+  ],
+}
+
+const currentFields = computed(() => {
+  if (active.value !== 'payment') return fieldMap[active.value] || []
+  const gw = form.payment_gateway || 'zarinpal'
+  return [
+    ...(fieldMap.payment || []),
+    ...(paymentFieldsByGateway[gw] || []),
+    { key: 'min_wallet_charge', label: 'حداقل شارژ کیف پول', type: 'number' },
+  ]
+})
 
 function loadForm() {
   const src = store.groups[active.value] || {}

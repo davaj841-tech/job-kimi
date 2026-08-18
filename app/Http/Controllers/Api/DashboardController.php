@@ -23,7 +23,7 @@ class DashboardController extends BaseController
         $user = $request->user()->load('subscriptionPlan');
 
         $completed = ExamAttempt::query()
-            ->with('exam:id,title,total_marks,passing_score')
+            ->with('exam:id,title,total_marks,passing_score,total_questions')
             ->where('user_id', $user->id)
             ->where('status', 'completed');
 
@@ -31,10 +31,12 @@ class DashboardController extends BaseController
 
         $totalTaken = $completedAttempts->count();
         $totalPassed = $completedAttempts->filter(function (ExamAttempt $attempt) {
-            return (float) $attempt->score >= (float) ($attempt->exam?->passing_score ?? 0);
+            return $attempt->resultSummary()['passed'] === true;
         })->count();
 
-        $avgScore = $totalTaken > 0 ? round((float) $completedAttempts->avg('score'), 2) : 0;
+        $avgPercentage = $totalTaken > 0
+            ? round($completedAttempts->avg(fn (ExamAttempt $a) => $a->resultSummary()['percentage']), 2)
+            : 0;
         $totalCorrect = (int) $completedAttempts->sum('total_correct');
         $totalWrong = (int) $completedAttempts->sum('total_wrong');
 
@@ -44,10 +46,10 @@ class DashboardController extends BaseController
 
         $scoreTrend = '';
         if ($completedAttempts->count() >= 2) {
-            $latest = (float) $completedAttempts->first()?->score;
-            $previous = (float) $completedAttempts->skip(1)->first()?->score;
+            $latest = (float) $completedAttempts->first()?->resultSummary()['percentage'];
+            $previous = (float) $completedAttempts->skip(1)->first()?->resultSummary()['percentage'];
             $delta = round($latest - $previous, 1);
-            $scoreTrend = ($delta >= 0 ? '+' : '').$delta.' نسبت به قبل';
+            $scoreTrend = ($delta >= 0 ? '+' : '').$delta.'٪ نسبت به قبل';
         }
 
         $daysLeft = null;
@@ -61,39 +63,18 @@ class DashboardController extends BaseController
 
         $progressChart = $this->buildProgressChart($user->id);
 
-        $recent = $this->examRepository->getUserAttempts($user, 10)->map(function (ExamAttempt $attempt) {
-            $totalMarks = (float) ($attempt->exam?->total_marks ?: 1);
-
-            return [
-                'id' => $attempt->id,
-                'exam_id' => $attempt->exam_id,
-                'exam_title' => $attempt->exam?->title,
-                'exam_slug' => $attempt->exam?->slug,
-                'subject' => $attempt->subject,
-                'score' => $attempt->score,
-                'total_correct' => $attempt->total_correct,
-                'total_wrong' => $attempt->total_wrong,
-                'total_unanswered' => max(
-                    0,
-                    (int) ($attempt->exam?->total_questions ?: 0)
-                    - (int) $attempt->total_correct
-                    - (int) $attempt->total_wrong
-                ),
-                'total_marks' => $attempt->exam?->total_marks,
-                'percentage' => round(((float) $attempt->score / $totalMarks) * 100, 2),
-                'created_at' => $attempt->created_at?->toIso8601String(),
-                'finished_at' => $attempt->finished_at?->toIso8601String(),
-                'status' => $attempt->status,
-            ];
-        })->values()->all();
+        $recent = $this->examRepository->getUserAttempts($user, 10)
+            ->map(fn (ExamAttempt $attempt) => $attempt->toHistoryItem())
+            ->values()
+            ->all();
 
         // ۱۲ تلاش اخیر (از جدید به قدیم خوانده شده؛ برای نمودار از قدیم به جدید)
         $examChart = $completedAttempts->take(12)->reverse()->values()->map(function (ExamAttempt $a) {
-            $totalMarks = (float) ($a->exam?->total_marks ?: 1);
+            $stats = $a->resultSummary();
 
             return [
                 'label' => Str::limit($a->exam?->title ?: 'آزمون', 18),
-                'percentage' => round(((float) $a->score / $totalMarks) * 100, 1),
+                'percentage' => $stats['percentage'],
                 'score' => (float) $a->score,
             ];
         })->all();
@@ -113,7 +94,7 @@ class DashboardController extends BaseController
             'stats' => [
                 'total_exams_taken' => $totalTaken,
                 'total_exams_passed' => $totalPassed,
-                'average_score' => $avgScore,
+                'average_score' => $avgPercentage,
                 'total_correct_answers' => $totalCorrect,
                 'total_wrong_answers' => $totalWrong,
                 'exams_this_week' => $examsThisWeek,

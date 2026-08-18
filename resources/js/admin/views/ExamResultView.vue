@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="mx-auto max-w-3xl">
+      <div class="mx-auto max-w-3xl">
       <div class="mb-4">
         <RouterLink
           to="/admin/exams"
@@ -131,12 +130,14 @@
               <div class="mb-2 leading-6" v-html="item.question_text" />
               <p class="text-xs">
                 پاسخ شما:
-                <b>{{
-                  item.user_answer
-                    ? String(item.user_answer).toUpperCase()
-                    : '—'
-                }}</b>
-                — صحیح: <b>{{ String(item.correct_answer).toUpperCase() }}</b>
+                <template v-if="item.is_blank || !item.user_answer"><b>نزده</b></template>
+                <template v-else>
+                  <b>{{ item.user_answer_label || optionFaLetter(item.user_answer) }})</b>
+                  <span v-html="item.user_answer_text || optionText(item, item.user_answer)" />
+                </template>
+                — صحیح:
+                <b>{{ item.correct_answer_label || optionFaLetter(item.correct_answer) }})</b>
+                <span v-html="item.correct_answer_text || optionText(item, item.correct_answer)" />
               </p>
             </div>
           </div>
@@ -158,14 +159,13 @@
         </div>
       </template>
     </div>
-  </AdminLayout>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import adminApi from '../api/client'
-import AdminLayout from '../components/layout/AdminLayout.vue'
+import { optionFaLetter, optionText } from '../../utils/examAnswers'
 
 const route = useRoute()
 const loading = ref(true)

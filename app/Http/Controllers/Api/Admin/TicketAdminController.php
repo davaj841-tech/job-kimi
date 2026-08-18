@@ -23,6 +23,7 @@ class TicketAdminController extends BaseController
             $s = $request->query('search');
             $query->where(function ($q) use ($s) {
                 $q->where('subject', 'like', "%{$s}%")
+                    ->orWhere('tracking_code', 'like', "%{$s}%")
                     ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$s}%")->orWhere('mobile', 'like', "%{$s}%"));
             });
         }

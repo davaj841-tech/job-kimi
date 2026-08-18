@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="space-y-5">
+      <div class="space-y-5">
       <div>
         <h1 class="text-2xl font-bold text-slate-900">سطح دسترسی اپراتور</h1>
         <p class="mt-1 text-sm text-slate-500">
@@ -83,13 +82,11 @@
         </div>
       </form>
     </div>
-  </AdminLayout>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import adminApi from '../api/client'
-import AdminLayout from '../components/layout/AdminLayout.vue'
 import OperatorPermissionsPicker from '../components/users/OperatorPermissionsPicker.vue'
 import DataTable from '../components/ui/DataTable.vue'
 import { DEFAULT_OPERATOR_PERMISSIONS } from '../permissions'

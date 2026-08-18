@@ -3,11 +3,9 @@
 namespace App\Services;
 
 use App\Events\JobPostApproved;
-use App\Models\Exam;
 use App\Models\JobClassification;
 use App\Models\JobPost;
 use App\Models\JobPostAttachment;
-use App\Models\PdfProduct;
 use App\Repositories\JobPostRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -142,48 +140,12 @@ class JobPostService
      */
     public function relatedCatalog(JobPost $jobPost): array
     {
-        $classId = $jobPost->job_classification_id;
-        if (! $classId) {
-            return ['exams' => [], 'pdfs' => []];
-        }
-
-        $classification = JobClassification::query()->find($classId);
-        $ids = $classification ? $classification->descendantAndSelfIds() : [$classId];
-
-        $exams = Exam::query()
-            ->whereIn('job_classification_id', $ids)
-            ->where('status', 'published')
-            ->orderByDesc('id')
-            ->limit(12)
-            ->get(['id', 'title', 'slug', 'is_free', 'price', 'duration_minutes', 'total_questions', 'job_classification_id']);
-
-        $pdfs = PdfProduct::query()
-            ->whereIn('job_classification_id', $ids)
-            ->where('is_active', true)
-            ->orderByDesc('id')
-            ->limit(12)
-            ->get(['id', 'title', 'price', 'thumbnail', 'category', 'job_classification_id']);
-
-        return [
-            'exams' => $exams->map(fn (Exam $exam) => [
-                'id' => $exam->id,
-                'title' => $exam->title,
-                'slug' => $exam->slug,
-                'is_free' => (bool) $exam->is_free,
-                'price' => $exam->price,
-                'duration_minutes' => $exam->duration_minutes,
-                'total_questions' => $exam->total_questions,
-                'job_classification_id' => $exam->job_classification_id,
-            ])->values()->all(),
-            'pdfs' => $pdfs->map(fn (PdfProduct $pdf) => [
-                'id' => $pdf->id,
-                'title' => $pdf->title,
-                'price' => $pdf->price,
-                'thumbnail' => $pdf->thumbnail,
-                'category' => $pdf->category,
-                'job_classification_id' => $pdf->job_classification_id,
-            ])->values()->all(),
-        ];
+        return app(CatalogAttachService::class)->resolve(
+            $jobPost->job_classification_id ? (int) $jobPost->job_classification_id : null,
+            (bool) ($jobPost->auto_catalog ?? true),
+            $jobPost->exam_ids ?? [],
+            $jobPost->pdf_ids ?? []
+        );
     }
 
     /**
@@ -253,8 +215,11 @@ class JobPostService
             }
         }
 
-        if (isset($data['attachment']) && $data['attachment'] instanceof UploadedFile) {
-            $data['_legacy_attachment'] = $data['attachment'];
+        if (array_key_exists('exam_ids', $data)) {
+            $data['exam_ids'] = app(CatalogAttachService::class)->intIds($data['exam_ids']);
+        }
+        if (array_key_exists('pdf_ids', $data)) {
+            $data['pdf_ids'] = app(CatalogAttachService::class)->intIds($data['pdf_ids']);
         }
 
         return $data;

@@ -87,7 +87,7 @@ final class OperatorPermissions
         $path = preg_replace('#^api/v1/#', '', $path) ?? $path;
         $path = preg_replace('#^admin/#', '', $path) ?? $path;
 
-        $adminOnly = ['settings', 'backups', 'audit-logs', 'site-errors'];
+        $adminOnly = ['settings', 'backups', 'audit-logs', 'site-errors', 'performance'];
         foreach ($adminOnly as $prefix) {
             if ($path === $prefix || str_starts_with($path, $prefix.'/')) {
                 return '__admin__';
@@ -105,6 +105,7 @@ final class OperatorPermissions
             'pdf-products' => 'pdf',
             'banners' => 'banners',
             'pages' => 'pages',
+            'team-members' => 'pages',
             'ai' => 'ai',
             'job-posts' => 'job_posts',
             'job-sources' => 'aggregation',

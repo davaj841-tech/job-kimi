@@ -17,6 +17,7 @@ class ContactController extends BaseController
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
+            'mobile' => ['required', 'string', 'regex:/^09\d{9}$/'],
             'email' => ['required', 'email', 'max:150'],
             'subject' => ['required', 'in:support,complaint,suggestion,partnership'],
             'message' => ['required', 'string', 'max:5000'],
@@ -27,6 +28,7 @@ class ContactController extends BaseController
         $row = ContactMessage::query()->create([
             'tracking_code' => $tracking,
             'name' => $data['name'],
+            'mobile' => $data['mobile'],
             'email' => $data['email'],
             'subject' => $data['subject'],
             'message' => $data['message'],
@@ -34,7 +36,11 @@ class ContactController extends BaseController
         ]);
 
         $this->mailConfigService->sendContactForm([
-            ...$data,
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'mobile' => $data['mobile'],
+            'subject' => $data['subject'],
+            'message' => $data['message'],
             'tracking_code' => $row->tracking_code,
         ]);
 

@@ -270,6 +270,10 @@ class ExamService
                 ],
                 'user_answer' => $userAnswer,
                 'correct_answer' => $question->correct_answer,
+                'user_answer_label' => \App\Services\ReportCardPDFService::optionLetter($userAnswer),
+                'correct_answer_label' => \App\Services\ReportCardPDFService::optionLetter($question->correct_answer),
+                'user_answer_text' => self::optionBody($question, $userAnswer),
+                'correct_answer_text' => self::optionBody($question, $question->correct_answer),
                 'is_correct' => $isCorrect,
                 'is_blank' => $isBlank,
                 'explanation' => $question->explanation,
@@ -340,6 +344,9 @@ class ExamService
                 'has_negative_marking' => (bool) ($attempt->exam->has_negative_marking),
                 'negative_mark_ratio' => (float) ($attempt->exam->negative_mark_ratio ?? 0.3333),
                 'passed' => (float) $attempt->score >= (float) $attempt->exam->passing_score,
+                'is_retry_wrong' => (bool) $attempt->is_retry_wrong,
+                'retry_mode' => $attempt->retry_mode,
+                'parent_attempt_id' => $attempt->parent_attempt_id,
             ],
         ];
     }
@@ -450,6 +457,19 @@ class ExamService
         $key = strtolower(trim((string) ($slug ?: $label)));
 
         return $map[$key] ?? ($label !== '' ? $label : ($key !== '' ? $key : 'عمومی'));
+    }
+
+    public static function optionBody(Question $question, mixed $letter): string
+    {
+        $key = strtolower(trim((string) $letter));
+
+        return match ($key) {
+            'a' => (string) $question->option_a,
+            'b' => (string) $question->option_b,
+            'c' => (string) $question->option_c,
+            'd' => (string) $question->option_d,
+            default => '',
+        };
     }
 
     public function cacheKey(int $attemptId): string

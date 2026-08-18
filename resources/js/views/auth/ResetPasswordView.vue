@@ -7,22 +7,18 @@
 
     <form class="space-y-4" @submit.prevent="submit">
       <label class="block text-sm font-medium">رمز جدید</label>
-      <input
+      <PasswordInput
         v-model="password"
-        type="password"
+        input-class="input-field text-left"
         required
-        minlength="8"
-        class="input-field text-left"
-        dir="ltr"
+        autocomplete="new-password"
       />
       <label class="block text-sm font-medium">تکرار رمز</label>
-      <input
+      <PasswordInput
         v-model="password_confirmation"
-        type="password"
+        input-class="input-field text-left"
         required
-        minlength="8"
-        class="input-field text-left"
-        dir="ltr"
+        autocomplete="new-password"
       />
       <button class="btn-primary" :disabled="loading">ذخیره رمز عبور</button>
     </form>
@@ -36,6 +32,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import PasswordInput from '../../components/PasswordInput.vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../api/client'
 

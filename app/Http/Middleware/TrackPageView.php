@@ -44,7 +44,7 @@ class TrackPageView
 
     protected function shouldSkip(string $path): bool
     {
-        $skip = ['api', 'admin', 'filament', 'horizon', 'sanctum', 'up', 'health', 'api/documentation', 'docs'];
+        $skip = ['api', 'admin', 'filament', 'horizon', 'sanctum', 'up', 'health', 'install', 'api/documentation', 'docs'];
         foreach ($skip as $prefix) {
             if ($path === '/'.$prefix || Str::startsWith($path, '/'.$prefix.'/')) {
                 return true;

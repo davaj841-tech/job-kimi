@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="space-y-6">
+      <div class="space-y-6">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 class="text-2xl font-bold text-gray-800">داشبورد</h1>
@@ -164,13 +163,11 @@
 
       <p v-if="error" class="text-center text-sm text-red-500">{{ error }}</p>
     </div>
-  </AdminLayout>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import adminApi from '../api/client'
-import AdminLayout from '../components/layout/AdminLayout.vue'
 import BarChart from '../components/ui/BarChart.vue'
 import ChartCard from '../components/ui/ChartCard.vue'
 import DoughnutChart from '../components/ui/DoughnutChart.vue'

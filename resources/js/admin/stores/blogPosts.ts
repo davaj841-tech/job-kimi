@@ -105,6 +105,14 @@ function toFormData(payload: Record<string, unknown> | null | undefined) {
       form.append('featured_image', value)
       return
     }
+    if (key === 'exam_ids' || key === 'pdf_ids') {
+      form.append(key, JSON.stringify(Array.isArray(value) ? value : []))
+      return
+    }
+    if (typeof value === 'boolean') {
+      form.append(key, value ? '1' : '0')
+      return
+    }
     form.append(key, value as string | Blob)
   })
   return form

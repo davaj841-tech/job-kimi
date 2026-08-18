@@ -59,7 +59,9 @@ class QuestionResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('exam.title')->label('آزمون')->limit(20),
                 Tables\Columns\TextColumn::make('question_text')->label('سوال')->html()->limit(40),
-                Tables\Columns\TextColumn::make('correct_answer')->label('پاسخ'),
+                Tables\Columns\TextColumn::make('correct_answer')->label('پاسخ')->formatStateUsing(
+                    fn ($state) => \App\Services\ReportCardPDFService::optionLetter($state)
+                ),
                 Tables\Columns\TextColumn::make('difficulty')->label('سختی')->badge(),
                 Tables\Columns\TextColumn::make('subject')->label('ماده'),
             ])

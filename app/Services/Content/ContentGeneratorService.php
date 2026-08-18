@@ -184,6 +184,8 @@ class ContentGeneratorService
                         'source_type' => JobSource::class,
                         'source_id' => $job->job_source_id,
                         'job_post_id' => $job->id,
+                        'job_classification_id' => $job->job_classification_id,
+                        'auto_catalog' => $content->auto_catalog ?? true,
                         'content_hash' => $hash,
                         'generation_attempts' => (int) ($content->generation_attempts ?? 0) + 1,
                         'last_error' => null,

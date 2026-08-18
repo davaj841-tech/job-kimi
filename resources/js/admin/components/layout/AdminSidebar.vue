@@ -136,6 +136,7 @@ const groups = [
       { to: '/admin/audit-logs', label: 'حسابرسی', icon: '☰' },
       { to: '/admin/site-errors', label: 'خطاهای سایت', icon: '⚠' },
       { to: '/admin/settings', label: 'تنظیمات', icon: '⚙' },
+      { to: '/admin/performance', label: 'سرعت سایت', icon: '⚡' },
     ],
   },
 ]

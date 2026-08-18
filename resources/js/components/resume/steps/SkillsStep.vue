@@ -12,7 +12,7 @@
         class="h-4 w-4"
         :class="{ 'animate-spin': aiLoading }"
       />
-      پیشنهاد مهارت بر اساس سوابق
+      پیشنهاد مهارت بر اساس شغل و سوابق
     </button>
 
     <div class="rounded-xl border border-surface-line bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
@@ -42,7 +42,7 @@
           v-model="newSkill"
           type="text"
           class="input-field flex-1"
-          placeholder="مهارت را بنویسید و Enter بزنید…"
+          placeholder="مهارت جدید را بنویسید…"
           @keydown.enter.prevent="addSkill"
         />
         <select
@@ -53,6 +53,13 @@
           <option value="مبتدی">مبتدی</option>
           <option value="حرفه‌ای">حرفه‌ای</option>
         </select>
+        <button
+          type="button"
+          class="rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white"
+          @click="addSkill"
+        >
+          افزودن
+        </button>
       </div>
     </div>
 
@@ -78,20 +85,7 @@
 import { computed, ref } from 'vue'
 import { SparklesIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
-const popularSkills = [
-  'Vue.js',
-  'React',
-  'Laravel',
-  'Python',
-  'UI/UX',
-  'Figma',
-  'Git',
-  'Docker',
-  'TypeScript',
-  'کار تیمی',
-  'Office',
-  'SQL',
-]
+import { suggestedSkillsFor } from '../../../data/skillSuggestions'
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -107,6 +101,13 @@ const newSkill = ref('')
 const newLevel = ref('متوسط')
 const aiLoading = ref(false)
 
+const popularSkills = computed(() =>
+  suggestedSkillsFor(
+    local.value?.personal?.field_of_study,
+    local.value?.target_job
+  )
+)
+
 function hasSkill(name) {
   return (local.value.skills || []).some((s) => s.name === name)
 }
@@ -115,14 +116,14 @@ function addSkill() {
   const name = newSkill.value.trim()
   if (!name || hasSkill(name)) return
   if (!Array.isArray(local.value.skills)) local.value.skills = []
-  local.value.skills.push({ name, level: newLevel.value })
+  local.value.skills.unshift({ name, level: newLevel.value })
   newSkill.value = ''
 }
 
 function addNamed(name) {
   if (hasSkill(name)) return
   if (!Array.isArray(local.value.skills)) local.value.skills = []
-  local.value.skills.push({ name, level: 'متوسط' })
+  local.value.skills.unshift({ name, level: 'متوسط' })
 }
 
 function removeSkill(index) {
@@ -138,7 +139,10 @@ async function suggestSkills() {
     if (Array.isArray(skills)) {
       skills.forEach((name) => {
         if (typeof name === 'string' && name.trim() && !hasSkill(name.trim())) {
-          local.value.skills.push({ name: name.trim(), level: 'متوسط' })
+          local.value.skills.push({
+            name: name.trim(),
+            level: 'متوسط',
+          })
         }
       })
     }

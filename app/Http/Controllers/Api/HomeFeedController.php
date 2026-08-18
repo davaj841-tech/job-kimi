@@ -16,12 +16,12 @@ class HomeFeedController extends BaseController
 {
     public function __invoke(): JsonResponse
     {
-        $payload = Cache::remember('home_feed_v2', 45, function () {
+        $payload = Cache::remember('home_feed_v3', 45, function () {
             $jobs = JobPost::query()
-                ->with(['classification:id,name'])
+                ->with(['classification:id,name,parent_id'])
                 ->where('status', 'approved')
                 ->latest('id')
-                ->limit(12)
+                ->limit(80)
                 ->get(['id', 'title', 'company_name', 'province', 'city', 'status', 'job_classification_id', 'created_at', 'registration_deadline']);
 
             $exams = Exam::query()
@@ -55,10 +55,13 @@ class HomeFeedController extends BaseController
                 ->get(['id', 'name', 'price', 'duration_days', 'features', 'is_active']);
 
             $classifications = JobClassification::query()
+                ->with(['children' => fn ($q) => $q->where('is_active', true)->select('id', 'parent_id', 'name')])
                 ->where('is_active', true)
+                ->whereNull('parent_id')
+                ->orderBy('sort_order')
                 ->orderBy('id')
                 ->limit(24)
-                ->get(['id', 'name']);
+                ->get(['id', 'name', 'parent_id']);
 
             return [
                 'jobs' => $jobs->map(function (JobPost $j) {
@@ -68,6 +71,8 @@ class HomeFeedController extends BaseController
                         'company_name' => $j->company_name,
                         'province' => $j->province,
                         'city' => $j->city,
+                        'job_classification_id' => $j->job_classification_id,
+                        'classification_parent_id' => $j->classification?->parent_id,
                         'classification_name' => $j->classification?->name,
                         'created_at' => $j->created_at?->toIso8601String(),
                         'registration_deadline' => $j->registration_deadline?->toIso8601String(),
@@ -120,6 +125,8 @@ class HomeFeedController extends BaseController
                 'classifications' => $classifications->map(fn ($c) => [
                     'id' => $c->id,
                     'name' => $c->name,
+                    'parent_id' => $c->parent_id,
+                    'child_ids' => $c->children?->pluck('id')->map(fn ($id) => (int) $id)->values()->all() ?? [],
                 ])->values()->all(),
             ];
         });

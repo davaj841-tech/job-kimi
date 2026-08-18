@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\BaseController;
 use App\Models\ContentTemplate;
 use App\Models\GeneratedContent;
 use App\Models\JobPost;
+use App\Services\CatalogAttachService;
 use App\Services\Content\ContentGeneratorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -103,7 +104,20 @@ class GeneratedContentAdminController extends BaseController
             'content' => ['sometimes', 'string'],
             'status' => ['sometimes', 'in:draft,scheduled,published,failed,skipped'],
             'scheduled_for' => ['nullable', 'date'],
+            'job_classification_id' => ['nullable', 'integer', 'exists:job_classifications,id'],
+            'auto_catalog' => ['sometimes', 'boolean'],
+            'exam_ids' => ['nullable', 'array'],
+            'exam_ids.*' => ['integer', 'exists:exams,id'],
+            'pdf_ids' => ['nullable', 'array'],
+            'pdf_ids.*' => ['integer', 'exists:pdf_products,id'],
         ]);
+
+        if (array_key_exists('exam_ids', $data)) {
+            $data['exam_ids'] = app(CatalogAttachService::class)->intIds($data['exam_ids']);
+        }
+        if (array_key_exists('pdf_ids', $data)) {
+            $data['pdf_ids'] = app(CatalogAttachService::class)->intIds($data['pdf_ids']);
+        }
 
         if (isset($data['content'])) {
             // Strip dangerous tags from admin edits; keep basic formatting.
@@ -242,6 +256,10 @@ class GeneratedContentAdminController extends BaseController
             'content_type_label' => $c->content_type instanceof ContentType ? $c->content_type->label() : $c->content_type,
             'status' => $c->status instanceof ContentStatus ? $c->status->value : $c->status,
             'job_post_id' => $c->job_post_id,
+            'job_classification_id' => $c->job_classification_id ?: $c->jobPost?->job_classification_id,
+            'auto_catalog' => (bool) ($c->auto_catalog ?? true),
+            'exam_ids' => $c->exam_ids ?? [],
+            'pdf_ids' => $c->pdf_ids ?? [],
             'job_title' => $c->jobPost?->title,
             'company_name' => $c->jobPost?->company_name,
             'blog_post_id' => $c->blog_post_id,

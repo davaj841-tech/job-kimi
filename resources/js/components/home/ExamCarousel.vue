@@ -88,7 +88,7 @@ function toFaDigits(v: string | number) {
 
 function goExam(exam: any) {
   const slug = exam.slug || exam.id
-  router.push(`/exams/${slug}`)
+  router.push(`/exams/${slug}/start`)
 }
 </script>
 

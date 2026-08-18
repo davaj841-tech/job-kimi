@@ -19,6 +19,11 @@
         v-html="post.content"
       />
 
+      <RelatedCatalog
+        :exams="post.catalog_exams || []"
+        :pdfs="post.catalog_pdfs || []"
+      />
+
       <section class="border-t border-surface-line pt-4">
         <h2 class="mb-3 text-sm font-bold">نظرات</h2>
         <form
@@ -74,6 +79,7 @@ import { useRoute } from 'vue-router'
 import api from '../../api/client'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import PageShell from '../../components/layout/PageShell.vue'
+import RelatedCatalog from '../../components/RelatedCatalog.vue'
 import ShareModal from '../../components/ShareModal.vue'
 import { setBlogPostMeta } from '../../services/meta'
 import { useAuthStore } from '../../stores/auth'

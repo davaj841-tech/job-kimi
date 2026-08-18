@@ -106,8 +106,18 @@ class ExamAttemptController extends BaseController
             return [
                 'id' => $question->id,
                 'question_text' => $question->question_text,
+                'options' => [
+                    'a' => $question->option_a,
+                    'b' => $question->option_b,
+                    'c' => $question->option_c,
+                    'd' => $question->option_d,
+                ],
                 'user_answer' => $userAnswer,
                 'correct_answer' => $question->correct_answer,
+                'user_answer_label' => \App\Services\ReportCardPDFService::optionLetter($userAnswer),
+                'correct_answer_label' => \App\Services\ReportCardPDFService::optionLetter($question->correct_answer),
+                'user_answer_text' => ExamService::optionBody($question, $userAnswer),
+                'correct_answer_text' => ExamService::optionBody($question, $question->correct_answer),
                 'is_correct' => $userAnswer !== null && $userAnswer !== '' && strtolower((string) $userAnswer) === strtolower($question->correct_answer),
                 'explanation' => $question->explanation,
             ];
@@ -143,8 +153,13 @@ class ExamAttemptController extends BaseController
 
         $mode = $request->input('mode', 'missed');
         $answers = $previous->answers ?? [];
+        $sourceIds = $this->examService->cachedQuestionIds($previous->id);
+        if ($sourceIds === []) {
+            $sourceIds = array_map('intval', array_keys($answers));
+        }
         $wrongIds = Question::query()
             ->where('exam_id', $exam->id)
+            ->when($sourceIds !== [], fn ($q) => $q->whereIn('id', $sourceIds))
             ->get()
             ->filter(function (Question $question) use ($answers, $mode) {
                 $userAnswer = $answers[(string) $question->id] ?? $answers[$question->id] ?? null;
@@ -168,10 +183,17 @@ class ExamAttemptController extends BaseController
             return $this->errorResponse($msg, 422);
         }
 
-        return $this->beginAttempt($request, $id, $wrongIds, true);
+        return $this->beginAttempt(
+            $request,
+            $id,
+            $wrongIds,
+            true,
+            $previous->id,
+            in_array($mode, ['blank', 'wrong'], true) ? $mode : 'wrong'
+        );
     }
 
-    protected function beginAttempt(Request $request, int $examId, ?array $onlyQuestionIds = null, bool $isRetryWrong = false): JsonResponse
+    protected function beginAttempt(Request $request, int $examId, ?array $onlyQuestionIds = null, bool $isRetryWrong = false, ?int $parentAttemptId = null, ?string $retryMode = null): JsonResponse
     {
         $user = $request->user();
         $exam = $this->examRepository->findById($examId);
@@ -213,7 +235,7 @@ class ExamAttemptController extends BaseController
         }
 
         try {
-            $started = $this->startExamAttempt->handle($user, $exam, null, $onlyQuestionIds, $isRetryWrong);
+            $started = $this->startExamAttempt->handle($user, $exam, null, $onlyQuestionIds, $isRetryWrong, $parentAttemptId, $retryMode);
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'SUBSCRIPTION_REQUIRED') {
                 return response()->json($this->examService->subscriptionRequiredPayload(), 403);

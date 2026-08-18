@@ -21,6 +21,7 @@ class ReportCardPDFService
         $payload = $this->examService->buildAnswerSheet($attempt);
         $fonts = $this->persianFont->ensure();
         $finishedAt = $attempt->finished_at ?? $attempt->updated_at ?? now();
+        $startedAt = $attempt->started_at;
 
         $html = view('pdf.report-card', [
             'attempt' => $attempt,
@@ -28,8 +29,13 @@ class ReportCardPDFService
             'user' => $attempt->user,
             'sheet' => $payload['sheet'],
             'analysis' => $payload['analysis'],
+            'siteName' => (string) (\App\Models\Setting::getFilled('site_name') ?: 'جاب‌آزمون'),
+            'logoDataUri' => self::logoDataUri(),
             'fontRegular' => $this->persianFont->cssUrl($fonts['regular']),
             'fontBold' => $this->persianFont->cssUrl($fonts['bold']),
+            'startedAtFa' => $startedAt
+                ? self::fa(Jalalian::fromCarbon(Carbon::parse($startedAt))->format('Y/m/d H:i'))
+                : '—',
             'finishedAtFa' => self::fa(Jalalian::fromCarbon(Carbon::parse($finishedAt))->format('Y/m/d H:i')),
             'generatedAtFa' => self::fa(Jalalian::now()->format('Y/m/d H:i')),
         ])->render();
@@ -71,6 +77,43 @@ class ReportCardPDFService
             '8' => '۸',
             '9' => '۹',
         ]);
+    }
+
+    public static function faPct(mixed $value): string
+    {
+        $n = (float) $value;
+        $formatted = abs($n - round($n)) < 0.05
+            ? (string) (int) round($n)
+            : number_format($n, 1, '.', '');
+
+        return self::fa($formatted).'٪';
+    }
+
+    public static function logoDataUri(): ?string
+    {
+        $raw = (string) (\App\Models\Setting::getFilled('site_logo') ?: '');
+        if ($raw === '') {
+            return null;
+        }
+
+        $url = \App\Support\PublicAsset::url($raw);
+        $full = null;
+        if (str_starts_with($url, '/storage/')) {
+            $full = storage_path('app/public/'.ltrim(substr($url, 9), '/'));
+        } elseif (str_starts_with($url, '/')) {
+            $full = public_path(ltrim($url, '/'));
+        }
+
+        if (! $full || ! is_file($full)) {
+            return null;
+        }
+
+        $mime = mime_content_type($full) ?: 'image/png';
+        if (! str_starts_with($mime, 'image/')) {
+            return null;
+        }
+
+        return 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($full));
     }
 
     public static function optionLetter(?string $letter): string

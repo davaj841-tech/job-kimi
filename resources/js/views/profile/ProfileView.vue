@@ -83,49 +83,117 @@
     >
       <Card v-if="activeTab === 'profile'" key="profile" class="space-y-3 p-5">
         <form class="space-y-3 text-sm" @submit.prevent="saveProfile">
-          <div>
-            <label class="mb-1 block text-xs text-ink-muted">نام</label>
-            <input
-              v-model="form.name"
-              class="input-field"
-              placeholder="نام و نام خانوادگی"
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs text-ink-muted">نام و نام خانوادگی</label>
+              <input
+                v-model="form.name"
+                class="input-field"
+                placeholder="نام و نام خانوادگی"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs text-ink-muted">ایمیل</label>
+              <input
+                v-model="form.email"
+                type="email"
+                class="input-field text-left"
+                dir="ltr"
+                placeholder="you@example.com"
+              />
+            </div>
+            <div class="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
+              <span class="text-ink-muted">موبایل</span>
+              <span class="font-medium" dir="ltr">{{ auth.user?.mobile || '—' }}</span>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs text-ink-muted">تلفن منزل</label>
+              <input
+                v-model="form.home_phone"
+                class="input-field text-left"
+                dir="ltr"
+                maxlength="11"
+                placeholder="02112345678"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs text-ink-muted">وضعیت سربازی</label>
+              <select v-model="form.military_status" class="input-field">
+                <option value="">انتخاب کنید</option>
+                <option v-for="m in militaryOptions" :key="m" :value="m">{{ m }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs text-ink-muted">سابقه بیمه</label>
+              <input
+                v-model="form.insurance_history"
+                class="input-field"
+                placeholder="مثلاً ۵ سال تامین اجتماعی"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs text-ink-muted">کد ملی</label>
+              <input
+                :value="form.national_code"
+                class="input-field text-left"
+                dir="ltr"
+                maxlength="10"
+                inputmode="numeric"
+                placeholder="۱۰ رقم"
+                @input="form.national_code = String($event.target.value || '').replace(/\D/g, '').slice(0, 10)"
+              />
+            </div>
+            <JalaliBirthInput v-model="form.birth_date" />
+            <div>
+              <label class="mb-1 block text-xs text-ink-muted">استان محل تولد</label>
+              <select v-model="form.birth_province" class="input-field" @change="form.birth_city = ''">
+                <option value="">انتخاب استان</option>
+                <option v-for="p in IRAN_PROVINCES" :key="p" :value="p">{{ p }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs text-ink-muted">شهرستان محل تولد</label>
+              <select v-model="form.birth_city" class="input-field" :disabled="!form.birth_province">
+                <option value="">انتخاب شهرستان</option>
+                <option v-for="c in cityOptions" :key="c" :value="c">{{ c }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs text-ink-muted">وضعیت تاهل</label>
+              <select v-model="form.marital_status" class="input-field">
+                <option value="">انتخاب کنید</option>
+                <option value="single">مجرد</option>
+                <option value="married">متاهل</option>
+                <option value="divorced">مطلقه / متعلقه</option>
+              </select>
+            </div>
+            <SearchSelect
+              v-model="form.field_of_study"
+              label="رشته تحصیلی"
+              placeholder="جستجوی رشته…"
+              :options="ACADEMIC_FIELDS"
             />
+            <div class="md:col-span-2">
+              <label class="mb-1 block text-xs text-ink-muted">آدرس محل سکونت</label>
+              <input v-model="form.address" class="input-field" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs text-ink-muted">کد پستی</label>
+              <input
+                :value="form.postal_code"
+                class="input-field text-left"
+                dir="ltr"
+                maxlength="10"
+                inputmode="numeric"
+                placeholder="۱۰ رقم"
+                @input="form.postal_code = String($event.target.value || '').replace(/\D/g, '').slice(0, 10)"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <PhotoUpload v-model="form.photo" />
+            </div>
           </div>
-          <div class="flex items-center justify-between">
-            <span class="text-ink-muted">موبایل</span>
-            <span class="font-medium" dir="ltr">{{
-              auth.user?.mobile || '—'
-            }}</span>
-          </div>
-          <div>
-            <label class="mb-1 block text-xs text-ink-muted">ایمیل</label>
-            <input
-              v-model="form.email"
-              type="email"
-              class="input-field text-left"
-              dir="ltr"
-              lang="en"
-              inputmode="email"
-              autocomplete="email"
-              autocapitalize="off"
-              spellcheck="false"
-              placeholder="you@example.com"
-            />
-          </div>
-          <div>
-            <label class="mb-1 block text-xs text-ink-muted">استان *</label>
-            <select v-model="form.province" class="input-field" required>
-              <option value="">انتخاب استان</option>
-              <option v-for="p in IRAN_PROVINCES" :key="p" :value="p">
-                {{ p }}
-              </option>
-            </select>
-          </div>
-          <button
-            type="submit"
-            class="btn-primary"
-            :disabled="saving || !form.province"
-          >
+          <button type="submit" class="btn-primary" :disabled="saving">
             {{ saving ? '...' : 'ذخیره تغییرات' }}
           </button>
         </form>
@@ -135,30 +203,26 @@
         <form class="space-y-3 text-sm" @submit.prevent="changePassword">
           <div>
             <label class="mb-1 block text-xs text-ink-muted">رمز فعلی</label>
-            <input
+            <PasswordInput
               v-model="passwordForm.current"
-              type="password"
-              class="input-field"
+              input-class="input-field"
               autocomplete="current-password"
             />
           </div>
           <div>
             <label class="mb-1 block text-xs text-ink-muted">رمز جدید</label>
-            <input
+            <PasswordInput
               v-model="passwordForm.password"
-              type="password"
-              class="input-field"
-              lang="en"
+              input-class="input-field"
               autocomplete="new-password"
             />
             <PasswordRulesHint :password="passwordForm.password" />
           </div>
           <div>
             <label class="mb-1 block text-xs text-ink-muted">تکرار رمز جدید</label>
-            <input
+            <PasswordInput
               v-model="passwordForm.password_confirmation"
-              type="password"
-              class="input-field"
+              input-class="input-field"
               autocomplete="new-password"
             />
           </div>
@@ -221,15 +285,20 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../api/client'
+import PasswordInput from '../../components/PasswordInput.vue'
 import PasswordRulesHint from '../../components/auth/PasswordRulesHint.vue'
 import EmptyState from '../../components/EmptyState.vue'
+import JalaliBirthInput from '../../components/resume/JalaliBirthInput.vue'
+import PhotoUpload from '../../components/resume/PhotoUpload.vue'
+import SearchSelect from '../../components/resume/SearchSelect.vue'
 import Badge from '../../components/ui/Badge.vue'
 import Card from '../../components/ui/Card.vue'
 import Skeleton from '../../components/ui/Skeleton.vue'
+import { ACADEMIC_FIELDS } from '../../data/academicFields'
 import { useToast } from '../../composables/useToast'
 import { useAuthStore } from '../../stores/auth'
 import { apiErrorMessage, formatDate, formatPrice, unwrapItem } from '../../utils/format'
-import { IRAN_PROVINCES } from '../../utils/provinces'
+import { IRAN_PROVINCES, citiesForProvince } from '../../utils/iranCities'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -247,7 +316,31 @@ const saving = ref(false)
 const pwdSaving = ref(false)
 const activityLoading = ref(false)
 const activity = ref<any[]>([])
-const form = reactive({ name: '', email: '', province: '' })
+const form = reactive({
+  name: '',
+  email: '',
+  national_code: '',
+  home_phone: '',
+  military_status: '',
+  insurance_history: '',
+  birth_date: '',
+  birth_province: '',
+  birth_city: '',
+  marital_status: '',
+  field_of_study: '',
+  address: '',
+  postal_code: '',
+  photo: '',
+})
+const militaryOptions = [
+  'پایان خدمت',
+  'معافیت دائم',
+  'معافیت تحصیلی',
+  'در حال خدمت',
+  'مشمول',
+  'غیرمشمول',
+]
+const cityOptions = computed(() => citiesForProvince(form.birth_province || ''))
 const passwordForm = reactive({
   current: '',
   password: '',
@@ -260,9 +353,21 @@ const initials = computed(() => {
 })
 
 function syncForm() {
-  form.name = auth.user?.name || ''
-  form.email = auth.user?.email || ''
-  form.province = auth.user?.province || ''
+  const u = auth.user || {}
+  form.name = u.name || ''
+  form.email = u.email || ''
+  form.national_code = String(u.national_code || '').replace(/\D/g, '').slice(0, 10)
+  form.home_phone = u.home_phone || ''
+  form.military_status = u.military_status || ''
+  form.insurance_history = u.insurance_history || ''
+  form.birth_date = u.birth_date || ''
+  form.birth_province = u.birth_province || u.province || ''
+  form.birth_city = u.birth_city || ''
+  form.marital_status = u.marital_status || ''
+  form.field_of_study = u.field_of_study || ''
+  form.address = u.address || ''
+  form.postal_code = String(u.postal_code || '').replace(/\D/g, '').slice(0, 10)
+  form.photo = u.avatar || ''
 }
 
 async function saveProfile() {
@@ -271,7 +376,19 @@ async function saveProfile() {
     await auth.updateProfile({
       name: form.name || null,
       email: form.email || null,
-      province: form.province,
+      province: form.birth_province || null,
+      national_code: form.national_code || null,
+      home_phone: form.home_phone || null,
+      military_status: form.military_status || null,
+      insurance_history: form.insurance_history || null,
+      birth_date: form.birth_date || null,
+      birth_province: form.birth_province || null,
+      birth_city: form.birth_city || null,
+      marital_status: form.marital_status || null,
+      field_of_study: form.field_of_study || null,
+      address: form.address || null,
+      postal_code: form.postal_code || null,
+      photo: form.photo?.startsWith('data:image') ? form.photo : undefined,
     })
     toast.success('پروفایل ذخیره شد')
     syncForm()

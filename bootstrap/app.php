@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Middleware\CacheResponse;
+use App\Http\Middleware\CheckInstalled;
 use App\Http\Middleware\CheckSubscription;
 use App\Http\Middleware\EnsureAuth;
 use App\Http\Middleware\EnsureOperatorPermission;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\FeatureEnabled;
 use App\Http\Middleware\ForceHttps;
+use App\Http\Middleware\PreventInstallAccess;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\TrackPageView;
 use App\Http\Middleware\TrustProxies;
@@ -16,6 +18,7 @@ use App\Services\SiteErrorLogger;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -24,6 +27,15 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         apiPrefix: 'api/v1',
+        then: function () {
+            if (! is_file(storage_path('installed'))) {
+                Route::middleware('web')->group(base_path('routes/install.php'));
+            } else {
+                Route::middleware('web')->any('/install/{any?}', function () {
+                    return redirect('/');
+                })->where('any', '.*');
+            }
+        },
     )
     ->withMiddleware(function (Middleware $middleware) {
         $trustedProxies = collect([
@@ -41,6 +53,8 @@ return Application::configure(basePath: dirname(__DIR__))
         }
 
         $middleware->prepend(TrustProxies::class);
+        $middleware->prependToGroup('web', CheckInstalled::class);
+        $middleware->prependToGroup('api', CheckInstalled::class);
         $middleware->throttleApi('api');
         $middleware->validateCsrfTokens(except: [
             'csp-report',
@@ -55,6 +69,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'track.page' => TrackPageView::class,
             'cache.response' => CacheResponse::class,
             'feature' => FeatureEnabled::class,
+            'install.check' => CheckInstalled::class,
+            'install.prevent' => PreventInstallAccess::class,
         ]);
         $middleware->web(append: [
             ForceHttps::class,

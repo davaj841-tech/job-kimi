@@ -32,6 +32,8 @@ class StartExamAttempt
         ?string $subject = null,
         ?array $onlyQuestionIds = null,
         bool $isRetryWrong = false,
+        ?int $parentAttemptId = null,
+        ?string $retryMode = null,
     ): array {
         if ($exam->status !== 'published') {
             throw new RuntimeException('آزمون یافت نشد یا منتشر نشده است.');
@@ -63,6 +65,9 @@ class StartExamAttempt
             'total_wrong' => 0,
             'status' => 'in_progress',
             'answers' => [],
+            'is_retry_wrong' => $isRetryWrong,
+            'parent_attempt_id' => $parentAttemptId,
+            'retry_mode' => $retryMode,
         ]);
 
         $ttl = max(60, $exam->duration_minutes * 60);

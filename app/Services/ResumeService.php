@@ -30,7 +30,7 @@ class ResumeService
             'user_id' => $payload['user_id'],
             'title' => $title,
             'data' => $data,
-            'template_id' => (int) ($payload['template_id'] ?? 1),
+            'template_id' => $this->clampTemplateId($payload['template_id'] ?? 1),
             'is_active' => true,
         ]);
     }
@@ -47,7 +47,7 @@ class ResumeService
         }
 
         if (array_key_exists('template_id', $payload)) {
-            $updates['template_id'] = (int) $payload['template_id'];
+            $updates['template_id'] = $this->clampTemplateId($payload['template_id']);
         }
 
         if (array_key_exists('data', $payload) && is_array($payload['data'])) {
@@ -78,10 +78,23 @@ class ResumeService
 
     public function switchTemplate(Resume $resume, int $templateId): Resume
     {
-        $resume->update(['template_id' => $templateId]);
+        $resume->update(['template_id' => $this->clampTemplateId($templateId)]);
         $this->resumePDFService->generatePDF($resume->fresh());
 
         return $resume->fresh();
+    }
+
+    protected function clampTemplateId(mixed $id): int
+    {
+        $n = (int) ($id ?: 1);
+        if ($n < 1) {
+            $n = 1;
+        }
+        if ($n > 10) {
+            $n = (($n - 1) % 10) + 1;
+        }
+
+        return $n;
     }
 
     /**

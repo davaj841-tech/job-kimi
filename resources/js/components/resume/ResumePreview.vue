@@ -1,210 +1,300 @@
 <template>
   <div
     id="resume-preview"
-    class="bg-white text-slate-900"
-    :class="rootClass"
+    class="resume-a4"
+    :class="'layout-' + layout"
+    :style="{
+      '--accent': theme.accent,
+      '--header': headerBg,
+      '--sidebar': theme.sidebar,
+      fontFamily: theme.fontFamily,
+    }"
     dir="rtl"
   >
-    <!-- Modern / Creative -->
     <div
-      v-if="templateStyle === 'modern' || templateStyle === 'creative'"
-      class="p-7"
+      v-if="layout === 'sidebar' || layout === 'split'"
+      class="cv-split"
     >
+      <aside class="cv-side">
+        <img
+          v-if="data.personal?.photo"
+          :src="data.personal.photo"
+          class="cv-photo"
+          alt=""
+        />
+        <h1 class="cv-side-name">{{ data.personal?.full_name || 'نام و نام خانوادگی' }}</h1>
+        <p
+          v-if="data.target_job"
+          class="cv-role"
+        >
+          {{ data.target_job }}
+        </p>
+        <h2>اطلاعات شخصی</h2>
+        <div
+          v-for="(row, i) in personalRows"
+          :key="'p-' + i"
+          class="cv-fact cv-fact-stack"
+        >
+          <span class="cv-fact-k">{{ row.label }}</span>
+          <span class="cv-fact-v">{{ row.value }}</span>
+        </div>
+        <template v-if="(data.skills || []).length">
+          <h2>مهارت‌ها</h2>
+          <div class="cv-chips">
+            <span
+              v-for="(s, i) in data.skills"
+              :key="'sk-' + i"
+              class="cv-chip"
+            >
+              {{ s.name }}
+              <em v-if="s.level">{{ s.level }}</em>
+            </span>
+          </div>
+        </template>
+        <template v-if="(data.languages || []).length">
+          <h2>زبان‌ها</h2>
+          <div
+            v-for="(lang, i) in data.languages"
+            :key="'lang-' + i"
+            class="cv-lang"
+          >
+            <span>{{ lang.name }}</span>
+            <span class="cv-dots">
+              <i
+                v-for="n in 5"
+                :key="n"
+                :class="{ on: n <= levelDots(lang.level) }"
+              />
+            </span>
+          </div>
+        </template>
+      </aside>
+      <div class="cv-main">
+        <section
+          v-if="data.summary"
+          class="cv-sec"
+        >
+          <h2>معرفی</h2>
+          <p class="cv-text">{{ data.summary }}</p>
+        </section>
+        <div class="cv-two">
+        <section
+          v-if="(data.experience || []).length"
+          class="cv-sec"
+        >
+          <h2>سوابق شغلی</h2>
+          <div
+            v-for="(exp, i) in data.experience"
+            :key="'exp-s-' + i"
+            class="cv-item"
+          >
+            <div class="cv-item-top">
+              <div>
+                <p class="cv-item-title">{{ exp.title }}</p>
+                <p class="cv-item-sub">{{ exp.company }}</p>
+              </div>
+              <span class="cv-date">{{ expRange(exp) }}</span>
+            </div>
+            <p
+              v-if="exp.description"
+              class="cv-text"
+            >
+              {{ exp.description }}
+            </p>
+          </div>
+        </section>
+        <section
+          v-if="(data.education || []).length"
+          class="cv-sec"
+        >
+          <h2>تحصیلات</h2>
+          <div
+            v-for="(edu, i) in data.education"
+            :key="'edu-s-' + i"
+            class="cv-item"
+          >
+            <div class="cv-item-top">
+              <div>
+                <p class="cv-item-title">
+                  {{ [edu.degree, edu.field].filter(Boolean).join(' — ') }}
+                </p>
+                <p class="cv-item-sub">{{ edu.university }}</p>
+                <p
+                  v-if="edu.gpa"
+                  class="cv-item-sub"
+                >
+                  معدل {{ toFa(edu.gpa) }}
+                </p>
+              </div>
+              <span class="cv-date">{{ eduRange(edu) }}</span>
+            </div>
+          </div>
+        </section>
+        </div>
+      </div>
+    </div>
+
+    <template v-else>
       <div
-        class="flex items-start gap-4 border-b-2 pb-5"
-        :class="templateStyle === 'creative' ? 'border-desk-orange' : 'border-brand'"
+        v-if="isBanner"
+        class="cv-banner"
       >
         <img
           v-if="data.personal?.photo"
           :src="data.personal.photo"
-          class="h-20 w-20 rounded-full object-cover"
+          class="cv-photo"
           alt=""
         />
-        <div class="min-w-0 flex-1">
-          <h1 class="text-2xl font-black">{{ data.personal?.full_name || 'نام شما' }}</h1>
+        <div>
+          <h1>{{ data.personal?.full_name || 'نام و نام خانوادگی' }}</h1>
           <p
-            class="mt-1 text-base font-medium"
-            :class="templateStyle === 'creative' ? 'text-desk-orange' : 'text-brand'"
+            v-if="data.target_job"
+            class="cv-role"
           >
-            {{ data.target_job || 'عنوان شغلی' }}
+            {{ data.target_job }}
           </p>
-          <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600">
-            <span v-if="data.personal?.email">{{ data.personal.email }}</span>
-            <span v-if="data.personal?.mobile">{{ data.personal.mobile }}</span>
-            <span v-if="data.personal?.national_code"
-              >کد ملی: {{ data.personal.national_code }}</span
-            >
-            <span v-if="data.personal?.birth_date"
-              >تولد: {{ data.personal.birth_date }}</span
-            >
-            <span v-if="birthPlace">محل تولد: {{ birthPlace }}</span>
-            <span v-if="maritalLabel">{{ maritalLabel }}</span>
-            <span v-if="data.personal?.field_of_study"
-              >رشته: {{ data.personal.field_of_study }}</span
-            >
-            <span v-if="data.personal?.address">{{ data.personal.address }}</span>
-          </div>
         </div>
       </div>
+      <template v-else>
+        <div class="cv-bar" />
+        <header class="cv-head">
+          <img
+            v-if="data.personal?.photo"
+            :src="data.personal.photo"
+            class="cv-photo"
+            alt=""
+          />
+          <div class="cv-head-text">
+            <h1>{{ data.personal?.full_name || 'نام و نام خانوادگی' }}</h1>
+            <p
+              v-if="data.target_job"
+              class="cv-role"
+            >
+              {{ data.target_job }}
+            </p>
+          </div>
+        </header>
+      </template>
 
-      <p
+      <section class="cv-sec">
+        <h2>اطلاعات شخصی</h2>
+        <div class="cv-facts">
+          <div
+            v-for="(row, i) in personalRows"
+            :key="i"
+            class="cv-fact"
+          >
+            <span class="cv-fact-k">{{ row.label }}</span>
+            <span class="cv-fact-v">{{ row.value }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section
         v-if="data.summary"
-        class="mt-4 text-sm leading-relaxed text-slate-700"
+        class="cv-sec"
       >
-        {{ data.summary }}
-      </p>
+        <h2>معرفی</h2>
+        <p class="cv-text">{{ data.summary }}</p>
+      </section>
 
+      <div class="cv-two">
       <section
         v-if="(data.experience || []).length"
-        class="mt-5"
+        class="cv-sec"
       >
-        <h2 class="mb-3 border-b border-slate-200 pb-1 text-sm font-bold">سوابق شغلی</h2>
-        <div
-          v-for="(exp, i) in data.experience"
-          :key="i"
-          class="mb-3"
-        >
-          <div class="flex justify-between gap-2">
-            <div>
-              <h3 class="text-sm font-bold">{{ exp.title }}</h3>
-              <p class="text-xs text-brand">{{ exp.company }}</p>
-            </div>
-            <span class="shrink-0 text-xs text-slate-500">{{ dateRange(exp) }}</span>
-          </div>
-          <p
-            v-if="exp.description"
-            class="mt-1 whitespace-pre-line text-xs leading-relaxed text-slate-600"
-          >
-            {{ exp.description }}
-          </p>
-        </div>
+        <h2>سوابق شغلی</h2>
+        <table class="cv-grid">
+          <thead>
+            <tr>
+              <th>عنوان</th>
+              <th>محل کار</th>
+              <th>از تاریخ تا تاریخ</th>
+              <th>توضیحات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(exp, i) in data.experience" :key="'exp-' + i">
+              <td>{{ exp.title }}</td>
+              <td>{{ exp.company }}</td>
+              <td dir="ltr">{{ expRange(exp) }}</td>
+              <td>{{ exp.description }}</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
-
       <section
         v-if="(data.education || []).length"
-        class="mt-5"
+        class="cv-sec"
       >
-        <h2 class="mb-3 border-b border-slate-200 pb-1 text-sm font-bold">تحصیلات</h2>
-        <div
-          v-for="(edu, i) in data.education"
-          :key="i"
-          class="mb-2 flex justify-between gap-2"
-        >
-          <div>
-            <h3 class="text-sm font-bold">{{ edu.degree }} · {{ edu.field }}</h3>
-            <p class="text-xs text-slate-600">{{ edu.university }}</p>
-          </div>
-          <span class="text-xs text-slate-500">{{ yearRange(edu) }}</span>
-        </div>
+        <h2>تحصیلات</h2>
+        <table class="cv-grid">
+          <thead>
+            <tr>
+              <th>مقطع / رشته</th>
+              <th>دانشگاه</th>
+              <th>از تاریخ تا تاریخ</th>
+              <th>معدل</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(edu, i) in data.education" :key="'edu-' + i">
+              <td>{{ [edu.degree, edu.field].filter(Boolean).join(' — ') }}</td>
+              <td>{{ edu.university }}</td>
+              <td dir="ltr">{{ eduRange(edu) }}</td>
+              <td dir="ltr">{{ edu.gpa ? toFa(edu.gpa) : '' }}</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
+      </div>
 
       <section
         v-if="(data.skills || []).length"
-        class="mt-5"
+        class="cv-sec"
       >
-        <h2 class="mb-3 border-b border-slate-200 pb-1 text-sm font-bold">مهارت‌ها</h2>
-        <div class="flex flex-wrap gap-1.5">
+        <h2>مهارت‌ها</h2>
+        <div class="cv-chips">
           <span
-            v-for="(skill, i) in data.skills"
-            :key="i"
-            class="rounded-md bg-slate-100 px-2 py-1 text-xs"
+            v-for="(s, i) in data.skills"
+            :key="'sk-' + i"
+            class="cv-chip"
           >
-            {{ skill.name || skill }}
+            {{ s.name }}
+            <em v-if="s.level">{{ s.level }}</em>
           </span>
         </div>
       </section>
 
       <section
         v-if="(data.languages || []).length"
-        class="mt-5"
+        class="cv-sec"
       >
-        <h2 class="mb-3 border-b border-slate-200 pb-1 text-sm font-bold">زبان‌ها</h2>
-        <div class="flex flex-wrap gap-2 text-xs">
-          <span
+        <h2>زبان‌ها</h2>
+        <div class="cv-langs">
+          <div
             v-for="(lang, i) in data.languages"
-            :key="i"
+            :key="'lang-' + i"
+            class="cv-lang"
           >
-            {{ lang.name }}<span v-if="lang.level"> ({{ lang.level }})</span>
-          </span>
+            <span>{{ lang.name }}</span>
+            <span class="cv-dots">
+              <i
+                v-for="n in 5"
+                :key="n"
+                :class="{ on: n <= levelDots(lang.level) }"
+              />
+            </span>
+          </div>
         </div>
       </section>
-    </div>
-
-    <!-- Classic -->
-    <div
-      v-else-if="templateStyle === 'classic'"
-      class="p-7 font-serif"
-    >
-      <div class="border-b border-slate-800 pb-4 text-center">
-        <h1 class="text-2xl font-bold tracking-wide">{{ data.personal?.full_name }}</h1>
-        <p class="mt-1 text-sm">{{ data.target_job }}</p>
-        <p class="mt-2 text-xs text-slate-600">
-          {{ [data.personal?.email, data.personal?.mobile, data.personal?.address].filter(Boolean).join(' · ') }}
-        </p>
-      </div>
-      <p
-        v-if="data.summary"
-        class="mt-4 text-center text-sm italic text-slate-700"
-      >
-        {{ data.summary }}
-      </p>
-      <template
-        v-for="block in classicBlocks"
-        :key="block.title"
-      >
-        <div
-          v-if="block.show"
-          class="mt-5"
-        >
-          <h2 class="mb-2 text-center text-xs font-bold uppercase tracking-widest text-slate-800">
-            {{ block.title }}
-          </h2>
-          <div
-            class="text-xs leading-relaxed"
-            v-html="block.html"
-          />
-        </div>
-      </template>
-    </div>
-
-    <!-- Minimal -->
-    <div
-      v-else
-      class="p-7"
-    >
-      <h1 class="text-xl font-semibold tracking-tight">{{ data.personal?.full_name }}</h1>
-      <p class="text-sm text-slate-500">{{ data.target_job }}</p>
-      <p class="mt-2 text-[11px] text-slate-500">
-        {{ [data.personal?.email, data.personal?.mobile].filter(Boolean).join('  ·  ') }}
-      </p>
-      <hr class="my-4 border-slate-200" />
-      <p
-        v-if="data.summary"
-        class="mb-4 text-xs leading-6 text-slate-700"
-      >
-        {{ data.summary }}
-      </p>
-      <div
-        v-for="(exp, i) in data.experience || []"
-        :key="'m' + i"
-        class="mb-3"
-      >
-        <p class="text-xs font-semibold">{{ exp.title }} — {{ exp.company }}</p>
-        <p class="text-[10px] text-slate-400">{{ dateRange(exp) }}</p>
-        <p class="mt-1 whitespace-pre-line text-[11px] text-slate-600">{{ exp.description }}</p>
-      </div>
-      <div
-        v-if="(data.skills || []).length"
-        class="mt-4 text-[11px] text-slate-600"
-      >
-        {{ (data.skills || []).map((s) => s.name || s).join(' · ') }}
-      </div>
-    </div>
+    </template>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { resumeThemeById } from '../../data/resumeThemes'
 
 const props = defineProps({
   data: { type: Object, required: true },
@@ -212,62 +302,422 @@ const props = defineProps({
   templateId: { type: Number, default: 1 },
 })
 
-const templateStyle = computed(() => {
-  if (props.template) return props.template
-  return { 1: 'modern', 2: 'minimal', 3: 'classic' }[props.templateId] || 'modern'
-})
-
-const birthPlace = computed(() => {
-  const p = props.data?.personal || {}
-  return [p.birth_province, p.birth_city].filter(Boolean).join(' / ')
+const theme = computed(() => resumeThemeById(props.templateId))
+const layout = computed(() => theme.value.layout || 'classic')
+const isBanner = computed(() =>
+  ['banner', 'magazine', 'bold'].includes(layout.value)
+)
+const headerBg = computed(() => {
+  const h = theme.value.header
+  if (layout.value === 'classic' && (h === '#ffffff' || String(h).startsWith('#f'))) {
+    return '#0f172a'
+  }
+  return h
 })
 
 const maritalLabel = computed(() => {
-  const map = {
-    single: 'مجرد',
-    married: 'متاهل',
-    divorced: 'مطلقه / متعلقه',
-  }
+  const map = { single: 'مجرد', married: 'متاهل', divorced: 'مطلقه / متعلقه' }
   const v = props.data?.personal?.marital_status
   return v ? map[v] || v : ''
 })
 
-const rootClass = computed(() =>
-  templateStyle.value === 'creative' ? 'bg-gradient-to-br from-white to-orange-50' : '',
-)
-
-function dateRange(exp) {
-  const start = exp.start_date || ''
-  const end = exp.is_current ? 'تاکنون' : exp.end_date || ''
-  return [start, end].filter(Boolean).join(' – ')
-}
-
-function yearRange(edu) {
-  return [edu.start_year, edu.end_year].filter(Boolean).join(' – ')
-}
-
-const classicBlocks = computed(() => {
-  const d = props.data || {}
-  const expHtml = (d.experience || [])
-    .map(
-      (e) =>
-        `<p><strong>${e.title || ''}</strong> — ${e.company || ''}<br/><span style="color:#64748b">${dateRange(e)}</span><br/>${(e.description || '').replace(/\n/g, '<br/>')}</p>`,
-    )
-    .join('')
-  const eduHtml = (d.education || [])
-    .map(
-      (e) =>
-        `<p><strong>${e.degree || ''} · ${e.field || ''}</strong><br/>${e.university || ''} · ${yearRange(e)}</p>`,
-    )
-    .join('')
-  const skills = (d.skills || []).map((s) => s.name || s).join('، ')
-  const langs = (d.languages || []).map((l) => `${l.name}${l.level ? ` (${l.level})` : ''}`).join('، ')
-
+const personalRows = computed(() => {
+  const p = props.data?.personal || {}
+  const birthPlace = [p.birth_province, p.birth_city].filter(Boolean).join(' / ')
   return [
-    { title: 'سوابق شغلی', show: !!(d.experience || []).length, html: expHtml },
-    { title: 'تحصیلات', show: !!(d.education || []).length, html: eduHtml },
-    { title: 'مهارت‌ها', show: !!skills, html: `<p>${skills}</p>` },
-    { title: 'زبان‌ها', show: !!langs, html: `<p>${langs}</p>` },
-  ]
+    { label: 'موبایل', value: p.mobile },
+    { label: 'تلفن منزل', value: p.home_phone },
+    { label: 'ایمیل', value: p.email },
+    { label: 'کد ملی', value: p.national_code },
+    { label: 'تاریخ تولد', value: p.birth_date },
+    { label: 'محل تولد', value: birthPlace },
+    { label: 'وضعیت تاهل', value: maritalLabel.value },
+    { label: 'وضعیت سربازی', value: p.military_status },
+    { label: 'سابقه بیمه', value: p.insurance_history },
+    { label: 'رشته تحصیلی', value: p.field_of_study },
+    { label: 'آدرس', value: p.address },
+    { label: 'کد پستی', value: p.postal_code },
+  ].filter((r) => String(r.value || '').trim())
 })
+
+function levelDots(level) {
+  const map = {
+    مبتدی: 2,
+    متوسط: 3,
+    حرفه‌ای: 5,
+    A1: 1,
+    A2: 2,
+    B1: 3,
+    B2: 4,
+    C1: 5,
+    C2: 5,
+  }
+  return map[level] || 3
+}
+
+function toFa(n) {
+  if (n == null || n === '') return ''
+  return String(n).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[d])
+}
+
+function ym(val) {
+  const m = String(val || '').match(/^(\d{4})-(\d{1,2})/)
+  if (m) return `${m[1]}/${String(m[2]).padStart(2, '0')}`
+  return String(val || '')
+}
+
+function yearRange(start, end) {
+  const a = ym(start) || String(start || '')
+  const b = ym(end) || String(end || '')
+  if (!a && !b) return ''
+  return `${toFa(a)} تا ${toFa(b)}`.trim()
+}
+
+function eduRange(edu) {
+  const start = ym(edu.start_date) || String(edu.start_year || '')
+  const end = ym(edu.end_date) || String(edu.end_year || '')
+  return yearRange(start, end)
+}
+
+function expRange(exp) {
+  const start = ym(exp.start_date)
+  const end = exp.is_current ? 'اکنون' : ym(exp.end_date)
+  if (!start && !end) return ''
+  return `${toFa(start)}${end ? ' تا ' + (end === 'اکنون' ? end : toFa(end)) : ''}`
+}
 </script>
+
+<style scoped>
+.resume-a4 {
+  width: 210mm;
+  min-height: 297mm;
+  box-sizing: border-box;
+  background: #fff;
+  color: #0f172a;
+  padding: 0 0 18mm;
+}
+.cv-bar {
+  height: 8px;
+  background: var(--header, #0f172a);
+}
+.cv-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18mm 14px;
+}
+.cv-head-text {
+  min-width: 0;
+  flex: 1;
+}
+.cv-head h1,
+.cv-banner h1,
+.cv-side-name {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+.cv-role {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent, #1a365d);
+}
+.cv-photo {
+  width: 96px;
+  height: 128px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+.cv-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+  padding: 0 18mm;
+  margin-top: 12px;
+  align-items: start;
+}
+.cv-two .cv-sec {
+  padding: 0;
+  margin-top: 0;
+}
+.cv-main .cv-two {
+  padding-left: 12mm;
+  padding-right: 12mm;
+}
+.cv-sec {
+  padding: 0 18mm;
+  margin-top: 12px;
+}
+.cv-sec h2,
+.cv-side h2 {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--accent, #1a365d);
+  border-bottom: 1.5px solid var(--accent, #1a365d);
+  padding-bottom: 4px;
+}
+.cv-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 18px;
+}
+.cv-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5px;
+}
+.cv-grid th {
+  background: var(--accent, #1a365d);
+  color: #fff;
+  text-align: right;
+  padding: 5px 6px;
+  font-size: 10px;
+}
+.cv-grid td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 6px;
+  vertical-align: top;
+  text-align: right;
+}
+.cv-fact {
+  display: flex;
+  gap: 6px;
+  font-size: 10.5px;
+  line-height: 1.6;
+}
+.cv-fact-stack {
+  display: block;
+  margin-bottom: 6px;
+}
+.cv-fact-k {
+  color: #64748b;
+  flex-shrink: 0;
+}
+.cv-fact-k::after {
+  content: ':';
+}
+.cv-fact-v {
+  color: #0f172a;
+  font-weight: 600;
+  word-break: break-word;
+}
+.cv-text {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.9;
+  color: #334155;
+  white-space: pre-line;
+}
+.cv-item {
+  margin-bottom: 10px;
+  padding-right: 10px;
+  border-right: 2px solid #e2e8f0;
+}
+.cv-item-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+.cv-item-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+}
+.cv-item-sub {
+  margin: 2px 0 0;
+  font-size: 10.5px;
+  color: #64748b;
+}
+.cv-date {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--accent, #1a365d);
+  direction: ltr;
+  unicode-bidi: plaintext;
+}
+.cv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.cv-chip em {
+  font-style: normal;
+  color: #64748b;
+  font-size: 9.5px;
+  font-weight: 500;
+}
+.cv-langs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 22px;
+}
+.cv-lang {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.cv-dots {
+  display: inline-flex;
+  gap: 3px;
+  direction: ltr;
+}
+.cv-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  display: inline-block;
+}
+.cv-dots i.on {
+  background: var(--accent, #1a365d);
+}
+.cv-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 18mm;
+  background: var(--header, #0f172a);
+  color: #fff;
+}
+.cv-banner .cv-role {
+  color: #fff;
+  opacity: 0.9;
+}
+.cv-banner .cv-photo {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+.cv-split {
+  display: grid;
+  grid-template-columns: 68mm 1fr;
+  min-height: 297mm;
+}
+.cv-side {
+  background: var(--sidebar, #f8fafc);
+  padding: 16px 12px 20px;
+}
+.cv-side .cv-photo {
+  display: block;
+  margin: 0 auto 12px;
+}
+.cv-side-name {
+  font-size: 18px;
+  text-align: center;
+}
+.cv-side .cv-role {
+  text-align: center;
+  margin-bottom: 14px;
+}
+.cv-side h2 {
+  margin-top: 14px;
+}
+.cv-main {
+  padding: 12px 0 18px;
+}
+.cv-main .cv-sec {
+  padding-left: 12mm;
+  padding-right: 12mm;
+}
+
+.layout-timeline .cv-item {
+  border-right: 3px solid var(--accent);
+  padding-right: 14px;
+  position: relative;
+}
+.layout-cards .cv-sec {
+  margin: 10px 14mm 0;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fafafa;
+}
+.layout-cards .cv-sec h2 {
+  border-bottom-width: 0;
+  background: var(--accent);
+  color: #fff;
+  margin: -10px -12px 10px;
+  padding: 6px 12px;
+  border-radius: 10px 10px 0 0;
+}
+.layout-compact {
+  font-size: 10px;
+}
+.layout-compact .cv-sec {
+  margin-top: 8px;
+  padding: 0 14mm;
+}
+.layout-compact .cv-head h1 {
+  font-size: 20px;
+}
+.layout-elegant .cv-sec h2 {
+  border-bottom-width: 0.5px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.layout-elegant .cv-item {
+  border-right: 0;
+  border-bottom: 0.5px solid #e7e5e4;
+  padding: 0 0 8px;
+}
+.layout-bold .cv-banner {
+  padding: 28px 18mm;
+}
+.layout-bold .cv-banner h1 {
+  font-size: 32px;
+}
+.layout-magazine .cv-banner h1 {
+  font-size: 34px;
+  font-weight: 700;
+}
+.layout-sidebar .cv-side {
+  color: #fff;
+  background: var(--header, #0f172a);
+}
+.layout-sidebar .cv-side h2 {
+  color: #fff;
+  border-bottom-color: rgba(255, 255, 255, 0.35);
+}
+.layout-sidebar .cv-fact-k,
+.layout-sidebar .cv-chip em {
+  color: rgba(255, 255, 255, 0.7);
+}
+.layout-sidebar .cv-fact-v,
+.layout-sidebar .cv-side-name,
+.layout-sidebar .cv-role {
+  color: #fff;
+}
+.layout-sidebar .cv-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+.layout-sidebar .cv-dots i {
+  background: rgba(255, 255, 255, 0.25);
+}
+.layout-sidebar .cv-dots i.on {
+  background: #fff;
+}
+</style>

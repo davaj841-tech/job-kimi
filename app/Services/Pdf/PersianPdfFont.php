@@ -3,11 +3,12 @@
 namespace App\Services\Pdf;
 
 use Barryvdh\DomPDF\PDF as DomPdfWrapper;
+use FontLib\Font;
 use RuntimeException;
 
 /**
- * Ensures real Vazirmatn TTF files are available for DomPDF (Persian-capable).
- * Never substitutes DejaVu under the Vazirmatn name — that produces unreadable PDFs.
+ * Ensures real Vazirmatn TTF + UFM metrics are available for DomPDF.
+ * Without .ufm files DomPDF never loads the font into CPDF and crashes on bold text.
  */
 class PersianPdfFont
 {
@@ -37,6 +38,11 @@ class PersianPdfFont
             $bold = $regular;
         }
 
+        $this->ensureUfm($regular);
+        if ($bold !== $regular) {
+            $this->ensureUfm($bold);
+        }
+
         return [
             'regular' => $regular,
             'bold' => $bold,
@@ -55,14 +61,13 @@ class PersianPdfFont
     public function applyOptions(DomPdfWrapper $pdf): DomPdfWrapper
     {
         $this->ensure();
-        $this->purgeSubsetCaches();
         $this->writeInstalledMap();
 
         $options = $pdf->getOptions();
         $options->set('fontDir', storage_path('fonts'));
         $options->set('fontCache', storage_path('fonts'));
         $options->set('chroot', base_path());
-        $options->set('isRemoteEnabled', false);
+        $options->set('isRemoteEnabled', true);
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isFontSubsettingEnabled', false);
         $options->set('defaultFont', 'vazirmatn');
@@ -81,14 +86,19 @@ class PersianPdfFont
             foreach (glob($dir.DIRECTORY_SEPARATOR.'vazirmatn_*') ?: [] as $file) {
                 @unlink($file);
             }
-            // Also clear hashed subset files that caused Undefined array key
-            foreach (glob($dir.DIRECTORY_SEPARATOR.'*vazirmatn*') ?: [] as $file) {
-                $base = basename($file);
-                if (preg_match('/vazirmatn/i', $base) && ! preg_match('/Vazirmatn-(Regular|Bold)\.ttf$/i', $base)) {
-                    @unlink($file);
-                }
-            }
         }
+    }
+
+    protected function ensureUfm(string $ttfPath): void
+    {
+        $ufm = preg_replace('/\.ttf$/i', '.ufm', $ttfPath) ?: ($ttfPath.'.ufm');
+        if (is_file($ufm) && filemtime($ufm) >= filemtime($ttfPath) && filesize($ufm) > 1000) {
+            return;
+        }
+
+        $font = Font::load($ttfPath);
+        $font->parse();
+        $font->saveAdobeFontMetrics($ufm);
     }
 
     protected function writeInstalledMap(): void
@@ -119,13 +129,16 @@ class PersianPdfFont
             return;
         }
 
-        // Replace missing or previously corrupted DejaVu-as-Vazirmatn copies.
         $needsCopy = ! is_file($destination)
             || filesize($destination) !== filesize($source)
             || md5_file($destination) !== md5_file($source);
 
         if ($needsCopy) {
             copy($source, $destination);
+            $ufm = preg_replace('/\.ttf$/i', '.ufm', $destination);
+            if (is_string($ufm) && is_file($ufm)) {
+                @unlink($ufm);
+            }
         }
     }
 }

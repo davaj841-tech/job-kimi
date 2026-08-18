@@ -210,7 +210,7 @@ async function loadClassifications() {
 }
 
 function goExam(exam) {
-  const path = `/exams/${exam.slug || exam.id}`
+  const path = `/exams/${exam.slug || exam.id}/start`
   if (!auth.isAuthenticated) {
     router.push({ path: '/login', query: { redirect: path } })
     return

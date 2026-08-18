@@ -91,11 +91,9 @@
             <label class="mb-1 block text-xs font-bold text-ink-soft"
               >🔒 رمز عبور</label
             >
-            <input
+            <PasswordInput
               v-model="loginForm.password"
-              type="password"
-              class="input-field"
-              lang="en"
+              input-class="input-field"
               autocomplete="current-password"
               required
               placeholder="رمز عبور"
@@ -166,13 +164,11 @@
               <label class="mb-1 block text-xs font-bold text-ink-soft"
                 >🔒 رمز عبور</label
               >
-              <input
+              <PasswordInput
                 v-model="registerForm.password"
-                type="password"
-                class="input-field"
-                lang="en"
-                required
+                input-class="input-field"
                 autocomplete="new-password"
+                required
                 placeholder="حداقل ۸ کاراکتر"
               />
               <PasswordRulesHint :password="registerForm.password" />
@@ -181,13 +177,11 @@
               <label class="mb-1 block text-xs font-bold text-ink-soft"
                 >🔁 تکرار رمز</label
               >
-              <input
+              <PasswordInput
                 v-model="registerForm.password_confirmation"
-                type="password"
-                class="input-field"
-                lang="en"
-                required
+                input-class="input-field"
                 autocomplete="new-password"
+                required
                 placeholder="تکرار رمز عبور"
               />
             </div>
@@ -328,6 +322,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../api/client'
 import AuthCaptchaField from '../../components/auth/AuthCaptchaField.vue'
+import PasswordInput from '../../components/PasswordInput.vue'
 import PasswordRulesHint from '../../components/auth/PasswordRulesHint.vue'
 import SiteBrandLogo from '../../components/SiteBrandLogo.vue'
 import TrustBadges from '../../components/TrustBadges.vue'

@@ -49,7 +49,7 @@ useScrollAnimations('.home-2026')
 
 const { layout, plansVariant, ensureLoaded } = useSiteTheme()
 
-const CACHE_KEY = 'ja_home_feed_v2'
+const CACHE_KEY = 'ja_home_feed_v3'
 
 const jobs = ref<any[]>([])
 const classifications = ref<any[]>([])

@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="space-y-5">
+      <div class="space-y-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 class="text-2xl font-bold">بکاپ‌ها</h1>
@@ -36,13 +35,11 @@
       </DataTable>
       <p v-if="message" class="text-sm text-slate-600">{{ message }}</p>
     </div>
-  </AdminLayout>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
 import adminApi from '../api/client'
-import AdminLayout from '../components/layout/AdminLayout.vue'
 import DataTable from '../components/ui/DataTable.vue'
 import { formatDateTime, apiErrorMessage, unwrapList } from '../../utils/format'
 import { useToast } from '../../composables/useToast'

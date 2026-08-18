@@ -3,10 +3,10 @@
     <Transition name="fade">
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-50 flex flex-col bg-slate-900/60 backdrop-blur-sm"
+        class="fixed inset-0 z-50 flex flex-col bg-slate-900/70"
       >
         <div class="flex items-center justify-between bg-white px-4 py-3 dark:bg-slate-900">
-          <p class="text-sm font-bold">پیش‌نمایش رزومه</p>
+          <p class="text-sm font-bold">پیش‌نمایش رزومه A4</p>
           <button
             type="button"
             class="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -15,11 +15,11 @@
             <XMarkIcon class="h-5 w-5" />
           </button>
         </div>
-        <div class="flex-1 overflow-y-auto p-4">
-          <div class="mx-auto max-w-lg overflow-hidden rounded-xl shadow-2xl">
+        <div class="flex-1 overflow-auto bg-slate-300 p-4 dark:bg-slate-800">
+          <div class="preview-full mx-auto shadow-2xl">
             <ResumePreview
               :data="data"
-              :template="template"
+              :template-id="templateId"
             />
           </div>
         </div>
@@ -36,11 +36,20 @@ defineProps({
   modelValue: { type: Boolean, default: false },
   data: { type: Object, required: true },
   template: { type: String, default: 'modern' },
+  templateId: { type: Number, default: 1 },
 })
 defineEmits(['update:modelValue'])
 </script>
 
 <style scoped>
+.preview-full {
+  width: 210mm;
+  max-width: 100%;
+}
+.preview-full :deep(.resume-a4) {
+  width: 210mm;
+  max-width: 100%;
+}
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s;

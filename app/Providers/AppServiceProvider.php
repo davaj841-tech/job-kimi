@@ -41,6 +41,12 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        if (! is_file(storage_path('installed'))) {
+            $this->app['config']->set('session.driver', 'file');
+            $this->app['config']->set('cache.default', 'file');
+            $this->app['config']->set('queue.default', 'sync');
+        }
+
         $this->app->singleton(IpHelper::class);
 
         $this->app->singleton(JobNormalizerInterface::class, JobNormalizer::class);

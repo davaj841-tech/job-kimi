@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="space-y-5">
+      <div class="space-y-5">
       <h1 class="text-2xl font-bold text-gray-800">پیام‌های تماس با ما</h1>
       <div class="rounded-xl bg-white p-4 shadow-sm">
         <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -12,7 +11,7 @@
           <input
             v-model="filters.search"
             class="field"
-            placeholder="جستجو نام، ایمیل یا شماره پیگیری"
+            placeholder="جستجو نام، موبایل، ایمیل یا شماره پیگیری"
             @keyup.enter="load"
           />
           <button class="btn-orange" @click="load">اعمال</button>
@@ -49,7 +48,8 @@
         </div>
         <div class="mb-3 space-y-1 text-sm">
           <p><strong>نام:</strong> {{ active.name }}</p>
-          <p dir="ltr"><strong>Email:</strong> {{ active.email }}</p>
+          <p dir="ltr"><strong>موبایل:</strong> {{ active.mobile || '—' }}</p>
+          <p dir="ltr"><strong>ایمیل:</strong> {{ active.email }}</p>
         </div>
         <div
           class="mb-3 flex-1 space-y-2 overflow-y-auto rounded-xl bg-slate-50 p-3 text-sm"
@@ -75,13 +75,11 @@
         </form>
       </div>
     </div>
-  </AdminLayout>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import adminApi from '../api/client'
-import AdminLayout from '../components/layout/AdminLayout.vue'
 import DataTable from '../components/ui/DataTable.vue'
 import { unwrapList, apiErrorMessage } from '../../utils/format'
 import { useToast } from '../../composables/useToast'
@@ -96,7 +94,8 @@ const columns = [
   { key: 'index', label: '#' },
   { key: 'tracking_code', label: 'پیگیری' },
   { key: 'name', label: 'نام' },
-  { key: 'email', label: 'Email' },
+  { key: 'email', label: 'ایمیل' },
+  { key: 'mobile', label: 'موبایل' },
   { key: 'subject', label: 'موضوع' },
   { key: 'status', label: 'وضعیت' },
 ]

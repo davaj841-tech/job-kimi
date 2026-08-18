@@ -28,6 +28,7 @@ class ContactMessageAdminController extends BaseController
                 $q->where('tracking_code', 'like', "%{$s}%")
                     ->orWhere('name', 'like', "%{$s}%")
                     ->orWhere('email', 'like', "%{$s}%")
+                    ->orWhere('mobile', 'like', "%{$s}%")
                     ->orWhere('message', 'like', "%{$s}%");
             });
         }
@@ -66,12 +67,23 @@ class ContactMessageAdminController extends BaseController
             'status' => 'replied',
         ]);
 
-        $this->mailConfigService->queueTo($row->email, new ContactReplyMail(
-            $row->name,
-            $row->tracking_code,
-            $data['reply']
-        ));
+        if (! filter_var((string) $row->email, FILTER_VALIDATE_EMAIL)) {
+            return $this->errorResponse('پاسخ ذخیره شد اما ایمیل معتبری برای ارسال ثبت نشده است.', 422);
+        }
 
-        return $this->successResponse($row->fresh()->load('replier:id,name'), 'پاسخ ارسال شد.');
+        try {
+            $this->mailConfigService->sendNow($row->email, new ContactReplyMail(
+                $row->name,
+                $row->tracking_code,
+                $data['reply']
+            ));
+        } catch (\Throwable $e) {
+            return $this->errorResponse(
+                'پاسخ ذخیره شد اما ارسال ایمیل ناموفق بود. تنظیمات SMTP را بررسی کنید.',
+                422
+            );
+        }
+
+        return $this->successResponse($row->fresh()->load('replier:id,name'), 'پاسخ به ایمیل کاربر ارسال شد.');
     }
 }

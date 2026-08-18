@@ -231,12 +231,16 @@ class PersianPdfText
 
     protected function isArabicChar(string $ch): bool
     {
+        if (preg_match('/[\x{06F0}-\x{06F9}\x{0660}-\x{0669}]/u', $ch) === 1) {
+            return false;
+        }
+
         return preg_match('/[\x{0600}-\x{06FF}\x{0750}-\x{077F}\x{08A0}-\x{08FF}\x{FB50}-\x{FDFF}\x{FE70}-\x{FEFF}]/u', $ch) === 1;
     }
 
     protected function isLatinRun(string $ch): bool
     {
-        return preg_match('/[0-9A-Za-z@._:\/\\\\%+\-٪]/u', $ch) === 1;
+        return preg_match('/[0-9A-Za-z@._:\/\\\\%+\-٪\x{06F0}-\x{06F9}\x{0660}-\x{0669}]/u', $ch) === 1;
     }
 
     protected function utf8Reverse(string $text): string

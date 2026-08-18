@@ -52,12 +52,11 @@
           </div>
           <div>
             <label class="label">رمز عبور *</label>
-            <input
+            <PasswordInput
               v-model="form.password"
-              type="password"
-              class="field"
-              lang="en"
+              input-class="field"
               required
+              autocomplete="new-password"
               placeholder="حداقل ۸ کاراکتر"
             />
             <PasswordRulesHint :password="form.password" />
@@ -158,6 +157,7 @@
 import { reactive, ref, watch } from 'vue'
 import { IRAN_PROVINCES } from '../../../utils/provinces'
 import { DEFAULT_OPERATOR_PERMISSIONS } from '../../permissions'
+import PasswordInput from '../../../components/PasswordInput.vue'
 import PasswordRulesHint from '../../../components/auth/PasswordRulesHint.vue'
 import OperatorPermissionsPicker from './OperatorPermissionsPicker.vue'
 

@@ -69,43 +69,10 @@
         ثبت‌نام در سایت منبع
       </a>
 
-      <section v-if="catalogExams.length" class="mb-5">
-        <h2 class="mb-2 text-sm font-black text-desk-text">
-          آزمون‌های مرتبط برای فروش
-        </h2>
-        <div class="space-y-2">
-          <RouterLink
-            v-for="exam in catalogExams"
-            :key="exam.id"
-            :to="`/exams/${exam.slug || exam.id}`"
-            class="card-soft flex items-center justify-between border border-surface-line p-3 text-sm"
-          >
-            <span class="font-bold text-desk-text">{{ exam.title }}</span>
-            <span class="text-xs text-desk-muted">{{
-              exam.is_free ? 'رایگان' : formatPrice(exam.price)
-            }}</span>
-          </RouterLink>
-        </div>
-      </section>
-
-      <section v-if="catalogPdfs.length" class="mb-5">
-        <h2 class="mb-2 text-sm font-black text-desk-text">
-          فایل‌های PDF مرتبط
-        </h2>
-        <div class="space-y-2">
-          <RouterLink
-            v-for="pdf in catalogPdfs"
-            :key="pdf.id"
-            :to="`/pdfs/${pdf.id}`"
-            class="card-soft flex items-center justify-between border border-surface-line p-3 text-sm"
-          >
-            <span class="font-bold text-desk-text">{{ pdf.title }}</span>
-            <span class="text-xs text-desk-muted">{{
-              formatPrice(pdf.price)
-            }}</span>
-          </RouterLink>
-        </div>
-      </section>
+      <RelatedCatalog
+        :exams="catalogExams"
+        :pdfs="catalogPdfs"
+      />
 
       <ShareModal
         :open="shareOpen"
@@ -120,13 +87,14 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import api from '../../api/client'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import PageShell from '../../components/layout/PageShell.vue'
+import RelatedCatalog from '../../components/RelatedCatalog.vue'
 import ShareModal from '../../components/ShareModal.vue'
 import { setJobPostMeta } from '../../services/meta'
-import { formatDate, formatPrice } from '../../utils/format'
+import { formatDate } from '../../utils/format'
 
 const route = useRoute()
 const job = ref(null)

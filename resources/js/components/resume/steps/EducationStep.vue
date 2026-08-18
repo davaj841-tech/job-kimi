@@ -22,7 +22,6 @@
           <button
             type="button"
             class="text-desk-muted hover:text-red-500"
-            :disabled="(local.education || []).length <= 1"
             @click="removeEducation(index)"
           >
             <TrashIcon class="h-5 w-5" />
@@ -44,10 +43,11 @@
               </option>
             </select>
           </label>
-          <FormInput
+          <SearchSelect
             v-model="edu.field"
             label="رشته"
-            placeholder="مهندسی کامپیوتر"
+            placeholder="جستجوی رشته تحصیلی…"
+            :options="ACADEMIC_FIELDS"
             required
           />
           <FormInput
@@ -56,24 +56,28 @@
             placeholder="دانشگاه تهران"
             required
           />
-          <FormInput
-            v-model.number="edu.start_year"
-            label="سال شروع (شمسی)"
-            type="number"
-            placeholder="1395"
+          <JalaliMonthYear
+            v-model="edu.start_date"
+            label="از تاریخ"
           />
-          <FormInput
-            v-model.number="edu.end_year"
-            label="سال پایان"
-            type="number"
-            placeholder="1399"
+          <JalaliMonthYear
+            v-model="edu.end_date"
+            label="تا تاریخ"
           />
-          <FormInput
-            v-model.number="edu.gpa"
-            label="معدل (اختیاری)"
-            type="number"
-            placeholder="17.5"
-          />
+          <label class="block">
+            <span class="mb-1.5 block text-xs font-medium text-desk-muted">معدل (اختیاری)</span>
+            <input
+              :value="edu.gpa ?? ''"
+              class="input-field text-left"
+              dir="ltr"
+              inputmode="decimal"
+              maxlength="4"
+              placeholder="۱۸.۵"
+              @input="onGpa(edu, $event)"
+              @blur="normalizeGpa(edu)"
+            />
+            <span class="mt-1 block text-[11px] text-desk-muted">دو رقم صحیح و یک رقم اعشار؛ مثلاً ۱۸۵ می‌شود ۱۸.۵</span>
+          </label>
         </div>
       </div>
     </div>
@@ -84,6 +88,9 @@
 import { computed } from 'vue'
 import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import FormInput from '../FormInput.vue'
+import JalaliMonthYear from '../JalaliMonthYear.vue'
+import SearchSelect from '../SearchSelect.vue'
+import { ACADEMIC_FIELDS } from '../../../data/academicFields'
 
 const degrees = ['دیپلم', 'کاردانی', 'کارشناسی', 'ارشد', 'دکترا']
 
@@ -99,11 +106,13 @@ const local = computed({
 
 function addEducation() {
   if (!Array.isArray(local.value.education)) local.value.education = []
-  local.value.education.push({
+  local.value.education.unshift({
     _key: `edu-${Date.now()}`,
     degree: 'کارشناسی',
     field: '',
     university: '',
+    start_date: '',
+    end_date: '',
     start_year: null,
     end_year: null,
     gpa: null,
@@ -111,7 +120,28 @@ function addEducation() {
 }
 
 function removeEducation(index) {
-  if ((local.value.education || []).length <= 1) return
   local.value.education.splice(index, 1)
+}
+
+function onGpa(edu, e) {
+  const digits = String(e.target.value || '').replace(/\D/g, '').slice(0, 3)
+  if (digits.length <= 2) {
+    edu.gpa = digits
+    return
+  }
+  edu.gpa = `${digits.slice(0, 2)}.${digits.slice(2)}`
+}
+
+function normalizeGpa(edu) {
+  if (edu.gpa === '' || edu.gpa == null) {
+    edu.gpa = null
+    return
+  }
+  const n = Number(edu.gpa)
+  if (!Number.isFinite(n) || n < 0 || n > 20) {
+    edu.gpa = null
+    return
+  }
+  edu.gpa = n.toFixed(1)
 }
 </script>

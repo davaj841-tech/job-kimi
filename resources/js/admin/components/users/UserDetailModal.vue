@@ -101,11 +101,10 @@
 
         <div v-if="editing">
           <label class="label">رمز عبور جدید (اختیاری)</label>
-          <input
+          <PasswordInput
             v-model="form.password"
-            type="password"
-            class="field"
-            dir="ltr"
+            input-class="field"
+            autocomplete="new-password"
             placeholder="حداقل ۸ کاراکتر، حرف + عدد"
           />
         </div>
@@ -207,6 +206,7 @@
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
+import PasswordInput from '../../../components/PasswordInput.vue'
 import { DEFAULT_OPERATOR_PERMISSIONS } from '../../permissions'
 import OperatorPermissionsPicker from './OperatorPermissionsPicker.vue'
 

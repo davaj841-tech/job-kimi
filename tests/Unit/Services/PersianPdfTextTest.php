@@ -23,6 +23,9 @@ class PersianPdfTextTest extends TestCase
     {
         $this->assertSame('2026/08/11', (new PersianPdfText)->reshape('2026/08/11'));
         $this->assertSame('PDF', (new PersianPdfText)->reshape('PDF'));
+        $reshaper = new PersianPdfText;
+        $this->assertSame('۱۴۰۵/۰۵/۲۳ ۱۲:۳۰', $reshaper->reshape('۱۴۰۵/۰۵/۲۳ ۱۲:۳۰'));
+        $this->assertSame('۶۷.۵٪', $reshaper->reshape('۶۷.۵٪'));
     }
 
     public function test_it_reshapes_html_text_nodes_only(): void

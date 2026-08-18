@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\BlogPost;
 use App\Repositories\BlogPostRepository;
+use App\Services\CatalogAttachService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 
@@ -71,6 +72,7 @@ class BlogPostService
         }
 
         $data['status'] = $data['status'] ?? 'draft';
+        $data = $this->normalizeCatalog($data);
 
         return BlogPost::query()->create($data);
     }
@@ -80,9 +82,37 @@ class BlogPostService
      */
     public function update(BlogPost $post, array $data): BlogPost
     {
+        $data = $this->normalizeCatalog($data);
         $post->update($data);
 
         return $post->fresh(['creator']);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function normalizeCatalog(array $data): array
+    {
+        $attach = app(CatalogAttachService::class);
+        if (array_key_exists('exam_ids', $data)) {
+            $data['exam_ids'] = $attach->intIds($data['exam_ids']);
+        }
+        if (array_key_exists('pdf_ids', $data)) {
+            $data['pdf_ids'] = $attach->intIds($data['pdf_ids']);
+        }
+
+        return $data;
+    }
+
+    public function relatedCatalog(BlogPost $post): array
+    {
+        return app(CatalogAttachService::class)->resolve(
+            $post->job_classification_id ? (int) $post->job_classification_id : null,
+            (bool) ($post->auto_catalog ?? true),
+            $post->exam_ids ?? [],
+            $post->pdf_ids ?? []
+        );
     }
 
     public function publish(int $id): BlogPost

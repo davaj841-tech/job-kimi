@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="space-y-5">
+      <div class="space-y-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl font-bold text-gray-800">تراکنش‌های مالی</h1>
       </div>
@@ -102,12 +101,10 @@
       :tx="selected"
       @close="detailOpen = false"
     />
-  </AdminLayout>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import AdminLayout from '../components/layout/AdminLayout.vue'
 import DataTable from '../components/ui/DataTable.vue'
 import PaginationBar from '../components/ui/PaginationBar.vue'
 import StatCard from '../components/ui/StatCard.vue'

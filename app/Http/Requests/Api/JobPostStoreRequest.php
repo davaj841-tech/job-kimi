@@ -51,6 +51,11 @@ class JobPostStoreRequest extends FormRequest
             'remove_attachment_ids.*' => ['integer'],
             'is_featured' => ['sometimes', 'boolean'],
             'status' => ['sometimes', 'in:pending,approved,rejected'],
+            'auto_catalog' => ['sometimes', 'boolean'],
+            'exam_ids' => ['nullable', 'array'],
+            'exam_ids.*' => ['integer', 'exists:exams,id'],
+            'pdf_ids' => ['nullable', 'array'],
+            'pdf_ids.*' => ['integer', 'exists:pdf_products,id'],
         ];
     }
 
@@ -98,6 +103,9 @@ class JobPostStoreRequest extends FormRequest
             'provinces' => array_values(array_unique(array_filter($provinces))),
             'is_featured' => filter_var($this->input('is_featured', false), FILTER_VALIDATE_BOOLEAN),
             'remove_attachment_ids' => is_array($removeIds) ? $removeIds : [],
+            'auto_catalog' => filter_var($this->input('auto_catalog', true), FILTER_VALIDATE_BOOLEAN),
+            'exam_ids' => $this->decodeIdList($this->input('exam_ids')),
+            'pdf_ids' => $this->decodeIdList($this->input('pdf_ids')),
         ];
 
         foreach (['city', 'exam_date', 'registration_link', 'source_url', 'seo_tag'] as $key) {
@@ -107,6 +115,23 @@ class JobPostStoreRequest extends FormRequest
         }
 
         $this->merge($merge);
+    }
+
+    /**
+     * @param  mixed  $value
+     * @return array<int, int>
+     */
+    protected function decodeIdList(mixed $value): array
+    {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $value = json_last_error() === JSON_ERROR_NONE ? $decoded : [];
+        }
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map('intval', $value))));
     }
 
     public function withValidator(Validator $validator): void

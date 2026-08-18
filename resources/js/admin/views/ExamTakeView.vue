@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="mx-auto max-w-3xl">
+      <div class="mx-auto max-w-3xl">
       <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <RouterLink
@@ -118,14 +117,12 @@
         </div>
       </template>
     </div>
-  </AdminLayout>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import adminApi from '../api/client'
-import AdminLayout from '../components/layout/AdminLayout.vue'
 import { useToast } from '../../composables/useToast'
 
 const PER_PAGE = 5

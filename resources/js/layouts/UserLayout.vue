@@ -128,6 +128,7 @@
     </div>
 
     <AppToast />
+    <PageScrollFab />
   </div>
 </template>
 
@@ -152,6 +153,7 @@ import AppToast from '../components/AppToast.vue'
 import BottomNav from '../components/BottomNav.vue'
 import SiteBrandLogo from '../components/SiteBrandLogo.vue'
 import NavItem from '../components/user/NavItem.vue'
+import PageScrollFab from '../components/ui/PageScrollFab.vue'
 import { useDarkMode } from '../composables/useDarkMode'
 import { useSiteTheme } from '../composables/useSiteTheme'
 import { useAuthStore } from '../stores/auth'

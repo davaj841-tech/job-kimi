@@ -14,6 +14,10 @@
       <div class="prose-ja mb-6 text-sm leading-7 text-desk-text">
         {{ contentText }}
       </div>
+      <RelatedCatalog
+        :exams="article.catalog_exams || []"
+        :pdfs="article.catalog_pdfs || []"
+      />
       <RouterLink
         v-if="article.job?.id"
         :to="`/jobs/${article.job.id}`"
@@ -32,6 +36,7 @@ import { useRoute } from 'vue-router'
 import api from '../../api/client'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import PageShell from '../../components/layout/PageShell.vue'
+import RelatedCatalog from '../../components/RelatedCatalog.vue'
 
 const route = useRoute()
 const loading = ref(true)

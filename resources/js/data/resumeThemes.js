@@ -1,0 +1,116 @@
+export const RESUME_THEME_GROUPS = [
+  { id: 'official', name: 'رسمی و اداری' },
+  { id: 'modern', name: 'مدرن' },
+  { id: 'creative', name: 'خلاقانه' },
+  { id: 'minimal', name: 'مینیمال' },
+]
+
+export const RESUME_THEMES = [
+  {
+    id: 1,
+    group: 'official',
+    name: 'کلاسیک سرمه‌ای',
+    accent: '#1a365d',
+    header: '#1a365d',
+    sidebar: '#f8fafc',
+    layout: 'classic',
+    fontFamily: 'Vazirmatn, Tahoma, sans-serif',
+  },
+  {
+    id: 2,
+    group: 'official',
+    name: 'ستونی زغالی',
+    accent: '#111827',
+    header: '#0f172a',
+    sidebar: '#111827',
+    layout: 'sidebar',
+    fontFamily: 'Vazirmatn, Tahoma, sans-serif',
+  },
+  {
+    id: 3,
+    group: 'official',
+    name: 'بنر سازمانی',
+    accent: '#14532d',
+    header: '#14532d',
+    sidebar: '#ecfdf5',
+    layout: 'banner',
+    fontFamily: 'Vazirmatn, Tahoma, sans-serif',
+  },
+  {
+    id: 4,
+    group: 'modern',
+    name: 'دو ستونه آبی',
+    accent: '#1d4ed8',
+    header: '#1e40af',
+    sidebar: '#eff6ff',
+    layout: 'split',
+    fontFamily: 'Vazirmatn, Tahoma, sans-serif',
+  },
+  {
+    id: 5,
+    group: 'modern',
+    name: 'خط زمانی',
+    accent: '#0f766e',
+    header: '#0d9488',
+    sidebar: '#f0fdfa',
+    layout: 'timeline',
+    fontFamily: 'Vazirmatn, Tahoma, sans-serif',
+  },
+  {
+    id: 6,
+    group: 'modern',
+    name: 'کارت‌های نیلی',
+    accent: '#4338ca',
+    header: '#4f46e5',
+    sidebar: '#eef2ff',
+    layout: 'cards',
+    fontFamily: 'Vazirmatn, Tahoma, sans-serif',
+  },
+  {
+    id: 7,
+    group: 'creative',
+    name: 'مجله‌ای سرخ',
+    accent: '#be123c',
+    header: '#9f1239',
+    sidebar: '#fff1f2',
+    layout: 'magazine',
+    fontFamily: 'Vazirmatn, Georgia, serif',
+  },
+  {
+    id: 8,
+    group: 'minimal',
+    name: 'فشرده خاکستری',
+    accent: '#334155',
+    header: '#0f172a',
+    sidebar: '#f8fafc',
+    layout: 'compact',
+    fontFamily: 'Tahoma, Vazirmatn, sans-serif',
+  },
+  {
+    id: 9,
+    group: 'minimal',
+    name: 'ظریف طلایی',
+    accent: '#b45309',
+    header: '#1c1917',
+    sidebar: '#fffbeb',
+    layout: 'elegant',
+    fontFamily: 'Georgia, Vazirmatn, serif',
+  },
+  {
+    id: 10,
+    group: 'creative',
+    name: 'برجسته تیره',
+    accent: '#ea580c',
+    header: '#0f172a',
+    sidebar: '#fff7ed',
+    layout: 'bold',
+    fontFamily: 'Vazirmatn, Tahoma, sans-serif',
+  },
+]
+
+export function resumeThemeById(id) {
+  let n = Number(id) || 1
+  if (n < 1) n = 1
+  if (n > 10) n = ((n - 1) % 10) + 1
+  return RESUME_THEMES.find((t) => t.id === n) || RESUME_THEMES[0]
+}

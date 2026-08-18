@@ -74,7 +74,9 @@
             >
               <th class="p-3 font-medium">مقایسه</th>
               <th class="p-3 font-medium">آزمون</th>
+              <th class="p-3 font-medium">درست</th>
               <th class="p-3 font-medium">درصد</th>
+              <th class="p-3 font-medium">نتیجه</th>
               <th class="p-3 font-medium">نمره</th>
               <th class="p-3 font-medium">غلط</th>
               <th class="p-3 font-medium">بدون پاسخ</th>
@@ -98,10 +100,27 @@
               <td class="p-3 font-medium dark:text-white">
                 {{ row.exam_title }}
               </td>
+              <td class="p-3 dark:text-slate-200">
+                {{ toFaDigits(row.total_correct || 0) }} از
+                {{ toFaDigits(row.total_questions || 0) }}
+              </td>
               <td class="p-3">
                 <Badge :variant="scoreVariant(row.percentage)">
                   {{ toFaDigits(Math.round(row.percentage || 0)) }}٪
                 </Badge>
+              </td>
+              <td class="p-3">
+                <span
+                  v-if="row.passed === true"
+                  class="font-bold text-emerald-600"
+                  >قبول</span
+                >
+                <span
+                  v-else-if="row.passed === false"
+                  class="font-bold text-brand"
+                  >مردود</span
+                >
+                <span v-else class="text-ink-muted">—</span>
               </td>
               <td class="p-3 dark:text-slate-200">
                 {{ toFaDigits(row.score ?? '—') }}
@@ -183,8 +202,25 @@
           >
             <p class="font-bold dark:text-white">{{ row.exam_title }}</p>
             <p class="mt-2 text-sm">
+              درست:
+              <strong
+                >{{ toFaDigits(row.total_correct || 0) }} از
+                {{ toFaDigits(row.total_questions || 0) }}</strong
+              >
+            </p>
+            <p class="text-sm">
               درصد:
               <strong>{{ toFaDigits(Math.round(row.percentage || 0)) }}٪</strong>
+            </p>
+            <p class="text-sm">
+              نتیجه:
+              <strong v-if="row.passed === true" class="text-emerald-600"
+                >قبول</strong
+              >
+              <strong v-else-if="row.passed === false" class="text-brand"
+                >مردود</strong
+              >
+              <strong v-else>—</strong>
             </p>
             <p class="text-sm">
               نمره: <strong>{{ toFaDigits(row.score ?? '—') }}</strong>
@@ -290,12 +326,15 @@ function toggleCompare(id: number) {
 }
 
 function exportCsv() {
-  const header = 'title,percentage,score,date\n'
+  const header = 'title,correct,total,percentage,passed,score,date\n'
   const body = filtered.value
     .map((r) =>
       [
         JSON.stringify(r.exam_title || ''),
+        r.total_correct,
+        r.total_questions,
         r.percentage,
+        r.passed === true ? 'pass' : r.passed === false ? 'fail' : '',
         r.score,
         r.finished_at || r.created_at || '',
       ].join(',')

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ContactReplyMail;
 use App\Models\ContactMessage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,6 +19,7 @@ class ContactMessageTest extends TestCase
         Mail::fake();
         $res = $this->postJson('/api/v1/contact', [
             'name' => 'علی',
+            'mobile' => '09123456789',
             'email' => 'ali@example.com',
             'subject' => 'support',
             'message' => 'سلام، نیاز به راهنمایی دارم.',
@@ -28,8 +30,10 @@ class ContactMessageTest extends TestCase
 
         $code = $res->json('data.tracking_code');
         $this->assertNotEmpty($code);
+        $this->assertMatchesRegularExpression('/^\d{6}$/', (string) $code);
         $this->assertDatabaseHas('contact_messages', [
             'email' => 'ali@example.com',
+            'mobile' => '09123456789',
             'tracking_code' => $code,
         ]);
     }
@@ -58,5 +62,10 @@ class ContactMessageTest extends TestCase
             'status' => 'replied',
             'reply' => 'پاسخ مدیر',
         ]);
+
+        Mail::assertSent(ContactReplyMail::class, function (ContactReplyMail $mail) {
+            return $mail->hasTo('ali@example.com')
+                && $mail->replyText === 'پاسخ مدیر';
+        });
     }
 }

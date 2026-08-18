@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="space-y-5">
+      <div class="space-y-5">
       <h1 class="text-2xl font-bold text-gray-800">تیکت‌های پشتیبانی</h1>
       <div class="rounded-xl bg-white p-4 shadow-sm">
         <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -18,7 +17,7 @@
           <input
             v-model="filters.search"
             class="field"
-            placeholder="جستجو"
+            placeholder="جستجو موضوع / شماره پیگیری"
             @keyup.enter="load"
           />
         </div>
@@ -52,7 +51,10 @@
       <div
         class="flex max-h-[90vh] w-full max-w-xl flex-col rounded-2xl bg-white p-5 shadow-xl"
       >
-        <h3 class="mb-2 font-bold">{{ active.subject }}</h3>
+        <h3 class="mb-1 font-bold">{{ active.subject }}</h3>
+        <p v-if="active.tracking_code" class="mb-2 text-xs font-bold text-orange-600" dir="ltr">
+          شماره پیگیری: {{ active.tracking_code }}
+        </p>
         <div
           class="mb-3 flex-1 space-y-2 overflow-y-auto rounded-xl bg-slate-50 p-3 text-sm"
         >
@@ -76,13 +78,11 @@
         </form>
       </div>
     </div>
-  </AdminLayout>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import adminApi from '../api/client'
-import AdminLayout from '../components/layout/AdminLayout.vue'
 import DataTable from '../components/ui/DataTable.vue'
 import { unwrapList, apiErrorMessage } from '../../utils/format'
 import { useToast } from '../../composables/useToast'
@@ -95,6 +95,7 @@ const replyMsg = ref('')
 const filters = reactive({ status: '', priority: '', search: '' })
 const columns = [
   { key: 'index', label: '#' },
+  { key: 'tracking_code', label: 'پیگیری' },
   { key: 'subject', label: 'موضوع' },
   { key: 'user', label: 'کاربر' },
   { key: 'priority', label: 'اولویت' },

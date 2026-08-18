@@ -59,15 +59,12 @@
           <label class="mb-1 block text-sm font-medium text-slate-700"
             >رمز عبور</label
           >
-          <input
+          <PasswordInput
             v-model="password"
-            type="password"
-            class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
-            dir="ltr"
-            lang="en"
+            input-class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
             autocomplete="current-password"
             placeholder="••••••••"
-            @keyup.enter="onPasswordLogin"
+            @enter="onPasswordLogin"
           />
         </div>
         <button
@@ -181,6 +178,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import PasswordInput from '../../components/PasswordInput.vue'
 import { useRouter } from 'vue-router'
 import { useAdminAuthStore } from '../stores/auth'
 

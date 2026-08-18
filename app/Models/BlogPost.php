@@ -19,6 +19,10 @@ class BlogPost extends Model
         'excerpt',
         'featured_image',
         'category',
+        'job_classification_id',
+        'auto_catalog',
+        'exam_ids',
+        'pdf_ids',
         'meta_title',
         'meta_description',
         'status',
@@ -33,6 +37,15 @@ class BlogPost extends Model
                 $post->slug = Str::slug($post->title).'-'.Str::random(5);
             }
         });
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'exam_ids' => 'array',
+            'pdf_ids' => 'array',
+            'auto_catalog' => 'boolean',
+        ];
     }
 
     public function creator(): BelongsTo

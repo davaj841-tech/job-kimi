@@ -37,6 +37,9 @@ class JobPostResource extends JsonResource
                 ])->values();
             }),
             'status' => $this->status,
+            'auto_catalog' => (bool) ($this->auto_catalog ?? true),
+            'exam_ids' => $this->exam_ids ?? [],
+            'pdf_ids' => $this->pdf_ids ?? [],
             'is_featured' => $this->is_featured,
             'view_count' => $this->view_count,
             'created_at' => $this->created_at?->toIso8601String(),

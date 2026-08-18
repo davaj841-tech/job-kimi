@@ -10,6 +10,7 @@ use App\Mail\WelcomeMail;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Mail;
 
 class MailConfigService
 {
@@ -32,8 +33,22 @@ class MailConfigService
 
     public function queueTo(string $email, object $mailable): void
     {
+        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
         $this->applySmtpFromSettings();
         SendEmailJob::dispatch($email, $mailable);
+    }
+
+    public function sendNow(string $email, object $mailable): bool
+    {
+        if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+        $this->applySmtpFromSettings();
+        Mail::to($email)->send($mailable);
+
+        return true;
     }
 
     public function sendWelcome(User $user): void
@@ -71,7 +86,8 @@ class MailConfigService
             $data['email'],
             $data['subject'],
             $data['message'],
-            $data['tracking_code'] ?? null
+            $data['tracking_code'] ?? null,
+            $data['mobile'] ?? null
         ));
     }
 }

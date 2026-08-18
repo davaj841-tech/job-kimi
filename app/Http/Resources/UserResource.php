@@ -17,7 +17,17 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'province' => $this->province,
             'national_code' => $this->national_code,
-            'avatar' => $this->avatar,
+            'avatar' => $this->avatarUrl(),
+            'home_phone' => $this->home_phone,
+            'military_status' => $this->military_status,
+            'insurance_history' => $this->insurance_history,
+            'birth_date' => $this->birth_date,
+            'birth_province' => $this->birth_province,
+            'birth_city' => $this->birth_city,
+            'marital_status' => $this->marital_status,
+            'field_of_study' => $this->field_of_study,
+            'address' => $this->address,
+            'postal_code' => $this->postal_code,
             'role' => $this->role,
             'operator_permissions' => $this->role === 'operator'
                 ? \App\Support\OperatorPermissions::normalize($this->operator_permissions)

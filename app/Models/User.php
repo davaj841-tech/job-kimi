@@ -25,6 +25,16 @@ class User extends Authenticatable implements FilamentUser
         'national_code',
         'province',
         'avatar',
+        'home_phone',
+        'military_status',
+        'insurance_history',
+        'birth_date',
+        'birth_province',
+        'birth_city',
+        'marital_status',
+        'field_of_study',
+        'address',
+        'postal_code',
         'role',
         'operator_permissions',
         'status',
@@ -103,5 +113,18 @@ class User extends Authenticatable implements FilamentUser
     public function isBlocked(): bool
     {
         return ($this->status ?? 'active') === 'blocked';
+    }
+
+    public function avatarUrl(): ?string
+    {
+        $avatar = $this->avatar;
+        if (! is_string($avatar) || $avatar === '') {
+            return null;
+        }
+        if (str_starts_with($avatar, 'data:image') || str_starts_with($avatar, 'http://') || str_starts_with($avatar, 'https://') || str_starts_with($avatar, '/')) {
+            return $avatar;
+        }
+
+        return \App\Support\PublicAsset::url($avatar) ?: null;
     }
 }

@@ -221,6 +221,8 @@ onMounted(async () => {
       await startExam({ resume: true })
     } else if (route.query.restart === '1') {
       await startExam({ restart: true })
+    } else if (!exam.value?.active_attempt) {
+      await startExam()
     }
   } catch {
     error.value = 'آزمون یافت نشد.'

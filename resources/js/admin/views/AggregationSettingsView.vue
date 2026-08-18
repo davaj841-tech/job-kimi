@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="space-y-5">
+      <div class="space-y-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 class="text-2xl font-bold text-gray-800">زمان‌بندی تجمیع</h1>
@@ -200,12 +199,10 @@
         </div>
       </template>
     </div>
-  </AdminLayout>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import AdminLayout from '../components/layout/AdminLayout.vue'
 import { useAggregationScheduleStore } from '../stores/aggregationSchedule'
 
 const store = useAggregationScheduleStore()

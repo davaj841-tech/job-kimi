@@ -42,7 +42,21 @@
           v-model="form.category"
           required
           class="field"
-          placeholder="طبقه‌بندی *"
+          placeholder="طبقه‌بندی متنی *"
+        />
+        <div>
+          <label class="mb-1 block text-xs text-slate-500">رسته شغلی (برای آزمون و PDF)</label>
+          <select v-model="form.job_classification_id" class="field">
+            <option value="">بدون رسته</option>
+            <option v-for="c in classifications" :key="c.id" :value="c.id">
+              {{ c.name }}
+            </option>
+          </select>
+        </div>
+        <CatalogAttachFields
+          v-model:auto-catalog="form.auto_catalog"
+          v-model:exam-ids="form.exam_ids"
+          v-model:pdf-ids="form.pdf_ids"
         />
         <input
           v-model="form.meta_title"
@@ -74,9 +88,11 @@
 </template>
 
 <script setup>
-import { onUnmounted, reactive, ref, watch } from 'vue'
+import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import CatalogAttachFields from '../catalog/CatalogAttachFields.vue'
 import FileUploader from '../ui/FileUploader.vue'
 import RichEditor from '../ui/RichEditor.vue'
+import adminApi from '../../api/client'
 
 const DRAFT_KEY = 'admin_blog_draft'
 
@@ -89,7 +105,18 @@ const emit = defineEmits(['close', 'saved'])
 const saving = ref(false)
 const error = ref('')
 const form = reactive(empty())
+const classifications = ref([])
 let timer
+
+onMounted(async () => {
+  try {
+    const { data } = await adminApi.get('/admin/job-classifications')
+    const rows = data?.data?.flat ?? data?.data ?? []
+    classifications.value = Array.isArray(rows) ? rows : []
+  } catch {
+    classifications.value = []
+  }
+})
 
 watch(
   () => [props.open, props.post],
@@ -128,6 +155,10 @@ function empty() {
     excerpt: '',
     content: '',
     category: '',
+    job_classification_id: '',
+    auto_catalog: true,
+    exam_ids: [],
+    pdf_ids: [],
     meta_title: '',
     meta_description: '',
     status: 'draft',
@@ -142,6 +173,10 @@ function map(p) {
     excerpt: p.excerpt || '',
     content: p.content || '',
     category: p.category || '',
+    job_classification_id: p.job_classification_id || '',
+    auto_catalog: p.auto_catalog !== false,
+    exam_ids: Array.isArray(p.exam_ids) ? p.exam_ids.map(Number) : [],
+    pdf_ids: Array.isArray(p.pdf_ids) ? p.pdf_ids.map(Number) : [],
     meta_title: p.meta_title || '',
     meta_description: p.meta_description || '',
     status: p.status || 'draft',

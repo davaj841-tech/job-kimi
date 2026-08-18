@@ -23,5 +23,5 @@ Route::view('/admin/{any?}', 'admin')
     ->name('admin.spa');
 
 Route::get('/{any?}', SpaController::class)
-    ->where('any', '^(?!api|admin|filament|horizon|telescope|sanctum|health|up|csp-report|robots\.txt|sitemap\.xml).*$')
+    ->where('any', '^(?!api|admin|filament|horizon|telescope|sanctum|health|up|csp-report|install|robots\.txt|sitemap\.xml).*$')
     ->name('spa');

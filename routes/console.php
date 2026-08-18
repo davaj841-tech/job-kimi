@@ -3,13 +3,12 @@
 use App\Jobs\CrawlJobsJob;
 use App\Jobs\SendExamReminderJob;
 use App\Jobs\SendSubscriptionExpiryNotification;
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+Schedule::command('site:boost-performance')
+    ->hourly()
+    ->when(fn () => \App\Models\Setting::getBool('performance_auto', false))
+    ->withoutOverlapping(30);
 
 Schedule::job(new CrawlJobsJob)->dailyAt('06:00')->when(
     fn () => (bool) config('aggregation.enable_legacy_crawl_jobs_schedule', false)

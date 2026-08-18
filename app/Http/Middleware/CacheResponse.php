@@ -11,7 +11,7 @@ class CacheResponse
 {
     public function handle(Request $request, Closure $next, int $seconds = 60): Response
     {
-        if (! $request->isMethod('GET') || app()->environment('local', 'testing')) {
+        if (! $request->isMethod('GET') || app()->environment('testing')) {
             return $next($request);
         }
 

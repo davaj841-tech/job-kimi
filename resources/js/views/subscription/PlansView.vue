@@ -1,6 +1,6 @@
 <template>
   <div class="px-4 py-4">
-    <h1 class="section-title mb-4">پلن‌های اشتراک</h1>
+    <h1 class="section-title mb-3">پلن‌های اشتراک</h1>
     <div
       v-if="!subscriptionEnabled"
       class="card-soft p-6 text-center text-sm text-ink-muted"
@@ -11,49 +11,52 @@
     <div v-else class="space-y-3">
       <CouponBox
         v-if="selectedPlan"
-        class="mb-3"
+        class="mb-2"
         :amount="Number(selectedPlan.price)"
         type="subscription"
         @update:coupon="onCoupon"
       />
       <div v-if="gateways.length" class="card-soft p-3">
-        <label class="mb-2 block text-sm font-medium"
-          >درگاه پرداخت آنلاین</label
-        >
-        <select v-model="gateway" class="input-field">
+        <label class="mb-1.5 block text-xs font-medium">درگاه پرداخت آنلاین</label>
+        <select v-model="gateway" class="input-field h-9 text-sm">
           <option v-for="g in gateways" :key="g.name" :value="g.name">
             {{ g.display_name }}
           </option>
         </select>
       </div>
-      <div
-        v-for="plan in plans"
-        :key="plan.id"
-        class="card-soft cursor-pointer p-4 transition"
-        :class="selectedId === plan.id ? 'ring-2 ring-brand' : ''"
-        @click="selectedId = plan.id"
-      >
-        <div class="mb-2 flex items-center justify-between">
-          <h2 class="font-bold">{{ plan.name }}</h2>
-          <span class="price text-sm">{{ displayPrice(plan) }}</span>
-        </div>
-        <p class="mb-3 text-xs text-ink-muted">{{ plan.duration_days }} روز</p>
-        <ul class="mb-3 space-y-1 text-xs text-ink-soft">
-          <li v-for="(f, i) in plan.features || []" :key="i">• {{ f }}</li>
-        </ul>
-        <div class="flex gap-2">
-          <button
-            class="btn-primary flex-1"
-            @click.stop="subscribe(plan.id, 'wallet')"
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        <div
+          v-for="plan in plans"
+          :key="plan.id"
+          class="card-soft cursor-pointer p-3 transition"
+          :class="selectedId === plan.id ? 'ring-2 ring-brand' : ''"
+          @click="selectedId = plan.id"
+        >
+          <div class="mb-1 flex items-center justify-between gap-2">
+            <h2 class="truncate text-sm font-bold">{{ plan.name }}</h2>
+            <span class="price shrink-0 text-xs">{{ displayPrice(plan) }}</span>
+          </div>
+          <p class="mb-2 text-[11px] text-ink-muted">{{ plan.duration_days }} روز</p>
+          <ul
+            v-if="(plan.features || []).length"
+            class="mb-2 max-h-16 space-y-0.5 overflow-hidden text-[11px] text-ink-soft"
           >
-            کیف پول
-          </button>
-          <button
-            class="btn-ghost flex-1 border border-surface-line"
-            @click.stop="subscribe(plan.id, gateway)"
-          >
-            پرداخت آنلاین
-          </button>
+            <li v-for="(f, i) in (plan.features || []).slice(0, 4)" :key="i">• {{ f }}</li>
+          </ul>
+          <div class="flex gap-1.5">
+            <button
+              class="btn-primary !h-8 flex-1 !text-[11px]"
+              @click.stop="subscribe(plan.id, 'wallet')"
+            >
+              کیف پول
+            </button>
+            <button
+              class="btn-ghost !h-8 flex-1 border border-surface-line !text-[11px]"
+              @click.stop="subscribe(plan.id, gateway)"
+            >
+              آنلاین
+            </button>
+          </div>
         </div>
       </div>
     </div>

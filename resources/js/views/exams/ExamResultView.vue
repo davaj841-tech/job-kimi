@@ -1,7 +1,82 @@
 <template>
   <div class="min-h-dvh bg-surface-page px-4 py-8 dark:bg-slate-950">
     <LoadingSpinner v-if="loading" />
+    <div v-else-if="result && reviewMode" class="mx-auto max-w-4xl space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h1 class="text-lg font-bold dark:text-white">
+          {{ reviewTitle }}
+        </h1>
+        <button
+          type="button"
+          class="rounded-lg border border-surface-line bg-white px-3 py-1.5 text-xs font-bold dark:border-slate-700 dark:bg-slate-900"
+          @click="reviewMode = null"
+        >
+          بازگشت به صفحه اصلی
+        </button>
+      </div>
+      <p
+        v-if="!filteredSheet.length"
+        class="py-8 text-center text-sm text-ink-muted"
+      >
+        موردی یافت نشد.
+      </p>
+      <div
+        v-for="item in filteredSheet"
+        :key="item.id"
+        class="rounded-xl border-2 p-3"
+        :class="
+          item.is_blank
+            ? 'border-slate-200 dark:border-slate-700'
+            : item.is_correct
+              ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20'
+              : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+        "
+      >
+        <p class="mb-1 text-xs text-ink-muted">
+          سوال {{ toFaDigits(item.number) }}
+        </p>
+        <div
+          class="mb-2 text-sm leading-7 dark:text-slate-200"
+          v-html="renderKatexHtml(item.question_text)"
+        />
+        <p class="text-sm text-emerald-600">
+          پاسخ صحیح:
+          <b>{{ item.correct_answer_label || optionFaLetter(item.correct_answer) }})</b>
+          <span v-html="renderKatexHtml(item.correct_answer_text || optionText(item, item.correct_answer))" />
+        </p>
+        <p v-if="!item.is_correct" class="text-sm text-brand">
+          پاسخ شما:
+          <template v-if="item.is_blank || !item.user_answer">نزده</template>
+          <template v-else>
+            <b>{{ item.user_answer_label || optionFaLetter(item.user_answer) }})</b>
+            <span v-html="renderKatexHtml(item.user_answer_text || optionText(item, item.user_answer))" />
+          </template>
+        </p>
+      </div>
+    </div>
     <div v-else-if="result" class="mx-auto max-w-4xl space-y-6">
+      <div
+        v-if="isRetryResult"
+        class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-900/40 dark:bg-amber-950/30"
+      >
+        <p class="font-bold text-amber-900 dark:text-amber-200">
+          {{ retryMode === 'blank' ? 'نتیجه آزمون سوالات بدون پاسخ' : 'نتیجه مرور سوالات غلط' }}
+        </p>
+        <p class="mt-1 text-xs text-amber-800 dark:text-amber-300/90">
+          {{
+            retryMode === 'blank'
+              ? 'این کارنامه جدا از آزمون اصلی است و فقط سوالات بدون پاسخ را پوشش می‌دهد.'
+              : 'این کارنامه جدا از آزمون اصلی است و فقط سوالات غلط را پوشش می‌دهد.'
+          }}
+        </p>
+        <RouterLink
+          v-if="parentAttemptId"
+          :to="`/exams/${route.params.id}/result/${parentAttemptId}`"
+          class="mt-2 inline-block text-xs font-bold text-brand"
+        >
+          مشاهده کارنامه اصلی
+        </RouterLink>
+      </div>
       <div
         class="overflow-hidden rounded-3xl border border-surface-line bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900"
       >
@@ -63,52 +138,6 @@
       </div>
 
       <div
-        v-if="subjects.length"
-        class="rounded-2xl border border-surface-line bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
-      >
-        <h2 class="mb-4 text-lg font-bold dark:text-white">تحلیل درس‌ها</h2>
-        <div class="space-y-4">
-          <div
-            v-for="row in subjects"
-            :key="row.subject"
-            class="flex items-center gap-3"
-          >
-            <span
-              class="w-24 truncate text-sm font-medium dark:text-slate-200"
-              >{{ row.subject_label }}</span
-            >
-            <div
-              class="relative h-8 flex-1 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800"
-            >
-              <div
-                class="h-full rounded-lg transition-all duration-1000"
-                :class="
-                  (row.percentage ?? 0) >= 70
-                    ? 'bg-emerald-500'
-                    : (row.percentage ?? 0) >= 50
-                      ? 'bg-amber-500'
-                      : 'bg-brand'
-                "
-                :style="{ width: `${row.percentage ?? 0}%` }"
-              />
-              <span
-                class="absolute inset-0 flex items-center px-2 text-xs font-medium"
-                :class="
-                  (row.percentage ?? 0) > 45
-                    ? 'text-white'
-                    : 'text-ink dark:text-slate-200'
-                "
-              >
-                {{ toFaDigits(row.correct) }}/{{ toFaDigits(row.total) }} ({{
-                  toFaDigits(Math.round(row.percentage ?? 0))
-                }}٪)
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div
         class="rounded-2xl border border-amber-100 bg-amber-50 p-5 text-center dark:border-amber-900/40 dark:bg-amber-950/30"
       >
         <p class="mb-2 text-sm font-bold text-amber-900 dark:text-amber-200">
@@ -133,19 +162,33 @@
       >
         <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 class="text-lg font-bold dark:text-white">مرور پاسخ‌ها</h2>
-          <div class="flex flex-wrap items-center gap-2">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              class="rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white"
+              @click="openReview('correct')"
+            >
+              گزینه درست
+            </button>
             <button
               v-if="blankCount > 0"
               type="button"
-              class="rounded-xl bg-slate-700 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
-              :disabled="retrying"
-              @click="retry('blank')"
+              class="rounded-lg bg-slate-700 px-2.5 py-1 text-[11px] font-bold text-white"
+              @click="openReview('blank')"
             >
               بدون پاسخ
             </button>
             <button
+              v-if="wrongCount > 0"
               type="button"
-              class="text-sm font-bold text-brand"
+              class="rounded-lg bg-brand px-2.5 py-1 text-[11px] font-bold text-white"
+              @click="openReview('wrong')"
+            >
+              مرور غلط
+            </button>
+            <button
+              type="button"
+              class="text-xs font-bold text-brand"
               @click="showSheet = !showSheet"
             >
               {{ showSheet ? 'بستن' : 'نمایش پاسخبرگ' }}
@@ -213,18 +256,23 @@
                 />
                 <p class="text-sm text-emerald-600 dark:text-emerald-400">
                   پاسخ صحیح:
-                  {{ String(item.correct_answer || '').toUpperCase() }}
+                  <b>{{ item.correct_answer_label || optionFaLetter(item.correct_answer) }})</b>
+                  <span
+                    v-html="renderKatexHtml(item.correct_answer_text || optionText(item, item.correct_answer))"
+                  />
                 </p>
                 <p
                   v-if="!item.is_correct"
                   class="text-sm text-brand dark:text-red-300"
                 >
                   پاسخ شما:
-                  {{
-                    item.user_answer
-                      ? String(item.user_answer).toUpperCase()
-                      : 'نزده'
-                  }}
+                  <template v-if="item.is_blank || !item.user_answer">نزده</template>
+                  <template v-else>
+                    <b>{{ item.user_answer_label || optionFaLetter(item.user_answer) }})</b>
+                    <span
+                      v-html="renderKatexHtml(item.user_answer_text || optionText(item, item.user_answer))"
+                    />
+                  </template>
                 </p>
                 <p
                   v-if="item.explanation"
@@ -238,44 +286,50 @@
         </div>
       </div>
 
-      <div class="flex flex-col gap-3 sm:flex-row sm:justify-center">
+      <div class="flex flex-wrap justify-center gap-2">
         <button
-          v-if="blankCount > 0"
+          v-if="blankCount > 0 && !isRetryResult"
           type="button"
-          class="rounded-2xl bg-slate-700 px-8 py-3 font-bold text-white hover:bg-slate-800 disabled:opacity-50"
+          class="rounded-lg bg-slate-700 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
           :disabled="retrying"
           @click="retry('blank')"
         >
           {{ retrying ? '...' : 'پاسخ به سوالات بدون پاسخ' }}
         </button>
         <button
-          v-if="wrongCount > 0"
+          v-if="wrongCount > 0 && !isRetryResult"
           type="button"
-          class="rounded-2xl bg-brand px-8 py-3 font-bold text-white hover:bg-brand-dark disabled:opacity-50"
+          class="rounded-lg bg-brand px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
           :disabled="retrying"
           @click="retry('wrong')"
         >
-          {{ retrying ? '...' : 'مرور سوالات غلط' }}
+          {{ retrying ? '...' : 'آزمون مجدد سوالات غلط' }}
         </button>
         <button
           type="button"
-          class="rounded-2xl bg-desk-dark px-8 py-3 font-bold text-white hover:opacity-90 disabled:opacity-50"
+          class="rounded-lg bg-desk-dark px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
           :disabled="downloading"
           @click="downloadReportCard"
         >
-          {{ downloading ? '...' : 'دانلود کارنامه PDF' }}
+          {{ downloading ? '...' : 'دانلود کارنامه' }}
         </button>
         <button
           type="button"
-          class="flex items-center justify-center gap-2 rounded-2xl border border-surface-line bg-white px-8 py-3 font-medium dark:border-slate-700 dark:bg-slate-900"
+          class="inline-flex items-center gap-1 rounded-lg border border-surface-line bg-white px-3 py-2 text-xs font-medium dark:border-slate-700 dark:bg-slate-900"
           @click="shareResult"
         >
-          <ShareIcon class="h-5 w-5" />
-          اشتراک‌گذاری
+          <ShareIcon class="h-4 w-4" />
+          اشتراک
         </button>
         <RouterLink
+          to="/"
+          class="rounded-lg border border-surface-line px-3 py-2 text-xs font-medium dark:border-slate-700"
+        >
+          بازگشت به صفحه اصلی
+        </RouterLink>
+        <RouterLink
           to="/exams"
-          class="rounded-2xl border border-surface-line px-8 py-3 text-center font-medium dark:border-slate-700"
+          class="rounded-lg border border-surface-line px-3 py-2 text-xs font-medium dark:border-slate-700"
         >
           آزمون جدید
         </RouterLink>
@@ -307,6 +361,7 @@ import StarRating from '../../components/StarRating.vue'
 import ExamResultCharts from '../../components/exam/ExamResultCharts.vue'
 import { toFaDigits } from '../../utils/format'
 import { renderKatexHtml } from '../../utils/renderKatexHtml'
+import { optionFaLetter, optionText } from '../../utils/examAnswers'
 import { useExamStore } from '../../stores/exam'
 import { useExamSessionStore } from '../../stores/examSession'
 
@@ -320,6 +375,7 @@ const analysis = ref<any>(null)
 const sheet = ref<any[]>([])
 const showSheet = ref(true)
 const sheetFilter = ref('all')
+const reviewMode = ref<string | null>(null)
 const downloading = ref(false)
 const retrying = ref(false)
 const error = ref('')
@@ -328,6 +384,16 @@ const ratingSaving = ref(false)
 const ratingMsg = ref('')
 
 const passed = computed(() => Boolean(analysis.value?.passed))
+const isRetryResult = computed(
+  () =>
+    Boolean(result.value?.is_retry_wrong || analysis.value?.is_retry_wrong)
+)
+const parentAttemptId = computed(
+  () => result.value?.parent_attempt_id || analysis.value?.parent_attempt_id || null
+)
+const retryMode = computed(
+  () => result.value?.retry_mode || analysis.value?.retry_mode || 'wrong'
+)
 const subjects = computed(() => analysis.value?.by_subject || [])
 const chartSubjects = computed(() =>
   subjects.value.map((row: any) => ({
@@ -363,13 +429,23 @@ const displayPercentage = computed(() => {
   return Math.round((correctCount.value / total) * 10000) / 100
 })
 const filteredSheet = computed(() => {
-  if (sheetFilter.value === 'blank') return sheet.value.filter((i) => i.is_blank)
-  if (sheetFilter.value === 'wrong')
+  const mode = reviewMode.value || sheetFilter.value
+  if (mode === 'blank') return sheet.value.filter((i) => i.is_blank)
+  if (mode === 'wrong')
     return sheet.value.filter((i) => !i.is_blank && !i.is_correct)
+  if (mode === 'correct')
+    return sheet.value.filter((i) => i.is_correct && !i.is_blank)
   return sheet.value
+})
+const reviewTitle = computed(() => {
+  if (reviewMode.value === 'blank') return 'سوالات بدون پاسخ'
+  if (reviewMode.value === 'wrong') return 'سوالات غلط'
+  if (reviewMode.value === 'correct') return 'گزینه‌های درست'
+  return 'مرور پاسخ‌ها'
 })
 const sheetFilters = computed(() => [
   { id: 'all', label: 'همه', count: sheet.value.length },
+  { id: 'correct', label: 'درست', count: correctCount.value },
   { id: 'blank', label: 'بدون پاسخ', count: blankCount.value },
   { id: 'wrong', label: 'غلط', count: wrongCount.value },
 ])
@@ -454,6 +530,12 @@ onMounted(async () => {
   }
 })
 
+function openReview(mode: 'blank' | 'wrong' | 'correct') {
+  reviewMode.value = mode
+  showSheet.value = true
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 async function retry(mode: 'blank' | 'wrong') {
   retrying.value = true
   error.value = ''
@@ -472,8 +554,11 @@ async function retry(mode: 'blank' | 'wrong') {
       attemptId: payload.attempt_id || payload.attempt?.id,
       questions: payload.questions || [],
       duration: payload.duration_minutes || 20,
-      title: result.value?.exam?.title || result.value?.exam_title || 'آزمون',
+      title:
+        (mode === 'blank' ? 'آزمون سوالات بدون پاسخ · ' : 'مرور سوالات غلط · ') +
+        (result.value?.exam?.title || result.value?.exam_title || 'آزمون'),
       perPage,
+      isRetryWrong: true,
     }
     examStore.answers = { ...(payload.answers || {}) }
     examStore.dirty = false

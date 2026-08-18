@@ -38,6 +38,10 @@ class BlogPostController extends BaseController
         $post->prev_post = $nav['prev_post'];
         $post->next_post = $nav['next_post'];
 
+        $catalog = $this->blogPostService->relatedCatalog($post);
+        $post->catalog_exams = $catalog['exams'];
+        $post->catalog_pdfs = $catalog['pdfs'];
+
         $data = (new BlogPostResource($post))->resolve();
         $data['schema'] = $this->seoService->generateBlogSchema($post);
 

@@ -16,11 +16,11 @@
 
       <div
         v-if="classifications.length"
-        class="mb-4 flex flex-wrap gap-2"
+        class="scrollbar-hide mb-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <button
           type="button"
-          class="rounded-full px-3 py-1.5 text-xs font-bold transition"
+          class="shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition"
           :class="chipClass(null)"
           @click="selected = null"
         >
@@ -30,7 +30,7 @@
           v-for="item in classifications"
           :key="item.id"
           type="button"
-          class="rounded-full px-3 py-1.5 text-xs font-bold transition"
+          class="shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition"
           :class="chipClass(item.id)"
           @click="selected = item.id"
         >
@@ -102,7 +102,12 @@ const cards = computed(() => {
     Number(selected.value),
     ...(parent?.child_ids || []).map(Number),
   ])
-  return list.filter((j) => ids.has(Number(j.job_classification_id))).slice(0, 12)
+  return list.filter((j) => {
+    if (ids.has(Number(j.job_classification_id))) return true
+    if (ids.has(Number(j.classification_parent_id))) return true
+    if (parent && j.classification_name && j.classification_name === parent.name) return true
+    return false
+  }).slice(0, 12)
 })
 
 function chipClass(id) {

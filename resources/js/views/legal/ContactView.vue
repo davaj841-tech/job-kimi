@@ -13,7 +13,21 @@
           <input v-model="form.name" required class="field" placeholder="نام *" />
         </div>
         <div>
-          <label class="mb-1 block text-sm font-bold text-ink" dir="ltr">Email</label>
+          <label class="mb-1 block text-sm font-bold text-ink">موبایل</label>
+          <input
+            v-model="form.mobile"
+            type="tel"
+            required
+            class="field text-left"
+            dir="ltr"
+            inputmode="numeric"
+            autocomplete="tel"
+            maxlength="11"
+            placeholder="09xxxxxxxxx"
+          />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-bold text-ink">ایمیل</label>
           <input
             v-model="form.email"
             type="email"
@@ -25,7 +39,7 @@
             autocomplete="email"
             autocapitalize="off"
             spellcheck="false"
-            placeholder="Email *"
+            placeholder="email@example.com"
           />
         </div>
         <div>
@@ -53,9 +67,8 @@
         <p
           v-if="trackingCode"
           class="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-800"
-          dir="ltr"
         >
-          شماره پیگیری: {{ trackingCode }}
+          شماره پیگیری: {{ toFaDigits(trackingCode) }}
         </p>
         <button type="submit" class="btn-primary w-full" :disabled="sending">
           {{ sending ? 'در حال ارسال...' : 'ارسال پیام' }}
@@ -115,10 +128,10 @@
 import { onMounted, reactive, ref } from 'vue'
 import PageShell from '../../components/layout/PageShell.vue'
 import api from '../../api/client'
-import { apiErrorMessage, unwrapItem } from '../../utils/format'
+import { apiErrorMessage, unwrapItem, toFaDigits } from '../../utils/format'
 import { useSiteTheme } from '../../composables/useSiteTheme'
 
-const form = reactive({ name: '', email: '', subject: '', message: '' })
+const form = reactive({ name: '', mobile: '', email: '', subject: '', message: '' })
 const sending = ref(false)
 const error = ref('')
 const success = ref('')
@@ -158,9 +171,10 @@ async function submit() {
     const { data } = await api.post('/contact', { ...form })
     trackingCode.value = data?.data?.tracking_code || ''
     success.value = trackingCode.value
-      ? `پیام شما ثبت شد. شماره پیگیری: ${trackingCode.value}`
+      ? `پیام شما ثبت شد. شماره پیگیری: ${toFaDigits(trackingCode.value)}`
       : 'پیام شما با موفقیت ارسال شد.'
     form.name = ''
+    form.mobile = ''
     form.email = ''
     form.subject = ''
     form.message = ''

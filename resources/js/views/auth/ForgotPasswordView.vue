@@ -72,10 +72,9 @@
             <label class="mb-1 block text-xs font-bold text-ink-soft"
               >🔒 رمز عبور جدید</label
             >
-            <input
+            <PasswordInput
               v-model="password"
-              type="password"
-              class="input-field"
+              input-class="input-field"
               required
               autocomplete="new-password"
             />
@@ -84,10 +83,9 @@
             <label class="mb-1 block text-xs font-bold text-ink-soft"
               >🔁 تکرار رمز عبور</label
             >
-            <input
+            <PasswordInput
               v-model="password_confirmation"
-              type="password"
-              class="input-field"
+              input-class="input-field"
               required
               autocomplete="new-password"
             />
@@ -147,6 +145,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import PasswordInput from '../../components/PasswordInput.vue'
 import api from '../../api/client'
 
 const identifier = ref('')

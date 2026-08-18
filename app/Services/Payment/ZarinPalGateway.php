@@ -19,13 +19,21 @@ class ZarinPalGateway implements PaymentGatewayInterface
         return 'زرین‌پال';
     }
 
-    protected function baseUrl(): string
+    protected function sandbox(): bool
     {
-        $sandbox = Setting::getBool('zarinpal_sandbox', (bool) config('services.zarinpal.sandbox', false));
+        return Setting::getBool('zarinpal_sandbox', (bool) config('services.zarinpal.sandbox', false));
+    }
 
-        return $sandbox
+    protected function apiBase(): string
+    {
+        return $this->sandbox()
             ? 'https://sandbox.zarinpal.com'
-            : 'https://www.zarinpal.com';
+            : 'https://payment.zarinpal.com';
+    }
+
+    protected function startPayBase(): string
+    {
+        return $this->apiBase();
     }
 
     protected function merchantId(): string
@@ -36,6 +44,31 @@ class ZarinPalGateway implements PaymentGatewayInterface
             ?: '');
     }
 
+    /**
+     * @param  array<string, mixed>  $meta
+     * @return array<string, mixed>
+     */
+    protected function metadata(array $meta): array
+    {
+        $out = [];
+        $mobile = preg_replace('/\D+/', '', (string) ($meta['mobile'] ?? '')) ?: null;
+        if ($mobile && strlen($mobile) === 10) {
+            $mobile = '0'.$mobile;
+        }
+        if ($mobile && preg_match('/^09\d{9}$/', $mobile)) {
+            $out['mobile'] = $mobile;
+        }
+        $email = trim((string) ($meta['email'] ?? ''));
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $out['email'] = $email;
+        }
+        if (! empty($meta['order_id'])) {
+            $out['order_id'] = (string) $meta['order_id'];
+        }
+
+        return $out;
+    }
+
     public function request(int $amount, string $description, string $callbackUrl, array $meta = []): array
     {
         $merchantId = $this->merchantId();
@@ -44,14 +77,21 @@ class ZarinPalGateway implements PaymentGatewayInterface
             return ['authority' => null, 'payment_url' => null, 'error' => 'merchant_id زرین‌پال تنظیم نشده است.'];
         }
 
+        $payload = [
+            'merchant_id' => $merchantId,
+            'amount' => $amount,
+            'callback_url' => $callbackUrl,
+            'description' => mb_substr($description, 0, 500),
+            'currency' => 'IRR',
+        ];
+        $metadata = $this->metadata($meta);
+        if ($metadata !== []) {
+            $payload['metadata'] = $metadata;
+        }
+
         try {
-            $response = Http::timeout(30)->post($this->baseUrl().'/pg/v4/payment/request.json', [
-                'merchant_id' => $merchantId,
-                'amount' => $amount,
-                'callback_url' => $callbackUrl,
-                'description' => $description,
-                'currency' => 'IRR',
-            ]);
+            $response = Http::acceptJson()->asJson()->timeout(30)
+                ->post($this->apiBase().'/pg/v4/payment/request.json', $payload);
 
             $data = $response->json('data') ?? [];
             $authority = $data['authority'] ?? null;
@@ -69,7 +109,7 @@ class ZarinPalGateway implements PaymentGatewayInterface
 
             return [
                 'authority' => $authority,
-                'payment_url' => $this->baseUrl().'/pg/StartPay/'.$authority,
+                'payment_url' => $this->startPayBase().'/pg/StartPay/'.$authority,
                 'error' => null,
             ];
         } catch (\Throwable $e) {
@@ -88,7 +128,7 @@ class ZarinPalGateway implements PaymentGatewayInterface
         }
 
         try {
-            $response = Http::timeout(30)->post($this->baseUrl().'/pg/v4/payment/verify.json', [
+            $response = Http::acceptJson()->asJson()->timeout(30)->post($this->apiBase().'/pg/v4/payment/verify.json', [
                 'merchant_id' => $merchantId,
                 'amount' => $amount,
                 'authority' => $authority,
@@ -101,11 +141,16 @@ class ZarinPalGateway implements PaymentGatewayInterface
                 return [
                     'success' => true,
                     'ref_id' => isset($data['ref_id']) ? (string) $data['ref_id'] : null,
+                    'card_pan' => $data['card_pan'] ?? null,
                     'error' => null,
                 ];
             }
 
-            return ['success' => false, 'ref_id' => null, 'error' => 'پرداخت ناموفق بود'];
+            $message = $response->json('errors.message')
+                ?? data_get($response->json(), 'errors.0.message')
+                ?? 'پرداخت ناموفق بود';
+
+            return ['success' => false, 'ref_id' => null, 'error' => is_string($message) ? $message : 'پرداخت ناموفق بود'];
         } catch (\Throwable $e) {
             Log::error('ZarinPal verify exception', ['error' => $e->getMessage()]);
 

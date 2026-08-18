@@ -281,7 +281,12 @@ Resume JSON:
         $this->ensureWithinDailyLimit('resume_tip', (int) Setting::get('ai_resume_limit_per_day', 5));
 
         $title = (string) ($context['title'] ?? $context['target_job'] ?? 'کارشناس');
-        $prompt = 'Write a compelling 2-3 sentence professional resume summary in Persian (Farsi) for an Iranian job seeker. Be concise and ATS-friendly. Return JSON object: {"suggestion":"..."}. Context: '.json_encode($context, JSON_UNESCAPED_UNICODE).' Job title/target: '.$title;
+        $mode = (string) ($context['mode'] ?? 'summary');
+        if ($mode === 'job') {
+            $prompt = 'Write 3-4 sentences in Persian (Farsi) introducing the occupation "'.$title.'" for an Iranian job-seeker resume About section. Explain what this job typically does in Iranian organizations (bank, government, private), key duties, and required competencies. Do not invent a fake personal biography. Return JSON: {"suggestion":"..."}. Context: '.json_encode($context, JSON_UNESCAPED_UNICODE);
+        } else {
+            $prompt = 'Write a compelling 3-4 sentence professional resume summary in Persian (Farsi) for an Iranian job seeker targeting "'.$title.'". Use the candidate context when present. Be concise and ATS-friendly. Return JSON object: {"suggestion":"..."}. Context: '.json_encode($context, JSON_UNESCAPED_UNICODE);
+        }
 
         $raw = $this->chat($prompt);
         $obj = $this->parseJsonObject($raw);
@@ -385,6 +390,109 @@ Resume JSON:
         ]);
 
         return ['skills' => $skills, 'ai_content_id' => $aiContent->id];
+    }
+
+    /**
+     * Draft resume content (summary, skills, sample experience) for a target job.
+     *
+     * @param  array<string, mixed>  $context
+     * @return array{summary: string, skills: array<int, array{name: string, level: string}>, experience: array<int, array<string, mixed>>, languages: array<int, array{name: string, level: string}>, ai_content_id: int}
+     */
+    public function draftResumeForJob(array $context): array
+    {
+        if (! $this->isEnabled()) {
+            throw new \RuntimeException('سرویس هوش مصنوعی غیرفعال است.');
+        }
+
+        $this->ensureWithinDailyLimit('resume_tip', (int) Setting::get('ai_resume_limit_per_day', 5));
+
+        $title = (string) ($context['target_job'] ?? $context['title'] ?? 'کارشناس');
+        $prompt = 'Create a professional Persian (Farsi) resume DRAFT for an Iranian applicant targeting "'.$title.'".
+Do NOT invent a real company name the person worked at; use generic placeholders like «سازمان مربوطه» that the user can edit.
+Return JSON only:
+{
+  "summary": "3-4 sentences about the candidate profile for this job",
+  "skills": [{"name":"...","level":"مبتدی|متوسط|حرفه‌ای"}],
+  "experience": [{"title":"job title","company":"سازمان مربوطه","description":"3-4 duty lines separated by newline"}],
+  "languages": [{"name":"انگلیسی","level":"متوسط"}]
+}
+Include 8-12 skills common in Iranian job ads for this role, 1-2 experience templates, and English language. Context: '.json_encode($context, JSON_UNESCAPED_UNICODE);
+
+        $raw = $this->chat($prompt);
+        $obj = $this->parseJsonObject($raw);
+
+        $summary = trim((string) ($obj['summary'] ?? ''));
+        $skills = [];
+        foreach (($obj['skills'] ?? []) as $skill) {
+            if (is_string($skill) && trim($skill) !== '') {
+                $skills[] = ['name' => Str::limit(trim($skill), 50, ''), 'level' => 'متوسط'];
+            } elseif (is_array($skill) && trim((string) ($skill['name'] ?? '')) !== '') {
+                $level = (string) ($skill['level'] ?? 'متوسط');
+                if (! in_array($level, ['مبتدی', 'متوسط', 'حرفه‌ای'], true)) {
+                    $level = 'متوسط';
+                }
+                $skills[] = [
+                    'name' => Str::limit(trim((string) $skill['name']), 50, ''),
+                    'level' => $level,
+                ];
+            }
+        }
+        $experience = [];
+        foreach (($obj['experience'] ?? []) as $exp) {
+            if (! is_array($exp)) {
+                continue;
+            }
+            $jobTitle = trim((string) ($exp['title'] ?? $title));
+            $company = trim((string) ($exp['company'] ?? 'سازمان مربوطه')) ?: 'سازمان مربوطه';
+            $desc = trim((string) ($exp['description'] ?? ''));
+            if ($jobTitle === '') {
+                continue;
+            }
+            $experience[] = [
+                'title' => Str::limit($jobTitle, 100, ''),
+                'company' => Str::limit($company, 100, ''),
+                'description' => Str::limit($desc, 2000, ''),
+                'start_date' => '',
+                'end_date' => '',
+                'is_current' => false,
+            ];
+        }
+        $languages = [];
+        foreach (($obj['languages'] ?? []) as $lang) {
+            if (! is_array($lang) || trim((string) ($lang['name'] ?? '')) === '') {
+                continue;
+            }
+            $level = (string) ($lang['level'] ?? 'متوسط');
+            $allowed = ['مبتدی', 'متوسط', 'حرفه‌ای', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+            if (! in_array($level, $allowed, true)) {
+                $level = 'متوسط';
+            }
+            $languages[] = [
+                'name' => Str::limit(trim((string) $lang['name']), 50, ''),
+                'level' => $level,
+            ];
+        }
+
+        if ($summary === '' && $skills === []) {
+            throw new \RuntimeException('پاسخ AI برای پیش‌نویس رزومه نامعتبر است.');
+        }
+
+        $aiContent = AiContent::query()->create([
+            'type' => 'resume_tip',
+            'prompt' => $prompt,
+            'generated_content' => json_encode($obj, JSON_UNESCAPED_UNICODE),
+            'reviewed_by' => null,
+            'status' => 'pending',
+            'metadata' => ['field' => 'draft', 'target_job' => $title],
+        ]);
+
+        return [
+            'summary' => $summary,
+            'skills' => $skills,
+            'experience' => $experience,
+            'languages' => $languages,
+            'ai_content_id' => $aiContent->id,
+        ];
     }
 
     /**

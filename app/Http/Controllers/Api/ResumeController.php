@@ -87,9 +87,13 @@ class ResumeController extends BaseController
             return $this->errorResponse('رزومه یافت نشد.', 404);
         }
 
-        if ($this->resumePDFService->needsRegeneration($resume)) {
+        try {
             $this->resumeService->generatePDF($resume);
             $resume->refresh();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('ساخت PDF رزومه ناموفق بود.', 500);
         }
 
         $path = $this->resumePDFService->absolutePath($resume);
@@ -120,7 +124,7 @@ class ResumeController extends BaseController
     public function updateTemplate(Request $request, int $id): JsonResponse
     {
         $data = $request->validate([
-            'template_id' => ['required', 'integer', 'in:1,2,3'],
+            'template_id' => ['required', 'integer', 'between:1,10'],
         ]);
 
         $resume = $this->resumeRepository->findById($id, $request->user());
@@ -174,6 +178,8 @@ class ResumeController extends BaseController
             $context = [
                 'title' => (string) ($request->input('title') ?: data_get($resume->data, 'target_job') ?: data_get($resume->data, 'personal.full_name')),
                 'target_job' => data_get($resume->data, 'target_job'),
+                'mode' => $request->input('mode', 'summary'),
+                'field_of_study' => data_get($resume->data, 'personal.field_of_study'),
                 'experiences' => $request->input('experiences', data_get($resume->data, 'experience', [])),
                 'skills' => $request->input('skills', data_get($resume->data, 'skills', [])),
             ];
@@ -207,6 +213,20 @@ class ResumeController extends BaseController
 
             return $this->aiService->suggestResumeSkills($context);
         }, 'مهارت‌های پیشنهادی آماده شد.');
+    }
+
+    public function aiDraft(Request $request, int $id): JsonResponse
+    {
+        return $this->runResumeAi($request, $id, function ($resume) use ($request) {
+            $context = [
+                'title' => (string) ($request->input('title') ?: data_get($resume->data, 'target_job') ?: ''),
+                'target_job' => data_get($resume->data, 'target_job') ?: $request->input('title'),
+                'field_of_study' => data_get($resume->data, 'personal.field_of_study'),
+                'full_name' => data_get($resume->data, 'personal.full_name'),
+            ];
+
+            return $this->aiService->draftResumeForJob($context);
+        }, 'پیش‌نویس رزومه آماده شد.');
     }
 
     /**

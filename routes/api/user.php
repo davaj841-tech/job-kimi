@@ -68,5 +68,8 @@ Route::middleware(['auth:sanctum', 'subscription.check'])->group(function () {
     Route::post('/resumes/{id}/ai/suggest-skills', [ResumeController::class, 'aiSuggestSkills'])
         ->middleware('feature:ai-resume')
         ->whereNumber('id');
+    Route::post('/resumes/{id}/ai/draft', [ResumeController::class, 'aiDraft'])
+        ->middleware('feature:ai-resume')
+        ->whereNumber('id');
     Route::apiResource('/resumes', ResumeController::class)->parameters(['resumes' => 'id']);
 });

@@ -21,7 +21,7 @@
       <FormInput
         v-model="local.target_job"
         label="عنوان / شغل هدف"
-        placeholder="برنامه‌نویس فرانت‌اند"
+        placeholder="مثلاً کارشناس اعتبارات"
       />
       <FormInput
         v-model="local.personal.email"
@@ -38,23 +38,54 @@
         maxlength="11"
       />
       <FormInput
-        v-model="local.personal.national_code"
-        label="کد ملی"
-        placeholder="0012345678"
-        required
-        maxlength="10"
+        v-model="local.personal.home_phone"
+        label="تلفن منزل"
+        placeholder="02112345678"
+        maxlength="11"
       />
+      <label class="block">
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted">وضعیت سربازی</span>
+        <select
+          v-model="local.personal.military_status"
+          class="input-field"
+        >
+          <option value="">انتخاب کنید</option>
+          <option
+            v-for="m in militaryOptions"
+            :key="m"
+            :value="m"
+          >
+            {{ m }}
+          </option>
+        </select>
+      </label>
       <FormInput
+        v-model="local.personal.insurance_history"
+        label="سابقه بیمه"
+        placeholder="مثلاً ۵ سال تامین اجتماعی"
+      />
+      <label class="block">
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted">
+          کد ملی <span class="text-brand">*</span>
+        </span>
+        <input
+          :value="local.personal.national_code"
+          class="input-field text-left"
+          dir="ltr"
+          inputmode="numeric"
+          maxlength="10"
+          placeholder="۱۰ رقم"
+          required
+          @input="onNational"
+        />
+      </label>
+      <JalaliBirthInput
         v-model="local.personal.birth_date"
-        label="تاریخ تولد"
-        type="date"
         required
       />
 
       <label class="block">
-        <span class="mb-1.5 block text-xs font-medium text-desk-muted"
-          >استان محل تولد *</span
-        >
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted">استان محل تولد *</span>
         <select
           v-model="local.personal.birth_province"
           class="input-field"
@@ -73,9 +104,7 @@
       </label>
 
       <label class="block">
-        <span class="mb-1.5 block text-xs font-medium text-desk-muted"
-          >شهرستان محل تولد *</span
-        >
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted">شهرستان محل تولد *</span>
         <select
           v-model="local.personal.birth_city"
           class="input-field"
@@ -94,9 +123,7 @@
       </label>
 
       <label class="block">
-        <span class="mb-1.5 block text-xs font-medium text-desk-muted"
-          >وضعیت تاهل *</span
-        >
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted">وضعیت تاهل *</span>
         <select
           v-model="local.personal.marital_status"
           class="input-field"
@@ -109,24 +136,34 @@
         </select>
       </label>
 
-      <FormInput
+      <SearchSelect
         v-model="local.personal.field_of_study"
         label="رشته تحصیلی"
-        placeholder="مهندسی کامپیوتر"
+        placeholder="جستجوی رشته…"
+        :options="ACADEMIC_FIELDS"
       />
 
       <FormInput
         v-model="local.personal.address"
         label="آدرس محل سکونت"
-        placeholder="تهران، خیابان…"
+        placeholder=""
         class="md:col-span-2"
       />
-      <FormInput
-        v-model="local.personal.photo"
-        label="آدرس عکس (اختیاری)"
-        placeholder="https://..."
-        class="md:col-span-2"
-      />
+      <label class="block">
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted">کد پستی</span>
+        <input
+          :value="local.personal.postal_code"
+          class="input-field text-left"
+          dir="ltr"
+          inputmode="numeric"
+          maxlength="10"
+          placeholder="۱۰ رقم"
+          @input="onPostal"
+        />
+      </label>
+      <div class="md:col-span-2">
+        <PhotoUpload v-model="local.personal.photo" />
+      </div>
     </div>
   </div>
 </template>
@@ -134,7 +171,20 @@
 <script setup>
 import { computed } from 'vue'
 import FormInput from '../FormInput.vue'
+import JalaliBirthInput from '../JalaliBirthInput.vue'
+import PhotoUpload from '../PhotoUpload.vue'
+import SearchSelect from '../SearchSelect.vue'
+import { ACADEMIC_FIELDS } from '../../../data/academicFields'
 import { IRAN_PROVINCES, citiesForProvince } from '../../../utils/iranCities'
+
+const militaryOptions = [
+  'پایان خدمت',
+  'معافیت دائم',
+  'معافیت تحصیلی',
+  'در حال خدمت',
+  'مشمول',
+  'غیرمشمول',
+]
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -149,6 +199,18 @@ const local = computed({
 const cityOptions = computed(() =>
   citiesForProvince(local.value?.personal?.birth_province || '')
 )
+
+function onNational(e) {
+  local.value.personal.national_code = String(e.target.value || '')
+    .replace(/\D/g, '')
+    .slice(0, 10)
+}
+
+function onPostal(e) {
+  local.value.personal.postal_code = String(e.target.value || '')
+    .replace(/\D/g, '')
+    .slice(0, 10)
+}
 
 function onProvinceChange() {
   if (!local.value?.personal) return

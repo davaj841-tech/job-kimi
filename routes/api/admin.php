@@ -19,6 +19,8 @@ use App\Http\Controllers\Api\Admin\JobClassificationAdminController;
 use App\Http\Controllers\Api\Admin\JobPostAdminController;
 use App\Http\Controllers\Api\Admin\JobSourceAdminController;
 use App\Http\Controllers\Api\Admin\PageAdminController;
+use App\Http\Controllers\Api\Admin\TeamMemberAdminController;
+use App\Http\Controllers\Api\Admin\PerformanceAdminController;
 use App\Http\Controllers\Api\Admin\PDFProductAdminController;
 use App\Http\Controllers\Api\Admin\SettingsAdminController;
 use App\Http\Controllers\Api\Admin\SiteErrorAdminController;
@@ -166,6 +168,10 @@ Route::middleware(['auth:sanctum', 'subscription.check', 'role:admin,operator', 
     Route::put('/settings', [SettingsAdminController::class, 'update']);
     Route::post('/settings/upload-logo', [SettingsAdminController::class, 'uploadLogo']);
 
+    Route::get('/performance', [PerformanceAdminController::class, 'status']);
+    Route::post('/performance/boost', [PerformanceAdminController::class, 'boost']);
+    Route::post('/performance/auto', [PerformanceAdminController::class, 'auto']);
+
     Route::get('/tickets', [TicketAdminController::class, 'index']);
     Route::put('/tickets/{id}/status', [TicketAdminController::class, 'updateStatus'])->whereNumber('id');
 
@@ -182,6 +188,11 @@ Route::middleware(['auth:sanctum', 'subscription.check', 'role:admin,operator', 
     Route::post('/pages', [PageAdminController::class, 'store']);
     Route::put('/pages/{id}', [PageAdminController::class, 'update'])->whereNumber('id');
     Route::delete('/pages/{id}', [PageAdminController::class, 'destroy'])->whereNumber('id');
+
+    Route::get('/team-members', [TeamMemberAdminController::class, 'index']);
+    Route::post('/team-members', [TeamMemberAdminController::class, 'store']);
+    Route::post('/team-members/{id}', [TeamMemberAdminController::class, 'update'])->whereNumber('id');
+    Route::delete('/team-members/{id}', [TeamMemberAdminController::class, 'destroy'])->whereNumber('id');
 
     Route::get('/analytics/visits', [AnalyticsAdminController::class, 'visits']);
     Route::get('/analytics/top-pages', [AnalyticsAdminController::class, 'topPages']);

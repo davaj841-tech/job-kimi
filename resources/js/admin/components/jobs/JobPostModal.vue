@@ -51,6 +51,12 @@
           </p>
         </div>
 
+        <CatalogAttachFields
+          v-model:auto-catalog="form.auto_catalog"
+          v-model:exam-ids="form.exam_ids"
+          v-model:pdf-ids="form.pdf_ids"
+        />
+
         <div>
           <label class="label">شرح آگهی *</label>
           <RichEditor v-model="form.description" />
@@ -208,6 +214,7 @@
 
 <script setup>
 import { reactive, ref, watch } from 'vue'
+import CatalogAttachFields from '../catalog/CatalogAttachFields.vue'
 import JalaliDatepicker from '../ui/JalaliDatepicker.vue'
 import RichEditor from '../ui/RichEditor.vue'
 import StatusToggle from '../ui/StatusToggle.vue'
@@ -294,6 +301,9 @@ function empty() {
     newFiles: [],
     status: 'approved',
     is_featured: false,
+    auto_catalog: true,
+    exam_ids: [],
+    pdf_ids: [],
   }
 }
 
@@ -316,6 +326,9 @@ function map(p) {
     newFiles: [],
     status: p.status || 'pending',
     is_featured: Boolean(p.is_featured),
+    auto_catalog: p.auto_catalog !== false,
+    exam_ids: Array.isArray(p.exam_ids) ? p.exam_ids.map(Number) : [],
+    pdf_ids: Array.isArray(p.pdf_ids) ? p.pdf_ids.map(Number) : [],
   }
 }
 
@@ -382,6 +395,9 @@ function submit() {
       source_url: form.source_url || null,
       status: form.status,
       is_featured: form.is_featured,
+      auto_catalog: form.auto_catalog,
+      exam_ids: form.exam_ids,
+      pdf_ids: form.pdf_ids,
       attachments: form.newFiles
         .filter((r) => r.file instanceof File)
         .map((r) => r.file),

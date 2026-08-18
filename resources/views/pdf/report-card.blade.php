@@ -4,10 +4,17 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     @php
         $fa = static fn (mixed $v): string => \App\Services\ReportCardPDFService::fa($v);
-        $opt = static fn (?string $v): string => \App\Services\ReportCardPDFService::optionLetter($v);
+        $pct = static fn (mixed $v): string => \App\Services\ReportCardPDFService::faPct($v);
         $passed = (bool) ($analysis['passed'] ?? false);
-        $pct = (float) ($analysis['percentage'] ?? 0);
+        $isRetry = (bool) ($analysis['is_retry_wrong'] ?? $attempt->is_retry_wrong ?? false);
+        $retryMode = $analysis['retry_mode'] ?? $attempt->retry_mode ?? null;
+        $percent = (float) ($analysis['percentage'] ?? 0);
+        $correct = (int) ($analysis['total_correct'] ?? $attempt->total_correct ?? 0);
+        $wrong = (int) ($analysis['total_wrong'] ?? $attempt->total_wrong ?? 0);
+        $blank = (int) ($analysis['total_unanswered'] ?? 0);
+        $totalQ = (int) ($analysis['total_questions'] ?? count($sheet));
         $negRatio = number_format((float) ($analysis['negative_mark_ratio'] ?? 0.3333), 2);
+        $site = $siteName ?? 'جاب‌آزمون';
     @endphp
     <style>
         @font-face {
@@ -28,203 +35,191 @@
             direction: ltr;
             text-align: right;
             color: #0f172a;
-            font-size: 11.5px;
-            line-height: 1.75;
+            font-size: 11px;
+            line-height: 1.7;
             margin: 0;
-            padding: 18px 20px 22px;
+            padding: 12px 14px 16px;
             background: #ffffff;
         }
-        .frame {
-            border: 1.5px solid #d6deea;
-            padding: 0;
-        }
-        .header {
+        .frame { border: 2px solid #0f2744; }
+        .brand {
             width: 100%;
             border-collapse: collapse;
             background: #0f2744;
-            color: #ffffff;
+            color: #fff;
         }
-        .header td { padding: 16px 18px 14px; vertical-align: middle; border: 0; }
-        .header .mark {
-            width: 92px;
-            text-align: center;
-            background: #f97316;
-            color: #ffffff;
-            font-size: 11px;
-            font-weight: 700;
-        }
-        .header .mark .pct {
-            display: block;
-            font-size: 26px;
-            font-weight: 700;
-            line-height: 1.15;
-            margin-top: 2px;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 700;
-            color: #ffffff;
-        }
-        .header .sub {
-            margin: 4px 0 0;
-            font-size: 12px;
-            color: #dbe7f5;
-        }
-        .accent { height: 5px; background: #f97316; }
-        .pad { padding: 14px 16px 16px; }
-        .info { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-        .info td { padding: 0 4px 8px; vertical-align: top; border: 0; }
-        .cell {
-            width: 100%;
-            border-collapse: collapse;
-            background: #f6f8fb;
-            border: 1px solid #e2e8f0;
-        }
-        .cell td { padding: 8px 10px; border: 0; vertical-align: middle; }
-        .cell .key {
-            width: 38%;
-            font-weight: 700;
-            color: #0f2744;
-            font-size: 11px;
-            text-align: right;
-        }
-        .cell .val {
-            text-align: right;
-            color: #0f172a;
-            font-size: 12px;
-        }
-        .badge {
+        .brand td { border: 0; padding: 10px 12px; vertical-align: middle; }
+        .brand-logo { width: 92px; text-align: center; }
+        .logo { height: 40px; max-width: 110px; }
+        .brand h1 { margin: 0; font-size: 18px; color: #fff; letter-spacing: 0; }
+        .brand .exam { margin: 3px 0 0; font-size: 11px; color: #fdba74; font-weight: 700; }
+        .brand .meta { margin: 2px 0 0; font-size: 9.5px; color: #94a3b8; }
+        .chip {
             display: inline-block;
-            padding: 3px 12px;
+            margin-top: 5px;
+            padding: 1px 8px;
+            font-size: 9px;
             font-weight: 700;
-            font-size: 12px;
+            background: #f97316;
+            color: #fff;
         }
-        .badge-ok { background: #dcfce7; color: #166534; }
-        .badge-no { background: #fee2e2; color: #991b1b; }
-        .stats { width: 100%; border-collapse: collapse; margin: 4px 0 12px; }
-        .stats th, .stats td {
-            border: 1px solid #d6deea;
-            padding: 9px 6px;
+        .pct-box {
+            width: 96px;
             text-align: center;
+            background: #ef394e;
+            padding: 12px 8px;
         }
-        .stats th {
-            background: #0f2744;
-            color: #ffffff;
-            font-weight: 700;
-            font-size: 10.5px;
-        }
-        .stats td {
-            font-size: 13px;
-            font-weight: 700;
-            background: #f8fafc;
-        }
-        h2 {
-            font-size: 13px;
-            margin: 16px 0 8px;
-            color: #0f2744;
-            font-weight: 700;
-            padding: 0 0 5px;
-            border-bottom: 2px solid #f97316;
-        }
-        .note {
+        .pct-box .lbl { display: block; font-size: 9px; font-weight: 700; color: #fecaca; }
+        .pct-box .pct { display: block; font-size: 22px; font-weight: 700; line-height: 1.15; margin-top: 2px; }
+        .stripe { height: 3px; background: #f97316; }
+        .pad { padding: 12px 14px 14px; }
+        .retry {
             background: #fff7ed;
             border: 1px solid #fdba74;
             color: #9a3412;
-            padding: 8px 10px;
-            margin: 0 0 12px;
-            font-size: 11px;
-        }
-        .subjects, .sheet { width: 100%; border-collapse: collapse; }
-        .subjects th, .subjects td,
-        .sheet th, .sheet td {
-            border: 1px solid #d6deea;
-            padding: 7px 6px;
-            text-align: center;
-            font-size: 11px;
-        }
-        .subjects th, .sheet th {
-            background: #0f2744;
-            color: #ffffff;
+            padding: 5px 9px;
+            margin-bottom: 10px;
+            font-size: 10px;
             font-weight: 700;
-            font-size: 10.5px;
         }
-        .subjects .name {
-            text-align: right;
-            font-weight: 700;
+        .info { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .info td { padding: 0 3px 7px; border: 0; vertical-align: top; }
+        .cell { width: 100%; border-collapse: collapse; background: #f8fafc; border: 1px solid #e2e8f0; }
+        .cell td { padding: 7px 9px; border: 0; }
+        .cell .key { width: 36%; font-weight: 700; color: #0f2744; font-size: 10px; }
+        .cell .val { font-size: 11.5px; font-weight: 700; }
+        .badge { display: inline-block; padding: 2px 10px; font-weight: 700; font-size: 11px; }
+        .badge-ok { background: #dcfce7; color: #166534; }
+        .badge-no { background: #fee2e2; color: #991b1b; }
+        .stats { width: 100%; border-collapse: collapse; margin: 2px 0 10px; }
+        .stats th, .stats td { border: 1px solid #d6deea; padding: 8px 4px; text-align: center; }
+        .stats th { background: #0f2744; color: #fff; font-size: 10px; }
+        .stats td { font-size: 12px; font-weight: 700; background: #f8fafc; }
+        h2 {
+            font-size: 12px;
+            margin: 12px 0 6px;
             color: #0f2744;
-            padding-right: 10px;
-            background: #f8fafc;
+            font-weight: 700;
+            padding: 0 0 4px;
+            border-bottom: 2px solid #f97316;
         }
+        .note { background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; padding: 7px 9px; margin: 0 0 10px; font-size: 10.5px; }
+        .subjects, .sheet { width: 100%; border-collapse: collapse; }
+        .subjects th, .subjects td, .sheet th, .sheet td {
+            border: 1px solid #d6deea;
+            padding: 5px 4px;
+            text-align: center;
+            font-size: 10px;
+        }
+        .subjects th, .sheet th { background: #0f2744; color: #fff; font-weight: 700; font-size: 10px; }
+        .subjects .name { text-align: right; font-weight: 700; color: #0f2744; padding-right: 8px; background: #f8fafc; }
+        .barwrap { background: #e2e8f0; height: 7px; }
+        .bar { height: 7px; background: #10b981; }
+        .bar-mid { background: #f59e0b; }
+        .bar-low { background: #ef394e; }
         .ok { background: #ecfdf5; color: #166534; }
         .bad { background: #fef2f2; color: #991b1b; }
         .blank { background: #f8fafc; color: #64748b; }
+        .legend { width: 100%; margin: 6px 0 8px; border-collapse: collapse; }
+        .legend td { border: 0; font-size: 10px; padding: 2px 4px; }
+        .dot { display: inline-block; width: 8px; height: 8px; }
         .footer {
-            margin-top: 14px;
+            margin-top: 12px;
             color: #64748b;
-            font-size: 10px;
+            font-size: 9.5px;
             text-align: center;
             border-top: 1px solid #e2e8f0;
-            padding: 10px 8px 4px;
+            padding: 8px 6px 2px;
         }
     </style>
 </head>
 <body>
     <div class="frame">
-        <table class="header">
+        <table class="brand">
             <tr>
-                <td class="mark">
-                    درصد
-                    <span class="pct">{{ $fa(rtrim(rtrim(number_format($pct, 1), '0'), '.')) }}٪</span>
+                <td class="brand-logo">
+                    @if(!empty($logoDataUri))
+                        <img class="logo" src="{{ $logoDataUri }}" alt=""/>
+                    @endif
                 </td>
                 <td>
-                    <h1>کارنامه رسمی آزمون</h1>
-                    <p class="sub">جاب‌آزمون · سامانه آزمون‌های استخدامی</p>
+                    <h1>کارنامه آزمون</h1>
+                    <p class="exam">{{ $exam?->title ?: $site }}</p>
+                    <p class="meta">{{ $site }} · شماره کارنامه {{ $fa($attempt->id) }}</p>
+                    @if($isRetry)
+                        <span class="chip">
+                            @if($retryMode === 'blank')
+                                مرور سوالات بدون پاسخ
+                            @else
+                                مرور سوالات غلط
+                            @endif
+                        </span>
+                    @endif
+                </td>
+                <td class="pct-box">
+                    <span class="lbl">درصد کل</span>
+                    <span class="pct">{{ $pct($percent) }}</span>
                 </td>
             </tr>
         </table>
-        <div class="accent"></div>
+        <div class="stripe"></div>
 
         <div class="pad">
+            @if($isRetry)
+                <div class="retry">
+                    @if($retryMode === 'blank')
+                        این کارنامه مربوط به آزمون سوالات بدون پاسخ است و از کارنامه اصلی جداست.
+                    @else
+                        این کارنامه مربوط به آزمون مجدد سوالات غلط است و از کارنامه اصلی جداست.
+                    @endif
+                </div>
+            @endif
+
             <table class="info">
                 <tr>
                     <td width="50%">
-                        <table class="cell">
-                            <tr>
-                                <td class="val">{{ $exam?->title ?: '—' }}</td>
-                                <td class="key">عنوان آزمون</td>
-                            </tr>
-                        </table>
+                        <table class="cell"><tr>
+                            <td class="val">{{ $exam?->title ?: '—' }}</td>
+                            <td class="key">عنوان آزمون</td>
+                        </tr></table>
                     </td>
                     <td width="50%">
-                        <table class="cell">
-                            <tr>
-                                <td class="val">{{ $user?->name ?? '—' }}</td>
-                                <td class="key">نام داوطلب</td>
-                            </tr>
-                        </table>
+                        <table class="cell"><tr>
+                            <td class="val">{{ $user?->name ?? '—' }}</td>
+                            <td class="key">نام داوطلب</td>
+                        </tr></table>
                     </td>
                 </tr>
                 <tr>
                     <td width="50%">
-                        <table class="cell">
-                            <tr>
-                                <td class="val">
-                                    <span class="badge {{ $passed ? 'badge-ok' : 'badge-no' }}">
-                                        {{ $passed ? 'قبول شدید' : 'قبول نشدید' }}
-                                    </span>
-                                </td>
-                                <td class="key">نتیجه</td>
-                            </tr>
-                        </table>
+                        <table class="cell"><tr>
+                            <td class="val">
+                                <span class="badge {{ $passed ? 'badge-ok' : 'badge-no' }}">
+                                    {{ $passed ? 'قبول شدید' : 'قبول نشدید' }}
+                                </span>
+                            </td>
+                            <td class="key">نتیجه</td>
+                        </tr></table>
                     </td>
                     <td width="50%">
-                        <table class="cell">
-                            <tr>
-                                <td class="val">{{ $finishedAtFa }}</td>
-                                <td class="key">تاریخ برگزاری</td>
-                            </tr>
-                        </table>
+                        <table class="cell"><tr>
+                            <td class="val">{{ $user?->mobile ?? $user?->username ?? '—' }}</td>
+                            <td class="key">شناسه داوطلب</td>
+                        </tr></table>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="50%">
+                        <table class="cell"><tr>
+                            <td class="val">{{ $finishedAtFa }}</td>
+                            <td class="key">پایان آزمون</td>
+                        </tr></table>
+                    </td>
+                    <td width="50%">
+                        <table class="cell"><tr>
+                            <td class="val">{{ $startedAtFa }}</td>
+                            <td class="key">شروع آزمون</td>
+                        </tr></table>
                     </td>
                 </tr>
             </table>
@@ -236,80 +231,60 @@
                     <th>بدون پاسخ</th>
                     <th>غلط</th>
                     <th>صحیح</th>
+                    <th>کل سوال</th>
                     <th>نمره</th>
+                    <th>درصد</th>
                 </tr>
                 <tr>
                     <td>{{ $fa($exam?->passing_score ?? '—') }}</td>
                     <td>{{ $fa($analysis['rank'] ?? '—') }}</td>
-                    <td>{{ $fa(max(0, (int) ($analysis['total_questions'] ?? count($sheet)) - (int) ($analysis['total_correct'] ?? 0) - (int) ($analysis['total_wrong'] ?? 0))) }}</td>
-                    <td>{{ $fa($analysis['total_wrong'] ?? $attempt->total_wrong) }}</td>
-                    <td>{{ $fa($analysis['total_correct'] ?? $attempt->total_correct) }}</td>
+                    <td>{{ $fa($blank) }}</td>
+                    <td>{{ $fa($wrong) }}</td>
+                    <td>{{ $fa($correct) }}</td>
+                    <td>{{ $fa($totalQ) }}</td>
                     <td>{{ $fa($analysis['score'] ?? $attempt->score) }}</td>
+                    <td>{{ $pct($percent) }}</td>
                 </tr>
             </table>
 
             @if(!empty($analysis['has_negative_marking']))
-                <div class="note">
-                    این آزمون نمره منفی دارد (نسبت {{ $fa($negRatio) }}).
-                </div>
+                <div class="note">این آزمون نمره منفی دارد (نسبت {{ $fa($negRatio) }}). سوالات نزده نمره منفی ندارند.</div>
             @endif
 
             @if(!empty($analysis['by_subject']))
                 <h2>تحلیل درس‌ها</h2>
                 <table class="subjects">
                     <tr>
+                        <th>نمودار</th>
                         <th>درصد</th>
-                        <th>بدون پاسخ</th>
+                        <th>نزده</th>
                         <th>غلط</th>
                         <th>صحیح</th>
-                        <th>تعداد سوال</th>
+                        <th>تعداد</th>
                         <th>نام درس</th>
                     </tr>
                     @foreach($analysis['by_subject'] as $row)
+                        @php
+                            $p = (float) ($row['percentage'] ?? 0);
+                            $barClass = $p >= 70 ? 'bar' : ($p >= 50 ? 'bar bar-mid' : 'bar bar-low');
+                        @endphp
                         <tr>
-                            <td>{{ $fa($row['percentage'] ?? 0) }}٪</td>
-                            <td>{{ $fa($row['blank']) }}</td>
-                            <td>{{ $fa($row['wrong']) }}</td>
-                            <td>{{ $fa($row['correct']) }}</td>
-                            <td>{{ $fa($row['total']) }}</td>
+                            <td style="width: 70px;">
+                                <div class="barwrap"><div class="{{ $barClass }}" style="width: {{ min(100, $p) }}%;"></div></div>
+                            </td>
+                            <td>{{ $pct($p) }}</td>
+                            <td>{{ $fa($row['blank'] ?? 0) }}</td>
+                            <td>{{ $fa($row['wrong'] ?? 0) }}</td>
+                            <td>{{ $fa($row['correct'] ?? 0) }}</td>
+                            <td>{{ $fa($row['total'] ?? 0) }}</td>
                             <td class="name">{{ $row['subject_label'] ?? \App\Services\ExamService::subjectDisplayName($row['subject'] ?? null) }}</td>
                         </tr>
                     @endforeach
                 </table>
             @endif
 
-            <h2>پاسخبرگ</h2>
-            <table class="sheet">
-                <thead>
-                    <tr>
-                        <th>نتیجه</th>
-                        <th>پاسخ صحیح</th>
-                        <th>پاسخ شما</th>
-                        <th>شماره</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($sheet as $row)
-                        @php
-                            $cls = $row['is_blank'] ? 'blank' : ($row['is_correct'] ? 'ok' : 'bad');
-                        @endphp
-                        <tr class="{{ $cls }}">
-                            <td>
-                                @if($row['is_blank']) بدون پاسخ
-                                @elseif($row['is_correct']) صحیح
-                                @else غلط
-                                @endif
-                            </td>
-                            <td>{{ $opt($row['correct_answer'] ?? null) }}</td>
-                            <td>{{ $opt($row['user_answer'] ?? null) }}</td>
-                            <td>{{ $fa($row['number']) }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-
             <div class="footer">
-                جاب‌آزمون · صادرشده در {{ $generatedAtFa }}
+                {{ $site }} · صادرشده در {{ $generatedAtFa }} · این کارنامه صرفاً برای اطلاع داوطلب است.
             </div>
         </div>
     </div>

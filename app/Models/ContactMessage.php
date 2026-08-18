@@ -4,13 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
 
 class ContactMessage extends Model
 {
     protected $fillable = [
         'tracking_code',
         'name',
+        'mobile',
         'email',
         'subject',
         'message',
@@ -35,7 +35,7 @@ class ContactMessage extends Model
     public static function generateTrackingCode(): string
     {
         do {
-            $code = 'JA-'.strtoupper(Str::random(8));
+            $code = (string) random_int(100000, 999999);
         } while (self::query()->where('tracking_code', $code)->exists());
 
         return $code;

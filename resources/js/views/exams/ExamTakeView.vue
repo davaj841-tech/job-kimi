@@ -200,7 +200,7 @@
       </section>
 
       <aside class="hidden lg:block">
-        <div class="exam-nav-panel">
+        <div class="exam-nav-panel sticky top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto">
           <div class="mb-3 flex items-center justify-between">
             <h3 class="text-sm font-bold text-[#0f2744]">پیمایش</h3>
             <button
@@ -218,6 +218,7 @@
               type="button"
               class="relative h-9 rounded-md text-sm font-medium transition"
               :class="navigatorClass(item)"
+              :data-nav-id="item.id"
               @click="jumpTo(item.id)"
             >
               {{ toFaDigits(idx + 1) }}
@@ -303,6 +304,18 @@ let touchX = 0
 const q = computed(() => session.pageQuestions[0] || session.currentQuestion)
 const examTitle = computed(
   () => (examStore.current as any)?.title || (examStore.current as any)?.exam?.title || 'آزمون'
+)
+
+watch(
+  () => session.currentQuestion?.id,
+  (id) => {
+    if (!id) return
+    nextTick(() => {
+      document
+        .querySelector(`[data-nav-id="${id}"]`)
+        ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    })
+  }
 )
 
 const timerMsLeft = computed(() =>

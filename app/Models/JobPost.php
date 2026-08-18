@@ -17,6 +17,9 @@ class JobPost extends Model
         'seo_tag',
         'company_name',
         'job_classification_id',
+        'auto_catalog',
+        'exam_ids',
+        'pdf_ids',
         'description',
         'requirements',
         'education',
@@ -53,6 +56,9 @@ class JobPost extends Model
     {
         return [
             'provinces' => 'array',
+            'exam_ids' => 'array',
+            'pdf_ids' => 'array',
+            'auto_catalog' => 'boolean',
             'registration_starts_at' => 'datetime',
             'registration_deadline' => 'datetime',
             'exam_date' => 'datetime',

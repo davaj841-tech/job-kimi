@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="space-y-5">
+      <div class="space-y-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center gap-3">
           <h1 class="text-2xl font-bold text-gray-800">بانک سوالات</h1>
@@ -215,14 +214,12 @@
       @cancel="confirm.open = false"
       @confirm="runConfirm"
     />
-  </AdminLayout>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import adminApi from '../api/client'
-import AdminLayout from '../components/layout/AdminLayout.vue'
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
 import AIGenerateModal from '../components/questions/AIGenerateModal.vue'
 import BulkImportModal from '../components/questions/BulkImportModal.vue'

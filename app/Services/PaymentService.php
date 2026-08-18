@@ -18,6 +18,12 @@ class PaymentService
      */
     public function initiate(string $gateway, int $amount, string $description, string $callback, array $meta = []): array
     {
+        $user = auth()->user();
+        if ($user) {
+            $meta['mobile'] = $meta['mobile'] ?? $user->mobile;
+            $meta['email'] = $meta['email'] ?? $user->email;
+        }
+
         return $this->gateways->driver($gateway)->request($amount, $description, $callback, $meta);
     }
 

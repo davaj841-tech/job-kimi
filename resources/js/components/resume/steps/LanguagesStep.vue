@@ -63,7 +63,7 @@ import { computed } from 'vue'
 import { PlusIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import FormInput from '../FormInput.vue'
 
-const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+const levels = ['مبتدی', 'متوسط', 'حرفه‌ای', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -77,6 +77,6 @@ const local = computed({
 
 function addLanguage() {
   if (!Array.isArray(local.value.languages)) local.value.languages = []
-  local.value.languages.push({ name: '', level: 'B1' })
+  local.value.languages.unshift({ name: '', level: 'متوسط' })
 }
 </script>

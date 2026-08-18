@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="space-y-5">
+      <div class="space-y-5">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 class="text-2xl font-bold text-gray-800">تولید محتوای خودکار</h1>
@@ -131,15 +130,38 @@
         <p v-if="detail.last_error" class="mt-3 text-sm text-red-600">
           {{ detail.last_error }}
         </p>
+        <div class="mt-4 space-y-3">
+          <div>
+            <label class="mb-1 block text-xs text-slate-500">رسته شغلی</label>
+            <select v-model="catalog.job_classification_id" class="field">
+              <option value="">بدون رسته</option>
+              <option v-for="c in classifications" :key="c.id" :value="c.id">
+                {{ c.name }}
+              </option>
+            </select>
+          </div>
+          <CatalogAttachFields
+            v-model:auto-catalog="catalog.auto_catalog"
+            v-model:exam-ids="catalog.exam_ids"
+            v-model:pdf-ids="catalog.pdf_ids"
+          />
+          <button
+            type="button"
+            class="btn-orange"
+            :disabled="savingCatalog"
+            @click="saveCatalog"
+          >
+            {{ savingCatalog ? '...' : 'ذخیره آزمون و فایل‌ها' }}
+          </button>
+        </div>
       </div>
     </div>
-  </AdminLayout>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import adminApi from '../api/client'
-import AdminLayout from '../components/layout/AdminLayout.vue'
+import CatalogAttachFields from '../components/catalog/CatalogAttachFields.vue'
 import DataTable from '../components/ui/DataTable.vue'
 import PaginationBar from '../components/ui/PaginationBar.vue'
 import { useToast } from '../../composables/useToast'
@@ -153,6 +175,14 @@ const loading = ref(false)
 const generating = ref(false)
 const detail = ref(null)
 const types = ref([])
+const classifications = ref([])
+const savingCatalog = ref(false)
+const catalog = reactive({
+  job_classification_id: '',
+  auto_catalog: true,
+  exam_ids: [],
+  pdf_ids: [],
+})
 const filters = reactive({ search: '', status: '', content_type: '' })
 
 const detailPreview = computed(() => {
@@ -192,6 +222,12 @@ const cards = [
 onMounted(async () => {
   await loadDash()
   await load(1)
+  try {
+    const { data } = await adminApi.get('/admin/job-classifications')
+    classifications.value = data?.data?.flat ?? []
+  } catch {
+    classifications.value = []
+  }
 })
 
 function fa(n) {
@@ -245,6 +281,36 @@ async function generateNow() {
 async function open(row) {
   const { data } = await adminApi.get(`/admin/generated-contents/${row.id}`)
   detail.value = data.data
+  catalog.job_classification_id = data.data?.job_classification_id || ''
+  catalog.auto_catalog = data.data?.auto_catalog !== false
+  catalog.exam_ids = Array.isArray(data.data?.exam_ids)
+    ? data.data.exam_ids.map(Number)
+    : []
+  catalog.pdf_ids = Array.isArray(data.data?.pdf_ids)
+    ? data.data.pdf_ids.map(Number)
+    : []
+}
+
+async function saveCatalog() {
+  if (!detail.value?.id) return
+  savingCatalog.value = true
+  try {
+    const { data } = await adminApi.put(
+      `/admin/generated-contents/${detail.value.id}`,
+      {
+        job_classification_id: catalog.job_classification_id || null,
+        auto_catalog: catalog.auto_catalog,
+        exam_ids: catalog.exam_ids,
+        pdf_ids: catalog.pdf_ids,
+      }
+    )
+    detail.value = { ...detail.value, ...data.data }
+    toast.success(data.message || 'ذخیره شد.')
+  } catch (e) {
+    toast.error(e.response?.data?.message || 'ذخیره ناموفق.')
+  } finally {
+    savingCatalog.value = false
+  }
 }
 
 async function regenerate(row) {

@@ -1,6 +1,5 @@
 <template>
-  <AdminLayout>
-    <div class="space-y-5">
+      <div class="space-y-5">
       <div class="flex items-center justify-between gap-3">
         <h1 class="text-2xl font-bold">کدهای تخفیف</h1>
         <button class="btn-dark" @click="openCreate">کد جدید</button>
@@ -114,13 +113,11 @@
         </div>
       </form>
     </div>
-  </AdminLayout>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import adminApi from '../api/client'
-import AdminLayout from '../components/layout/AdminLayout.vue'
 import DataTable from '../components/ui/DataTable.vue'
 import { unwrapList, apiErrorMessage } from '../../utils/format'
 import { useToast } from '../../composables/useToast'

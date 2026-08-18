@@ -99,30 +99,6 @@ class UserPanelController extends BaseController
      */
     protected function mapAttempts($attempts): array
     {
-        return $attempts->map(function (ExamAttempt $attempt) {
-            $totalMarks = (float) ($attempt->exam?->total_marks ?: 1);
-
-            return [
-                'id' => $attempt->id,
-                'exam_id' => $attempt->exam_id,
-                'exam_title' => $attempt->exam?->title,
-                'exam_slug' => $attempt->exam?->slug,
-                'subject' => $attempt->subject,
-                'score' => $attempt->score,
-                'total_correct' => $attempt->total_correct,
-                'total_wrong' => $attempt->total_wrong,
-                'total_unanswered' => max(
-                    0,
-                    (int) ($attempt->exam?->total_questions ?: 0)
-                    - (int) $attempt->total_correct
-                    - (int) $attempt->total_wrong
-                ),
-                'total_marks' => $attempt->exam?->total_marks,
-                'percentage' => round(((float) $attempt->score / $totalMarks) * 100, 2),
-                'created_at' => $attempt->created_at?->toIso8601String(),
-                'finished_at' => $attempt->finished_at?->toIso8601String(),
-                'status' => $attempt->status,
-            ];
-        })->values()->all();
+        return $attempts->map(fn (ExamAttempt $attempt) => $attempt->toHistoryItem())->values()->all();
     }
 }

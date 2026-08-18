@@ -105,25 +105,25 @@
               <div
                 class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-desk-dark to-brand text-sm font-bold text-white"
               >
-                {{ toFaDigits(Math.round(exam.percentage || 0)) }}
+                {{ toFaDigits(Math.round(exam.percentage || 0)) }}٪
               </div>
               <div class="min-w-0 flex-1">
                 <p class="truncate font-medium text-ink dark:text-white">
                   {{ exam.exam_title }}
                 </p>
                 <p class="text-xs text-ink-muted dark:text-slate-400">
-                  {{ formatDate(exam.finished_at || exam.created_at) }}
-                  <span v-if="exam.total_wrong" class="mr-2 font-bold text-brand">
-                    {{ toFaDigits(exam.total_wrong) }} غلط
-                  </span>
-                  <span v-if="exam.total_unanswered" class="mr-2 font-bold text-slate-500">
-                    {{ toFaDigits(exam.total_unanswered) }} بدون پاسخ
-                  </span>
+                  {{ toFaDigits(exam.total_correct || 0) }} درست از
+                  {{ toFaDigits(exam.total_questions || 0) }}
+                  <span class="mx-1">·</span>
+                  نتیجه {{ toFaDigits(Math.round(exam.percentage || 0)) }}٪
+                  <span v-if="exam.passed === true" class="mr-1 font-bold text-emerald-600">قبول</span>
+                  <span v-else-if="exam.passed === false" class="mr-1 font-bold text-brand">مردود</span>
+                  <span class="mr-2">{{ formatDate(exam.finished_at || exam.created_at) }}</span>
                 </p>
               </div>
-              <Badge :variant="scoreVariant(exam.percentage)">
-                {{ scoreLabel(exam.percentage) }}
-              </Badge>
+              <span class="shrink-0 text-sm font-black text-ink dark:text-white">
+                {{ toFaDigits(Math.round(exam.percentage || 0)) }}٪
+              </span>
               <ChevronLeftIcon class="h-5 w-5 text-slate-400" />
             </button>
           </div>
@@ -175,7 +175,6 @@ import {
 } from '@heroicons/vue/24/outline'
 import api from '../api/client'
 import EmptyState from '../components/EmptyState.vue'
-import Badge from '../components/ui/Badge.vue'
 import Card from '../components/ui/Card.vue'
 import ProgressBar from '../components/ui/ProgressBar.vue'
 import QuickAction from '../components/ui/QuickAction.vue'
@@ -264,18 +263,6 @@ const quickActions = [
     icon: ShoppingBagIcon,
   },
 ]
-
-function scoreVariant(pct: number) {
-  if (pct >= 70) return 'success'
-  if (pct >= 50) return 'warning'
-  return 'danger'
-}
-
-function scoreLabel(pct: number) {
-  if (pct >= 70) return 'عالی'
-  if (pct >= 50) return 'قابل قبول'
-  return 'نیاز به تمرین'
-}
 
 onMounted(async () => {
   try {

@@ -40,7 +40,7 @@
               <li>د) {{ q.option_d }}</li>
             </ul>
             <p class="mt-2 text-xs text-emerald-700">
-              پاسخ: {{ q.correct_answer }}
+              پاسخ: {{ optionFaLetter(q.correct_answer) || q.correct_answer }}
             </p>
           </div>
         </div>
@@ -79,6 +79,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { optionFaLetter } from '../../../utils/examAnswers'
 
 const props = defineProps({
   open: Boolean,

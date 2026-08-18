@@ -37,18 +37,14 @@
                 label="شرکت"
                 placeholder="شرکت …"
               />
-              <FormInput
+              <JalaliMonthYear
                 v-model="exp.start_date"
-                label="از (YYYY-MM)"
-                placeholder="1401-01"
-                maxlength="7"
+                label="از تاریخ"
               />
               <div class="flex items-end gap-2">
-                <FormInput
+                <JalaliMonthYear
                   v-model="exp.end_date"
-                  label="تا"
-                  placeholder="1403-06"
-                  maxlength="7"
+                  label="تا تاریخ"
                   :disabled="exp.is_current"
                   class="flex-1"
                 />
@@ -123,6 +119,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import Sortable from 'sortablejs'
 import FormInput from '../FormInput.vue'
+import JalaliMonthYear from '../JalaliMonthYear.vue'
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
@@ -146,7 +143,7 @@ function ensureKeys() {
 
 function addExperience() {
   if (!Array.isArray(local.value.experience)) local.value.experience = []
-  local.value.experience.push({
+  local.value.experience.unshift({
     _key: `exp-${Date.now()}`,
     title: '',
     company: '',
