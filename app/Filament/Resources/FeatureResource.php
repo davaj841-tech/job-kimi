@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Concerns\InteractsWithStaffAccess;
 use App\Filament\Resources\FeatureResource\Pages;
 use App\Models\Feature;
 use App\Services\FeatureFlagService;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Collection;
 
 class FeatureResource extends Resource
 {
+    use InteractsWithStaffAccess;
+
     protected static ?string $model = Feature::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-flag';
@@ -31,7 +34,7 @@ class FeatureResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->role === 'admin';
+        return self::superAdminOnly();
     }
 
     public static function form(Form $form): Form
@@ -104,21 +107,25 @@ class FeatureResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\BulkAction::make('enableSelected')
-                        ->label('فعال کردن')
-                        ->icon('heroicon-o-check')
-                        ->action(function (Collection $records): void {
-                            $records->each(fn (Feature $feature) => $feature->update(['enabled' => true]));
-                            app(FeatureFlagService::class)->forgetCache();
-                        }),
-                    Tables\Actions\BulkAction::make('disableSelected')
-                        ->label('غیرفعال کردن')
-                        ->icon('heroicon-o-x-mark')
-                        ->action(function (Collection $records): void {
-                            $records->each(fn (Feature $feature) => $feature->update(['enabled' => false]));
-                            app(FeatureFlagService::class)->forgetCache();
-                        }),
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
+                    self::secureBulkAction(
+                        Tables\Actions\BulkAction::make('enableSelected')
+                            ->label('فعال کردن')
+                            ->icon('heroicon-o-check')
+                            ->action(function (Collection $records): void {
+                                $records->each(fn (Feature $feature) => $feature->update(['enabled' => true]));
+                                app(FeatureFlagService::class)->forgetCache();
+                            })
+                    ),
+                    self::secureBulkAction(
+                        Tables\Actions\BulkAction::make('disableSelected')
+                            ->label('غیرفعال کردن')
+                            ->icon('heroicon-o-x-mark')
+                            ->action(function (Collection $records): void {
+                                $records->each(fn (Feature $feature) => $feature->update(['enabled' => false]));
+                                app(FeatureFlagService::class)->forgetCache();
+                            })
+                    ),
+                    self::secureDeleteBulkAction(),
                 ]),
             ]);
     }

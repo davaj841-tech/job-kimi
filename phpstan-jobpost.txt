@@ -1,0 +1,7 @@
+﻿vendor\bin\phpstan : Note: Using configuration file C:\Users\Kardansoft\Desktop\job-kimi\phpstan.neon.
+At C:\Users\Kardansoft\AppData\Local\Temp\ps-script-b221ce32-13ab-4b89-81ca-98da75f14972.ps1:75 char:1
++ vendor\bin\phpstan analyse app/Http/Resources/JobPostResource.php --e ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Note: Using con...i\phpstan.neon.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

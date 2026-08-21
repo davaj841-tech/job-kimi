@@ -30,7 +30,7 @@
     <div
       v-else
       ref="editor"
-      class="prose prose-sm max-w-none px-3 py-2 text-sm leading-7 outline-none [&_a]:text-orange-600 [&_h2]:text-lg [&_h2]:font-black [&_h3]:text-base [&_h3]:font-bold [&_img]:max-w-full [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:p-2"
+      class="prose prose-sm max-w-none px-3 py-2 text-sm leading-7 outline-none [&_a]:text-orange-600 [&_h2]:text-lg [&_h2]:font-black [&_h3]:text-base [&_h3]:font-bold [&_img]:max-w-full [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:p-2 [&_.math]:font-mono [&_.math]:text-orange-700"
       :class="sizeClass"
       contenteditable="true"
       @input="onInput"
@@ -43,6 +43,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
+  /** default | page | exam */
   size: { type: String, default: 'default' },
 })
 const emit = defineEmits(['update:modelValue'])
@@ -51,9 +52,11 @@ const editor = ref(null)
 const htmlMode = ref(false)
 let syncing = false
 
-const sizeClass = computed(() =>
-  props.size === 'page' ? 'min-h-[min(62vh,640px)]' : 'min-h-48'
-)
+const sizeClass = computed(() => {
+  if (props.size === 'page') return 'min-h-[min(62vh,640px)]'
+  if (props.size === 'exam') return 'min-h-[min(42vh,420px)]'
+  return 'min-h-48'
+})
 
 const buttons = [
   { label: 'برگردان', cmd: 'undo', title: 'واگرد' },
@@ -61,17 +64,29 @@ const buttons = [
   { label: 'پررنگ', cmd: 'bold', title: 'پررنگ' },
   { label: 'ایتالیک', cmd: 'italic', title: 'ایتالیک' },
   { label: 'زیرخط', cmd: 'underline', title: 'زیرخط' },
+  { label: 'خط‌خورده', cmd: 'strikeThrough', title: 'خط‌خورده' },
+  { label: 'زیروند', cmd: 'subscript', title: 'زیروند' },
+  { label: 'بالاوند', cmd: 'superscript', title: 'بالاوند' },
   { label: 'H2', cmd: 'formatBlock', value: 'h2', title: 'عنوان' },
   { label: 'H3', cmd: 'formatBlock', value: 'h3', title: 'زیرعنوان' },
+  { label: 'پاراگراف', cmd: 'formatBlock', value: 'p', title: 'پاراگراف' },
   { label: 'نقل‌قول', cmd: 'formatBlock', value: 'blockquote', title: 'نقل‌قول' },
+  { label: 'کد', cmd: 'formatBlock', value: 'pre', title: 'بلوک کد' },
   { label: '• لیست', cmd: 'insertUnorderedList', title: 'لیست نقطه‌ای' },
   { label: '۱. لیست', cmd: 'insertOrderedList', title: 'لیست شماره‌دار' },
+  { label: 'تورفتگی+', cmd: 'indent', title: 'افزایش تورفتگی' },
+  { label: 'تورفتگی−', cmd: 'outdent', title: 'کاهش تورفتگی' },
   { label: 'راست‌چین', cmd: 'justifyRight', title: 'راست‌چین' },
   { label: 'وسط', cmd: 'justifyCenter', title: 'وسط‌چین' },
+  { label: 'چپ‌چین', cmd: 'justifyLeft', title: 'چپ‌چین' },
+  { label: 'کشیده', cmd: 'justifyFull', title: 'تراز دوطرفه' },
+  { label: 'خط افقی', action: 'hr', title: 'درج خط افقی' },
   { label: 'لینک', action: 'link', title: 'درج لینک' },
   { label: 'تصویر', action: 'image', title: 'درج تصویر' },
-  { label: 'فرمول', action: 'formula', title: 'درج فرمول ریاضی' },
+  { label: 'فرمول', action: 'formula', title: 'درج فرمول ریاضی (LaTeX)' },
   { label: 'جدول', action: 'table', title: 'درج جدول' },
+  { label: 'ردیف+', action: 'tableRow', title: 'افزودن ردیف به جدول' },
+  { label: 'ستون+', action: 'tableCol', title: 'افزودن ستون به جدول' },
   { label: 'پاک‌سازی', cmd: 'removeFormat', title: 'حذف قالب' },
 ]
 
@@ -116,6 +131,12 @@ function run(btn) {
     insertFormula()
   } else if (btn.action === 'table') {
     insertTable()
+  } else if (btn.action === 'hr') {
+    document.execCommand('insertHorizontalRule', false, null)
+  } else if (btn.action === 'tableRow') {
+    insertTableRow()
+  } else if (btn.action === 'tableCol') {
+    insertTableCol()
   } else {
     document.execCommand(btn.cmd, false, btn.value || null)
   }
@@ -123,11 +144,20 @@ function run(btn) {
 }
 
 function insertFormula() {
-  const latex = window.prompt('فرمول LaTeX را وارد کنید:')
+  const latex = window.prompt(
+    'فرمول LaTeX را وارد کنید:\nمثال: x^2 + y^2 = z^2 یا \\frac{a}{b}'
+  )
   if (!latex) return
   const trimmed = latex.trim()
-  const html = `<span class="math">\\(${trimmed}\\)</span>&nbsp;`
+  const html = `<span class="math" data-latex="${escapeAttr(trimmed)}">\\(${trimmed}\\)</span>&nbsp;`
   document.execCommand('insertHTML', false, html)
+}
+
+function escapeAttr(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
 }
 
 function insertTable() {
@@ -146,5 +176,50 @@ function insertTable() {
   }
   html += '</tbody></table><p><br></p>'
   document.execCommand('insertHTML', false, html)
+}
+
+function closestTableCell() {
+  const sel = window.getSelection()
+  if (!sel || !sel.rangeCount) return null
+  let node = sel.anchorNode
+  if (node && node.nodeType === Node.TEXT_NODE) node = node.parentElement
+  return node?.closest?.('td,th') || null
+}
+
+function insertTableRow() {
+  const cell = closestTableCell()
+  if (!cell) {
+    window.alert('ابتدا داخل یک سلول جدول کلیک کنید.')
+    return
+  }
+  const row = cell.parentElement
+  const table = cell.closest('table')
+  if (!row || !table) return
+  const cols = row.children.length
+  const tr = document.createElement('tr')
+  for (let i = 0; i < cols; i += 1) {
+    const td = document.createElement('td')
+    td.innerHTML = '&nbsp;'
+    tr.appendChild(td)
+  }
+  row.after(tr)
+}
+
+function insertTableCol() {
+  const cell = closestTableCell()
+  if (!cell) {
+    window.alert('ابتدا داخل یک سلول جدول کلیک کنید.')
+    return
+  }
+  const table = cell.closest('table')
+  if (!table) return
+  const index = Array.from(cell.parentElement.children).indexOf(cell)
+  table.querySelectorAll('tr').forEach((tr, rowIdx) => {
+    const ref = tr.children[index]
+    const el = document.createElement(rowIdx === 0 && tr.querySelector('th') ? 'th' : 'td')
+    el.innerHTML = rowIdx === 0 ? 'عنوان' : '&nbsp;'
+    if (ref) ref.after(el)
+    else tr.appendChild(el)
+  })
 }
 </script>

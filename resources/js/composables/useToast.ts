@@ -18,6 +18,7 @@ let timer: ReturnType<typeof setTimeout> | undefined
 
 export function useToast() {
   function show(message: string, type: ToastType = 'info', ms = 2800): void {
+    if (!message?.trim()) return
     state.message = message
     state.type = type
     state.visible = true

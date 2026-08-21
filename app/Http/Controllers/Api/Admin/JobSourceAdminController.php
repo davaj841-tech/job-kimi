@@ -10,6 +10,8 @@ use App\Enums\Aggregation\JobSourceType;
 use App\Http\Controllers\Api\BaseController;
 use App\Http\Requests\Api\Admin\JobSourceEndpointStoreRequest;
 use App\Http\Requests\Api\Admin\JobSourceStoreRequest;
+use App\Models\CrawlerError;
+use App\Models\CrawlerRun;
 use App\Models\JobSource;
 use App\Models\JobSourceEndpoint;
 use App\Services\Aggregation\CrawlOrchestrator;
@@ -210,16 +212,23 @@ class JobSourceAdminController extends BaseController
             return $this->errorResponse('خطا در اجرای تست: '.$e->getMessage(), 422);
         }
 
-        $run = $result['run']->fresh(['errors']);
+        $run = $result['run']?->fresh(['errors']) ?? $result['run'];
         $freshSource = $result['source'] ?? $source->fresh();
+        if (! $freshSource instanceof JobSource) {
+            $freshSource = $source;
+        }
+
+        $qualityStatus = $freshSource->quality_status;
 
         return $this->successResponse([
             'summary' => $result['summary'],
             'health' => $result['health'] ?? null,
-            'quality_status' => $freshSource->quality_status?->value,
-            'quality_status_label' => $freshSource->quality_status?->label(),
+            'quality_status' => $qualityStatus instanceof \BackedEnum ? $qualityStatus->value : $qualityStatus,
+            'quality_status_label' => $qualityStatus instanceof JobSourceQualityStatus
+                ? $qualityStatus->label()
+                : JobSourceQualityStatus::Active->label(),
             'source' => $this->serializeSource($freshSource),
-            'run' => $this->serializeRun($run),
+            'run' => $run instanceof CrawlerRun ? $this->serializeRun($run) : null,
             'note' => 'آگهی‌های جدید در وضعیت pending ذخیره می‌شوند و منتشر نمی‌شوند.',
         ], 'تست خزیدن انجام شد.');
     }
@@ -261,6 +270,9 @@ class JobSourceAdminController extends BaseController
             'is_enabled' => $data['is_enabled'] ?? true,
             'sort_order' => $data['sort_order'] ?? 0,
         ]);
+        if (! $endpoint instanceof JobSourceEndpoint) {
+            return $this->errorResponse('Endpoint ایجاد نشد.', 500);
+        }
 
         return $this->successResponse($this->serializeEndpoint($endpoint), 'Endpoint ایجاد شد.', 201);
     }
@@ -293,7 +305,7 @@ class JobSourceAdminController extends BaseController
             'sort_order' => $data['sort_order'] ?? $endpoint->sort_order,
         ]);
 
-        return $this->successResponse($this->serializeEndpoint($endpoint->fresh()), 'Endpoint به‌روزرسانی شد.');
+        return $this->successResponse($this->serializeEndpoint($endpoint->fresh() ?? $endpoint), 'Endpoint به‌روزرسانی شد.');
     }
 
     public function destroyEndpoint(int $id, int $endpointId): JsonResponse
@@ -348,26 +360,26 @@ class JobSourceAdminController extends BaseController
             'domain' => $domain,
             'source_type' => $data['source_type'],
             'reliability_level' => $data['reliability_level'],
-            'priority' => (int) ($data['priority'] ?? $existing?->priority ?? 50),
+            'priority' => (int) ($data['priority'] ?? ($existing !== null ? $existing->priority : null) ?? 50),
             'is_enabled' => array_key_exists('is_enabled', $data)
                 ? (bool) $data['is_enabled']
-                : ($existing?->is_enabled ?? false),
+                : ($existing !== null ? (bool) $existing->is_enabled : false),
             'is_approved' => array_key_exists('is_approved', $data)
                 ? (bool) $data['is_approved']
-                : ($existing?->is_approved ?? false),
+                : ($existing !== null ? (bool) $existing->is_approved : false),
             'quality_status' => $data['quality_status']
-                ?? $existing?->quality_status?->value
+                ?? $this->enumValue($existing !== null ? $existing->quality_status : null)
                 ?? JobSourceQualityStatus::Active->value,
             'crawler_type' => $data['crawler_type'],
-            'crawl_frequency' => $data['crawl_frequency'] ?? $existing?->crawl_frequency ?? 'daily',
-            'schedule_mode' => $data['schedule_mode'] ?? $existing?->schedule_mode ?? 'global',
+            'crawl_frequency' => $data['crawl_frequency'] ?? ($existing !== null ? $existing->crawl_frequency : null) ?? 'daily',
+            'schedule_mode' => $data['schedule_mode'] ?? ($existing !== null ? $existing->schedule_mode : null) ?? 'global',
             'custom_schedule_times' => $this->normalizeCustomTimes(
-                $data['custom_schedule_times'] ?? $existing?->custom_schedule_times
+                $data['custom_schedule_times'] ?? ($existing !== null ? $existing->custom_schedule_times : null)
             ),
-            'notes' => $data['notes'] ?? $existing?->notes,
+            'notes' => $data['notes'] ?? ($existing !== null ? $existing->notes : null),
             'quality_notes' => array_key_exists('quality_notes', $data)
                 ? $data['quality_notes']
-                : ($existing?->quality_notes),
+                : ($existing !== null ? $existing->quality_notes : null),
         ];
     }
 
@@ -404,34 +416,47 @@ class JobSourceAdminController extends BaseController
         return $out;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function serializeSource(JobSource $source, bool $withEndpoints = false): array
     {
+        $sourceType = $source->source_type;
+        $reliability = $source->reliability_level;
+        $qualityStatus = $source->quality_status ?? JobSourceQualityStatus::Active;
+        $crawlerType = $source->crawler_type;
+        $lastCrawledAt = $source->last_crawled_at;
+        $lastSuccessAt = $source->last_success_at;
+        $lastFailureAt = $source->last_failure_at;
+        $healthBackoffUntil = $source->health_backoff_until;
+
         $row = [
             'id' => $source->id,
             'name' => $source->name,
             'slug' => $source->slug,
             'official_url' => $source->official_url,
             'domain' => $source->domain,
-            'source_type' => $source->source_type?->value,
-            'source_type_label' => $source->source_type?->label(),
-            'reliability_level' => $source->reliability_level?->value,
-            'reliability_label' => $source->reliability_level?->label(),
+            'source_type' => $this->enumValue($sourceType),
+            'source_type_label' => $sourceType instanceof JobSourceType ? $sourceType->label() : null,
+            'reliability_level' => $this->enumValue($reliability),
+            'reliability_label' => $reliability instanceof JobSourceReliability ? $reliability->label() : null,
             'priority' => $source->priority,
             'is_enabled' => (bool) $source->is_enabled,
             'is_approved' => (bool) $source->is_approved,
             'is_whitelisted' => (bool) ($source->is_enabled && $source->is_approved),
-            'quality_status' => $source->quality_status?->value ?? JobSourceQualityStatus::Active->value,
-            'quality_status_label' => $source->quality_status?->label()
-                ?? JobSourceQualityStatus::Active->label(),
+            'quality_status' => $this->enumValue($qualityStatus) ?? JobSourceQualityStatus::Active->value,
+            'quality_status_label' => $qualityStatus instanceof JobSourceQualityStatus
+                ? $qualityStatus->label()
+                : JobSourceQualityStatus::Active->label(),
             'allows_automatic_crawl' => $source->allowsAutomaticCrawl(),
-            'crawler_type' => $source->crawler_type?->value,
-            'crawler_type_label' => $source->crawler_type?->label(),
+            'crawler_type' => $this->enumValue($crawlerType),
+            'crawler_type_label' => $crawlerType instanceof JobCrawlerType ? $crawlerType->label() : null,
             'crawl_frequency' => $source->crawl_frequency,
             'schedule_mode' => $source->schedule_mode ?: 'global',
             'custom_schedule_times' => $source->custom_schedule_times,
-            'last_crawled_at' => $source->last_crawled_at?->toIso8601String(),
-            'last_success_at' => $source->last_success_at?->toIso8601String(),
-            'last_failure_at' => $source->last_failure_at?->toIso8601String(),
+            'last_crawled_at' => $lastCrawledAt instanceof \Carbon\CarbonInterface ? $lastCrawledAt->toIso8601String() : null,
+            'last_success_at' => $lastSuccessAt instanceof \Carbon\CarbonInterface ? $lastSuccessAt->toIso8601String() : null,
+            'last_failure_at' => $lastFailureAt instanceof \Carbon\CarbonInterface ? $lastFailureAt->toIso8601String() : null,
             'notes' => $source->notes,
             'quality_notes' => $source->quality_notes,
             'consecutive_failures' => (int) $source->consecutive_failures,
@@ -447,8 +472,12 @@ class JobSourceAdminController extends BaseController
             'lifetime_validation_errors' => (int) $source->lifetime_validation_errors,
             'last_http_status' => $source->last_http_status,
             'last_crawl_outcome' => $source->last_crawl_outcome,
-            'health_backoff_until' => $source->health_backoff_until?->toIso8601String(),
-            'in_backoff' => $source->health_backoff_until?->isFuture() ?? false,
+            'health_backoff_until' => $healthBackoffUntil instanceof \Carbon\CarbonInterface
+                ? $healthBackoffUntil->toIso8601String()
+                : null,
+            'in_backoff' => $healthBackoffUntil instanceof \Carbon\CarbonInterface
+                ? $healthBackoffUntil->isFuture()
+                : false,
             'endpoints_count' => $source->endpoints_count ?? $source->endpoints()->count(),
             'job_posts_count' => $source->job_posts_count ?? null,
             'crawler_runs_count' => $source->crawler_runs_count ?? null,
@@ -458,19 +487,27 @@ class JobSourceAdminController extends BaseController
         ];
 
         if ($withEndpoints || $source->relationLoaded('endpoints')) {
-            $row['endpoints'] = $source->endpoints->map(fn ($e) => $this->serializeEndpoint($e))->values();
+            $row['endpoints'] = $source->endpoints
+                ->filter(fn ($e) => $e instanceof JobSourceEndpoint)
+                ->map(fn (JobSourceEndpoint $e) => $this->serializeEndpoint($e))
+                ->values();
         }
 
         return $row;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function serializeEndpoint(JobSourceEndpoint $endpoint): array
     {
+        $endpointType = $endpoint->endpoint_type;
+
         return [
             'id' => $endpoint->id,
             'job_source_id' => $endpoint->job_source_id,
             'url' => $endpoint->url,
-            'endpoint_type' => $endpoint->endpoint_type?->value,
+            'endpoint_type' => $this->enumValue($endpointType),
             'http_method' => $endpoint->http_method,
             'parser_type' => $endpoint->parser_type,
             'is_enabled' => (bool) $endpoint->is_enabled,
@@ -478,14 +515,21 @@ class JobSourceAdminController extends BaseController
         ];
     }
 
-    protected function serializeRun($run): array
+    /**
+     * @return array<string, mixed>
+     */
+    protected function serializeRun(CrawlerRun $run): array
     {
+        $status = $run->status;
+        $startedAt = $run->started_at;
+        $finishedAt = $run->finished_at;
+
         return [
             'id' => $run->id,
             'job_source_id' => $run->job_source_id,
-            'status' => $run->status?->value,
-            'started_at' => $run->started_at?->toIso8601String(),
-            'finished_at' => $run->finished_at?->toIso8601String(),
+            'status' => $this->enumValue($status),
+            'started_at' => $startedAt instanceof \Carbon\CarbonInterface ? $startedAt->toIso8601String() : null,
+            'finished_at' => $finishedAt instanceof \Carbon\CarbonInterface ? $finishedAt->toIso8601String() : null,
             'execution_ms' => $run->execution_ms,
             'jobs_found' => $run->jobs_found,
             'jobs_created' => $run->jobs_created,
@@ -494,15 +538,32 @@ class JobSourceAdminController extends BaseController
             'errors_count' => $run->errors_count,
             'meta' => is_array($run->meta) ? $run->meta : null,
             'errors' => $run->relationLoaded('errors')
-                ? $run->errors->map(fn ($e) => [
-                    'id' => $e->id,
-                    'error_type' => $e->error_type,
-                    'message' => $e->message,
-                    'url' => $e->url,
-                    'occurred_at' => $e->occurred_at?->toIso8601String(),
-                    'context' => $this->domains->sanitizeContext($e->context),
-                ])->values()
+                ? $run->errors->map(function (CrawlerError $e) {
+                    $occurredAt = $e->occurred_at;
+
+                    return [
+                        'id' => $e->id,
+                        'error_type' => $e->error_type,
+                        'message' => $e->message,
+                        'url' => $e->url,
+                        'occurred_at' => $occurredAt instanceof \Carbon\CarbonInterface
+                            ? $occurredAt->toIso8601String()
+                            : null,
+                        'context' => $this->domains->sanitizeContext(
+                            is_array($e->context) ? $e->context : null
+                        ),
+                    ];
+                })->values()->all()
                 : [],
         ];
+    }
+
+    protected function enumValue(mixed $value): ?string
+    {
+        if ($value instanceof \BackedEnum) {
+            return (string) $value->value;
+        }
+
+        return is_string($value) ? $value : null;
     }
 }

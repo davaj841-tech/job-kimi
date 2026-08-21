@@ -8,7 +8,11 @@ use Illuminate\Support\Str;
 
 class SpaController extends Controller
 {
-    /** Known public SPA route prefixes (first segment or exact). */
+    /**
+     * Known public SPA route prefixes (first segment or exact).
+     *
+     * @var list<string>
+     */
     protected array $known = [
         '',
         'login',

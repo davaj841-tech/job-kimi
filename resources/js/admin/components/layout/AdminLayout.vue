@@ -35,7 +35,7 @@
           داشبورد
         </RouterLink>
         <RouterLink
-          v-if="isAdmin"
+          v-if="isSuperAdmin"
           to="/admin/settings"
           class="flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-bold text-slate-500"
         >
@@ -54,7 +54,7 @@ import AdminSidebar from './AdminSidebar.vue'
 
 const sidebarOpen = ref(false)
 const auth = useAdminAuthStore()
-const isAdmin = computed(() => auth.isAdmin)
+const isSuperAdmin = computed(() => auth.isSuperAdmin)
 
 onMounted(() => {
   const views = import.meta.glob('../../views/*.vue')

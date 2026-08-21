@@ -18,7 +18,11 @@
           اشتراک‌گذاری
         </button>
       </div>
-      <p class="mb-4 text-sm leading-6 text-desk-muted">{{ exam.description }}</p>
+      <div
+        v-if="exam.description"
+        class="prose prose-sm mb-4 max-w-none text-sm leading-6 text-desk-muted [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:p-2"
+        v-html="renderKatexHtml(exam.description)"
+      />
       <div class="page-card mb-4 grid grid-cols-2 gap-3 p-4 text-sm text-desk-text">
         <div>
           مدت: <b>{{ exam.duration_minutes }} دقیقه</b>
@@ -141,6 +145,7 @@ import PageShell from '../../components/layout/PageShell.vue'
 import ShareModal from '../../components/ShareModal.vue'
 import StarRating from '../../components/StarRating.vue'
 import { formatPrice } from '../../utils/format'
+import { renderKatexHtml } from '../../utils/renderKatexHtml'
 import { useAuthStore } from '../../stores/auth'
 
 const route = useRoute()

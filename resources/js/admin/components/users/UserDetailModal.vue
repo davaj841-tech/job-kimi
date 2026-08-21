@@ -81,6 +81,7 @@
               <option value="jobseeker">کارجو</option>
               <option value="employer">کارفرما</option>
               <option value="operator">اپراتور</option>
+              <option v-if="canManageSuper || form.role === 'super_admin'" value="super_admin">سوپرادمین</option>
               <option v-if="canManage || form.role === 'admin'" value="admin">مدیر</option>
             </select>
           </div>
@@ -216,6 +217,7 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   startEditing: { type: Boolean, default: false },
   canManage: { type: Boolean, default: false },
+  canManageSuper: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['close', 'save'])

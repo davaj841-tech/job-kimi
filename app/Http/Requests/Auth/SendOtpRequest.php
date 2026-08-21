@@ -11,11 +11,18 @@ class SendOtpRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $mobile = \App\Support\IranMobile::normalize($this->input('mobile'));
+        if ($mobile !== null) {
+            $this->merge(['mobile' => $mobile]);
+        }
+    }
+
     /** @return array<string, mixed> */
     public function rules(): array
     {
         return [
-            // فرمت استاندارد موبایل ایران
             'mobile' => ['required', 'string', 'regex:/^09\d{9}$/'],
         ];
     }
@@ -25,7 +32,7 @@ class SendOtpRequest extends FormRequest
     {
         return [
             'mobile.required' => 'شماره موبایل الزامی است.',
-            'mobile.regex' => 'شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد.',
+            'mobile.regex' => 'شماره موبایل نامعتبر است. قالب‌های مجاز: 0912…، +98912… یا 98912…',
         ];
     }
 }

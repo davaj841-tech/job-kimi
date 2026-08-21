@@ -48,6 +48,14 @@
 
         <p id="db-status" class="hidden rounded-xl px-3 py-2 text-sm"></p>
 
+        <?php $tableCount = (int) old('db_table_count', session('install_db_state.table_count', 0)); ?>
+        <?php if ($tableCount > 0 || old('confirm_existing_db')): ?>
+            <label class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm">
+                <input type="checkbox" name="confirm_existing_db" value="1" class="mt-1" <?= old('confirm_existing_db') ? 'checked' : '' ?>>
+                <span>می‌دانم پایگاه ممکن است جدول داشته باشد. migration بدون DROP اجرا می‌شود.</span>
+            </label>
+        <?php endif; ?>
+
         <div class="flex flex-col gap-2 sm:flex-row">
             <button type="button" id="test-btn" class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold">
                 تست اتصال
@@ -84,6 +92,16 @@
             const data = await res.json();
             status.textContent = data.message || (res.ok ? 'موفق' : 'ناموفق');
             status.classList.add(res.ok ? 'bg-emerald-50' : 'bg-red-50', res.ok ? 'text-emerald-800' : 'text-red-700');
+            if (data.table_count > 0) {
+                let box = document.getElementById('confirm-db-box');
+                if (!box) {
+                    box = document.createElement('label');
+                    box.id = 'confirm-db-box';
+                    box.className = 'flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm';
+                    box.innerHTML = '<input type="checkbox" name="confirm_existing_db" value="1" class="mt-1"><span>می‌دانم این پایگاه ' + data.table_count + ' جدول دارد.</span>';
+                    form.insertBefore(box, form.querySelector('.flex.flex-col'));
+                }
+            }
         } catch (e) {
             status.textContent = 'خطا در ارسال درخواست.';
             status.classList.add('bg-red-50', 'text-red-700');

@@ -9,6 +9,9 @@ class BlogPostCollection extends ResourceCollection
 {
     public $collects = BlogPostResource::class;
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [

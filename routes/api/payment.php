@@ -14,15 +14,17 @@ use Illuminate\Support\Facades\Route;
 */
 
 // ZarinPal callbacks (public — gateway redirects without Bearer token)
-Route::match(['get', 'post'], '/wallet/verify', [WalletController::class, 'verify']);
-Route::match(['get', 'post'], '/subscription/verify', [SubscriptionController::class, 'verifySubscription']);
-Route::match(['get', 'post'], '/pdf-products/{id}/verify', [PDFProductController::class, 'verifyPurchase'])->whereNumber('id');
+Route::match(['get', 'post'], '/wallet/verify', [WalletController::class, 'verify'])->middleware('throttle:payment-callback');
+Route::match(['get', 'post'], '/subscription/verify', [SubscriptionController::class, 'verifySubscription'])->middleware('throttle:payment-callback');
+Route::match(['get', 'post'], '/pdf-products/{id}/verify', [PDFProductController::class, 'verifyPurchase'])->middleware('throttle:payment-callback')->whereNumber('id');
 
-Route::middleware(['auth:sanctum', 'subscription.check'])->group(function () {
+Route::middleware(['auth:sanctum', 'user.active', 'subscription.check'])->group(function () {
     Route::get('/wallet', [WalletController::class, 'index'])->middleware('feature:wallet');
     Route::post('/wallet/charge', [WalletController::class, 'charge'])->middleware('feature:wallet');
 
     Route::post('/subscription/subscribe', [SubscriptionController::class, 'subscribe'])
+        ->middleware('feature:subscription');
+    Route::post('/subscription/upgrade', [SubscriptionController::class, 'upgrade'])
         ->middleware('feature:subscription');
 
     Route::post('/pdf-products/{id}/purchase', [PDFProductController::class, 'purchase'])

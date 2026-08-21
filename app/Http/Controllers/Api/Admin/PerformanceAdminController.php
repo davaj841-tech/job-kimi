@@ -41,6 +41,12 @@ class PerformanceAdminController extends BaseController
         ], $on ? 'سرعت خودکار فعال شد.' : 'سرعت خودکار خاموش شد.');
     }
 
+    /**
+     * @return list<string>
+     */
+    /**
+     * @return list<string>
+     */
     protected function runBoost(): array
     {
         $log = [];
@@ -86,6 +92,15 @@ class PerformanceAdminController extends BaseController
         return $log;
     }
 
+    /**
+     * @param  list<string>  $log
+     */
+    /**
+     * @param  list<string>  $log
+     */
+    /**
+     * @param  list<string>  $log
+     */
     protected function warmPublicApis(array &$log): void
     {
         $base = rtrim((string) config('app.url'), '/');

@@ -118,6 +118,10 @@ final class IdempotencyService
                 ];
             }
 
+            if (in_array($locked->status, [Transaction::STATUS_CANCELLED, Transaction::STATUS_EXPIRED], true)) {
+                throw new IdempotencyException('Transaction was cancelled or expired.');
+            }
+
             if (! in_array($locked->status, [Transaction::STATUS_PENDING, Transaction::STATUS_FAILED], true)) {
                 throw new IdempotencyException('Transaction is not eligible for processing.');
             }

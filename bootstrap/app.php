@@ -4,6 +4,7 @@ use App\Http\Middleware\CacheResponse;
 use App\Http\Middleware\CheckInstalled;
 use App\Http\Middleware\CheckSubscription;
 use App\Http\Middleware\EnsureAuth;
+use App\Http\Middleware\EnsureUserActive;
 use App\Http\Middleware\EnsureOperatorPermission;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\FeatureEnabled;
@@ -61,6 +62,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'auth.ensure' => EnsureAuth::class,
+            'user.active' => EnsureUserActive::class,
             'role' => EnsureRole::class,
             'operator.perm' => EnsureOperatorPermission::class,
             'subscription.check' => CheckSubscription::class,
@@ -73,6 +75,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'install.prevent' => PreventInstallAccess::class,
         ]);
         $middleware->web(append: [
+            \App\Http\Middleware\SeoRedirect::class,
             ForceHttps::class,
             SecurityHeaders::class,
             TrackPageView::class,
@@ -93,6 +96,38 @@ return Application::configure(basePath: dirname(__DIR__))
             } catch (Throwable) {
                 // ignore
             }
+        });
+
+        $exceptions->render(function (Throwable $e, $request) {
+            if (! ($request->is('api/*') || $request->expectsJson())) {
+                return null;
+            }
+
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->validator->errors()->first() ?: 'اطلاعات واردشده معتبر نیست.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+
+            if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'احراز هویت الزامی است.',
+                    'errors' => null,
+                ], 401);
+            }
+
+            if ($e instanceof \Illuminate\Http\Exceptions\ThrottleRequestsException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'تعداد درخواست‌ها بیش از حد مجاز است. کمی بعد دوباره تلاش کنید.',
+                    'errors' => null,
+                ], 429);
+            }
+
+            return null;
         });
 
         $exceptions->reportable(function (Throwable $e) {

@@ -2,8 +2,6 @@
 
 namespace App\Services\Payment;
 
-use App\Models\PaymentGateway;
-use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -21,7 +19,7 @@ class ZarinPalGateway implements PaymentGatewayInterface
 
     protected function sandbox(): bool
     {
-        return Setting::getBool('zarinpal_sandbox', (bool) config('services.zarinpal.sandbox', false));
+        return (bool) config('services.zarinpal.sandbox', false);
     }
 
     protected function apiBase(): string
@@ -38,10 +36,7 @@ class ZarinPalGateway implements PaymentGatewayInterface
 
     protected function merchantId(): string
     {
-        return (string) (Setting::getFilled('zarinpal_merchant_id')
-            ?: optional(PaymentGateway::query()->where('name', 'zarinpal')->first())->merchant_id
-            ?: config('services.zarinpal.merchant_id')
-            ?: '');
+        return (string) config('services.zarinpal.merchant_id', '');
     }
 
     /**
@@ -102,7 +97,10 @@ class ZarinPalGateway implements PaymentGatewayInterface
                     ?? data_get($response->json(), 'errors.0.message')
                     ?? 'خطا در ایجاد درخواست پرداخت.';
 
-                Log::warning('ZarinPal request failed', ['body' => $response->body()]);
+                Log::warning('ZarinPal request failed', [
+                    'http' => $response->status(),
+                    'code' => $code,
+                ]);
 
                 return ['authority' => null, 'payment_url' => null, 'error' => is_string($error) ? $error : 'خطا در ایجاد درخواست پرداخت.'];
             }
@@ -136,12 +134,19 @@ class ZarinPalGateway implements PaymentGatewayInterface
 
             $data = $response->json('data') ?? [];
             $code = (int) ($data['code'] ?? 0);
+            $paid = $data['amount'] ?? null;
+            if ($paid !== null && (int) $paid !== $amount) {
+                Log::warning('ZarinPal verify amount mismatch', [
+                    'expected' => $amount,
+                ]);
+
+                return ['success' => false, 'ref_id' => null, 'error' => 'مبلغ پرداخت با تراکنش همخوانی ندارد'];
+            }
 
             if (in_array($code, [100, 101], true)) {
                 return [
                     'success' => true,
                     'ref_id' => isset($data['ref_id']) ? (string) $data['ref_id'] : null,
-                    'card_pan' => $data['card_pan'] ?? null,
                     'error' => null,
                 ];
             }

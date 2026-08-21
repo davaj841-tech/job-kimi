@@ -72,7 +72,8 @@ class JobPostService
     }
 
     /**
-     * @param  array<string, mixed>  $newAttachments
+     * @param  array<string, mixed>  $data
+     * @param  array<int, array<string, UploadedFile|string|null>>  $newAttachments
      */
     public function create(array $data, array $newAttachments = []): JobPost
     {
@@ -93,7 +94,8 @@ class JobPostService
     }
 
     /**
-     * @param  array<string, mixed>  $newAttachments
+     * @param  array<string, mixed>  $data
+     * @param  array<int, array<string, UploadedFile|string|null>>  $newAttachments
      */
     public function update(JobPost $jobPost, array $data, array $newAttachments = []): JobPost
     {
@@ -149,7 +151,7 @@ class JobPostService
     }
 
     /**
-     * @param  array<string, mixed>  $items
+     * @param  array<int, array<string, UploadedFile|string|null>>  $items
      */
     protected function storeAttachments(JobPost $jobPost, array $items): void
     {

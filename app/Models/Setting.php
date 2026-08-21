@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class Setting extends Model
 {
@@ -16,11 +18,19 @@ class Setting extends Model
     /** خواندن تنظیمات از دیتابیس (بدون هاردکد) */
     public static function get(string $key, mixed $default = null): mixed
     {
-        return Cache::remember("setting.{$key}", 3600, function () use ($key, $default) {
-            $setting = static::query()->where('key', $key)->first();
+        try {
+            if (! Schema::hasTable((new self)->getTable())) {
+                return $default;
+            }
 
-            return $setting?->value ?? $default;
-        });
+            return Cache::remember("setting.{$key}", 3600, function () use ($key, $default) {
+                $setting = static::query()->where('key', $key)->first();
+
+                return $setting?->value ?? $default;
+            });
+        } catch (Throwable) {
+            return $default;
+        }
     }
 
     /** مقدار خالی دیتابیس را نادیده می‌گیرد تا fallback به env/config کار کند. */

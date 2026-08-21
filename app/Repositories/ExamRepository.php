@@ -82,6 +82,9 @@ class ExamRepository
         return Exam::query()->with('category')->withCount('questions')->find($id);
     }
 
+    /**
+     * @return Collection<int, ExamAttempt>
+     */
     public function getUserAttempts(User $user, int $limit = 5, bool $completedOnly = true): Collection
     {
         return ExamAttempt::query()

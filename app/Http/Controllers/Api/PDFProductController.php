@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\PdfProductResource;
 use App\Models\PdfProduct;
+use App\Models\Transaction;
 use App\Repositories\PDFProductRepository;
-use App\Repositories\TransactionRepository;
+use App\Services\Payment\GatewayCallbackService;
 use App\Services\PaymentService;
 use App\Services\PDFProductService;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,7 @@ class PDFProductController extends BaseController
         protected PDFProductService $pdfProductService,
         protected PDFProductRepository $pdfProductRepository,
         protected PaymentService $paymentService,
-        protected TransactionRepository $transactionRepository
+        protected GatewayCallbackService $gatewayCallback,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -114,57 +115,23 @@ class PDFProductController extends BaseController
 
     public function verifyPurchase(Request $request, int $id): JsonResponse
     {
-        $authority = $this->paymentService->extractAuthority($request);
-
-        if ($authority === '') {
-            return $this->errorResponse('شناسه پرداخت نامعتبر است.', 422);
-        }
-
-        $transaction = $this->transactionRepository->getByReference($authority);
-
-        if (
-            ! $transaction
-            || $transaction->type !== 'purchase'
-            || $transaction->payable_type !== PdfProduct::class
-            || (int) $transaction->payable_id !== $id
-        ) {
-            return $this->errorResponse('تراکنش یافت نشد.', 404);
-        }
-
-        if ($transaction->status === 'success') {
-            return $this->successResponse(null, 'خرید با موفقیت انجام شد.');
-        }
-
-        $gateway = $transaction->gateway ?: 'zarinpal';
-
-        if (! $this->paymentService->callbackSucceeded($request, $gateway)) {
-            $transaction->update(['status' => 'failed']);
-
-            return $this->errorResponse('پرداخت ناموفق بود', 400);
-        }
-
-        $verify = $this->paymentService->verify(
-            $gateway,
-            $authority,
-            (int) $transaction->amount,
-            ['order_id' => (string) $transaction->id]
+        $result = $this->gatewayCallback->complete(
+            $request,
+            fn (Transaction $tx) => $tx->type === 'purchase'
+                && $tx->payable_type === PdfProduct::class
+                && (int) $tx->payable_id === $id,
+            function (Transaction $locked) {
+                $this->pdfProductService->completeZarinPalPurchase($locked);
+            }
         );
 
-        if (! $verify['success']) {
-            $transaction->update(['status' => 'failed']);
-
-            return $this->errorResponse($verify['error'] ?? 'پرداخت ناموفق بود', 400);
+        if (! $result->ok) {
+            return $this->errorResponse($result->message, $result->status);
         }
 
-        if ($verify['ref_id']) {
-            $transaction->update([
-                'description' => trim(($transaction->description ?? '').' | RefID: '.$verify['ref_id']),
-            ]);
-        }
-
-        $this->pdfProductService->completeZarinPalPurchase($transaction);
-
-        return $this->successResponse(null, 'خرید با موفقیت انجام شد.');
+        return $this->successResponse([
+            'already_processed' => $result->alreadyProcessed,
+        ], 'خرید با موفقیت انجام شد.');
     }
 
     public function download(Request $request, int $id): BinaryFileResponse|JsonResponse

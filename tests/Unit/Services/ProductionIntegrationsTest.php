@@ -44,7 +44,7 @@ class ProductionIntegrationsTest extends TestCase
         config(['services.zarinpal.merchant_id' => 'env-merchant', 'services.zarinpal.sandbox' => false]);
 
         Http::fake([
-            'www.zarinpal.com/*' => Http::response([
+            'payment.zarinpal.com/*' => Http::response([
                 'data' => [
                     'code' => 100,
                     'authority' => str_repeat('A', 36),
@@ -56,7 +56,7 @@ class ProductionIntegrationsTest extends TestCase
 
         $this->assertNull($result['error'] ?? null);
         $this->assertNotEmpty($result['authority']);
-        Http::assertSent(fn ($request) => str_contains($request->url(), 'www.zarinpal.com'));
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'payment.zarinpal.com'));
     }
 
     public function test_setting_get_filled_falls_back_when_db_value_empty(): void

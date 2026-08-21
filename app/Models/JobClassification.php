@@ -7,6 +7,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @property int $id
+ * @property int|null $parent_id
+ * @property string $name
+ * @property string|null $icon
+ * @property string|null $color
+ * @property string|null $logo_path
+ * @property int|null $sort_order
+ * @property bool|null $is_active
+ * @property bool|null $show_on_home
+ * @property-read string|null $logo_url
+ * @property-read JobClassification|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, JobClassification> $children
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, JobPost> $jobPosts
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Exam> $exams
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PdfProduct> $pdfProducts
+ */
 class JobClassification extends Model
 {
     protected $fillable = [
@@ -31,26 +48,31 @@ class JobClassification extends Model
         ];
     }
 
+    /** @return BelongsTo<JobClassification, $this> */
     public function parent(): BelongsTo
     {
         return $this->belongsTo(self::class, 'parent_id');
     }
 
+    /** @return HasMany<JobClassification, $this> */
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id')->orderBy('sort_order')->orderBy('name');
     }
 
+    /** @return HasMany<JobPost, $this> */
     public function jobPosts(): HasMany
     {
         return $this->hasMany(JobPost::class);
     }
 
+    /** @return HasMany<Exam, $this> */
     public function exams(): HasMany
     {
         return $this->hasMany(Exam::class);
     }
 
+    /** @return HasMany<PdfProduct, $this> */
     public function pdfProducts(): HasMany
     {
         return $this->hasMany(PdfProduct::class);
@@ -65,7 +87,11 @@ class JobClassification extends Model
         return Storage::disk('public')->url($this->logo_path);
     }
 
-    /** Self + descendant ids for filtering related content */
+    /**
+     * Self + descendant ids for filtering related content
+     *
+     * @return list<int>
+     */
     public function descendantAndSelfIds(): array
     {
         $ids = [$this->id];

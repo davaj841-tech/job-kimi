@@ -18,8 +18,12 @@ class CheckSubscription
         $user = $request->user();
 
         if ($user) {
+            $accessToken = $user->currentAccessToken();
             $this->subscriptionService->expireIfNeeded($user);
             $user->refresh();
+            if ($accessToken) {
+                $user->withAccessToken($accessToken);
+            }
 
             $isActive = $this->subscriptionService->isActive($user);
 

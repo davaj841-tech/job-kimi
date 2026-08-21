@@ -2,11 +2,20 @@
 
 namespace App\Http\Resources;
 
+use App\Models\ExamAttempt;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin ExamAttempt
+ *
+ * @property-read ExamAttempt $resource
+ */
 class ExamAttemptResource extends JsonResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         $stats = $this->resultSummary();

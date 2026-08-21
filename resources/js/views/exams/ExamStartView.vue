@@ -57,8 +57,8 @@
           <h3 class="mb-2 text-sm font-bold text-ink dark:text-white">دروس</h3>
           <div class="flex flex-wrap gap-1.5">
             <span
-              v-for="subject in subjects"
-              :key="subject.slug || subject.name"
+              v-for="(subject, sIdx) in subjects"
+              :key="subject.slug || subject.name || sIdx"
               class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200"
             >
               <span>{{ subject.icon || '📘' }}</span>
@@ -131,6 +131,7 @@
 </template>
 
 <script setup lang="ts">
+import type { AxiosError } from 'axios'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -145,6 +146,7 @@ import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import { useAuthStore } from '../../stores/auth'
 import { useExamStore } from '../../stores/exam'
 import { useExamSessionStore } from '../../stores/examSession'
+import type { ExamStartPayload } from '@/types/exam'
 import { toFaDigits } from '../../utils/format'
 
 const route = useRoute()
@@ -153,7 +155,48 @@ const auth = useAuthStore()
 const examStore = useExamStore()
 const session = useExamSessionStore()
 
-const exam = ref<any>(null)
+type ExamStartViewSubject = {
+  slug?: string | null
+  name?: string | null
+  label?: string | null
+  icon?: string | null
+  question_count?: number | string | null
+  count?: number | string | null
+}
+
+type ExamStartViewExam = {
+  id: number
+  slug: string
+  title?: string | null
+  subject?: string | null
+  category?: { name?: string | null } | null
+  duration_minutes?: number | null
+  passing_score?: number | string | null
+  has_negative_marking?: boolean | null
+  questions_count?: number | string | null
+  question_count?: number | string | null
+  total_questions?: number | string | null
+  subjects?: ExamStartViewSubject[] | null
+  exam_subjects?: ExamStartViewSubject[] | null
+  subject_breakdown?: ExamStartViewSubject[] | null
+  active_attempt?: {
+    id?: number | string | null
+    remaining_seconds?: number | string | null
+    answered?: number | string | null
+  } | null
+}
+
+type StartConflictErrors = {
+  attempt_id?: number
+  remaining_seconds?: number
+}
+
+type ApiErrorResponse = {
+  message?: string
+  errors?: StartConflictErrors
+}
+
+const exam = ref<ExamStartViewExam | null>(null)
 const loading = ref(true)
 const isStarting = ref(false)
 const error = ref('')
@@ -183,7 +226,8 @@ const questionCount = computed(
     exam.value?.question_count ||
     exam.value?.total_questions ||
     subjects.value.reduce(
-      (s: number, x: any) => s + Number(x.question_count || x.count || 0),
+      (s: number, x: ExamStartViewSubject) =>
+        s + Number(x.question_count || x.count || 0),
       0
     ) ||
     '—'
@@ -251,51 +295,56 @@ async function startExam(opts: { resume?: boolean; restart?: boolean } = {}) {
     const payload = data.data
     applyPayload(payload)
     router.push(`/exams/${exam.value.id}/take`)
-  } catch (e: any) {
-    if (e.response?.status === 401) {
+  } catch (e) {
+    const err = e as AxiosError<ApiErrorResponse>
+    if (err.response?.status === 401) {
       router.push(loginPath)
       return
     }
-    if (e.response?.status === 409) {
+    if (err.response?.status === 409) {
       // unfinished — show continue/restart UI
-      const err = e.response?.data?.errors || {}
+      const conflict = err.response?.data?.errors || {}
       exam.value = {
         ...exam.value,
         active_attempt: {
-          id: err.attempt_id,
-          remaining_seconds: err.remaining_seconds,
+          id: conflict.attempt_id,
+          remaining_seconds: conflict.remaining_seconds,
           answered: 0,
         },
       }
       error.value = ''
       return
     }
-    error.value = e.response?.data?.message || 'شروع آزمون ممکن نشد.'
+    error.value = err.response?.data?.message || 'شروع آزمون ممکن نشد.'
   } finally {
     isStarting.value = false
   }
 }
 
-function applyPayload(payload: any) {
+function applyPayload(payload: ExamStartPayload) {
+  if (!exam.value) return
+  const currentExam = exam.value
   session.resetSessionUx()
   const perPage = Math.max(1, Math.min(20, Number(payload.per_page) || 5))
   session.setQuestionsPerPage(perPage)
+  const durationMinutes = Number(currentExam.duration_minutes ?? 0) || 0
   examStore.current = {
-    examId: exam.value.id,
-    attemptId: payload.attempt_id || payload.attempt?.id,
+    examId: currentExam.id,
+    attemptId: Number(payload.attempt_id || payload.attempt?.id || 0),
     questions: payload.questions || [],
-    duration: exam.value.duration_minutes,
-    hasNegativeMarking: Boolean(exam.value.has_negative_marking),
-    title: exam.value.title,
+    duration: durationMinutes || undefined,
+    hasNegativeMarking: Boolean(currentExam.has_negative_marking),
+    title: currentExam.title ?? undefined,
     perPage,
   }
   const answers = payload.answers || {}
   examStore.answers = { ...answers }
   examStore.dirty = false
   examStore.pageIndex = 0
+  examStore.setFlagged([])
   examStore.endsAt = payload.end_time
     ? payload.end_time * 1000
-    : Date.now() + exam.value.duration_minutes * 60 * 1000
+    : Date.now() + durationMinutes * 60 * 1000
   examStore.saveCache()
 }
 </script>

@@ -80,15 +80,13 @@
       </div>
 
       <div v-if="result" class="mb-4 rounded-xl bg-slate-50 p-3 text-sm">
-        <p>
-          موفق: {{ result.success ?? result.imported ?? result.created ?? '—' }}
-        </p>
-        <p>خطا: {{ result.failed ?? result.errors_count ?? 0 }}</p>
+        <p>موفق: {{ result.created ?? result.success ?? result.imported ?? '—' }}</p>
+        <p>رد شده: {{ result.skipped ?? result.failed ?? 0 }}</p>
         <ul
           v-if="result.errors?.length"
           class="mt-2 max-h-28 overflow-y-auto text-xs text-red-500"
         >
-          <li v-for="(err, i) in result.errors.slice(0, 10)" :key="i">
+          <li v-for="(err, i) in result.errors.slice(0, 15)" :key="i">
             {{ err }}
           </li>
         </ul>

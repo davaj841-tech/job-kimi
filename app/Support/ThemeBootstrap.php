@@ -48,6 +48,9 @@ final class ThemeBootstrap
         return sprintf('#%02x%02x%02x', $out[0], $out[1], $out[2]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public static function payload(): array
     {
         return cache()->remember('public_theme_bootstrap', 60, function () {

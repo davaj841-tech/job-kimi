@@ -1,0 +1,1 @@
+Note: Using configuration file C:\Users\Kardansoft\Desktop\job-kimi\phpstan.neon.

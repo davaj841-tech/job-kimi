@@ -1,25 +1,48 @@
 # نصب برنامه (مشابه وردپرس)
 
-پس از آپلود فایل‌ها روی هاست، در مرورگر بروید به:
+## روش A — cPanel (public_html + install.php)
+
+پس از آپلود `install.php`، پوشه `lib/` و `package/jobazmoon-core.zip` در `public_html`:
+
+`https://your-domain.example/install.php`
+
+مراحل نصب‌کننده:
+
+1. **پیش‌نیاز:** PHP 8.2+، افزونه‌ها، manifest.json در zip
+2. **پایگاه‌داده:** تست اتصال MySQL — اگر جدول دارد نیاز به تأیید صریح
+3. **سایت و مدیر:** نام سایت، URL، ایمیل، موبایل، رمز (در گزارش نمایش داده نمی‌شود)
+4. **تأیید:** خلاصه بدون secret + checkbox تأیید
+5. **پایان:** migrate، seed، storage:link، cache، قفل `storage/installed`، حذف install.php
+
+## روش B — Laravel wizard (/install)
+
+اگر کل پروژه Laravel روی VPS است و Document Root = `public/`:
 
 `https://your-domain.example/install`
 
-اگر فایل `storage/installed` وجود نداشته باشد، **همهٔ درخواست‌ها** (به‌جز `/up` و `/health`) به `/install` هدایت می‌شوند.  
+مراحل: پیش‌نیاز → پایگاه‌داده → migrate/seed → مدیر → پایان
+
+---
+
+## قفل نصب
+
+اگر فایل `storage/installed` وجود نداشته باشد، **همهٔ درخواست‌ها** (به‌جز `/up`، `/health` و `/api/v1/health`) به `/install` هدایت می‌شوند.  
 اگر آن فایل وجود داشته باشد، مسیر `/install` به `/` برمی‌گردد.
-
-## مراحل
-
-1. **خوش‌آمد و پیش‌نیاز:** نسخه PHP، افزونه‌ها، مجوز نوشتن پوشه‌ها، و شمارش خودکار فایل‌های `database/migrations/*.php`
-2. **پایگاه‌داده:** هاست، پورت، نام، کاربر، رمز، پیشوند جداول — دکمه تست اتصال — `CREATE DATABASE IF NOT EXISTS`
-3. **مهاجرت:** `php artisan migrate --force` سپس `php artisan db:seed --force` با خروجی خط‌به‌خط و نوار پیشرفت
-4. **مدیر:** نام سایت (`APP_NAME`)، نام، ایمیل، رمز (bcrypt) — کاربر با `app(User::class)` ساخته می‌شود
-5. **پایان:** ساخت `storage/installed`، `APP_INSTALLED=true`، پاکسازی کش، لینک ورود
 
 ## امنیت
 
-- پیشرفت نصب در سشن (`install_step`) نگه داشته می‌شود؛ هر مرحله فقط بعد از مرحلهٔ قبل باز است.
+- پیشرفت نصب در سشن نگه داشته می‌شود؛ هر مرحله فقط بعد از مرحلهٔ قبل باز است.
 - همهٔ فرم‌ها CSRF دارند.
-- تا پایان نصب، سشن روی `file` است تا بدون دیتابیس کار کند.
+- رمز دیتابیس، APP_KEY و رمز مدیر در صفحه پایان نمایش داده **نمی‌شوند**.
+- تغییر/نصب روی پایگاه دارای جدول بدون checkbox تأیید ممکن نیست.
+- در صورت خطا، rollback migration و پاکسازی `.env` / پوشه job (در cPanel installer).
+
+## تست نصب
+
+```bash
+php artisan test --filter=Install
+php cpanel-installer/test-install-cli.php
+```
 
 ## فایل محیط
 

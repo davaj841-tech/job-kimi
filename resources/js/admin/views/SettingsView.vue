@@ -33,8 +33,9 @@
         </div>
         <SettingsForm
           v-else
-          v-model="form"
+          :model-value="form"
           :fields="currentFields"
+          @update:model-value="onFormUpdate"
           @dirty="store.markDirty()"
           @upload="onUpload"
         />
@@ -310,6 +311,12 @@ function loadForm() {
   Object.assign(form, { ...src })
 }
 
+/** Keep reactive form mutated in-place (v-model replace breaks watches/selection). */
+function onFormUpdate(next) {
+  if (!next || typeof next !== 'object') return
+  Object.assign(form, next)
+}
+
 watch(
   () => store.groups,
   () => loadForm(),
@@ -321,6 +328,8 @@ watch(
   (id) => {
     if (active.value !== 'homepage' || !id) return
     const preset = themePreset(id)
+    form.primary_color = preset.primary
+    form.secondary_color = preset.secondary
     applySiteTheme({
       homepage_layout: id,
       primary_color: preset.primary,

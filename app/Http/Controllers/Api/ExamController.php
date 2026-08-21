@@ -11,6 +11,7 @@ use App\Repositories\ExamRepository;
 use App\Services\Exam\ExamCreationService;
 use App\Services\Exam\ExamSubjectAssembler;
 use App\Services\ExamService;
+use App\Services\Seo\SeoManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,6 +22,7 @@ class ExamController extends BaseController
         protected ExamService $examService,
         protected ExamSubjectAssembler $subjectAssembler,
         protected ExamCreationService $examCreationService,
+        protected SeoManager $seoManager,
     ) {}
 
     /**
@@ -83,6 +85,16 @@ class ExamController extends BaseController
 
         $data = (new ExamResource($exam))->resolve();
         $data['subjects'] = $this->subjectAssembler->assemble($exam, $user);
+
+        $breadcrumbs = [
+            ['name' => 'خانه', 'url' => url('/')],
+            ['name' => 'آزمون‌ها', 'url' => url('/exams')],
+            ['name' => $exam->title, 'url' => url('/exams/'.$exam->slug)],
+        ];
+        $seo = $this->seoManager->buildPublicPayload($exam, $breadcrumbs);
+        $data['seo'] = $seo;
+        $data['schema'] = $seo['schemas'];
+
         $active = $user ? $this->examRepository->findInProgress($user, $exam) : null;
         if ($active) {
             $ends = $active->started_at?->copy()->addMinutes((int) $exam->duration_minutes);
@@ -145,7 +157,7 @@ class ExamController extends BaseController
         }
 
         $user = $request->user();
-        if (! in_array($user->role, ['admin', 'operator'], true) && $exam->created_by !== $user->id) {
+        if (! \App\Support\StaffRoles::isStaff($user) && $exam->created_by !== $user->id) {
             return $this->errorResponse('دسترسی غیرمجاز.', 403);
         }
 

@@ -157,10 +157,15 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'dirty', 'upload'])
 
 function set(key, value) {
-  if (props.modelValue && typeof props.modelValue === 'object') {
-    props.modelValue[key] = value
+  const current =
+    props.modelValue && typeof props.modelValue === 'object'
+      ? props.modelValue
+      : {}
+  // Mutate reactive parent in place so selection + live preview update immediately
+  if (current === props.modelValue) {
+    current[key] = value
   }
-  emit('update:modelValue', props.modelValue)
+  emit('update:modelValue', { ...current, [key]: value })
   emit('dirty')
 }
 

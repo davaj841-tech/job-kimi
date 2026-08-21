@@ -245,6 +245,9 @@ class GeneratedContentAdminController extends BaseController
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function serialize(GeneratedContent $c, bool $full = false): array
     {
         $row = [
@@ -252,9 +255,9 @@ class GeneratedContentAdminController extends BaseController
             'title' => $c->title,
             'slug' => $c->slug,
             'excerpt' => $c->excerpt,
-            'content_type' => $c->content_type instanceof ContentType ? $c->content_type->value : $c->content_type,
-            'content_type_label' => $c->content_type instanceof ContentType ? $c->content_type->label() : $c->content_type,
-            'status' => $c->status instanceof ContentStatus ? $c->status->value : $c->status,
+            'content_type' => $c->content_type?->value,
+            'content_type_label' => $c->content_type?->label(),
+            'status' => $c->status?->value,
             'job_post_id' => $c->job_post_id,
             'job_classification_id' => $c->job_classification_id ?: $c->jobPost?->job_classification_id,
             'auto_catalog' => (bool) ($c->auto_catalog ?? true),
@@ -263,7 +266,7 @@ class GeneratedContentAdminController extends BaseController
             'job_title' => $c->jobPost?->title,
             'company_name' => $c->jobPost?->company_name,
             'blog_post_id' => $c->blog_post_id,
-            'public_url' => $c->status === ContentStatus::Published || ($c->status instanceof ContentStatus && $c->status === ContentStatus::Published)
+            'public_url' => $c->status === ContentStatus::Published
                 ? $c->publicUrl()
                 : null,
             'published_at' => $c->published_at?->toIso8601String(),

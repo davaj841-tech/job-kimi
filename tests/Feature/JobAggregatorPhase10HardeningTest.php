@@ -43,7 +43,11 @@ class JobAggregatorPhase10HardeningTest extends TestCase
 
     protected function actingOperator(): User
     {
-        $user = User::factory()->create(['role' => 'operator', 'status' => 'active']);
+        $user = User::factory()->create([
+            'role' => 'operator',
+            'status' => 'active',
+            'operator_permissions' => ['aggregation'],
+        ]);
         Sanctum::actingAs($user);
 
         return $user;

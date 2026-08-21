@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\AuditLogService;
+use App\Support\StaffRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -137,8 +139,8 @@ class AuditLogAdminController extends BaseController
      */
     public function destroyRange(Request $request): JsonResponse
     {
-        if ($request->user()?->role !== 'admin') {
-            return $this->errorResponse('فقط مدیر سایت می‌تواند گزارش‌ها را حذف کند.', 403);
+        if (! StaffRoles::isSuperAdmin($request->user())) {
+            return $this->errorResponse('فقط سوپرادمین می‌تواند گزارش‌های حسابرسی را حذف کند.', 403);
         }
 
         $data = $request->validate([
@@ -156,6 +158,13 @@ class AuditLogAdminController extends BaseController
         }
 
         $deleted = $query->delete();
+
+        app(AuditLogService::class)->log('audit.purged', null, null, [
+            'deleted' => $deleted,
+            'date_from' => $data['date_from'],
+            'date_to' => $data['date_to'],
+            'user_id' => $data['user_id'] ?? null,
+        ]);
 
         return $this->successResponse(['deleted' => $deleted], "{$deleted} رکورد حسابرسی حذف شد.");
     }

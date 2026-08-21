@@ -14,7 +14,11 @@ use Illuminate\Http\Request;
 
 class SettingsAdminController extends BaseController
 {
-    /** Keys allowed for admin SPA (grouped). */
+    /**
+     * Keys allowed for admin SPA (grouped).
+     *
+     * @var array<string, list<string>>
+     */
     protected array $schema = [
         'general' => [
             'site_name',
@@ -107,6 +111,7 @@ class SettingsAdminController extends BaseController
         ],
         'subscription' => [
             'free_plan_exam_limit',
+            'max_wallet_charge',
         ],
         'exam' => [
             'default_exam_duration',
@@ -131,11 +136,11 @@ class SettingsAdminController extends BaseController
             $byGroup[$g] = [];
             foreach ($keys as $key) {
                 $row = $rows->firstWhere('key', $key);
-                $value = $row?->value ?? $this->defaultFor($key);
+                $value = ($row instanceof Setting ? $row->value : null) ?? $this->defaultFor($key);
                 if (in_array($key, ['site_logo', 'site_favicon', 'logo_mobile', 'logo_dark', 'logo_light', 'android_direct_url'], true)) {
                     $value = PublicAsset::url((string) $value);
                 }
-                $byGroup[$g][$key] = $value;
+                $byGroup[$g][$key] = $this->maskSecret($key, $value);
             }
         }
 
@@ -146,7 +151,7 @@ class SettingsAdminController extends BaseController
                 $byGroup[$g] = [];
             }
             if (! array_key_exists($row->key, $byGroup[$g])) {
-                $byGroup[$g][$row->key] = $row->value;
+                $byGroup[$g][$row->key] = $this->maskSecret($row->key, $row->value);
             }
         }
 
@@ -172,6 +177,9 @@ class SettingsAdminController extends BaseController
 
         foreach ($data['values'] as $key => $value) {
             if (! in_array($key, $allowed, true)) {
+                continue;
+            }
+            if ($this->isSecretKey((string) $key) && ($value === null || $value === '' || $value === '********')) {
                 continue;
             }
             if ($key === 'homepage_layout') {
@@ -215,7 +223,7 @@ class SettingsAdminController extends BaseController
         }
 
         if ($group === 'payment') {
-            $this->syncPaymentGateways($data['values']);
+            $this->syncPaymentGateways($this->withoutMaskedSecrets($data['values']));
         }
 
         app(AuditLogService::class)->log('settings.updated', null, null, [
@@ -241,13 +249,15 @@ class SettingsAdminController extends BaseController
             ], [
                 'file.max' => 'حداکثر حجم فایل ۵۰ مگابایت است.',
             ]);
+            $mime = (string) $request->file('file')->getMimeType();
             $ext = strtolower((string) $request->file('file')->getClientOriginalExtension());
-            if ($ext !== 'apk') {
-                return $this->errorResponse('فقط فایل APK مجاز است.', 422);
+            $allowedApk = ['application/vnd.android.package-archive', 'application/java-archive', 'application/zip', 'application/octet-stream'];
+            if ($ext !== 'apk' || ! in_array($mime, $allowedApk, true)) {
+                return $this->errorResponse('فقط فایل APK معتبر مجاز است.', 422);
             }
         } else {
             $request->validate([
-                'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,svg,ico', 'max:2048'],
+            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,ico', 'max:2048'],
             ]);
         }
 
@@ -305,13 +315,16 @@ class SettingsAdminController extends BaseController
             'ai_blog_enabled', 'ai_questions_enabled', 'ai_crawl_enabled' => 'true',
             'captcha_enabled' => 'false',
             'turnstile_enabled' => 'false',
-            'free_plan_exam_limit' => '5',
+            'max_wallet_charge' => '50000000',
             'default_exam_duration' => '60',
             'exam_questions_per_page' => '5',
             default => '',
         };
     }
 
+    /**
+     * @param  array<string, mixed>  $values
+     */
     protected function syncPaymentGateways(array $values): void
     {
         $default = $values['payment_gateway'] ?? Setting::get('payment_gateway', 'zarinpal');
@@ -377,5 +390,56 @@ class SettingsAdminController extends BaseController
             PaymentGateway::query()->where('name', '!=', $default)->update(['is_default' => false]);
             PaymentGateway::query()->where('name', $default)->update(['is_default' => true]);
         }
+    }
+
+    /** @return list<string> */
+    protected function secretKeys(): array
+    {
+        return [
+            'smtp_password',
+            'sms_api_key',
+            'ai_api_key',
+            'turnstile_secret_key',
+            'nextpay_api_key',
+            'idpay_api_key',
+            'mellat_password',
+            'mellat_username',
+            'shaparak_password',
+            'shaparak_username',
+        ];
+    }
+
+    protected function isSecretKey(string $key): bool
+    {
+        return in_array($key, $this->secretKeys(), true)
+            || str_ends_with($key, '_secret')
+            || str_ends_with($key, '_password');
+    }
+
+    protected function maskSecret(string $key, mixed $value): mixed
+    {
+        if (! $this->isSecretKey($key)) {
+            return $value;
+        }
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        return '********';
+    }
+
+    /**
+     * @param  array<string, mixed>  $values
+     * @return array<string, mixed>
+     */
+    protected function withoutMaskedSecrets(array $values): array
+    {
+        foreach ($values as $key => $value) {
+            if ($this->isSecretKey((string) $key) && ($value === '********' || $value === '' || $value === null)) {
+                unset($values[$key]);
+            }
+        }
+
+        return $values;
     }
 }

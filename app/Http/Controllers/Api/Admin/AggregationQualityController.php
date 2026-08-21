@@ -37,15 +37,22 @@ class AggregationQualityController extends BaseController
             ->get()
             ->map(function ($row) {
                 $source = JobSource::query()->find($row->job_source_id);
+                $lastSuccessAt = $source?->last_success_at;
 
                 return [
                     'job_source_id' => (int) $row->job_source_id,
                     'source_name' => $source?->name,
-                    'reliability_level' => $source?->reliability_level?->value,
-                    'quality_status' => $source?->quality_status?->value,
-                    'consecutive_failures' => (int) ($source?->consecutive_failures ?? 0),
-                    'last_success_at' => $source?->last_success_at?->toIso8601String(),
-                    'total' => (int) $row->total,
+                    'reliability_level' => $source?->reliability_level instanceof \BackedEnum
+                        ? $source->reliability_level->value
+                        : $source?->reliability_level,
+                    'quality_status' => $source?->quality_status instanceof \BackedEnum
+                        ? $source->quality_status->value
+                        : $source?->quality_status,
+                    'consecutive_failures' => (int) ($source !== null ? $source->consecutive_failures : 0),
+                    'last_success_at' => $lastSuccessAt instanceof \Carbon\CarbonInterface
+                        ? $lastSuccessAt->toIso8601String()
+                        : null,
+                    'total' => (int) $row->getAttribute('total'),
                 ];
             })
             ->values();
@@ -59,7 +66,7 @@ class AggregationQualityController extends BaseController
                 'reliability_level' => $row->reliability_level instanceof \BackedEnum
                     ? $row->reliability_level->value
                     : $row->reliability_level,
-                'total' => (int) $row->total,
+                'total' => (int) $row->getAttribute('total'),
             ])
             ->values();
 
@@ -69,13 +76,21 @@ class AggregationQualityController extends BaseController
             ->orderByDesc('id')
             ->limit(10)
             ->get()
-            ->map(fn (CrawlerRun $run) => [
-                'id' => $run->id,
-                'source_name' => $run->source?->name,
-                'status' => $run->status?->value,
-                'errors_count' => $run->errors_count,
-                'finished_at' => $run->finished_at?->toIso8601String(),
-            ])
+            ->map(function (CrawlerRun $run): array {
+                $status = $run->status;
+                $finishedAt = $run->finished_at;
+                $source = $run->source;
+
+                return [
+                    'id' => $run->id,
+                    'source_name' => $source instanceof \App\Models\JobSource ? $source->name : null,
+                    'status' => $status instanceof \BackedEnum ? $status->value : $status,
+                    'errors_count' => $run->errors_count,
+                    'finished_at' => $finishedAt instanceof \Carbon\CarbonInterface
+                        ? $finishedAt->toIso8601String()
+                        : null,
+                ];
+            })
             ->values();
 
         $duplicateUpdates = (int) CrawlerRun::query()->sum('duplicates');
@@ -107,18 +122,31 @@ class AggregationQualityController extends BaseController
             ->orderByDesc('consecutive_failures')
             ->limit(20)
             ->get(['id', 'name', 'slug', 'quality_status', 'consecutive_failures', 'consecutive_empty_crawls', 'last_success_at', 'last_failure_at', 'last_http_status', 'health_backoff_until'])
-            ->map(fn (JobSource $s) => [
-                'id' => $s->id,
-                'name' => $s->name,
-                'slug' => $s->slug,
-                'quality_status' => $s->quality_status?->value,
-                'consecutive_failures' => (int) $s->consecutive_failures,
-                'consecutive_empty_crawls' => (int) $s->consecutive_empty_crawls,
-                'last_success_at' => $s->last_success_at?->toIso8601String(),
-                'last_failure_at' => $s->last_failure_at?->toIso8601String(),
-                'last_http_status' => $s->last_http_status,
-                'health_backoff_until' => $s->health_backoff_until?->toIso8601String(),
-            ])
+            ->map(function (JobSource $s) {
+                $qualityStatus = $s->quality_status;
+                $lastSuccessAt = $s->last_success_at;
+                $lastFailureAt = $s->last_failure_at;
+                $healthBackoffUntil = $s->health_backoff_until;
+
+                return [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'slug' => $s->slug,
+                    'quality_status' => $qualityStatus instanceof \BackedEnum ? $qualityStatus->value : $qualityStatus,
+                    'consecutive_failures' => (int) $s->consecutive_failures,
+                    'consecutive_empty_crawls' => (int) $s->consecutive_empty_crawls,
+                    'last_success_at' => $lastSuccessAt instanceof \Carbon\CarbonInterface
+                        ? $lastSuccessAt->toIso8601String()
+                        : null,
+                    'last_failure_at' => $lastFailureAt instanceof \Carbon\CarbonInterface
+                        ? $lastFailureAt->toIso8601String()
+                        : null,
+                    'last_http_status' => $s->last_http_status,
+                    'health_backoff_until' => $healthBackoffUntil instanceof \Carbon\CarbonInterface
+                        ? $healthBackoffUntil->toIso8601String()
+                        : null,
+                ];
+            })
             ->values();
 
         return $this->successResponse([
@@ -137,7 +165,7 @@ class AggregationQualityController extends BaseController
                     'quality_status' => $row->quality_status instanceof \BackedEnum
                         ? $row->quality_status->value
                         : $row->quality_status,
-                    'total' => (int) $row->total,
+                    'total' => (int) $row->getAttribute('total'),
                 ])
                 ->values(),
             'source_health' => [

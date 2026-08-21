@@ -41,13 +41,14 @@ class InvoiceService
             ->setPaper('a4')
             ->setOptions([
                 'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => true,
+                'isRemoteEnabled' => false,
+                'chroot' => storage_path(),
                 'defaultFont' => 'DejaVu Sans',
             ]);
 
         $path = 'invoices/'.$transaction->invoice_number.'.pdf';
-        Storage::disk('public')->put($path, $pdf->output());
-        $transaction->update(['invoice_pdf' => Storage::disk('public')->url($path)]);
+        Storage::disk('local')->put($path, $pdf->output());
+        $transaction->update(['invoice_pdf' => $path]);
 
         return $transaction->fresh();
     }
@@ -68,16 +69,46 @@ class InvoiceService
     public function pdfBinary(Transaction $transaction): string
     {
         $tx = $this->ensureInvoice($transaction);
-        $relative = str_replace('/storage/', '', parse_url((string) $tx->invoice_pdf, PHP_URL_PATH) ?: '');
-        if ($relative && Storage::disk('public')->exists($relative)) {
-            return Storage::disk('public')->get($relative);
+        $relative = $this->storedRelativePath($tx);
+        $binary = $this->readStoredPdf($relative);
+        if ($binary !== null) {
+            return $binary;
         }
 
-        // regenerate
         $tx->update(['invoice_pdf' => null]);
         $tx = $this->ensureInvoice($tx->fresh());
-        $relative = str_replace('/storage/', '', parse_url((string) $tx->invoice_pdf, PHP_URL_PATH) ?: '');
 
-        return Storage::disk('public')->get($relative);
+        return $this->readStoredPdf($this->storedRelativePath($tx)) ?? '';
+    }
+
+    protected function storedRelativePath(Transaction $tx): ?string
+    {
+        $stored = (string) $tx->invoice_pdf;
+        if ($stored === '') {
+            return null;
+        }
+
+        if (! str_contains($stored, '://') && ! str_starts_with($stored, '/')) {
+            return $stored;
+        }
+
+        $relative = str_replace('/storage/', '', parse_url($stored, PHP_URL_PATH) ?: '');
+
+        return $relative !== '' ? $relative : null;
+    }
+
+    protected function readStoredPdf(?string $relative): ?string
+    {
+        if (! $relative) {
+            return null;
+        }
+
+        foreach (['local', 'public'] as $disk) {
+            if (Storage::disk($disk)->exists($relative)) {
+                return Storage::disk($disk)->get($relative);
+            }
+        }
+
+        return null;
     }
 }

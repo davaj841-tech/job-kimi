@@ -37,6 +37,7 @@ import api from '../../api/client'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import PageShell from '../../components/layout/PageShell.vue'
 import RelatedCatalog from '../../components/RelatedCatalog.vue'
+import { setArticleMeta } from '../../services/meta'
 
 const route = useRoute()
 const loading = ref(true)
@@ -64,13 +65,7 @@ async function load() {
   try {
     const { data } = await api.get(`/articles/${route.params.slug}`)
     article.value = data.data
-    if (article.value?.meta) {
-      document.title = article.value.meta.title || article.value.title
-      const desc = document.querySelector('meta[name="description"]')
-      if (desc && article.value.meta.description) {
-        desc.setAttribute('content', article.value.meta.description)
-      }
-    }
+    setArticleMeta(article.value)
   } catch {
     article.value = null
   } finally {

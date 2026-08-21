@@ -6,7 +6,30 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|null $user_id
+ * @property numeric-string|float|int|null $amount
+ * @property string|null $type
+ * @property string|null $gateway
+ * @property string|null $status
+ * @property string|null $reference_id
+ * @property string|null $idempotency_key
+ * @property string|null $description
+ * @property string|null $payable_type
+ * @property int|null $payable_id
+ * @property string|null $invoice_number
+ * @property string|null $invoice_pdf
+ * @property int|null $coupon_id
+ * @property numeric-string|float|int|null $discount_amount
+ * @property numeric-string|float|int|null $original_amount
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read User|null $user
+ * @property-read Coupon|null $coupon
+ */
 class Transaction extends Model
 {
     public const STATUS_PENDING = 'pending';
@@ -15,6 +38,10 @@ class Transaction extends Model
     public const STATUS_COMPLETED = 'success';
 
     public const STATUS_FAILED = 'failed';
+
+    public const STATUS_CANCELLED = 'cancelled';
+
+    public const STATUS_EXPIRED = 'expired';
 
     protected $fillable = [
         'user_id',
@@ -52,16 +79,19 @@ class Transaction extends Model
         return $query->where('idempotency_key', $key);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return MorphTo<Model, $this> */
     public function payable(): MorphTo
     {
         return $this->morphTo();
     }
 
+    /** @return BelongsTo<Coupon, $this> */
     public function coupon(): BelongsTo
     {
         return $this->belongsTo(Coupon::class);

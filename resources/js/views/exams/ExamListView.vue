@@ -63,7 +63,21 @@
 
     <SkeletonCard v-if="loading" :count="5" />
     <template v-else>
-      <div v-if="exams.length" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <EmptyState
+        v-if="error"
+        title="خطا در بارگذاری آزمون‌ها"
+        :description="error"
+        icon="⚠️"
+      >
+        <button
+          type="button"
+          class="mt-2 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white"
+          @click="load"
+        >
+          تلاش مجدد
+        </button>
+      </EmptyState>
+      <div v-else-if="exams.length" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <article
           v-for="exam in exams"
           :key="exam.id"
@@ -131,7 +145,7 @@ import PageShell from '../../components/layout/PageShell.vue'
 import SkeletonCard from '../../components/ui/SkeletonCard.vue'
 import StarRating from '../../components/StarRating.vue'
 import { useAuthStore } from '../../stores/auth'
-import { formatPrice, unwrapList } from '../../utils/format'
+import { formatPrice, unwrapList, apiErrorMessage } from '../../utils/format'
 
 const route = useRoute()
 const router = useRouter()
@@ -140,6 +154,7 @@ const auth = useAuthStore()
 const exams = ref([])
 const classifications = ref([])
 const loading = ref(true)
+const error = ref(null)
 
 const accessOptions = [
   { value: '', label: 'همه' },
@@ -181,6 +196,7 @@ function badgeClass(exam) {
 
 async function load() {
   loading.value = true
+  error.value = null
   try {
     const { data } = await api.get('/exams', {
       params: {
@@ -192,8 +208,8 @@ async function load() {
       },
     })
     exams.value = unwrapList(data)
-  } catch {
-    exams.value = []
+  } catch (e) {
+    error.value = apiErrorMessage(e, 'بارگذاری آزمون‌ها ناموفق بود.')
   } finally {
     loading.value = false
   }

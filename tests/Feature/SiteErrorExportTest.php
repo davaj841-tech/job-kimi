@@ -14,7 +14,7 @@ class SiteErrorExportTest extends TestCase
 
     public function test_admin_can_export_site_errors_excel(): void
     {
-        $admin = User::factory()->create(['role' => 'admin', 'status' => 'active']);
+        $admin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
         Sanctum::actingAs($admin);
 
         SiteError::query()->create([

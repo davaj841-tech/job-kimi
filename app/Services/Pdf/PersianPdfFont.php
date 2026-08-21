@@ -66,8 +66,8 @@ class PersianPdfFont
         $options = $pdf->getOptions();
         $options->set('fontDir', storage_path('fonts'));
         $options->set('fontCache', storage_path('fonts'));
-        $options->set('chroot', base_path());
-        $options->set('isRemoteEnabled', true);
+        $options->set('chroot', storage_path());
+        $options->set('isRemoteEnabled', false);
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isFontSubsettingEnabled', false);
         $options->set('defaultFont', 'vazirmatn');

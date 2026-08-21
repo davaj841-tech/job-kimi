@@ -10,6 +10,7 @@ use App\Http\Requests\Api\Admin\UpdateUserStatusRequest;
 use App\Models\User;
 use App\Services\AuditLogService;
 use App\Support\OperatorPermissions;
+use App\Support\StaffRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -19,6 +20,7 @@ class AdminUserController extends BaseController
     {
         $validated = $request->validated();
         $perPage = (int) ($validated['per_page'] ?? 20);
+        $actor = $request->user();
 
         $query = User::query()->with('subscriptionPlan:id,name');
 
@@ -48,7 +50,9 @@ class AdminUserController extends BaseController
 
         $paginator = $query->paginate($perPage);
 
-        $rows = collect($paginator->items())->map(fn (User $user) => $this->listItem($user))->values();
+        $rows = collect($paginator->items())
+            ->map(fn (User $user) => $this->listItem($user, $actor))
+            ->values();
 
         return response()->json([
             'success' => true,
@@ -73,6 +77,7 @@ class AdminUserController extends BaseController
             return $this->errorResponse('کاربر یافت نشد.', 404);
         }
 
+        $actor = request()->user();
         $attemptsCount = $user->attempts()->count();
         $purchasesCount = $user->pdfPurchases()->count();
 
@@ -93,8 +98,8 @@ class AdminUserController extends BaseController
             'id' => $user->id,
             'name' => $user->name,
             'mobile' => $user->mobile,
-            'email' => $user->email,
-            'national_code' => $user->national_code,
+            'email' => $this->maskEmail($user->email, $actor),
+            'national_code' => $this->maskNationalCode($user->national_code, $actor),
             'username' => $user->username,
             'avatar' => $user->avatar,
             'role' => $user->role,
@@ -123,11 +128,27 @@ class AdminUserController extends BaseController
         $data = $request->validated();
         $actor = $request->user();
 
-        if (($actor?->role !== 'admin') && (($data['role'] ?? null) === 'admin')) {
-            return $this->errorResponse('فقط مدیر می‌تواند نقش مدیر تعیین کند.', 403);
+        if ($denied = $this->denyIfProtectedStaffAccount($actor, $user)) {
+            return $denied;
         }
 
-        if ($actor?->role === 'admin' && array_key_exists('operator_permissions', $data)) {
+        if (array_key_exists('role', $data) && ! $this->canAssignRole($actor, $data['role'])) {
+            return $this->errorResponse('تعیین این نقش برای شما مجاز نیست.', 403);
+        }
+
+        if (! StaffRoles::isStaffAdmin($actor)) {
+            if (array_key_exists('role', $data) && $data['role'] !== $user->role) {
+                return $this->errorResponse('تغییر نقش فقط توسط مدیر مجاز است.', 403);
+            }
+            if (array_intersect(['status', 'password', 'operator_permissions', 'is_verified'], array_keys($data))) {
+                return $this->errorResponse('تغییر وضعیت یا رمز عبور فقط توسط مدیر مجاز است.', 403);
+            }
+        }
+
+        $data = $this->stripOperatorUnsafeFields($actor, $data);
+        unset($data['wallet_balance']);
+
+        if (StaffRoles::isStaffAdmin($actor) && array_key_exists('operator_permissions', $data)) {
             $data['operator_permissions'] = ($data['role'] ?? $user->role) === 'operator'
                 ? OperatorPermissions::normalize($data['operator_permissions'])
                 : null;
@@ -136,8 +157,8 @@ class AdminUserController extends BaseController
         }
 
         if ($request->user()->id === $user->id) {
-            if (isset($data['role']) && $data['role'] !== 'admin') {
-                return $this->errorResponse('نمی‌توانید نقش خودتان را از ادمین خارج کنید.', 422);
+            if (isset($data['role']) && ! $this->canSelfRetainStaffRole($user, $data['role'])) {
+                return $this->errorResponse('نمی‌توانید نقش خودتان را تغییر دهید.', 422);
             }
             if (isset($data['status']) && $data['status'] === 'blocked') {
                 return $this->errorResponse('نمی‌توانید وضعیت حساب خودتان را مسدود کنید.', 422);
@@ -162,7 +183,7 @@ class AdminUserController extends BaseController
             $user->fresh()->only(['name', 'email', 'mobile', 'role', 'status', 'username', 'national_code'])
         );
 
-        return $this->successResponse($this->listItem($user->fresh('subscriptionPlan')), 'کاربر به‌روزرسانی شد.');
+        return $this->successResponse($this->listItem($user->fresh('subscriptionPlan'), $actor), 'کاربر به‌روزرسانی شد.');
     }
 
     public function updateRole(UpdateUserRoleRequest $request, int $id): JsonResponse
@@ -173,23 +194,34 @@ class AdminUserController extends BaseController
             return $this->errorResponse('کاربر یافت نشد.', 404);
         }
 
-        if ($request->user()?->role !== 'admin' && $request->validated('role') === 'admin') {
-            return $this->errorResponse('فقط مدیر می‌تواند نقش مدیر تعیین کند.', 403);
+        $actor = $request->user();
+        $newRole = $request->validated('role');
+
+        if (! StaffRoles::isStaffAdmin($actor)) {
+            return $this->errorResponse('تغییر نقش فقط توسط مدیر مجاز است.', 403);
         }
 
-        if ($request->user()->id === $user->id && $request->validated('role') !== 'admin') {
-            return $this->errorResponse('نمی‌توانید نقش خودتان را از ادمین خارج کنید.', 422);
+        if ($denied = $this->denyIfProtectedStaffAccount($actor, $user)) {
+            return $denied;
+        }
+
+        if (! $this->canAssignRole($actor, $newRole)) {
+            return $this->errorResponse('تعیین این نقش برای شما مجاز نیست.', 403);
+        }
+
+        if ($request->user()->id === $user->id && ! $this->canSelfRetainStaffRole($user, $newRole)) {
+            return $this->errorResponse('نمی‌توانید نقش خودتان را تغییر دهید.', 422);
         }
 
         $old = ['role' => $user->role];
-        $payload = ['role' => $request->validated('role')];
-        if ($request->validated('role') !== 'operator') {
+        $payload = ['role' => $newRole];
+        if ($newRole !== 'operator') {
             $payload['operator_permissions'] = null;
         }
         $user->update($payload);
         app(AuditLogService::class)->log('user.role_changed', $user, $old, ['role' => $user->role]);
 
-        return $this->successResponse($this->listItem($user->fresh('subscriptionPlan')), 'نقش کاربر به‌روزرسانی شد.');
+        return $this->successResponse($this->listItem($user->fresh('subscriptionPlan'), $actor), 'نقش کاربر به‌روزرسانی شد.');
     }
 
     public function updateStatus(UpdateUserStatusRequest $request, int $id): JsonResponse
@@ -200,13 +232,17 @@ class AdminUserController extends BaseController
             return $this->errorResponse('کاربر یافت نشد.', 404);
         }
 
+        if ($denied = $this->denyIfTargetIsAdmin($request->user(), $user)) {
+            return $denied;
+        }
+
         if ($request->user()->id === $user->id) {
             return $this->errorResponse('نمی‌توانید وضعیت حساب خودتان را تغییر دهید.', 422);
         }
 
         $user->update(['status' => $request->validated('status')]);
 
-        return $this->successResponse($this->listItem($user->fresh('subscriptionPlan')), 'وضعیت کاربر به‌روزرسانی شد.');
+        return $this->successResponse($this->listItem($user->fresh('subscriptionPlan'), $request->user()), 'وضعیت کاربر به‌روزرسانی شد.');
     }
 
     public function store(Request $request): JsonResponse
@@ -224,7 +260,7 @@ class AdminUserController extends BaseController
             'mobile' => ['nullable', 'regex:/^09\d{9}$/', 'unique:users,mobile'],
             'email' => ['nullable', 'email', 'max:191', 'unique:users,email'],
             'province' => ['required', 'string', 'max:100'],
-            'role' => ['required', 'in:jobseeker,employer,operator,admin'],
+            'role' => ['required', 'in:jobseeker,employer,operator,admin,super_admin'],
             'operator_permissions' => ['sometimes', 'nullable', 'array'],
             'operator_permissions.*' => ['string'],
             'status' => ['nullable', 'in:active,blocked'],
@@ -248,13 +284,19 @@ class AdminUserController extends BaseController
             return $this->errorResponse('حداقل یکی از موبایل یا ایمیل الزامی است.', 422);
         }
 
-        if ($request->user()?->role !== 'admin' && $data['role'] === 'admin') {
-            return $this->errorResponse('فقط مدیر می‌تواند حساب مدیر بسازد.', 403);
+        $actor = $request->user();
+
+        if (! $this->canAssignRole($actor, $data['role'])) {
+            return $this->errorResponse('ایجاد این نقش برای شما مجاز نیست.', 403);
+        }
+
+        if (! StaffRoles::isStaffAdmin($actor) && ! in_array($data['role'], ['jobseeker', 'employer'], true)) {
+            return $this->errorResponse('ایجاد نقش مدیر یا اپراتور فقط توسط مدیر مجاز است.', 403);
         }
 
         $permissions = null;
         if ($data['role'] === 'operator') {
-            $permissions = $request->user()?->role === 'admin'
+            $permissions = StaffRoles::isStaffAdmin($actor)
                 ? OperatorPermissions::normalize($data['operator_permissions'] ?? OperatorPermissions::defaults())
                 : OperatorPermissions::defaults();
         }
@@ -272,7 +314,12 @@ class AdminUserController extends BaseController
             'is_verified' => true,
         ]);
 
-        return $this->successResponse($this->listItem($user->load('subscriptionPlan')), 'کاربر ایجاد شد.', 201);
+        app(AuditLogService::class)->log('user.created', $user, null, [
+            'role' => $user->role,
+            'username' => $user->username,
+        ]);
+
+        return $this->successResponse($this->listItem($user->load('subscriptionPlan'), $actor), 'کاربر ایجاد شد.', 201);
     }
 
     public function destroy(int $id): JsonResponse
@@ -283,22 +330,115 @@ class AdminUserController extends BaseController
             return $this->errorResponse('کاربر یافت نشد.', 404);
         }
 
+        if ($denied = $this->denyIfProtectedStaffAccount(request()->user(), $user)) {
+            return $denied;
+        }
+
         if (request()->user()?->id === $user->id) {
             return $this->errorResponse('نمی‌توانید حساب خودتان را حذف کنید.', 422);
         }
 
+        app(AuditLogService::class)->log('user.deleted', $user, $user->only(['name', 'role', 'mobile']), null);
         $user->delete();
 
         return $this->successResponse(null, 'کاربر حذف شد.');
     }
 
-    protected function listItem(User $user): array
+    protected function denyIfProtectedStaffAccount(?User $actor, User $target): ?JsonResponse
+    {
+        if (StaffRoles::isProtectedStaffAccount($target) && ! StaffRoles::canManageStaffAccounts($actor)) {
+            return $this->errorResponse('تغییر حساب مدیر فقط توسط سوپرادمین مجاز است.', 403);
+        }
+
+        return null;
+    }
+
+    /** @deprecated use denyIfProtectedStaffAccount */
+    protected function denyIfTargetIsAdmin(?User $actor, User $target): ?JsonResponse
+    {
+        return $this->denyIfProtectedStaffAccount($actor, $target);
+    }
+
+    protected function canAssignRole(?User $actor, string $role): bool
+    {
+        if (in_array($role, ['super_admin', 'admin'], true)) {
+            return StaffRoles::canManageStaffAccounts($actor);
+        }
+
+        if ($role === 'operator') {
+            return StaffRoles::isStaffAdmin($actor);
+        }
+
+        return true;
+    }
+
+    protected function canSelfRetainStaffRole(User $user, string $newRole): bool
+    {
+        if (StaffRoles::isSuperAdmin($user)) {
+            return $newRole === StaffRoles::SUPER_ADMIN;
+        }
+
+        if (StaffRoles::isAdmin($user)) {
+            return $newRole === StaffRoles::ADMIN;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function stripOperatorUnsafeFields(?User $actor, array $data): array
+    {
+        if (StaffRoles::isStaffAdmin($actor)) {
+            return $data;
+        }
+
+        unset(
+            $data['role'],
+            $data['status'],
+            $data['password'],
+            $data['operator_permissions'],
+            $data['subscription_plan_id'],
+            $data['subscription_expires_at'],
+            $data['wallet_balance'],
+            $data['is_verified'],
+        );
+
+        return $data;
+    }
+
+    protected function maskNationalCode(?string $code, ?User $actor): ?string
+    {
+        if (! filled($code) || StaffRoles::isStaffAdmin($actor)) {
+            return $code;
+        }
+
+        return '***'.substr($code, -4);
+    }
+
+    protected function maskEmail(?string $email, ?User $actor): ?string
+    {
+        if (! filled($email) || StaffRoles::isStaffAdmin($actor)) {
+            return $email;
+        }
+
+        [$local, $domain] = explode('@', $email, 2);
+
+        return substr($local, 0, 2).'***@'.$domain;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function listItem(User $user, ?User $actor = null): array
     {
         return [
             'id' => $user->id,
             'name' => $user->name ?: '—',
             'mobile' => $user->mobile,
-            'email' => $user->email,
+            'email' => $this->maskEmail($user->email, $actor),
             'username' => $user->username,
             'province' => $user->province,
             'role' => $user->role,

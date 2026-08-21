@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Setting;
+use App\Services\Seo\SeoManager;
 use App\Support\PublicAsset;
 use App\Support\SiteFonts;
 use App\Support\SiteThemes;
@@ -55,6 +56,7 @@ class PublicSettingsController extends BaseController
                 'turnstile_enabled' => $captchaMode === 'turnstile',
                 'turnstile_site_key' => $captchaMode === 'turnstile' ? $siteKey : '',
                 'captcha_enabled' => true,
+                'seo' => app(SeoManager::class)->buildHomePayload(),
             ];
         });
 

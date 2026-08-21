@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasSeo;
 use App\Observers\ExamObserver;
 use App\Traits\HasUniqueSlug;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -10,11 +11,38 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string $title
+ * @property string|null $slug
+ * @property string|null $seo_tag
+ * @property int|null $category_id
+ * @property int|null $job_post_id
+ * @property int|null $job_classification_id
+ * @property string|null $description
+ * @property int|null $duration_minutes
+ * @property int|null $passing_score
+ * @property int|null $total_questions
+ * @property int|null $total_marks
+ * @property bool $has_negative_marking
+ * @property float|null $negative_mark_ratio
+ * @property bool $is_free
+ * @property numeric-string|float|int|null $price
+ * @property bool|null $subscription_required
+ * @property string|null $status
+ * @property bool $is_random
+ * @property array<string, mixed>|null $random_config
+ * @property int|null $created_by
+ * @property float|int|null $user_best_score
+ * @property bool|null $is_eligible
+ * @property int|null $user_attempt_count
+ */
 #[ObservedBy([ExamObserver::class])]
 class Exam extends Model
 {
     use HasFactory;
     use HasUniqueSlug;
+    use \App\Traits\HasSeo;
 
     protected string $slugSourceField = 'title';
 
@@ -57,31 +85,37 @@ class Exam extends Model
         ];
     }
 
+    /** @return BelongsTo<ExamCategory, $this> */
     public function category(): BelongsTo
     {
         return $this->belongsTo(ExamCategory::class, 'category_id');
     }
 
+    /** @return BelongsTo<JobPost, $this> */
     public function jobPost(): BelongsTo
     {
         return $this->belongsTo(JobPost::class);
     }
 
+    /** @return BelongsTo<JobClassification, $this> */
     public function classification(): BelongsTo
     {
         return $this->belongsTo(JobClassification::class, 'job_classification_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return HasMany<Question, $this> */
     public function questions(): HasMany
     {
         return $this->hasMany(Question::class);
     }
 
+    /** @return HasMany<ExamAttempt, $this> */
     public function attempts(): HasMany
     {
         return $this->hasMany(ExamAttempt::class);

@@ -62,6 +62,9 @@ class CouponAdminController extends BaseController
         return $this->successResponse(null, 'کد تخفیف حذف شد.');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function validated(Request $request, bool $require = true): array
     {
         return $request->validate([

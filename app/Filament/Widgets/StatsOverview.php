@@ -23,7 +23,7 @@ class StatsOverview extends BaseWidget
 
         $online = User::query()
             ->where('updated_at', '>=', now()->subMinutes(10))
-            ->whereIn('role', ['jobseeker', 'employer', 'operator', 'admin'])
+            ->whereIn('role', ['jobseeker', 'employer', 'operator', 'admin', 'super_admin'])
             ->count();
 
         return [

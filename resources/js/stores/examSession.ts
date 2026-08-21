@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import type { ExamQuestion } from '@/types/exam'
 import { useExamStore } from './exam'
 
 /**
@@ -9,7 +10,6 @@ import { useExamStore } from './exam'
 export const useExamSessionStore = defineStore('examSession', () => {
   const examStore = useExamStore()
 
-  const flagged = ref<number[]>([])
   const tabSwitchCount = ref(0)
   const isFullscreen = ref(false)
   const showAnswerSheet = ref(false)
@@ -22,7 +22,7 @@ export const useExamSessionStore = defineStore('examSession', () => {
   const fontScale = ref(1)
 
   const questions = computed(
-    () => (examStore.current?.questions as any[]) || []
+    () => (examStore.current?.questions as ExamQuestion[]) || []
   )
 
   const subjectTabs = computed(() => {
@@ -112,7 +112,7 @@ export const useExamSessionStore = defineStore('examSession', () => {
       ).length
   )
 
-  const flaggedCount = computed(() => flagged.value.length)
+  const flaggedCount = computed(() => examStore.flagged.length)
   const progressPercent = computed(() => {
     const total = questions.value.length || 1
     return Math.round((answeredCount.value / total) * 100)
@@ -129,15 +129,11 @@ export const useExamSessionStore = defineStore('examSession', () => {
   const isFirstInFilter = computed(() => pageStart.value <= 0)
 
   function isFlagged(questionId: number): boolean {
-    return flagged.value.includes(questionId)
+    return examStore.isFlagged(questionId)
   }
 
   function toggleFlag(questionId: number): void {
-    if (flagged.value.includes(questionId)) {
-      flagged.value = flagged.value.filter((id) => id !== questionId)
-    } else {
-      flagged.value = [...flagged.value, questionId]
-    }
+    examStore.toggleFlag(questionId)
   }
 
   function navigateTo(index: number): void {
@@ -208,7 +204,7 @@ export const useExamSessionStore = defineStore('examSession', () => {
   }
 
   function resetSessionUx(): void {
-    flagged.value = []
+    examStore.setFlagged([])
     tabSwitchCount.value = 0
     isFullscreen.value = false
     showAnswerSheet.value = false
@@ -221,7 +217,6 @@ export const useExamSessionStore = defineStore('examSession', () => {
 
   return {
     examStore,
-    flagged,
     tabSwitchCount,
     isFullscreen,
     showAnswerSheet,

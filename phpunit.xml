@@ -19,6 +19,7 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="SMS_ALLOW_LOG_FALLBACK" value="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="MAIL_MAILER" value="array"/>
@@ -29,5 +30,8 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="PAYMENT_FAKE" value="true"/>
+        <env name="ZARINPAL_MERCHANT_ID" value="test-merchant-id"/>
+        <env name="ZARINPAL_SANDBOX" value="true"/>
     </php>
 </phpunit>

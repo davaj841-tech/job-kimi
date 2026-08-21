@@ -264,7 +264,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -283,9 +283,11 @@ import ExitConfirmModal from '../../components/exam/ExitConfirmModal.vue'
 import SubmitConfirmModal from '../../components/exam/SubmitConfirmModal.vue'
 import { useExamStore } from '../../stores/exam'
 import { useExamSessionStore } from '../../stores/examSession'
-import { toFaDigits } from '../../utils/format'
+import type { ExamQuestion, AutosaveResponse } from '@/types/exam'
+import { toFaDigits, apiErrorMessage } from '../../utils/format'
 import { renderKatexHtml } from '../../utils/renderKatexHtml'
 
+const route = useRoute()
 const router = useRouter()
 const examStore = useExamStore()
 const session = useExamSessionStore()
@@ -302,9 +304,7 @@ let pendingSync = false
 let touchX = 0
 
 const q = computed(() => session.pageQuestions[0] || session.currentQuestion)
-const examTitle = computed(
-  () => (examStore.current as any)?.title || (examStore.current as any)?.exam?.title || 'آزمون'
-)
+const examTitle = computed(() => examStore.current?.title || 'آزمون')
 
 watch(
   () => session.currentQuestion?.id,
@@ -351,23 +351,23 @@ function seededShuffle<T>(items: T[], seed: string | number): T[] {
   return arr
 }
 
-const optionsCache = new Map()
-function optionsFor(question: any) {
-  if (optionsCache.has(question.id)) return optionsCache.get(question.id)
+const optionsCache = new Map<number, Array<{ key: string; label: string }>>()
+function optionsFor(question: ExamQuestion) {
+  if (optionsCache.has(question.id)) return optionsCache.get(question.id)!
   const o = question.options || {}
   const base = [
     { key: 'a', label: o.a || question.option_a },
     { key: 'b', label: o.b || question.option_b },
     { key: 'c', label: o.c || question.option_c },
     { key: 'd', label: o.d || question.option_d },
-  ].filter((opt) => opt.label)
+  ].filter((opt): opt is { key: string; label: string } => Boolean(opt.label))
   const seed = `${examStore.current?.attemptId || 0}-${question.id}`
   const shuffled = seededShuffle(base, seed)
   optionsCache.set(question.id, shuffled)
   return shuffled
 }
 
-function navigatorClass(item: any) {
+function navigatorClass(item: ExamQuestion) {
   const answered = isAnswered(item?.id)
   const current = Number(session.currentQuestion?.id) === Number(item?.id)
   if (current) return 'ring-2 ring-[#ef394e] bg-[#fff1f2] text-[#ef394e]'
@@ -426,7 +426,9 @@ async function syncAnswers() {
 
   syncing.value = true
   try {
-    const { examId, attemptId } = examStore.current as any
+    const current = examStore.current
+    if (!current) return
+    const { examId, attemptId } = current
     await api.post(`/exams/${examId}/autosave/${attemptId}`, {
       answers: examStore.answers,
     })
@@ -513,13 +515,15 @@ watch(
 )
 
 onMounted(async () => {
-  if (!examStore.current) examStore.loadCache()
+  if (!examStore.current) {
+    examStore.loadCache(route.params.id as string)
+  }
   if (!examStore.current) {
     router.replace('/exams')
     return
   }
 
-  const cachedPerPage = Number((examStore.current as any)?.perPage)
+  const cachedPerPage = Number(examStore.current?.perPage)
   if (cachedPerPage) session.setQuestionsPerPage(cachedPerPage)
 
   examStore.setOffline(!navigator.onLine)
@@ -531,15 +535,19 @@ onMounted(async () => {
 
   if (Object.keys(examStore.answers || {}).length === 0) {
     try {
-      const { examId, attemptId } = examStore.current as any
-      const { data } = await api.get(`/exams/${examId}/autosave/${attemptId}`)
+      const current = examStore.current
+      if (!current) return
+      const { examId, attemptId } = current
+      const { data } = await api.get<{ data?: AutosaveResponse }>(
+        `/exams/${examId}/autosave/${attemptId}`
+      )
       const remote = data.data?.answers || {}
       if (Object.keys(remote).length) {
         examStore.answers = remote
         examStore.saveCache()
       }
     } catch {
-      /* ignore */
+      /* server autosave unavailable — local cache remains */
     }
   }
 
@@ -587,18 +595,19 @@ async function submit() {
   session.showSubmitConfirm = false
   try {
     await syncAnswers()
-    const { examId, attemptId } = examStore.current as any
+    const current = examStore.current
+    if (!current) return
+    const { examId, attemptId } = current
     await api.post(`/exams/${examId}/submit/${attemptId}`, {
       answers: examStore.answers,
     })
     examStore.clearCache()
     session.resetSessionUx()
     router.replace(`/exams/${examId}/result/${attemptId}`)
-  } catch (e: any) {
+  } catch (e: unknown) {
     examStore.saveCache()
     submitError.value =
-      e.response?.data?.message ||
-      'ثبت آزمون ناموفق بود. لطفاً دوباره تلاش کنید.'
+      apiErrorMessage(e, 'ثبت آزمون ناموفق بود. لطفاً دوباره تلاش کنید.')
     submitting.value = false
   }
 }

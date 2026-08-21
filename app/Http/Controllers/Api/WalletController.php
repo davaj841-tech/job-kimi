@@ -9,7 +9,9 @@ use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Repositories\TransactionRepository;
+use App\Services\AuditLogService;
 use App\Services\IdempotencyService;
+use App\Services\Payment\GatewayCallbackService;
 use App\Services\PaymentService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +26,8 @@ class WalletController extends BaseController
         protected ManageWallet $manageWallet,
         protected InitiatePayment $initiatePayment,
         protected IdempotencyService $idempotencyService,
+        protected GatewayCallbackService $gatewayCallback,
+        protected AuditLogService $audit,
     ) {}
 
     /**
@@ -71,11 +75,15 @@ class WalletController extends BaseController
      */
     public function charge(Request $request): JsonResponse
     {
-        $minCharge = (int) Setting::get('min_wallet_charge', 10000);
+        $minCharge = (int) Setting::get('min_wallet_charge', config('payment.min_wallet_charge', 10000));
+        $maxCharge = max($minCharge, (int) Setting::get('max_wallet_charge', config('payment.max_wallet_charge', 50_000_000)));
 
         $data = $request->validate([
-            'amount' => ['required', 'integer', 'min:'.$minCharge],
+            'amount' => ['required', 'integer', 'min:'.$minCharge, 'max:'.$maxCharge],
             'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay,mellat,shaparak'],
+        ], [
+            'amount.min' => 'مبلغ شارژ کمتر از حد مجاز است.',
+            'amount.max' => 'مبلغ شارژ بیشتر از حد مجاز است.',
         ]);
 
         $amount = (int) $data['amount'];
@@ -122,6 +130,12 @@ class WalletController extends BaseController
 
         $transaction->update(['reference_id' => $result['authority']]);
 
+        $this->audit->log('payment.initiated', $transaction, null, [
+            'amount' => (int) $transaction->amount,
+            'type' => $transaction->type,
+            'gateway' => $transaction->gateway,
+        ], $user->id);
+
         return $this->successResponse([
             'payment_url' => $result['payment_url'],
             'transaction_id' => $transaction->id,
@@ -148,79 +162,31 @@ class WalletController extends BaseController
      */
     public function verify(Request $request): JsonResponse
     {
-        $authority = $this->paymentService->extractAuthority($request);
-
-        if ($authority === '') {
-            return $this->errorResponse('شناسه پرداخت نامعتبر است.', 422);
-        }
-
-        $transaction = $this->transactionRepository->getByReference($authority);
-
-        if (! $transaction || $transaction->type !== 'deposit') {
-            return $this->errorResponse('تراکنش یافت نشد.', 404);
-        }
-
-        $requestKey = $this->idempotencyService->extractKey($request);
-        if (
-            $requestKey !== null
-            && $transaction->idempotency_key
-            && ! hash_equals($transaction->idempotency_key, $requestKey)
-        ) {
-            return $this->errorResponse('کلید یکتایی پرداخت نامعتبر است.', 422);
-        }
-
-        if ($transaction->status === Transaction::STATUS_COMPLETED) {
-            $balance = $this->walletService->getBalance($transaction->user);
-
-            return $this->successResponse([
-                'new_balance' => $balance,
-                'already_processed' => true,
-            ], 'کیف پول با موفقیت شارژ شد');
-        }
-
-        $gateway = $transaction->gateway ?: 'zarinpal';
-
-        if (! $this->paymentService->callbackSucceeded($request, $gateway)) {
-            $transaction->update(['status' => Transaction::STATUS_FAILED]);
-
-            return $this->errorResponse('پرداخت ناموفق بود', 400);
-        }
-
-        $verify = $this->paymentService->verify(
-            $gateway,
-            $authority,
-            (int) $transaction->amount,
-            ['order_id' => (string) $transaction->id]
+        $result = $this->gatewayCallback->complete(
+            $request,
+            fn (Transaction $tx) => $tx->type === 'deposit',
+            function (Transaction $locked) {
+                $user = User::query()->findOrFail($locked->user_id);
+                $this->walletService->deposit($user, (int) $locked->amount, $locked);
+            }
         );
 
-        if (! $verify['success']) {
-            $transaction->update(['status' => Transaction::STATUS_FAILED]);
-
-            return $this->errorResponse($verify['error'] ?? 'پرداخت ناموفق بود', 400);
+        if (! $result->ok) {
+            return $this->errorResponse($result->message, $result->status);
         }
 
-        $outcome = $this->idempotencyService->completeOnce($transaction, function (Transaction $locked) use ($verify) {
-            $user = User::query()->findOrFail($locked->user_id);
-            $this->walletService->deposit($user, (int) $locked->amount, $locked);
-
-            if ($verify['ref_id']) {
-                $locked->update([
-                    'description' => trim(($locked->description ?? '').' | RefID: '.$verify['ref_id']),
-                ]);
-            }
-
-            return true;
-        });
-
-        if (! $outcome['already_processed']) {
-            event(new PaymentSuccessful($outcome['transaction']->fresh()));
+        $tx = $result->transaction;
+        if (! $result->alreadyProcessed && $tx) {
+            event(new PaymentSuccessful($tx));
         }
 
-        $newBalance = $this->walletService->getBalance($transaction->user);
+        $balance = $tx
+            ? $this->walletService->getBalance($tx->user ?? User::query()->findOrFail($tx->user_id))
+            : 0;
 
         return $this->successResponse([
-            'new_balance' => $newBalance,
-            'already_processed' => $outcome['already_processed'],
-        ], 'کیف پول با موفقیت شارژ شد');
+            'new_balance' => $balance,
+            'already_processed' => $result->alreadyProcessed,
+        ], $result->alreadyProcessed ? 'کیف پول با موفقیت شارژ شد' : 'کیف پول با موفقیت شارژ شد');
     }
 }

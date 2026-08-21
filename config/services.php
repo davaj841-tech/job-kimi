@@ -65,6 +65,18 @@ return [
         'sandbox' => env('IDPAY_SANDBOX', false),
     ],
 
+    'mellat' => [
+        'terminal_id' => env('MELLAT_TERMINAL_ID'),
+        'username' => env('MELLAT_USERNAME'),
+        'password' => env('MELLAT_PASSWORD'),
+    ],
+
+    'shaparak' => [
+        'terminal_id' => env('SHAPARAK_TERMINAL_ID'),
+        'username' => env('SHAPARAK_USERNAME'),
+        'password' => env('SHAPARAK_PASSWORD'),
+    ],
+
     'turnstile' => [
         'site_key' => env('TURNSTILE_SITE_KEY'),
         'secret' => env('TURNSTILE_SECRET_KEY'),

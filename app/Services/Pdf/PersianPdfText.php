@@ -126,6 +126,9 @@ class PersianPdfText
         return is_string($reshaped) ? $reshaped : $html;
     }
 
+    /**
+     * @param  list<string>  $chars
+     */
     protected function previousJoiner(array $chars, int $index): ?string
     {
         for ($i = $index - 1; $i >= 0; $i--) {
@@ -142,6 +145,12 @@ class PersianPdfText
         return null;
     }
 
+    /**
+     * @param  list<string>  $chars
+     */
+    /**
+     * @param  list<string>  $chars
+     */
     protected function nextJoiner(array $chars, int $index): ?string
     {
         $count = count($chars);

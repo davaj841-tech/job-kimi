@@ -2,11 +2,23 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Exam;
+use App\Models\JobPost;
+use App\Models\JobPostAttachment;
+use App\Models\PdfProduct;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin JobPost
+ *
+ * @property-read JobPost $resource
+ */
 class JobPostResource extends JsonResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         $data = [
@@ -16,25 +28,25 @@ class JobPostResource extends JsonResource
             'company_name' => $this->classification_name,
             'job_classification_id' => $this->job_classification_id,
             'classification_name' => $this->classification_name,
-            'description' => $this->description,
+            'description' => \App\Support\HtmlSanitizer::clean($this->description),
             'province' => $this->province,
             'provinces' => $this->provinces ?? ($this->province ? [$this->province] : []),
             'city' => $this->city,
             'job_category' => $this->job_category,
             'registration_deadline' => $this->registration_deadline?->toIso8601String(),
             'exam_date' => $this->exam_date?->toIso8601String(),
-            'registration_link' => $this->registration_link,
-            'source_url' => $this->source_url,
+            'registration_link' => \App\Support\HtmlSanitizer::safeUrl($this->registration_link),
+            'source_url' => \App\Support\HtmlSanitizer::safeUrl($this->source_url),
             'attachment_path' => $this->attachment_path,
             'attachment_url' => $this->attachment_url,
-            'attachments' => $this->when($this->relationLoaded('attachments'), function () {
-                return $this->attachments->map(fn ($a) => [
+            'attachments' => $this->when($this->relationLoaded('attachments'), function (): array {
+                return $this->attachments->map(fn (JobPostAttachment $a) => [
                     'id' => $a->id,
                     'title' => $a->title,
                     'description' => $a->description,
                     'url' => $a->url,
                     'sort_order' => $a->sort_order,
-                ])->values();
+                ])->values()->all();
             }),
             'status' => $this->status,
             'auto_catalog' => (bool) ($this->auto_catalog ?? true),
@@ -45,8 +57,8 @@ class JobPostResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'related_exams_count' => $this->related_exams_count ?? null,
             'related_pdfs_count' => $this->related_pdfs_count ?? null,
-            'related_exams' => $this->when($this->relationLoaded('exams'), function () {
-                return $this->exams->map(fn ($exam) => [
+            'related_exams' => $this->when($this->relationLoaded('exams'), function (): array {
+                return $this->exams->map(fn (Exam $exam) => [
                     'id' => $exam->id,
                     'title' => $exam->title,
                     'slug' => $exam->slug,
@@ -55,25 +67,25 @@ class JobPostResource extends JsonResource
                     'duration_minutes' => $exam->duration_minutes,
                     'total_questions' => $exam->total_questions,
                     'job_classification_id' => $exam->job_classification_id,
-                ])->values();
+                ])->values()->all();
             }),
-            'related_pdfs' => $this->when($this->relationLoaded('pdfProducts'), function () {
-                return $this->pdfProducts->map(fn ($pdf) => [
+            'related_pdfs' => $this->when($this->relationLoaded('pdfProducts'), function (): array {
+                return $this->pdfProducts->map(fn (PdfProduct $pdf) => [
                     'id' => $pdf->id,
                     'title' => $pdf->title,
                     'price' => $pdf->price,
                     'thumbnail' => $pdf->thumbnail,
                     'job_classification_id' => $pdf->job_classification_id,
-                ])->values();
+                ])->values()->all();
             }),
-            'related_pdf_products' => $this->when($this->relationLoaded('pdfProducts'), function () {
-                return $this->pdfProducts->map(fn ($pdf) => [
+            'related_pdf_products' => $this->when($this->relationLoaded('pdfProducts'), function (): array {
+                return $this->pdfProducts->map(fn (PdfProduct $pdf) => [
                     'id' => $pdf->id,
                     'title' => $pdf->title,
                     'price' => $pdf->price,
                     'thumbnail' => $pdf->thumbnail,
                     'job_classification_id' => $pdf->job_classification_id,
-                ])->values();
+                ])->values()->all();
             }),
             'catalog_exams' => $this->when(isset($this->catalog_exams), $this->catalog_exams),
             'catalog_pdfs' => $this->when(isset($this->catalog_pdfs), $this->catalog_pdfs),
@@ -87,7 +99,7 @@ class JobPostResource extends JsonResource
             'field_of_study' => $this->field_of_study,
             'experience' => $this->experience,
             'employment_type' => $this->employment_type,
-            'requirements' => $this->requirements,
+            'requirements' => \App\Support\HtmlSanitizer::clean($this->requirements),
             'registration_starts_at' => $this->registration_starts_at?->toIso8601String(),
             'published_at' => $this->published_at?->toIso8601String(),
             'job_source' => $this->when($this->relationLoaded('source') && $this->source, function () {
@@ -96,7 +108,9 @@ class JobPostResource extends JsonResource
                     'name' => $this->source->name,
                     'domain' => $this->source->domain,
                     'slug' => $this->source->slug,
-                    'reliability_level' => $this->source->reliability_level?->value,
+                    'reliability_level' => $this->source->reliability_level instanceof \BackedEnum
+                        ? $this->source->reliability_level->value
+                        : $this->source->reliability_level,
                 ];
             }),
         ];

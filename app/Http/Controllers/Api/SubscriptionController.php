@@ -6,8 +6,7 @@ use App\Http\Resources\SubscriptionPlanResource;
 use App\Models\SubscriptionPlan;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Repositories\TransactionRepository;
-use App\Services\IdempotencyService;
+use App\Services\Payment\GatewayCallbackService;
 use App\Services\PaymentService;
 use App\Services\SubscriptionService;
 use Illuminate\Http\JsonResponse;
@@ -18,8 +17,7 @@ class SubscriptionController extends BaseController
     public function __construct(
         protected SubscriptionService $subscriptionService,
         protected PaymentService $paymentService,
-        protected TransactionRepository $transactionRepository,
-        protected IdempotencyService $idempotencyService,
+        protected GatewayCallbackService $gatewayCallback,
     ) {}
 
     /**
@@ -92,86 +90,63 @@ class SubscriptionController extends BaseController
         ], $result['message']);
     }
 
-    public function verifySubscription(Request $request): JsonResponse
+    public function upgrade(Request $request): JsonResponse
     {
-        $authority = $this->paymentService->extractAuthority($request);
+        $data = $request->validate([
+            'plan_id' => ['required', 'integer', 'exists:subscription_plans,id'],
+            'payment_method' => ['required', 'in:wallet,zarinpal,nextpay,idpay'],
+            'coupon_code' => ['nullable', 'string', 'max:50'],
+            'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay,mellat,shaparak'],
+        ]);
 
-        if ($authority === '') {
-            return $this->errorResponse('شناسه پرداخت نامعتبر است.', 422);
-        }
+        $plan = SubscriptionPlan::query()->findOrFail($data['plan_id']);
+        $gateway = $data['payment_method'] === 'wallet'
+            ? null
+            : ($data['gateway'] ?? $data['payment_method']);
 
-        $transaction = $this->transactionRepository->getByReference($authority);
-
-        if (! $transaction || $transaction->type !== 'purchase' || $transaction->payable_type !== SubscriptionPlan::class) {
-            return $this->errorResponse('تراکنش یافت نشد.', 404);
-        }
-
-        $requestKey = $this->idempotencyService->extractKey($request);
-        if (
-            $requestKey !== null
-            && $transaction->idempotency_key
-            && ! hash_equals($transaction->idempotency_key, $requestKey)
-        ) {
-            return $this->errorResponse('کلید یکتایی پرداخت نامعتبر است.', 422);
-        }
-
-        if ($transaction->status === Transaction::STATUS_COMPLETED) {
-            $user = User::query()->findOrFail($transaction->user_id);
-
-            return $this->successResponse([
-                'expires_at' => $this->formatExpiresAt($user),
-                'already_processed' => true,
-            ], 'اشتراک فعال شد');
-        }
-
-        $gateway = $transaction->gateway ?: 'zarinpal';
-
-        if (! $this->paymentService->callbackSucceeded($request, $gateway)) {
-            $transaction->update(['status' => Transaction::STATUS_FAILED]);
-
-            return $this->errorResponse('پرداخت ناموفق بود', 400);
-        }
-
-        $verify = $this->paymentService->verify(
-            $gateway,
-            $authority,
-            (int) $transaction->amount,
-            ['order_id' => (string) $transaction->id]
+        $result = $this->subscriptionService->upgrade(
+            $request->user(),
+            $plan,
+            $data['payment_method'] === 'wallet' ? 'wallet' : ($gateway ?: 'zarinpal'),
+            $data['coupon_code'] ?? null,
+            $gateway
         );
 
-        if (! $verify['success']) {
-            $transaction->update(['status' => Transaction::STATUS_FAILED]);
-
-            return $this->errorResponse($verify['error'] ?? 'پرداخت ناموفق بود', 400);
+        if (! $result['success']) {
+            return $this->errorResponse($result['message'], 400, ['code' => $result['error'] ?? null]);
         }
 
-        $plan = SubscriptionPlan::query()->find($transaction->payable_id);
+        return $this->successResponse([
+            'payment_url' => $result['payment_url'] ?? null,
+            'expires_at' => $result['expires_at'] ?? null,
+            'idempotency_key' => $result['idempotency_key'] ?? null,
+        ], $result['message']);
+    }
 
-        if (! $plan) {
-            $transaction->update(['status' => Transaction::STATUS_FAILED]);
-
-            return $this->errorResponse('پلن اشتراک یافت نشد.', 404);
-        }
-
-        $outcome = $this->idempotencyService->completeOnce($transaction, function (Transaction $locked) use ($verify, $plan) {
-            if ($verify['ref_id']) {
-                $locked->description = trim(($locked->description ?? '').' | RefID: '.$verify['ref_id']);
+    public function verifySubscription(Request $request): JsonResponse
+    {
+        $result = $this->gatewayCallback->complete(
+            $request,
+            fn (Transaction $tx) => $tx->type === 'purchase' && $tx->payable_type === SubscriptionPlan::class,
+            function (Transaction $locked) {
+                $plan = SubscriptionPlan::query()->find($locked->payable_id);
+                if (! $plan) {
+                    throw new \RuntimeException('پلن اشتراک یافت نشد.');
+                }
+                $user = User::query()->whereKey($locked->user_id)->lockForUpdate()->firstOrFail();
+                $this->subscriptionService->activate($user, $plan, $locked);
             }
+        );
 
-            $locked->status = Transaction::STATUS_COMPLETED;
-            $locked->save();
+        if (! $result->ok) {
+            return $this->errorResponse($result->message, $result->status);
+        }
 
-            $user = User::query()->findOrFail($locked->user_id);
-            $this->subscriptionService->activate($user, $plan, $locked);
-
-            return true;
-        });
-
-        $user = User::query()->findOrFail($outcome['transaction']->user_id);
+        $user = User::query()->findOrFail($result->transaction?->user_id);
 
         return $this->successResponse([
             'expires_at' => $this->formatExpiresAt($user->fresh() ?? $user),
-            'already_processed' => $outcome['already_processed'],
+            'already_processed' => $result->alreadyProcessed,
         ], 'اشتراک فعال شد');
     }
 

@@ -8,6 +8,7 @@ use App\Models\TicketReply;
 use App\Models\User;
 use App\Notifications\GenericDatabaseNotification;
 use App\Services\MailConfigService;
+use App\Support\OperatorPermissions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -72,8 +73,8 @@ class TicketController extends BaseController
             ->with(['replies.user:id,name,role', 'user:id,name,mobile'])
             ->findOrFail($id);
 
-        if ($ticket->user_id !== $request->user()->id && ! in_array($request->user()->role, ['admin', 'operator'], true)) {
-            return $this->errorResponse('دسترسی ندارید.', 403);
+        if ($ticket->user_id !== $request->user()->id && ! OperatorPermissions::allows($request->user(), 'tickets')) {
+            return $this->errorResponse('تیکت یافت نشد.', 404);
         }
 
         return $this->successResponse($ticket);
@@ -83,11 +84,13 @@ class TicketController extends BaseController
     {
         $ticket = Ticket::query()->findOrFail($id);
         $user = $request->user();
-        $isAdmin = in_array($user->role, ['admin', 'operator'], true);
+        $canStaff = OperatorPermissions::allows($user, 'tickets');
 
-        if ($ticket->user_id !== $user->id && ! $isAdmin) {
-            return $this->errorResponse('دسترسی ندارید.', 403);
+        if ($ticket->user_id !== $user->id && ! $canStaff) {
+            return $this->errorResponse('تیکت یافت نشد.', 404);
         }
+
+        $isAdmin = $ticket->user_id !== $user->id && $canStaff;
 
         $data = $request->validate([
             'message' => ['required', 'string', 'max:5000'],
@@ -101,21 +104,24 @@ class TicketController extends BaseController
         ]);
 
         if ($isAdmin) {
-            $ticket->user?->notify(new GenericDatabaseNotification(
-                'admin_reply',
-                'پاسخ پشتیبانی',
-                'پاسخ جدید برای تیکت «'.$ticket->subject.'»',
-                '/support/'.$ticket->id
-            ));
-            if ($ticket->user?->email) {
-                try {
-                    $this->mail->queueTo($ticket->user->email, new ContactFormMail(
-                        'پشتیبانی جاب‌آزمون',
-                        config('mail.from.address'),
-                        'support',
-                        'پاسخ جدید به تیکت شما: '.$data['message']
-                    ));
-                } catch (\Throwable) {
+            $ticketUser = $ticket->user;
+            if ($ticketUser instanceof User) {
+                $ticketUser->notify(new GenericDatabaseNotification(
+                    'admin_reply',
+                    'پاسخ پشتیبانی',
+                    'پاسخ جدید برای تیکت «'.$ticket->subject.'»',
+                    '/support/'.$ticket->id
+                ));
+                if ($ticketUser->email) {
+                    try {
+                        $this->mail->queueTo($ticketUser->email, new ContactFormMail(
+                            'پشتیبانی جاب‌آزمون',
+                            config('mail.from.address'),
+                            'support',
+                            'پاسخ جدید به تیکت شما: '.$data['message']
+                        ));
+                    } catch (\Throwable) {
+                    }
                 }
             }
         }

@@ -2,7 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import adminApi from '../api/client'
 
-const STAFF_ROLES = ['admin', 'operator'] as const
+const STAFF_ROLES = ['super_admin', 'admin', 'operator'] as const
 
 interface AdminUser {
   role?: string
@@ -28,7 +28,12 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
   const isStaff = computed(() =>
     STAFF_ROLES.includes(user.value?.role as (typeof STAFF_ROLES)[number])
   )
-  const isAdmin = computed(() => user.value?.role === 'admin')
+  const isSuperAdmin = computed(() => user.value?.role === 'super_admin')
+  const isStaffAdmin = computed(() =>
+    ['super_admin', 'admin'].includes(user.value?.role ?? '')
+  )
+  /** Backward-compatible alias for staff admin (not operator). */
+  const isAdmin = computed(() => isStaffAdmin.value)
   const isOperator = computed(() => user.value?.role === 'operator')
   const permissions = computed<string[]>(() => {
     const list = user.value?.operator_permissions
@@ -36,7 +41,7 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
   })
 
   function can(permission?: string) {
-    if (isAdmin.value) return true
+    if (isStaffAdmin.value) return true
     if (!permission) return true
     return permissions.value.includes(permission)
   }
@@ -143,6 +148,8 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
     loading,
     isAuthenticated,
     isStaff,
+    isSuperAdmin,
+    isStaffAdmin,
     isAdmin,
     isOperator,
     permissions,

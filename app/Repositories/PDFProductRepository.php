@@ -76,6 +76,9 @@ class PDFProductRepository
         return PdfProduct::query()->find($id);
     }
 
+    /**
+     * @return Collection<int, PdfProduct>
+     */
     public function getPurchasedByUser(User $user): Collection
     {
         return PdfProduct::query()

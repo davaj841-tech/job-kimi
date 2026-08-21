@@ -7,6 +7,7 @@ use App\Imports\QuestionsImport;
 use App\Repositories\QuestionRepository;
 use Illuminate\Http\UploadedFile;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class QuestionService
@@ -21,7 +22,14 @@ class QuestionService
     public function importFromExcel(UploadedFile $file, ?int $examId = null): array
     {
         $import = new QuestionsImport($examId);
-        Excel::import($import, $file);
+
+        // Keep Persian/English headers as-is; slug formatter turns «متن_سوال» into «mtn_soal».
+        HeadingRowFormatter::default(HeadingRowFormatter::FORMATTER_NONE);
+        try {
+            Excel::import($import, $file);
+        } finally {
+            HeadingRowFormatter::reset();
+        }
 
         return [
             'created' => $import->created,

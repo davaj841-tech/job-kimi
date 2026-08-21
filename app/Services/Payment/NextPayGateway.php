@@ -2,8 +2,6 @@
 
 namespace App\Services\Payment;
 
-use App\Models\PaymentGateway;
-use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -21,10 +19,7 @@ class NextPayGateway implements PaymentGatewayInterface
 
     protected function apiKey(): string
     {
-        return (string) (Setting::getFilled('nextpay_api_key')
-            ?: optional(PaymentGateway::query()->where('name', 'nextpay')->first())->api_key
-            ?: config('services.nextpay.api_key')
-            ?: '');
+        return (string) config('services.nextpay.api_key', '');
     }
 
     /** NextPay expects amount in Tomans */
@@ -55,7 +50,7 @@ class NextPayGateway implements PaymentGatewayInterface
             $transId = $response->json('trans_id');
 
             if ($code !== 0 || blank($transId)) {
-                Log::warning('NextPay request failed', ['body' => $response->body()]);
+                Log::warning('NextPay request failed', ['http' => $response->status(), 'code' => $code]);
 
                 return [
                     'authority' => null,
@@ -100,7 +95,7 @@ class NextPayGateway implements PaymentGatewayInterface
                 ];
             }
 
-            Log::warning('NextPay verify failed', ['body' => $response->body()]);
+            Log::warning('NextPay verify failed', ['http' => $response->status(), 'code' => $code]);
 
             return ['success' => false, 'ref_id' => null, 'error' => 'پرداخت نکست‌پی ناموفق بود'];
         } catch (\Throwable $e) {

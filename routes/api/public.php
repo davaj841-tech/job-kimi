@@ -9,11 +9,13 @@ use App\Http\Controllers\Api\ExamController;
 use App\Http\Controllers\Api\FeatureController;
 use App\Http\Controllers\Api\JobPostController;
 use App\Http\Controllers\Api\LeaderboardController;
+use App\Http\Controllers\Api\NewsletterController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\PageViewController;
 use App\Http\Controllers\Api\PaymentGatewayController;
 use App\Http\Controllers\Api\PDFProductController;
 use App\Http\Controllers\Api\PublicSettingsController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SearchSuggestionController;
 use App\Http\Controllers\Api\SubscriptionController;
@@ -26,8 +28,12 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::post('/coupons/validate', [CouponController::class, 'validateCode']);
-Route::post('/page-views', [PageViewController::class, 'store']);
+Route::post('/coupons/validate', [CouponController::class, 'validateCode'])->middleware('throttle:coupon');
+Route::post('/page-views', [PageViewController::class, 'store'])->middleware('throttle:30,1');
+
+// Health check for uptime monitoring (no auth required).
+Route::get('/health', HealthController::class)->name('api.health');
+
 Route::get('/features', [FeatureController::class, 'index']);
 Route::get('/search', SearchController::class);
 Route::get('/search/suggestions', SearchSuggestionController::class);
@@ -62,7 +68,8 @@ Route::get('/pdf-products/{id}', [PDFProductController::class, 'show'])->whereNu
 Route::get('/exams', [ExamController::class, 'index'])->middleware('cache.response:300');
 Route::get('/exams/{slug}', [ExamController::class, 'show']);
 
-Route::post('/contact', [ContactController::class, 'store']);
+Route::post('/contact', [ContactController::class, 'store'])->middleware(['auth.captcha', 'throttle:contact']);
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->middleware('throttle:newsletter');
 Route::get('/home-feed', \App\Http\Controllers\Api\HomeFeedController::class)
     ->middleware('cache.response:120');
 Route::get('/settings/public', [PublicSettingsController::class, 'index'])->middleware('cache.response:300');

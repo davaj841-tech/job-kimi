@@ -166,6 +166,12 @@ const children = [
     meta: { title: 'بکاپ', auth: true, adminOnly: true },
   },
   {
+    path: 'system-updates',
+    name: 'admin-system-updates',
+    component: () => import('../views/SystemUpdatesView.vue'),
+    meta: { title: 'به‌روزرسانی سیستم', auth: true, adminOnly: true },
+  },
+  {
     path: 'audit-logs',
     name: 'admin-audit-logs',
     component: () => import('../views/AuditLogsView.vue'),
@@ -226,7 +232,7 @@ router.beforeEach(async (to) => {
     return { name: 'admin-dashboard' };
   }
 
-  if (adminOnly && !auth.isAdmin) {
+  if (adminOnly && !auth.isSuperAdmin) {
     return { name: 'admin-dashboard' };
   }
 

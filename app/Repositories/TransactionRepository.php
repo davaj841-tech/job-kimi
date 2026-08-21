@@ -79,6 +79,12 @@ class TransactionRepository
         return Transaction::query()->where('reference_id', $ref)->first();
     }
 
+    /**
+     * @return Collection<int, Transaction>
+     */
+    /**
+     * @return Collection<int, Transaction>
+     */
     public function recentForUser(User $user, int $limit = 20): Collection
     {
         return Transaction::query()

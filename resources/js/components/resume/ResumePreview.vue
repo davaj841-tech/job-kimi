@@ -79,31 +79,6 @@
         </section>
         <div class="cv-two">
         <section
-          v-if="(data.experience || []).length"
-          class="cv-sec"
-        >
-          <h2>سوابق شغلی</h2>
-          <div
-            v-for="(exp, i) in data.experience"
-            :key="'exp-s-' + i"
-            class="cv-item"
-          >
-            <div class="cv-item-top">
-              <div>
-                <p class="cv-item-title">{{ exp.title }}</p>
-                <p class="cv-item-sub">{{ exp.company }}</p>
-              </div>
-              <span class="cv-date">{{ expRange(exp) }}</span>
-            </div>
-            <p
-              v-if="exp.description"
-              class="cv-text"
-            >
-              {{ exp.description }}
-            </p>
-          </div>
-        </section>
-        <section
           v-if="(data.education || []).length"
           class="cv-sec"
         >
@@ -128,6 +103,31 @@
               </div>
               <span class="cv-date">{{ eduRange(edu) }}</span>
             </div>
+          </div>
+        </section>
+        <section
+          v-if="(data.experience || []).length"
+          class="cv-sec"
+        >
+          <h2>سوابق شغلی</h2>
+          <div
+            v-for="(exp, i) in data.experience"
+            :key="'exp-s-' + i"
+            class="cv-item"
+          >
+            <div class="cv-item-top">
+              <div>
+                <p class="cv-item-title">{{ exp.title }}</p>
+                <p class="cv-item-sub">{{ exp.company }}</p>
+              </div>
+              <span class="cv-date">{{ expRange(exp) }}</span>
+            </div>
+            <p
+              v-if="exp.description"
+              class="cv-text"
+            >
+              {{ exp.description }}
+            </p>
           </div>
         </section>
         </div>
@@ -200,30 +200,6 @@
 
       <div class="cv-two">
       <section
-        v-if="(data.experience || []).length"
-        class="cv-sec"
-      >
-        <h2>سوابق شغلی</h2>
-        <table class="cv-grid">
-          <thead>
-            <tr>
-              <th>عنوان</th>
-              <th>محل کار</th>
-              <th>از تاریخ تا تاریخ</th>
-              <th>توضیحات</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(exp, i) in data.experience" :key="'exp-' + i">
-              <td>{{ exp.title }}</td>
-              <td>{{ exp.company }}</td>
-              <td dir="ltr">{{ expRange(exp) }}</td>
-              <td>{{ exp.description }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-      <section
         v-if="(data.education || []).length"
         class="cv-sec"
       >
@@ -241,8 +217,32 @@
             <tr v-for="(edu, i) in data.education" :key="'edu-' + i">
               <td>{{ [edu.degree, edu.field].filter(Boolean).join(' — ') }}</td>
               <td>{{ edu.university }}</td>
-              <td dir="ltr">{{ eduRange(edu) }}</td>
+              <td class="cv-period" dir="ltr">{{ eduRange(edu) }}</td>
               <td dir="ltr">{{ edu.gpa ? toFa(edu.gpa) : '' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section
+        v-if="(data.experience || []).length"
+        class="cv-sec"
+      >
+        <h2>سوابق شغلی</h2>
+        <table class="cv-grid">
+          <thead>
+            <tr>
+              <th>عنوان</th>
+              <th>محل کار</th>
+              <th>از تاریخ تا تاریخ</th>
+              <th>توضیحات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(exp, i) in data.experience" :key="'exp-' + i">
+              <td>{{ exp.title }}</td>
+              <td>{{ exp.company }}</td>
+              <td class="cv-period" dir="ltr">{{ expRange(exp) }}</td>
+              <td>{{ exp.description }}</td>
             </tr>
           </tbody>
         </table>
@@ -370,20 +370,22 @@ function yearRange(start, end) {
   const a = ym(start) || String(start || '')
   const b = ym(end) || String(end || '')
   if (!a && !b) return ''
-  return `${toFa(a)} تا ${toFa(b)}`.trim()
+  if (!b) return toFa(a)
+  if (!a) return toFa(b)
+  return `${toFa(a)} - ${toFa(b)}`
 }
 
 function eduRange(edu) {
-  const start = ym(edu.start_date) || String(edu.start_year || '')
-  const end = ym(edu.end_date) || String(edu.end_year || '')
-  return yearRange(start, end)
+  return yearRange(edu.start_date || edu.start_year, edu.end_date || edu.end_year)
 }
 
 function expRange(exp) {
   const start = ym(exp.start_date)
   const end = exp.is_current ? 'اکنون' : ym(exp.end_date)
   if (!start && !end) return ''
-  return `${toFa(start)}${end ? ' تا ' + (end === 'اکنون' ? end : toFa(end)) : ''}`
+  if (!end) return toFa(start)
+  if (!start) return end === 'اکنون' ? end : toFa(end)
+  return `${toFa(start)} - ${end === 'اکنون' ? end : toFa(end)}`
 }
 </script>
 
@@ -441,10 +443,19 @@ function expRange(exp) {
   padding: 0 18mm;
   margin-top: 12px;
   align-items: start;
+  direction: rtl;
 }
 .cv-two .cv-sec {
   padding: 0;
   margin-top: 0;
+}
+.cv-two .cv-sec + .cv-sec {
+  border-right: 1.5px solid var(--accent, #1a365d);
+  padding-right: 12px;
+  margin-right: 2px;
+}
+.cv-two h2 {
+  text-align: right;
 }
 .cv-main .cv-two {
   padding-left: 12mm;
@@ -472,6 +483,7 @@ function expRange(exp) {
   width: 100%;
   border-collapse: collapse;
   font-size: 10.5px;
+  border: 1px solid var(--accent, #1a365d);
 }
 .cv-grid th {
   background: var(--accent, #1a365d);
@@ -479,29 +491,30 @@ function expRange(exp) {
   text-align: right;
   padding: 5px 6px;
   font-size: 10px;
+  border: 1px solid var(--accent, #1a365d);
 }
 .cv-grid td {
-  border-bottom: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   padding: 6px;
   vertical-align: top;
   text-align: right;
 }
 .cv-fact {
-  display: flex;
-  gap: 6px;
+  display: block;
   font-size: 10.5px;
   line-height: 1.6;
+  text-align: right;
+  direction: rtl;
+  unicode-bidi: plaintext;
 }
 .cv-fact-stack {
-  display: block;
   margin-bottom: 6px;
 }
 .cv-fact-k {
   color: #64748b;
-  flex-shrink: 0;
 }
 .cv-fact-k::after {
-  content: ':';
+  content: ': ';
 }
 .cv-fact-v {
   color: #0f172a;
@@ -543,6 +556,14 @@ function expRange(exp) {
   color: var(--accent, #1a365d);
   direction: ltr;
   unicode-bidi: plaintext;
+}
+.cv-period {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent, #1a365d);
 }
 .cv-chips {
   display: flex;

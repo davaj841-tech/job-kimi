@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AnswerSheetRequest extends FormRequest
@@ -19,9 +20,9 @@ class AnswerSheetRequest extends FormRequest
         ];
     }
 
-    public function withValidator($validator): void
+    public function withValidator(Validator $validator): void
     {
-        $validator->after(function ($validator) {
+        $validator->after(function (Validator $validator): void {
             $examId = (int) $this->route('id');
             $attemptId = (int) $this->route('attemptId');
 

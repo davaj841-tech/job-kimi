@@ -6,12 +6,12 @@ namespace App\Actions\Payment;
 
 use App\Events\PaymentSuccessful;
 use App\Exceptions\IdempotencyException;
-use App\Exceptions\InsufficientBalanceException;
 use App\Listeners\DispatchAfterCommit;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\IdempotencyService;
 use App\Services\PaymentService;
+use App\Services\WalletService;
 use App\Traits\HandlesTransactions;
 
 final class PaymentAction
@@ -21,6 +21,7 @@ final class PaymentAction
     public function __construct(
         private readonly PaymentService $payments,
         private readonly IdempotencyService $idempotency,
+        private readonly WalletService $wallet,
     ) {}
 
     /**
@@ -113,7 +114,7 @@ final class PaymentAction
             $user = User::query()->whereKey($transaction->user_id)->lockForUpdate()->firstOrFail();
 
             if ($transaction->type === 'deposit') {
-                $user->increment('wallet_balance', (int) $transaction->amount);
+                $this->wallet->deposit($user, (int) $transaction->amount, $transaction);
             }
 
             $transaction->update([
@@ -136,46 +137,13 @@ final class PaymentAction
     public function refund(Transaction $transaction): Transaction
     {
         return $this->transaction(function () use ($transaction) {
-            $locked = Transaction::query()
-                ->whereKey($transaction->id)
-                ->lockForUpdate()
-                ->firstOrFail();
+            $refund = $this->wallet->refund($transaction);
 
-            if ($locked->status !== Transaction::STATUS_COMPLETED) {
-                throw new IdempotencyException('Only completed transactions can be refunded.');
+            if ($refund->wasRecentlyCreated) {
+                DispatchAfterCommit::handle($refund, static function (Transaction $tx): void {
+                    event(new PaymentSuccessful($tx));
+                });
             }
-
-            $user = User::query()->whereKey($locked->user_id)->lockForUpdate()->firstOrFail();
-
-            if ($locked->type === 'deposit') {
-                $available = (int) $user->wallet_balance;
-                $amount = (int) $locked->amount;
-                if ($available < $amount) {
-                    throw new InsufficientBalanceException($user, $amount, $available);
-                }
-                $user->decrement('wallet_balance', $amount);
-            } elseif (in_array($locked->type, ['purchase', 'withdrawal'], true)) {
-                $user->increment('wallet_balance', (int) $locked->amount);
-            }
-
-            $refund = Transaction::query()->create([
-                'user_id' => $user->id,
-                'amount' => $locked->amount,
-                'type' => 'refund',
-                'gateway' => $locked->gateway,
-                'status' => Transaction::STATUS_COMPLETED,
-                'description' => 'بازگشت وجه تراکنش #'.$locked->id,
-                'reference_id' => 'REFUND-'.$locked->id.'-'.uniqid(),
-                'idempotency_key' => $this->idempotency->generateKey(),
-            ]);
-
-            $locked->update([
-                'description' => trim(($locked->description ?? '').' | refunded:'.$refund->id),
-            ]);
-
-            DispatchAfterCommit::handle($refund, static function (Transaction $tx): void {
-                event(new PaymentSuccessful($tx));
-            });
 
             return $refund;
         });

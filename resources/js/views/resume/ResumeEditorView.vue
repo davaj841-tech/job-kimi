@@ -55,13 +55,13 @@
             @click="draftWithAi"
           >
             {{ drafting ? '…' : 'پیش‌نویس AI' }}
-          </button>
-          <button
+      </button>
+      <button
             type="button"
             class="rounded-xl border border-surface-line px-3 py-2 text-xs font-medium disabled:opacity-50 dark:border-slate-700"
-            :disabled="saving"
-            @click="save"
-          >
+        :disabled="saving"
+        @click="save"
+      >
             {{ saving ? '…' : 'ذخیره' }}
           </button>
           <button
@@ -72,8 +72,8 @@
           >
             <DocumentArrowDownIcon class="h-4 w-4" />
             <span class="hidden sm:inline">PDF</span>
-          </button>
-        </div>
+      </button>
+    </div>
       </div>
     </header>
 
@@ -122,6 +122,33 @@
 
         <div class="md:hidden">
           <ThemePicker v-model="templateId" />
+        </div>
+
+        <div class="flex justify-between gap-2">
+          <button
+            type="button"
+            class="rounded-xl border border-surface-line px-5 py-2.5 text-sm disabled:opacity-30 dark:border-slate-700"
+            :disabled="currentStep === 0"
+            @click="goPrev"
+          >
+            قبلی
+          </button>
+          <button
+            v-if="currentStep < steps.length - 1"
+            type="button"
+            class="rounded-xl bg-brand px-5 py-2.5 text-sm text-white"
+            @click="goNext"
+          >
+            بعدی
+          </button>
+          <button
+            v-else
+            type="button"
+            class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm text-white"
+            @click="finishAndPreview"
+          >
+            مشاهده نهایی
+          </button>
         </div>
 
         <div class="rounded-2xl border border-surface-line bg-white p-4 sm:p-6 dark:border-slate-800 dark:bg-slate-900">
@@ -191,7 +218,7 @@
           />
         </div>
       </aside>
-    </div>
+      </div>
 
     <PreviewModal
       v-model="showPreview"
@@ -374,11 +401,6 @@ onUnmounted(() => {
 function formatProfileNational(raw) {
   const d = String(raw || '').replace(/\D/g, '').slice(0, 10)
   return d.length === 10 ? d : ''
-}
-
-function setTemplate(t) {
-  activeTemplate.value = t.id
-  templateId.value = t.templateId
 }
 
 function fillFromProfile() {

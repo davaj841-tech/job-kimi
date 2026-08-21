@@ -4,7 +4,7 @@
         <div>
           <h1 class="text-2xl font-bold">بکاپ‌ها</h1>
           <p class="mt-1 text-sm text-slate-500">
-            بکاپ خودکار هر روز ساعت ۳ صبح — فایل دانلودشده را می‌توانید دوباره وارد کنید
+            بکاپ روزانه ساعت ۳:۱۵ (scheduler) — شامل پایگاه داده، فایل‌های خصوصی و عمومی. بازگردانی production از اسکریپت انجام شود.
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
@@ -12,7 +12,7 @@
             بکاپ دستی
           </button>
           <label class="btn-orange cursor-pointer" :class="restoring ? 'opacity-50' : ''">
-            {{ restoring ? 'در حال بازگردانی...' : 'بازگردانی بکاپ' }}
+            {{ restoring ? 'در حال بازگردانی...' : 'بازگردانی ZIP' }}
             <input
               type="file"
               accept=".zip,application/zip"
@@ -27,8 +27,14 @@
       <DataTable :columns="columns" :rows="rows" :loading="loading" actions>
         <template #cell-index="{ index }">{{ index + 1 }}</template>
         <template #cell-size="{ row }">{{ row.size_human }}</template>
+        <template #cell-verified="{ row }">
+          <span :class="row.verified ? 'text-emerald-700' : 'text-red-600'">
+            {{ row.verified ? 'معتبر' : 'نامعتبر / ناقص' }}
+          </span>
+        </template>
         <template #cell-date="{ row }">{{ formatDateTime(row.date) }}</template>
         <template #actions="{ row }">
+          <button class="act" @click="verify(row)">تأیید</button>
           <button class="act" @click="download(row)">دانلود</button>
           <button class="act text-red-600" @click="remove(row)">حذف</button>
         </template>
@@ -54,6 +60,7 @@ const columns = [
   { key: 'index', label: '#' },
   { key: 'path', label: 'نام فایل' },
   { key: 'size', label: 'حجم' },
+  { key: 'verified', label: 'اعتبار' },
   { key: 'date', label: 'تاریخ' },
 ]
 
@@ -81,6 +88,23 @@ async function create() {
     toast.error(apiErrorMessage(e))
   } finally {
     creating.value = false
+  }
+}
+
+async function verify(row) {
+  try {
+    const { data } = await adminApi.get('/admin/backups/verify', {
+      params: { path: row.path },
+    })
+    const payload = data.data || data
+    if (payload.ok) {
+      toast.success(payload.message || 'بکاپ معتبر است')
+    } else {
+      toast.error(payload.message || 'بکاپ ناقص است')
+    }
+    await load()
+  } catch (e) {
+    toast.error(apiErrorMessage(e))
   }
 }
 

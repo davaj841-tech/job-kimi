@@ -29,6 +29,7 @@ return [
         'timeout_seconds' => (int) env('AGGREGATION_HTTP_TIMEOUT', 30),
         'max_bytes' => (int) env('AGGREGATION_HTTP_MAX_BYTES', 2_000_000),
         'max_redirects' => (int) env('AGGREGATION_HTTP_MAX_REDIRECTS', 3),
+        'endpoint_delay_ms' => (int) env('AGGREGATION_HTTP_ENDPOINT_DELAY_MS', 1000),
     ],
 
     /*

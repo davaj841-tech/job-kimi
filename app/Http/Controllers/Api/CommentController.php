@@ -44,7 +44,7 @@ class CommentController extends BaseController
         $comment = BlogComment::query()->create([
             'blog_post_id' => $id,
             'user_id' => $request->user()->id,
-            'content' => $data['content'],
+            'content' => strip_tags($data['content']),
             'status' => $needsApproval ? 'pending' : 'approved',
         ]);
 

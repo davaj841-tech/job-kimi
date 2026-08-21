@@ -6,7 +6,7 @@ use App\Http\Resources\BlogPostCollection;
 use App\Http\Resources\BlogPostResource;
 use App\Repositories\BlogPostRepository;
 use App\Services\BlogPostService;
-use App\Services\SEOService;
+use App\Services\Seo\SeoManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,7 +15,7 @@ class BlogPostController extends BaseController
     public function __construct(
         protected BlogPostRepository $blogPostRepository,
         protected BlogPostService $blogPostService,
-        protected SEOService $seoService
+        protected SeoManager $seoManager
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -43,7 +43,14 @@ class BlogPostController extends BaseController
         $post->catalog_pdfs = $catalog['pdfs'];
 
         $data = (new BlogPostResource($post))->resolve();
-        $data['schema'] = $this->seoService->generateBlogSchema($post);
+        $breadcrumbs = [
+            ['name' => 'خانه', 'url' => url('/')],
+            ['name' => 'بلاگ', 'url' => url('/blog')],
+            ['name' => $post->title, 'url' => url('/blog/'.$post->slug)],
+        ];
+        $seo = $this->seoManager->buildPublicPayload($post, $breadcrumbs);
+        $data['seo'] = $seo;
+        $data['schema'] = $seo['schema'];
 
         return $this->successResponse($data);
     }

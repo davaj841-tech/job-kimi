@@ -194,7 +194,7 @@ class ContentProductionAuditTest extends TestCase
             ->assertJsonPath('data.slug', $slug)
             ->assertJsonPath('data.meta.title', $result['content']->title);
 
-        $this->get('/sitemap.xml')->assertOk()->assertSee('/articles/'.$slug, false);
+        $this->get('/sitemaps/articles.xml')->assertOk()->assertSee('/articles/'.$slug, false);
     }
 
     public function test_scheduled_article_not_public_before_time(): void

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import api from '@/api'
+import { normalizeIranMobile } from '@/utils/iranMobile'
 
 export interface User {
   id: number
@@ -11,6 +12,17 @@ export interface User {
   role?: string
   wallet_balance?: number | string
   province?: string | null
+  national_code?: string | null
+  home_phone?: string | null
+  military_status?: string | null
+  insurance_history?: string | null
+  birth_date?: string | null
+  birth_province?: string | null
+  birth_city?: string | null
+  marital_status?: string | null
+  field_of_study?: string | null
+  address?: string | null
+  postal_code?: string | null
   [key: string]: unknown
 }
 
@@ -81,7 +93,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const { data } = await api.post(
         '/auth/otp/send',
-        withCaptcha({ mobile }, captcha)
+        withCaptcha({ mobile: normalizeIranMobile(mobile) || mobile }, captcha)
       )
       return data
     } finally {
@@ -97,7 +109,10 @@ export const useAuthStore = defineStore('auth', () => {
   ): Promise<unknown> {
     loading.value = true
     try {
-      const payload = withCaptcha({ mobile, code }, captcha)
+      const payload = withCaptcha(
+        { mobile: normalizeIranMobile(mobile) || mobile, code },
+        captcha
+      )
       if (province) payload.province = province
       const { data } = await api.post('/auth/otp/verify', payload)
       applyAuthPayload(data)
@@ -114,9 +129,10 @@ export const useAuthStore = defineStore('auth', () => {
   ): Promise<unknown> {
     loading.value = true
     try {
+      const ident = normalizeIranMobile(login) || login
       const { data } = await api.post(
         '/auth/login',
-        withCaptcha({ login, password }, captcha)
+        withCaptcha({ login: ident, password }, captcha)
       )
       applyAuthPayload(data)
       return data
@@ -131,8 +147,14 @@ export const useAuthStore = defineStore('auth', () => {
   ): Promise<unknown> {
     loading.value = true
     try {
-      const { data } = await api.post('/auth/register', withCaptcha(payload, captcha))
-      applyAuthPayload(data)
+      const body = { ...payload }
+      if (typeof body.mobile === 'string' && body.mobile) {
+        body.mobile = normalizeIranMobile(body.mobile) || body.mobile
+      }
+      const { data } = await api.post('/auth/register', withCaptcha(body, captcha))
+      if (data.data?.token) {
+        applyAuthPayload(data)
+      }
       return data
     } finally {
       loading.value = false

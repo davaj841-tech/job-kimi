@@ -2,8 +2,6 @@
 
 namespace App\Services\Payment;
 
-use App\Models\PaymentGateway;
-use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -21,15 +19,12 @@ class IdPayGateway implements PaymentGatewayInterface
 
     protected function apiKey(): string
     {
-        return (string) (Setting::getFilled('idpay_api_key')
-            ?: optional(PaymentGateway::query()->where('name', 'idpay')->first())->api_key
-            ?: config('services.idpay.api_key')
-            ?: '');
+        return (string) config('services.idpay.api_key', '');
     }
 
     protected function sandbox(): bool
     {
-        return Setting::getBool('idpay_sandbox', (bool) config('services.idpay.sandbox', false));
+        return (bool) config('services.idpay.sandbox', false);
     }
 
     public function request(int $amount, string $description, string $callbackUrl, array $meta = []): array
@@ -61,7 +56,7 @@ class IdPayGateway implements PaymentGatewayInterface
             $link = $response->json('link');
 
             if (! $response->successful() || blank($id) || blank($link)) {
-                Log::warning('IDPay request failed', ['body' => $response->body()]);
+                Log::warning('IDPay request failed', ['http' => $response->status()]);
 
                 return [
                     'authority' => null,
@@ -108,7 +103,14 @@ class IdPayGateway implements PaymentGatewayInterface
                 'order_id' => $orderId,
             ]);
 
-            if ($response->successful() && $response->json('status') == 100) {
+            if ($response->successful() && (int) $response->json('status') === 100) {
+                $paid = $response->json('amount') ?? $response->json('payment.amount');
+                if ($paid !== null && (int) $paid !== $amount) {
+                    Log::warning('IDPay verify amount mismatch', ['expected' => $amount]);
+
+                    return ['success' => false, 'ref_id' => null, 'error' => 'مبلغ پرداخت با تراکنش همخوانی ندارد'];
+                }
+
                 return [
                     'success' => true,
                     'ref_id' => (string) ($response->json('track_id') ?? $response->json('payment.track_id') ?? $authority),
@@ -116,7 +118,7 @@ class IdPayGateway implements PaymentGatewayInterface
                 ];
             }
 
-            Log::warning('IDPay verify failed', ['body' => $response->body()]);
+            Log::warning('IDPay verify failed', ['http' => $response->status()]);
 
             return ['success' => false, 'ref_id' => null, 'error' => 'پرداخت آیدی‌پی ناموفق بود'];
         } catch (\Throwable $e) {

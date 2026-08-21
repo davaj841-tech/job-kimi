@@ -121,6 +121,21 @@
         />
       </div>
 
+      <EmptyState
+        v-else-if="error"
+        title="خطا در بارگذاری آگهی‌ها"
+        :description="error"
+        icon="⚠️"
+      >
+        <button
+          type="button"
+          class="mt-2 rounded-xl bg-brand px-4 py-2 text-xs font-bold text-white"
+          @click="fetchJobs(true)"
+        >
+          تلاش مجدد
+        </button>
+      </EmptyState>
+
       <div
         v-else
         class="space-y-2.5"
@@ -135,7 +150,7 @@
       </div>
 
       <div
-        v-if="!loading && jobs.length === 0"
+        v-if="!loading && !error && jobs.length === 0"
         class="py-16 text-center"
       >
         <div
@@ -154,7 +169,21 @@
       </div>
 
       <div
-        v-if="hasMore && !loading"
+        v-if="loadMoreError"
+        class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200"
+      >
+        <p>{{ loadMoreError }}</p>
+        <button
+          type="button"
+          class="mt-2 text-xs font-bold text-brand"
+          @click="loadMore"
+        >
+          تلاش مجدد
+        </button>
+      </div>
+
+      <div
+        v-if="hasMore && !loading && !error"
         class="pt-3 text-center"
       >
         <button
@@ -181,6 +210,7 @@ import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import JobCardCompact from '../../components/jobs/JobCardCompact.vue'
 import JobCardSkeleton from '../../components/jobs/JobCardSkeleton.vue'
 import JobDetailDrawer from '../../components/jobs/JobDetailDrawer.vue'
+import EmptyState from '../../components/EmptyState.vue'
 import { useJobList } from '../../composables/useJobList'
 import { IRAN_PROVINCES } from '../../utils/provinces'
 import { toFaDigits } from '../../utils/format'
@@ -193,10 +223,13 @@ const {
   loading,
   loadingMore,
   hasMore,
+  error,
+  loadMoreError,
   filters,
   pagination,
   classifications,
   provinces,
+  fetchJobs,
   loadMore,
   debouncedSearch,
   toggleCategory,

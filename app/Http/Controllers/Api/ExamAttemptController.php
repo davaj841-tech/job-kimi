@@ -71,7 +71,7 @@ class ExamAttemptController extends BaseController
             ->where('exam_id', $id)
             ->first();
 
-        if (! $attempt || ($attempt->user_id !== $user->id && ! in_array($user->role, ['admin', 'operator'], true))) {
+        if (! $attempt || ($attempt->user_id !== $user->id && ! \App\Support\OperatorPermissions::allows($user, 'exams'))) {
             return $this->errorResponse('نتیجه یافت نشد.', 404);
         }
 
@@ -99,9 +99,11 @@ class ExamAttemptController extends BaseController
         }
 
         $resultQuestions = $questions->map(function (Question $question) use ($attempt) {
-            $userAnswer = $attempt->answers[(string) $question->id]
-                ?? $attempt->answers[$question->id]
-                ?? null;
+            $answers = $attempt->answers ?? [];
+            $qid = (string) $question->id;
+            $userAnswer = array_key_exists($qid, $answers)
+                ? $answers[$qid]
+                : ($answers[$question->id] ?? null);
 
             return [
                 'id' => $question->id,
@@ -118,7 +120,7 @@ class ExamAttemptController extends BaseController
                 'correct_answer_label' => \App\Services\ReportCardPDFService::optionLetter($question->correct_answer),
                 'user_answer_text' => ExamService::optionBody($question, $userAnswer),
                 'correct_answer_text' => ExamService::optionBody($question, $question->correct_answer),
-                'is_correct' => $userAnswer !== null && $userAnswer !== '' && strtolower((string) $userAnswer) === strtolower($question->correct_answer),
+                'is_correct' => $userAnswer !== null && $userAnswer !== '' && strtolower((string) $userAnswer) === strtolower((string) $question->correct_answer),
                 'explanation' => $question->explanation,
             ];
         })->values()->all();
@@ -162,9 +164,12 @@ class ExamAttemptController extends BaseController
             ->when($sourceIds !== [], fn ($q) => $q->whereIn('id', $sourceIds))
             ->get()
             ->filter(function (Question $question) use ($answers, $mode) {
-                $userAnswer = $answers[(string) $question->id] ?? $answers[$question->id] ?? null;
+                $qid = (string) $question->id;
+                $userAnswer = array_key_exists($qid, $answers)
+                    ? $answers[$qid]
+                    : ($answers[$question->id] ?? null);
                 $blank = $userAnswer === null || $userAnswer === '';
-                $wrong = ! $blank && strtolower((string) $userAnswer) !== strtolower($question->correct_answer);
+                $wrong = ! $blank && strtolower((string) $userAnswer) !== strtolower((string) $question->correct_answer);
 
                 return match ($mode) {
                     'blank' => $blank,
@@ -193,6 +198,9 @@ class ExamAttemptController extends BaseController
         );
     }
 
+    /**
+     * @param  list<int>|null  $onlyQuestionIds
+     */
     protected function beginAttempt(Request $request, int $examId, ?array $onlyQuestionIds = null, bool $isRetryWrong = false, ?int $parentAttemptId = null, ?string $retryMode = null): JsonResponse
     {
         $user = $request->user();
@@ -289,6 +297,10 @@ class ExamAttemptController extends BaseController
         ], 'ادامه آزمون.');
     }
 
+    /**
+     * @param  array<int|string, mixed>  $answers
+     * @return array<string, mixed>
+     */
     protected function finalizeAttempt(ExamAttempt $attempt, array $answers): array
     {
         return DB::transaction(function () use ($attempt, $answers) {
@@ -330,7 +342,7 @@ class ExamAttemptController extends BaseController
                 $user->notify(new GenericDatabaseNotification(
                     'exam_completed',
                     'نتیجه آزمون آماده است',
-                    'آزمون «'.($attempt->exam?->title ?? 'آزمون').'» تمام شد - نمره: '.$scoreData['score'],
+                    'آزمون «'.(($attempt->exam !== null ? $attempt->exam->title : null) ?? 'آزمون').'» تمام شد - نمره: '.$scoreData['score'],
                     '/exams/'.$attempt->exam_id.'/result/'.$attempt->id
                 ));
             }

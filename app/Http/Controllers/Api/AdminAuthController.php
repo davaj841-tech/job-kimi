@@ -6,6 +6,8 @@ use App\Http\Resources\UserResource;
 use App\Mail\PasswordResetMail;
 use App\Models\User;
 use App\Services\AuditLogService;
+use App\Support\StaffRoles;
+use App\Services\Auth\OtpAuthService;
 use App\Services\MailConfigService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,21 +19,22 @@ class AdminAuthController extends BaseController
 {
     public function __construct(
         protected AuditLogService $audit,
-        protected MailConfigService $mail
+        protected MailConfigService $mail,
+        protected OtpAuthService $otpAuthService
     ) {}
 
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'username' => ['required', 'string', 'regex:/^[a-z0-9_]{3,20}$/'],
+            'username' => ['required', 'string', 'regex:/^[a-zA-Z0-9_]{3,20}$/'],
             'password' => ['required', 'string', 'min:8'],
         ], [
-            'username.regex' => 'نام کاربری باید ۳ تا ۲۰ کاراکتر و فقط شامل حروف کوچک، عدد و ـ باشد.',
+            'username.regex' => 'نام کاربری باید ۳ تا ۲۰ کاراکتر و فقط شامل حروف انگلیسی، عدد و ـ باشد.',
         ]);
 
         $user = User::query()
             ->where('username', $data['username'])
-            ->whereIn('role', ['admin', 'operator'])
+            ->whereIn('role', StaffRoles::staffRoles())
             ->first();
 
         if ($user && $this->isLocked($user)) {
@@ -70,7 +73,7 @@ class AdminAuthController extends BaseController
             'locked_until' => null,
         ]);
 
-        $token = $user->createToken('admin_token')->plainTextToken;
+        $token = $this->otpAuthService->issueToken($user, 'admin_token');
         $user->load('subscriptionPlan');
 
         $this->audit->log('admin.login', $user, null, [
@@ -89,7 +92,7 @@ class AdminAuthController extends BaseController
         $user = $request->user();
         if ($user) {
             $this->audit->log('admin.logout', $user, null, ['method' => 'password'], $user->id);
-            $user->currentAccessToken()?->delete();
+            $this->otpAuthService->revokeCurrentToken($user, $request);
         }
 
         return $this->successResponse(null, 'خروج موفق.');
@@ -103,7 +106,7 @@ class AdminAuthController extends BaseController
 
         $user = User::query()
             ->where('email', $data['email'])
-            ->whereIn('role', ['admin', 'operator'])
+            ->whereIn('role', StaffRoles::staffRoles())
             ->first();
 
         if ($user && filled($user->email)) {

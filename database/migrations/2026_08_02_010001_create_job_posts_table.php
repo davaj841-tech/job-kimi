@@ -20,7 +20,7 @@ return new class extends Migration
             $table->timestamp('exam_date')->nullable();
             $table->string('registration_link')->nullable();
             $table->string('source_url')->nullable();
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending')->index();
+            $table->enum('status', ['pending', 'approved', 'rejected', 'draft', 'expired'])->default('pending')->index();
             $table->boolean('is_featured')->default(false);
             $table->unsignedBigInteger('view_count')->default(0);
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();

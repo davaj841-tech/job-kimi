@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Concerns\InteractsWithStaffAccess;
+use App\Filament\Forms\SeoFormSchema;
 use App\Filament\Resources\JobPostResource\Pages;
 use App\Models\JobPost;
 use Filament\Forms;
@@ -12,6 +14,8 @@ use Filament\Tables\Table;
 
 class JobPostResource extends Resource
 {
+    use InteractsWithStaffAccess;
+
     protected static ?string $model = JobPost::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-briefcase';
@@ -23,6 +27,11 @@ class JobPostResource extends Resource
     protected static ?string $pluralModelLabel = 'آگهی‌های شغلی';
 
     protected static ?string $navigationGroup = 'استخدام';
+
+    public static function canViewAny(): bool
+    {
+        return self::staffAdminOnly();
+    }
 
     public static function form(Form $form): Form
     {
@@ -44,6 +53,7 @@ class JobPostResource extends Resource
             ])->required()->helperText('وضعیت تایید آگهی'),
             Forms\Components\Toggle::make('is_featured')->label('ویژه')->helperText('نمایش در بخش ویژه'),
             Forms\Components\Select::make('created_by')->label('ایجادکننده')->relationship('creator', 'name')->required()->helperText('کاربر ثبت‌کننده'),
+            SeoFormSchema::section(),
         ]);
     }
 
@@ -74,7 +84,7 @@ class JobPostResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
+                    self::secureDeleteBulkAction(),
                 ]),
             ]);
     }

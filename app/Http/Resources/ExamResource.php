@@ -2,11 +2,20 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Exam;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin Exam
+ *
+ * @property-read Exam $resource
+ */
 class ExamResource extends JsonResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         $user = $request->user();

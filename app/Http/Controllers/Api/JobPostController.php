@@ -7,7 +7,8 @@ use App\Http\Resources\JobPostCollection;
 use App\Http\Resources\JobPostResource;
 use App\Repositories\JobPostRepository;
 use App\Services\JobPostService;
-use App\Services\SEOService;
+use App\Services\Seo\SeoManager;
+use App\Support\HtmlSanitizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,7 @@ class JobPostController extends BaseController
     public function __construct(
         protected JobPostRepository $jobPostRepository,
         protected JobPostService $jobPostService,
-        protected SEOService $seoService
+        protected SeoManager $seoManager
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -63,12 +64,17 @@ class JobPostController extends BaseController
         $jobPost->catalog_pdfs = $catalog['pdfs'];
 
         $data = (new JobPostResource($jobPost))->resolve();
-        $data['schema'] = $this->seoService->generateJobPostSchema($jobPost);
+        $breadcrumbs = [
+            ['name' => 'خانه', 'url' => url('/')],
+            ['name' => 'آگهی‌ها', 'url' => url('/jobs')],
+            ['name' => $jobPost->title, 'url' => url('/jobs/'.$jobPost->getKey())],
+        ];
+        $seo = $this->seoManager->buildPublicPayload($jobPost, $breadcrumbs);
+        $data['seo'] = $seo;
+        $data['schema'] = $seo['schema'];
         if ($jobPost->seo_tag) {
-            $data['seo'] = [
-                'tag' => $jobPost->seo_tag,
-                'keywords' => str_replace('_', ' ', $jobPost->seo_tag),
-            ];
+            $data['seo']['tag'] = $jobPost->seo_tag;
+            $data['seo']['keywords'] = str_replace('_', ' ', $jobPost->seo_tag);
         }
 
         return $this->successResponse($data);
@@ -76,10 +82,37 @@ class JobPostController extends BaseController
 
     public function submit(JobPostStoreRequest $request): JsonResponse
     {
+        $user = $request->user();
+
+        $recentCount = \App\Models\JobPost::query()
+            ->where('created_by', $user->id)
+            ->where('created_at', '>=', now()->subDay())
+            ->count();
+
+        if ($recentCount >= 3) {
+            return $this->errorResponse('شما حداکثر ۳ آگهی در روز می‌توانید ثبت کنید.', 429);
+        }
+
         $data = $request->validated();
+        unset($data['exam_ids'], $data['pdf_ids']);
+
+        $duplicate = \App\Models\JobPost::query()
+            ->where('created_by', $user->id)
+            ->where('title', $data['title'])
+            ->whereIn('status', ['pending', 'approved'])
+            ->exists();
+
+        if ($duplicate) {
+            return $this->errorResponse('آگهی با این عنوان قبلاً توسط شما ثبت شده است.', 422);
+        }
+
         $data['status'] = 'pending';
-        $data['created_by'] = $request->user()->id;
+        $data['created_by'] = $user->id;
         $data['is_featured'] = false;
+        $data['description'] = HtmlSanitizer::clean($data['description'] ?? '');
+        if (array_key_exists('requirements', $data)) {
+            $data['requirements'] = HtmlSanitizer::clean($data['requirements']);
+        }
 
         $jobPost = $this->jobPostService->create($data, []);
 

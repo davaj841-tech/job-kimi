@@ -112,6 +112,9 @@ class DashboardController extends BaseController
         return $this->successResponse(new DashboardResource($payload));
     }
 
+    /**
+     * @return list<array{subject: string, subject_label: string, average_score: float|int, exam_count: int}>
+     */
     public function buildProgressChart(int $userId): array
     {
         $attempts = ExamAttempt::query()
@@ -147,7 +150,8 @@ class DashboardController extends BaseController
         }
 
         return collect($subjectStats)->map(function (array $stat, string $subject) {
-            $label = ExamSubject::query()->where('slug', $subject)->value('name') ?: $subject;
+            $name = ExamSubject::query()->where('slug', $subject)->value('name');
+            $label = is_string($name) && $name !== '' ? $name : $subject;
 
             return [
                 'subject' => $subject,

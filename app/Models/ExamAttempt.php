@@ -5,7 +5,33 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property int $exam_id
+ * @property string|null $subject
+ * @property Carbon|null $started_at
+ * @property Carbon|null $finished_at
+ * @property numeric-string|float|null $score
+ * @property int|null $total_correct
+ * @property int|null $total_wrong
+ * @property string|null $status
+ * @property array<int|string, mixed>|null $answers
+ * @property bool $is_retry_wrong
+ * @property int|null $parent_attempt_id
+ * @property string|null $retry_mode
+ * @property-read User|null $user
+ * @property-read Exam|null $exam
+ * @property int|null $rank
+ * @property list<array<string, mixed>>|null $result_questions
+ * @property-read int|null $attempts
+ * @property-read numeric-string|float|int|null $total_score
+ * @property-read int|null $activity
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class ExamAttempt extends Model
 {
     use HasFactory;
@@ -39,11 +65,13 @@ class ExamAttempt extends Model
         ];
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Exam, $this> */
     public function exam(): BelongsTo
     {
         return $this->belongsTo(Exam::class);
@@ -89,7 +117,8 @@ class ExamAttempt extends Model
             }
         }
 
-        $passing = (float) ($this->exam?->passing_score ?? 0);
+        $exam = $this->exam;
+        $passing = (float) (($exam !== null ? $exam->passing_score : null) ?? 0);
         $passed = null;
         if ($passing > 0) {
             $passed = $passing <= 100

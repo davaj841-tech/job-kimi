@@ -68,8 +68,8 @@ class ResumePDFService
         $html = $this->renderHtml($resume);
 
         $pdf = $this->persianFont->applyOptions(app('dompdf.wrapper'));
-        $pdf->getOptions()->set('isRemoteEnabled', true);
-        $pdf->getOptions()->set('chroot', base_path());
+        $pdf->getOptions()->set('isRemoteEnabled', false);
+        $pdf->getOptions()->set('chroot', storage_path());
         $pdf->loadHTML($html)->setPaper('a4');
 
         try {

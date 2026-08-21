@@ -9,6 +9,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\IdempotencyService;
+use App\Services\Payment\FakePaymentGateway;
 use App\Services\WalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -57,6 +58,7 @@ final class IdempotencyTest extends TestCase
             'idempotency_key' => $key,
             'description' => 'شارژ کیف پول',
         ]);
+        FakePaymentGateway::seed((string) $transaction->reference_id, $amount);
 
         return [$user, $transaction];
     }
@@ -143,6 +145,8 @@ final class IdempotencyTest extends TestCase
             'idempotency_key' => $keyB,
             'description' => 'B',
         ]);
+        FakePaymentGateway::seed((string) $txA->reference_id, 10000);
+        FakePaymentGateway::seed((string) $txB->reference_id, 20000);
 
         $this->postJson('/api/v1/wallet/verify', [
             'Authority' => $txA->reference_id,
@@ -211,6 +215,7 @@ final class IdempotencyTest extends TestCase
             'payable_type' => SubscriptionPlan::class,
             'payable_id' => $plan->id,
         ]);
+        FakePaymentGateway::seed((string) $transaction->reference_id, 90000);
 
         $payload = [
             'Authority' => $transaction->reference_id,

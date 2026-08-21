@@ -14,6 +14,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionController extends BaseController
 {
@@ -121,10 +123,18 @@ class QuestionController extends BaseController
     public function import(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
+            'file' => [
+                'required',
+                'file',
+                'max:20480',
+                'extensions:xlsx,xls,csv',
+            ],
             'exam_id' => ['required', 'integer', 'exists:exams,id'],
         ], [
             'exam_id.required' => 'ابتدا آزمون مورد نظر را انتخاب کنید.',
+            'file.required' => 'فایل اکسل الزامی است.',
+            'file.extensions' => 'پسوند فایل باید xlsx، xls یا csv باشد.',
+            'file.max' => 'حداکثر حجم فایل ۲۰ مگابایت است.',
         ]);
 
         $summary = $this->questionService->importFromExcel(
@@ -141,7 +151,7 @@ class QuestionController extends BaseController
         return $this->successResponse($summary, 'ورود اکسل انجام شد.');
     }
 
-    public function importSample(Request $request)
+    public function importSample(Request $request): StreamedResponse
     {
         $format = strtolower((string) $request->query('format', 'xlsx'));
         if (! in_array($format, ['xlsx', 'csv'], true)) {
@@ -202,7 +212,7 @@ class QuestionController extends BaseController
         ]);
     }
 
-    public function export(Request $request)
+    public function export(Request $request): BinaryFileResponse
     {
         return $this->questionService->exportToExcel($request->only([
             'exam_id', 'subject', 'difficulty', 'search',

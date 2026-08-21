@@ -1,0 +1,9 @@
+# Optional OS-level backup cron (preferred off-site dumps).
+# Install:
+#   cp deploy/backup.cron /etc/cron.d/jobazmoon-backup
+#   chmod 644 /etc/cron.d/jobazmoon-backup
+#
+# cPanel: Cron Jobs → Daily at 03:00 → paste the command line below.
+# Adjust PHP/user/paths for the host.
+
+0 3 * * * www-data /var/www/jobazmoon/scripts/backup.sh >> /var/log/jobazmoon-backup.log 2>&1

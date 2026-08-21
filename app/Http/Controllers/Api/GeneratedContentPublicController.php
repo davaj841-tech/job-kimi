@@ -5,14 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\GeneratedContent;
 use App\Services\CatalogAttachService;
-use App\Services\SEOService;
+use App\Services\Seo\SeoManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class GeneratedContentPublicController extends BaseController
 {
     public function __construct(
-        protected SEOService $seoService,
+        protected SeoManager $seoManager,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -55,19 +55,29 @@ class GeneratedContentPublicController extends BaseController
         }
 
         $data = $this->serialize($c, true);
-        $data['schema'] = $this->seoService->generateGeneratedContentSchema($c);
-        $data['canonical_url'] = $c->publicUrl();
+        $breadcrumbs = [
+            ['name' => 'خانه', 'url' => url('/')],
+            ['name' => 'مقالات', 'url' => url('/articles')],
+            ['name' => $c->title, 'url' => $c->publicUrl()],
+        ];
+        $seo = $this->seoManager->buildPublicPayload($c, $breadcrumbs);
+        $data['seo'] = $seo;
+        $data['schema'] = $seo['schema'];
+        $data['canonical_url'] = $seo['meta']['canonical_url'] ?? $c->publicUrl();
         $data['meta'] = [
-            'title' => $c->title,
-            'description' => $c->excerpt,
-            'og_title' => $c->title,
-            'og_description' => $c->excerpt,
-            'canonical' => $c->publicUrl(),
+            'title' => $seo['meta']['meta_title'] ?? $c->title,
+            'description' => $seo['meta']['meta_description'] ?? $c->excerpt,
+            'og_title' => $seo['meta']['og_title'] ?? $c->title,
+            'og_description' => $seo['meta']['og_description'] ?? $c->excerpt,
+            'canonical' => $seo['meta']['canonical_url'] ?? $c->publicUrl(),
         ];
 
         return $this->successResponse($data);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function serialize(GeneratedContent $c, bool $full = false): array
     {
         $row = [
@@ -75,8 +85,8 @@ class GeneratedContentPublicController extends BaseController
             'title' => $c->title,
             'slug' => $c->slug,
             'excerpt' => $c->excerpt,
-            'content_type' => $c->content_type?->value ?? $c->content_type,
-            'content_type_label' => $c->content_type?->label() ?? null,
+            'content_type' => $c->content_type?->value,
+            'content_type_label' => $c->content_type?->label(),
             'published_at' => $c->published_at?->toIso8601String(),
             'url' => $c->publicUrl(),
             'job_post_id' => $c->job_post_id,
@@ -85,7 +95,7 @@ class GeneratedContentPublicController extends BaseController
             'source_name' => $c->jobPost?->source?->name,
         ];
         if ($full) {
-            $row['content'] = $c->content;
+            $row['content'] = \App\Support\HtmlSanitizer::clean($c->content);
             $row['job'] = $c->jobPost ? [
                 'id' => $c->jobPost->id,
                 'title' => $c->jobPost->title,

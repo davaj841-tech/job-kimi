@@ -46,6 +46,29 @@ class OperatorPermissionTest extends TestCase
         Sanctum::actingAs($operator);
 
         $this->getJson('/api/v1/admin/settings')->assertForbidden();
+        $this->getJson('/api/v1/admin/analytics/visits')->assertForbidden();
+        $this->getJson('/api/v1/admin/backups')->assertForbidden();
+    }
+
+    public function test_operator_without_aggregation_cannot_open_crawler_runs(): void
+    {
+        $operator = User::factory()->create([
+            'role' => 'operator',
+            'status' => 'active',
+            'operator_permissions' => ['exams'],
+        ]);
+        Sanctum::actingAs($operator);
+
+        $this->getJson('/api/v1/admin/crawler-runs')->assertForbidden();
+    }
+
+    public function test_regular_admin_cannot_access_settings(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'status' => 'active']);
+        Sanctum::actingAs($admin);
+
+        $this->getJson('/api/v1/admin/settings')->assertForbidden();
+        $this->getJson('/api/v1/admin/backups')->assertForbidden();
     }
 
     public function test_admin_can_set_operator_permissions(): void

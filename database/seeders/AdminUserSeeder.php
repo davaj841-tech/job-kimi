@@ -25,15 +25,30 @@ class AdminUserSeeder extends Seeder
             }
         }
 
+        $mobile = (string) env('ADMIN_SEED_MOBILE', '');
+        $username = (string) env('ADMIN_SEED_USERNAME', '');
+        $email = (string) env('ADMIN_SEED_EMAIL', '');
+
+        if ($mobile === '' || $username === '' || $email === '') {
+            if ($this->command) {
+                $this->command->error(
+                    'ADMIN_SEED_MOBILE / ADMIN_SEED_USERNAME / ADMIN_SEED_EMAIL must be set in .env'
+                );
+            }
+
+            return;
+        }
+
         User::query()->updateOrCreate(
-            ['mobile' => '09120000000'],
+            ['mobile' => $mobile],
             [
-                'username' => 'admin',
+                'username' => $username,
                 'name' => 'مدیر سیستم',
-                'email' => 'admin@jobazmoon.ir',
+                'email' => $email,
                 // hashed via User cast
                 'password' => $password,
-                'role' => 'admin',
+                'role' => 'super_admin',
+                'status' => 'active',
                 'is_verified' => true,
                 'subscription_plan_id' => $freePlan?->id,
             ]

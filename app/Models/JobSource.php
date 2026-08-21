@@ -12,6 +12,27 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string|null $slug
+ * @property string|null $official_url
+ * @property string|null $domain
+ * @property JobSourceType|null $source_type
+ * @property JobSourceReliability|null $reliability_level
+ * @property JobSourceQualityStatus|null $quality_status
+ * @property JobCrawlerType|null $crawler_type
+ * @property bool $is_enabled
+ * @property bool $is_approved
+ * @property \Illuminate\Support\Carbon|null $last_crawled_at
+ * @property \Illuminate\Support\Carbon|null $last_success_at
+ * @property \Illuminate\Support\Carbon|null $last_failure_at
+ * @property \Illuminate\Support\Carbon|null $health_backoff_until
+ * @property int|null $consecutive_failures
+ * @property string|null $schedule_mode
+ * @property string|null $crawl_frequency
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, JobSourceEndpoint> $endpoints
+ */
 class JobSource extends Model
 {
     use HasFactory;
@@ -105,6 +126,9 @@ class JobSource extends Model
         return $host ? Str::lower($host) : null;
     }
 
+    /**
+     * @return HasMany<JobSourceEndpoint, $this>
+     */
     public function endpoints(): HasMany
     {
         return $this->hasMany(JobSourceEndpoint::class)->orderBy('sort_order')->orderBy('id');

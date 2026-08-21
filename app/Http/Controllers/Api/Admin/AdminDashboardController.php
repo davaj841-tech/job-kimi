@@ -62,18 +62,33 @@ class AdminDashboardController extends BaseController
             ->groupBy(fn (Transaction $t) => $t->created_at->format('Y-m-d'))
             ->map(fn (Collection $rows) => (int) $rows->sum('amount'));
 
+        /** @var Collection<string, int> $revenueByDay */
+        $revenueByDay = $revenueByDay;
+
         $usersByDay = User::query()
             ->where('created_at', '>=', $chartStart)
             ->get(['created_at'])
             ->groupBy(fn (User $u) => $u->created_at->format('Y-m-d'))
             ->map(fn (Collection $rows) => $rows->count());
 
+        /** @var Collection<string, int> $usersByDay */
+        $usersByDay = $usersByDay;
+
         $examsByDay = ExamAttempt::query()
             ->where('status', 'completed')
             ->where('finished_at', '>=', $chartStart)
             ->get(['finished_at'])
-            ->groupBy(fn (ExamAttempt $a) => optional($a->finished_at)->format('Y-m-d') ?: 'unknown')
+            ->groupBy(function (ExamAttempt $a) {
+                $finishedAt = $a->finished_at;
+
+                return $finishedAt instanceof \Illuminate\Support\Carbon
+                    ? $finishedAt->format('Y-m-d')
+                    : 'unknown';
+            })
             ->map(fn (Collection $rows) => $rows->count());
+
+        /** @var Collection<string, int> $examsByDay */
+        $examsByDay = $examsByDay;
 
         $charts = [
             'revenue' => $this->fillDailySeries($chartStart, $revenueByDay, 'amount'),
@@ -203,8 +218,8 @@ class AdminDashboardController extends BaseController
                 return [
                     'user_id' => $row->user_id,
                     'name' => $u?->name ?: 'کاربر #'.$row->user_id,
-                    'activity' => (int) $row->activity,
-                    'total_score' => (float) $row->total_score,
+                    'activity' => (int) $row->getAttribute('activity'),
+                    'total_score' => (float) $row->getAttribute('total_score'),
                 ];
             })->all();
 

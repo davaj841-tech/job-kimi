@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Concerns\InteractsWithStaffAccess;
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Models\Transaction;
 use Filament\Forms;
@@ -14,6 +15,8 @@ use Morilog\Jalali\Jalalian;
 
 class TransactionResource extends Resource
 {
+    use InteractsWithStaffAccess;
+
     protected static ?string $model = Transaction::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
@@ -27,6 +30,11 @@ class TransactionResource extends Resource
     protected static ?string $navigationGroup = 'اشتراک و مالی';
 
     protected static ?int $navigationSort = 1;
+
+    public static function canViewAny(): bool
+    {
+        return self::staffAdminOnly();
+    }
 
     public static function canCreate(): bool
     {

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div
     v-if="open"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
@@ -89,15 +89,18 @@
         </div>
 
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div>
-            <label class="label">مهلت ثبت‌نام * (سال / ماه / روز)</label>
-            <JalaliDatepicker v-model="form.registration_deadline" />
-          </div>
-          <div>
-            <label class="label">تاریخ آزمون (سال / ماه / روز)</label>
-            <JalaliDatepicker v-model="form.exam_date" />
-          </div>
+          <JalaliDatepicker
+            v-model="form.registration_deadline"
+            label="مهلت ثبت‌نام *"
+            :error="jobDateError"
+          />
+          <JalaliDatepicker
+            v-model="form.exam_date"
+            label="تاریخ آزمون"
+            :error="jobDateError"
+          />
         </div>
+        <p v-if="jobDateError" class="text-xs text-red-600">{{ jobDateError }}</p>
 
         <input
           v-model="form.registration_link"
@@ -213,11 +216,12 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import CatalogAttachFields from '../catalog/CatalogAttachFields.vue'
 import JalaliDatepicker from '../ui/JalaliDatepicker.vue'
 import RichEditor from '../ui/RichEditor.vue'
 import StatusToggle from '../ui/StatusToggle.vue'
+import { compareIsoDate } from '../../../utils/jalali'
 
 const props = defineProps({
   open: Boolean,
@@ -264,6 +268,14 @@ const IRAN_PROVINCES = [
 const saving = ref(false)
 const error = ref('')
 const form = reactive(empty())
+
+const jobDateError = computed(() => {
+  if (!form.registration_deadline || !form.exam_date) return ''
+  const cmp = compareIsoDate(form.registration_deadline, form.exam_date)
+  return cmp !== null && cmp >= 0
+    ? 'مهلت ثبت‌نام باید قبل از تاریخ آزمون باشد.'
+    : ''
+})
 const existingAttachments = ref([])
 const removeAttachmentIds = ref([])
 const allProvinces = ref([...IRAN_PROVINCES])
@@ -379,6 +391,10 @@ function submit() {
     }
     if (!form.registration_deadline) {
       error.value = 'مهلت ثبت‌نام الزامی است.'
+      return
+    }
+    if (jobDateError.value) {
+      error.value = jobDateError.value
       return
     }
 

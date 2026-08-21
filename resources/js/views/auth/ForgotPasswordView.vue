@@ -147,6 +147,7 @@
 import { ref } from 'vue'
 import PasswordInput from '../../components/PasswordInput.vue'
 import api from '../../api/client'
+import { normalizeIranMobile } from '../../utils/iranMobile'
 
 const identifier = ref('')
 const code = ref('')
@@ -167,7 +168,7 @@ async function submitIdentify() {
 
     const { data } = await api.post('/auth/forgot-password', payload)
     const channel =
-      data.data?.channel || (/^09\d{9}$/.test(id) ? 'mobile' : 'email')
+      data.data?.channel || (normalizeIranMobile(id) ? 'mobile' : 'email')
     if (channel === 'mobile') {
       step.value = 'otp'
     } else {
@@ -185,7 +186,7 @@ async function submitOtp() {
   loading.value = true
   try {
     await api.post('/auth/forgot-password/verify-otp', {
-      mobile: identifier.value.trim(),
+      mobile: normalizeIranMobile(identifier.value) || identifier.value.trim(),
       code: code.value.trim(),
       password: password.value,
       password_confirmation: password_confirmation.value,

@@ -126,7 +126,10 @@ class ExamService
         $hasNegative = (bool) ($exam?->has_negative_marking);
 
         foreach ($questions as $question) {
-            $userAnswer = $answers[(string) $question->id] ?? $answers[$question->id] ?? null;
+            $qid = (string) $question->id;
+            $userAnswer = array_key_exists($qid, $answers)
+                ? $answers[$qid]
+                : ($answers[$question->id] ?? null);
 
             if ($userAnswer === null || $userAnswer === '') {
                 $unanswered++;
@@ -253,9 +256,12 @@ class ExamService
         $sheet = [];
 
         foreach ($questions as $index => $question) {
-            $userAnswer = $answers[(string) $question->id] ?? $answers[$question->id] ?? null;
+            $qid = (string) $question->id;
+            $userAnswer = array_key_exists($qid, $answers)
+                ? $answers[$qid]
+                : ($answers[$question->id] ?? null);
             $isCorrect = $userAnswer !== null && $userAnswer !== ''
-                && strtolower((string) $userAnswer) === strtolower($question->correct_answer);
+                && strtolower((string) $userAnswer) === strtolower((string) $question->correct_answer);
             $isBlank = $userAnswer === null || $userAnswer === '';
 
             $sheet[] = [

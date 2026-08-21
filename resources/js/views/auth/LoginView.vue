@@ -69,7 +69,7 @@
         >
           <div>
             <label class="mb-1 block text-xs font-bold text-ink-soft"
-              >👤 نام کاربری یا ایمیل</label
+              >👤 نام کاربری، ایمیل یا موبایل</label
             >
             <input
               v-model="loginForm.login"
@@ -83,7 +83,8 @@
               autocorrect="off"
               spellcheck="false"
               required
-              placeholder="username یا you@email.com"
+              maxlength="100"
+              placeholder="username، ایمیل یا 0912…"
               @input="onLoginIdInput"
             />
           </div>
@@ -196,9 +197,9 @@
                 class="input-field text-left tracking-widest"
                 dir="ltr"
                 lang="en"
-                inputmode="numeric"
-                maxlength="11"
-                placeholder="09123456789"
+                inputmode="tel"
+                maxlength="16"
+                placeholder="0912… یا +98912…"
               />
             </div>
             <div>
@@ -248,9 +249,9 @@
                 class="input-field text-left tracking-widest"
                 dir="ltr"
                 lang="en"
-                inputmode="numeric"
-                maxlength="11"
-                placeholder="09123456789"
+                inputmode="tel"
+                maxlength="16"
+                placeholder="0912… یا +98912…"
               />
             </div>
             <AuthCaptchaField
@@ -261,7 +262,7 @@
             <button
               class="btn-primary"
               :disabled="
-                auth.loading || mobile.length !== 11 || !captchaReady
+                auth.loading || !normalizeIranMobile(mobile) || !captchaReady
               "
               @click="onSendOtp"
             >
@@ -327,6 +328,7 @@ import PasswordRulesHint from '../../components/auth/PasswordRulesHint.vue'
 import SiteBrandLogo from '../../components/SiteBrandLogo.vue'
 import TrustBadges from '../../components/TrustBadges.vue'
 import { useAuthStore } from '../../stores/auth'
+import { normalizeIranMobile } from '../../utils/iranMobile'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -378,8 +380,9 @@ function captchaPayload() {
 }
 
 function onLoginIdInput(e) {
-  const v = String(e.target.value || '')
-  // keep latin/email chars
+  let v = String(e.target.value || '')
+  v = v.replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+  v = v.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
   loginForm.login = v.replace(/[^\w.@+-]/g, '')
 }
 
@@ -448,7 +451,13 @@ async function onRegister() {
     }
     if (registerForm.mobile.trim()) payload.mobile = registerForm.mobile.trim()
     if (registerForm.email.trim()) payload.email = registerForm.email.trim()
-    await auth.register(payload, captchaPayload())
+    const data = await auth.register(payload, captchaPayload())
+    if (data?.data?.needs_otp) {
+      mobile.value = data.data.mobile || normalizeIranMobile(registerForm.mobile) || registerForm.mobile
+      tab.value = 'otp'
+      otpStep.value = 2
+      return
+    }
     redirectAfterAuth()
   } catch (e) {
     const errors = e.response?.data?.errors

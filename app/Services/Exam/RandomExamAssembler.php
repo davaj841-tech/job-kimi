@@ -19,8 +19,10 @@ class RandomExamAssembler
     public function assemble(Exam $exam, ?string $subjectFilter = null): Collection
     {
         $config = is_array($exam->random_config) ? $exam->random_config : [];
-        $subjects = $config['subjects'] ?? [];
-        if (! is_array($subjects) || $subjects === []) {
+        /** @var array<string, mixed> $config */
+        $subjectsRaw = $config['subjects'] ?? [];
+        $subjects = is_array($subjectsRaw) ? $subjectsRaw : [];
+        if ($subjects === []) {
             return collect();
         }
 

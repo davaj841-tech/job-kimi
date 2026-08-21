@@ -117,6 +117,9 @@ class SearchController extends BaseController
         ]);
     }
 
+    /**
+     * @return list<string>
+     */
     protected function popularSearches(): array
     {
         $raw = Setting::get('popular_searches', '[]');

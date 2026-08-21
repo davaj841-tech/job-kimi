@@ -33,8 +33,8 @@
 
       <div class="rounded-xl bg-white p-4 shadow-sm">
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
-          <input v-model="store.filters.date_from" type="date" class="field" />
-          <input v-model="store.filters.date_to" type="date" class="field" />
+          <JalaliDatepicker v-model="store.filters.date_from" label="از تاریخ" :error="dateRangeError" />
+          <JalaliDatepicker v-model="store.filters.date_to" label="تا تاریخ" :error="dateRangeError" />
           <select v-model="store.filters.gateway" class="field">
             <option value="">همه درگاه‌ها</option>
             <option value="zarinpal">زرین‌پال</option>
@@ -54,6 +54,7 @@
             <option value="failed">ناموفق</option>
           </select>
         </div>
+        <p v-if="dateRangeError" class="mt-2 text-xs text-red-600">{{ dateRangeError }}</p>
         <div class="mt-3 flex gap-2">
           <button class="btn-orange" @click="apply">اعمال فیلتر</button>
           <button class="btn-muted" @click="clear">پاک کردن</button>
@@ -104,12 +105,14 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import DataTable from '../components/ui/DataTable.vue'
+import JalaliDatepicker from '../components/ui/JalaliDatepicker.vue'
 import PaginationBar from '../components/ui/PaginationBar.vue'
 import StatCard from '../components/ui/StatCard.vue'
 import TransactionDetailModal from '../components/transactions/TransactionDetailModal.vue'
 import { formatDateTime, apiErrorMessage } from '../../utils/format'
+import { compareIsoDate, RANGE_ORDER_ERROR } from '../../utils/jalali'
 import { useToast } from '../../composables/useToast'
 import { useTransactionsStore } from '../stores/transactions'
 
@@ -117,6 +120,11 @@ const store = useTransactionsStore()
 const toast = useToast()
 const detailOpen = ref(false)
 const selected = ref(null)
+
+const dateRangeError = computed(() => {
+  const cmp = compareIsoDate(store.filters.date_from, store.filters.date_to)
+  return cmp !== null && cmp >= 0 ? RANGE_ORDER_ERROR : ''
+})
 
 const columns = [
   { key: 'index', label: '#' },
@@ -184,6 +192,10 @@ onMounted(async () => {
 })
 
 function apply() {
+  if (dateRangeError.value) {
+    toast.error(dateRangeError.value)
+    return
+  }
   store.fetchTransactions(1)
 }
 function clear() {

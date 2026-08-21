@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Api\BaseController;
 use App\Models\JobClassification;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -155,6 +157,9 @@ class JobClassificationAdminController extends BaseController
         ], 'مرتب‌سازی انجام شد.');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function validated(Request $request, ?int $id = null): array
     {
         $parentRules = ['nullable', 'integer', 'exists:job_classifications,id'];
@@ -199,7 +204,10 @@ class JobClassificationAdminController extends BaseController
         return (int) JobClassification::query()->where('parent_id', $parentId)->max('sort_order') + 1;
     }
 
-    protected function tree()
+    /**
+     * @return EloquentCollection<int, JobClassification>
+     */
+    protected function tree(): EloquentCollection
     {
         return JobClassification::query()
             ->with(['children' => fn ($q) => $q->orderBy('sort_order')->orderBy('name')])
@@ -209,7 +217,10 @@ class JobClassificationAdminController extends BaseController
             ->get();
     }
 
-    protected function flat()
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    protected function flat(): Collection
     {
         return JobClassification::query()
             ->with('parent:id,name')
@@ -220,6 +231,9 @@ class JobClassificationAdminController extends BaseController
             ->values();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function toFlat(JobClassification $c): array
     {
         return [

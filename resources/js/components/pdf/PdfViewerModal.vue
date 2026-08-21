@@ -133,9 +133,8 @@ async function load() {
     page.value = 1
     await nextTick()
     await renderPage()
-  } catch (e) {
+  } catch {
     error.value = 'بارگذاری PDF ناموفق بود.'
-    console.error(e)
   } finally {
     loading.value = false
   }

@@ -56,26 +56,57 @@ class PaymentService
 
     public function extractAuthority(Request $request): string
     {
-        return (string) (
-            $request->query('Authority')
-            ?? $request->input('Authority')
-            ?? $request->query('trans_id')
-            ?? $request->input('trans_id')
-            ?? $request->query('id')
-            ?? $request->input('id')
-            ?? $request->query('authority')
-            ?? $request->input('authority')
-            ?? ''
-        );
+        foreach (['Authority', 'authority', 'trans_id', 'track_id'] as $key) {
+            $value = $request->query($key) ?? $request->request->get($key);
+            if (is_string($value) && $value !== '') {
+                return $value;
+            }
+        }
+
+        $queryId = $request->query('id');
+        $routeId = $request->route('id');
+        if (is_string($queryId) && $queryId !== '' && (string) $routeId !== $queryId) {
+            return $queryId;
+        }
+        if (is_string($queryId) && $queryId !== '' && $routeId === null) {
+            return $queryId;
+        }
+
+        return '';
     }
 
     public function callbackSucceeded(Request $request, string $gateway): bool
     {
+        return $this->callbackOutcome($request, $gateway) === 'ok';
+    }
+
+    /**
+     * @return 'ok'|'cancel'|'fail'
+     */
+    public function callbackOutcome(Request $request, string $gateway): string
+    {
+        $status = strtoupper((string) ($request->query('Status') ?? $request->input('Status') ?? ''));
+        $idpay = (int) ($request->query('status') ?? $request->input('status') ?? 0);
+        $resCode = (string) ($request->input('ResCode') ?? $request->query('ResCode') ?? '');
+
         return match ($gateway) {
-            'zarinpal' => strtoupper((string) ($request->query('Status') ?? $request->input('Status') ?? '')) === 'OK',
-            'nextpay' => true, // status confirmed in verify API
-            'idpay' => in_array((int) ($request->query('status') ?? $request->input('status') ?? 0), [10, 100], true),
-            default => true,
+            'zarinpal', 'fake' => match ($status) {
+                'OK' => 'ok',
+                'NOK' => 'cancel',
+                default => 'fail',
+            },
+            'nextpay' => $status === 'NOK' ? 'cancel' : 'ok',
+            'idpay' => match ($idpay) {
+                10, 100 => 'ok',
+                6, 7, 8 => 'cancel',
+                default => 'fail',
+            },
+            'mellat', 'shaparak' => match ($resCode) {
+                '0', '00' => 'ok',
+                '17' => 'cancel',
+                default => 'fail',
+            },
+            default => 'fail',
         };
     }
 

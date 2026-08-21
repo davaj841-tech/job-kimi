@@ -203,7 +203,8 @@
       :user="store.selectedUser"
       :loading="store.detailLoading"
       :start-editing="detailStartEdit"
-      :can-manage="auth.isAdmin"
+      :can-manage="auth.isStaffAdmin"
+      :can-manage-super="auth.isSuperAdmin"
       @close="closeDetail"
       @save="onSaveUser"
     />
@@ -211,7 +212,8 @@
     <UserCreateModal
       ref="createModal"
       :open="createOpen"
-      :can-manage="auth.isAdmin"
+      :can-manage="auth.isStaffAdmin"
+      :can-manage-super="auth.isSuperAdmin"
       @close="createOpen = false"
       @created="onCreateUser"
     />

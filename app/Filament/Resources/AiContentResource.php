@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Concerns\InteractsWithStaffAccess;
 use App\Filament\Resources\AiContentResource\Pages;
 use App\Models\AiContent;
 use App\Repositories\AiContentRepository;
@@ -14,6 +15,8 @@ use Filament\Tables\Table;
 
 class AiContentResource extends Resource
 {
+    use InteractsWithStaffAccess;
+
     protected static ?string $model = AiContent::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-sparkles';
@@ -25,6 +28,11 @@ class AiContentResource extends Resource
     protected static ?string $pluralModelLabel = 'محتواهای AI';
 
     protected static ?string $navigationGroup = 'محتوا';
+
+    public static function canViewAny(): bool
+    {
+        return self::staffAdminOnly();
+    }
 
     public static function form(Form $form): Form
     {
@@ -90,7 +98,7 @@ class AiContentResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
+                    self::secureDeleteBulkAction(),
                 ]),
             ]);
     }

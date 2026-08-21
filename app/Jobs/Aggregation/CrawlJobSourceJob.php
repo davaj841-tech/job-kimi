@@ -28,6 +28,12 @@ class CrawlJobSourceJob implements ShouldBeUnique, ShouldQueue
     /** Keep uniqueness for the duration of a typical crawl window. */
     public int $uniqueFor = 900;
 
+    /** @return array<int, int> */
+    public function backoff(): array
+    {
+        return [60, 300];
+    }
+
     public function __construct(
         public int $jobSourceId
     ) {

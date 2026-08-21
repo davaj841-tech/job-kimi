@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Concerns\InteractsWithStaffAccess;
+use App\Filament\Forms\SeoFormSchema;
 use App\Filament\Resources\BlogPostResource\Pages;
 use App\Models\BlogPost;
 use Filament\Forms;
@@ -12,6 +14,8 @@ use Filament\Tables\Table;
 
 class BlogPostResource extends Resource
 {
+    use InteractsWithStaffAccess;
+
     protected static ?string $model = BlogPost::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-newspaper';
@@ -23,6 +27,11 @@ class BlogPostResource extends Resource
     protected static ?string $pluralModelLabel = 'پست‌های بلاگ';
 
     protected static ?string $navigationGroup = 'محتوا';
+
+    public static function canViewAny(): bool
+    {
+        return self::staffAdminOnly();
+    }
 
     public static function form(Form $form): Form
     {
@@ -40,6 +49,7 @@ class BlogPostResource extends Resource
             ])->required()->helperText('وضعیت انتشار'),
             Forms\Components\Select::make('ai_content_id')->label('محتوای AI')->relationship('aiContent', 'id')->helperText('محتوای تولیدشده توسط AI'),
             Forms\Components\Select::make('created_by')->label('نویسنده')->relationship('creator', 'name')->required()->helperText('نویسنده مطلب'),
+            SeoFormSchema::section(),
         ]);
     }
 
@@ -58,7 +68,7 @@ class BlogPostResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
+                    self::secureDeleteBulkAction(),
                 ]),
             ]);
     }

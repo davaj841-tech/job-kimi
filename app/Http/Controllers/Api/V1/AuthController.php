@@ -7,17 +7,19 @@ use App\Http\Requests\Auth\SendOtpRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\Auth\AvatarStorageService;
 use App\Services\Auth\OtpAuthService;
+use App\Support\IranMobile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends BaseController
 {
     public function __construct(
-        protected OtpAuthService $otpAuthService
+        protected OtpAuthService $otpAuthService,
+        protected AvatarStorageService $avatars
     ) {}
 
     /**
@@ -40,7 +42,7 @@ class AuthController extends BaseController
         $result = $this->otpAuthService->sendOtp($request->validated('mobile'));
 
         if (! $result['success']) {
-            return $this->errorResponse($result['message'], 429);
+            return $this->errorResponse($result['message'], $result['http'] ?? 429);
         }
 
         return $this->successResponse([
@@ -73,16 +75,7 @@ class AuthController extends BaseController
         );
 
         if (! $result['success']) {
-            $code = ($result['code'] ?? null) === 'PROVINCE_REQUIRED' ? 422 : 422;
-
-            return response()->json([
-                'success' => false,
-                'message' => $result['message'],
-                'code' => $result['code'] ?? null,
-                'errors' => ($result['code'] ?? null) === 'PROVINCE_REQUIRED'
-                    ? ['province' => ['انتخاب استان الزامی است.']]
-                    : null,
-            ], $code);
+            return $this->errorResponse($result['message'], $result['http'] ?? 422);
         }
 
         return $this->successResponse([
@@ -112,26 +105,44 @@ class AuthController extends BaseController
             'login' => ['required', 'string', 'max:100'],
             'password' => ['required', 'string'],
         ], [
-            'login.required' => 'نام کاربری یا ایمیل الزامی است.',
+            'login.required' => 'نام کاربری، ایمیل یا موبایل الزامی است.',
             'password.required' => 'رمز عبور الزامی است.',
         ]);
 
         $login = trim($data['login']);
+        $mobile = IranMobile::normalize($login);
+
         $user = User::query()
-            ->where(function ($q) use ($login) {
+            ->where(function ($q) use ($login, $mobile) {
                 $q->where('username', $login)->orWhere('email', $login);
+                if ($mobile) {
+                    $q->orWhere('mobile', $mobile);
+                }
             })
             ->first();
 
+        if ($user && $this->otpAuthService->isLocked($user)) {
+            return $this->errorResponse('حساب موقتاً قفل شده است. لطفاً ۱۵ دقیقه دیگر تلاش کنید.', 423);
+        }
+
         if (! $user || blank($user->password) || ! Hash::check($data['password'], $user->password)) {
+            if ($user) {
+                $this->otpAuthService->registerFailedAttempt($user);
+            }
+
             return $this->errorResponse('نام کاربری یا رمز عبور اشتباه است.', 401);
         }
 
-        if (($user->status ?? 'active') !== 'active') {
+        if (! $user->isActiveAccount()) {
             return $this->errorResponse('حساب کاربری غیرفعال است.', 403);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $user->update([
+            'failed_login_attempts' => 0,
+            'locked_until' => null,
+        ]);
+
+        $token = $this->otpAuthService->issueToken($user, 'api');
         $user->load('subscriptionPlan');
 
         return $this->successResponse([
@@ -162,18 +173,21 @@ class AuthController extends BaseController
      */
     public function register(Request $request): JsonResponse
     {
+        if ($request->filled('mobile')) {
+            $request->merge(['mobile' => IranMobile::normalize((string) $request->input('mobile'))]);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'username' => ['required', 'string', 'regex:/^[a-zA-Z0-9_]{3,20}$/', 'unique:users,username'],
             'password' => ['required', 'string', 'confirmed', Password::min(8)],
-            'mobile' => ['nullable', 'regex:/^09\d{9}$/', 'unique:users,mobile'],
+            'mobile' => ['nullable', 'regex:/^09\d{9}$/'],
             'email' => ['nullable', 'email', 'max:191', 'unique:users,email'],
             'province' => ['nullable', 'string', 'max:100'],
         ], [
             'username.regex' => 'نام کاربری فقط حروف انگلیسی، عدد و _ (۳ تا ۲۰ کاراکتر).',
             'username.unique' => 'این نام کاربری قبلاً ثبت شده است.',
-            'mobile.regex' => 'شماره موبایل معتبر نیست (مثال: 09123456789).',
-            'mobile.unique' => 'این شماره موبایل قبلاً ثبت شده است.',
+            'mobile.regex' => 'شماره موبایل معتبر نیست (مثال: 09123456789 یا +989123456789).',
             'email.unique' => 'این ایمیل قبلاً ثبت شده است.',
             'password.confirmed' => 'تکرار رمز عبور مطابقت ندارد.',
         ]);
@@ -182,21 +196,61 @@ class AuthController extends BaseController
             return $this->errorResponse('حداقل یکی از موبایل یا ایمیل الزامی است.', 422);
         }
 
-        $user = User::query()->create([
+        $username = strtolower($data['username']);
+        $existingByMobile = ! empty($data['mobile'])
+            ? User::query()->where('mobile', $data['mobile'])->first()
+            : null;
+
+        if ($existingByMobile && (filled($existingByMobile->username) || filled($existingByMobile->password))) {
+            return $this->errorResponse('این شماره موبایل قبلاً ثبت شده است.', 422, [
+                'mobile' => ['این شماره موبایل قبلاً ثبت شده است.'],
+            ]);
+        }
+
+        $payload = [
             'name' => $data['name'],
-            'username' => strtolower($data['username']),
+            'username' => $username,
             'password' => $data['password'],
-            'mobile' => $data['mobile'] ?? null,
             'email' => $data['email'] ?? null,
             'province' => $data['province'] ?? null,
             'role' => 'jobseeker',
             'status' => 'active',
-            'is_verified' => true,
-        ]);
+            'is_verified' => empty($data['mobile']),
+        ];
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        if ($existingByMobile) {
+            $existingByMobile->update($payload);
+            $user = $existingByMobile->fresh();
+        } else {
+            if (! empty($data['mobile'])) {
+                $payload['mobile'] = $data['mobile'];
+            } else {
+                do {
+                    $payload['mobile'] = '08'.str_pad((string) random_int(0, 999999999), 9, '0', STR_PAD_LEFT);
+                } while (User::query()->where('mobile', $payload['mobile'])->exists());
+            }
+            $user = User::query()->create($payload);
+        }
+
+        if (! empty($data['mobile'])) {
+            $otp = $this->otpAuthService->sendOtp($data['mobile']);
+            if (! $otp['success']) {
+                return $this->errorResponse($otp['message'], $otp['http'] ?? 429);
+            }
+
+            return $this->successResponse([
+                'needs_otp' => true,
+                'mobile' => $data['mobile'],
+                'expires_in' => $otp['expires_in'] ?? 120,
+                'token' => null,
+                'user' => new UserResource($user->load('subscriptionPlan')),
+            ], 'حساب ساخته شد. کد تایید به موبایل شما ارسال شد.', 201);
+        }
+
+        $token = $this->otpAuthService->issueToken($user, 'api');
 
         return $this->successResponse([
+            'needs_otp' => false,
             'token' => $token,
             'user' => new UserResource($user->load('subscriptionPlan')),
         ], 'عضویت با موفقیت انجام شد.', 201);
@@ -215,7 +269,7 @@ class AuthController extends BaseController
      */
     public function logout(Request $request): JsonResponse
     {
-        $this->otpAuthService->logout($request->user());
+        $this->otpAuthService->logout($request->user(), $request);
 
         return $this->successResponse(null, 'خروج موفق.');
     }
@@ -284,21 +338,10 @@ class AuthController extends BaseController
         if (array_key_exists('photo', $data)) {
             $photo = $data['photo'];
             unset($data['photo']);
-            if (is_string($photo) && preg_match('#^data:image/(png|jpe?g|gif|webp);base64,#i', $photo, $m)) {
-                $raw = base64_decode(substr($photo, (int) strpos($photo, ',') + 1), true);
-                if ($raw) {
-                    $ext = str_contains(strtolower($m[1]), 'png') ? 'png' : 'jpg';
-                    $rel = 'avatars/'.$user->id.'.'.$ext;
-                    if ($user->avatar && $user->avatar !== $rel) {
-                        Storage::disk('public')->delete($user->avatar);
-                    }
-                    Storage::disk('public')->put($rel, $raw);
-                    $data['avatar'] = $rel;
-                }
+            if (is_string($photo) && str_starts_with($photo, 'data:image/')) {
+                $data['avatar'] = $this->avatars->storeFromDataUri($user, $photo);
             } elseif ($photo === '' || $photo === null) {
-                if ($user->avatar) {
-                    Storage::disk('public')->delete($user->avatar);
-                }
+                $this->avatars->delete($user);
                 $data['avatar'] = null;
             }
         }

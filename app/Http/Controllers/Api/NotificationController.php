@@ -50,11 +50,19 @@ class NotificationController extends BaseController
 
     public function markAllRead(Request $request): JsonResponse
     {
-        $request->user()->unreadNotifications->markAsRead();
+        $unread = $request->user()->unreadNotifications;
+        foreach ($unread as $notification) {
+            if ($notification instanceof DatabaseNotification) {
+                $notification->markAsRead();
+            }
+        }
 
         return $this->successResponse(null, 'همه اعلان‌ها خوانده شد.');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function transform(DatabaseNotification $n): array
     {
         $data = $n->data ?? [];

@@ -26,6 +26,7 @@ final class OperatorPermissions
             'transactions' => 'تراکنش‌ها',
             'coupons' => 'کد تخفیف',
             'wallets' => 'کیف پول‌ها',
+            'system_update' => 'به‌روزرسانی سیستم',
         ];
     }
 
@@ -70,11 +71,11 @@ final class OperatorPermissions
             return false;
         }
 
-        if ($user->role === 'admin') {
+        if (StaffRoles::isSuperAdmin($user) || StaffRoles::isAdmin($user)) {
             return true;
         }
 
-        if ($user->role !== 'operator') {
+        if (! StaffRoles::isOperator($user)) {
             return false;
         }
 
@@ -87,10 +88,25 @@ final class OperatorPermissions
         $path = preg_replace('#^api/v1/#', '', $path) ?? $path;
         $path = preg_replace('#^admin/#', '', $path) ?? $path;
 
-        $adminOnly = ['settings', 'backups', 'audit-logs', 'site-errors', 'performance'];
-        foreach ($adminOnly as $prefix) {
+        $superAdminOnly = [
+            'settings',
+            'backups',
+            'system-updates',
+            'audit-logs',
+            'site-errors',
+            'performance',
+            'analytics',
+        ];
+        foreach ($superAdminOnly as $prefix) {
             if ($path === $prefix || str_starts_with($path, $prefix.'/')) {
-                return '__admin__';
+                return '__super_admin__';
+            }
+        }
+
+        $staffOpen = ['dashboard-stats', 'exam-categories', 'exam-job-posts'];
+        foreach ($staffOpen as $open) {
+            if ($path === $open || str_starts_with($path, $open.'/')) {
+                return null;
             }
         }
 
@@ -99,6 +115,7 @@ final class OperatorPermissions
             'tickets' => 'tickets',
             'contact-messages' => 'tickets',
             'exams' => 'exams',
+            'exam-subjects' => 'exams',
             'questions' => 'questions',
             'blog-posts' => 'blog',
             'generated-contents' => 'generated_contents',
@@ -108,7 +125,11 @@ final class OperatorPermissions
             'team-members' => 'pages',
             'ai' => 'ai',
             'job-posts' => 'job_posts',
+            'job-classifications' => 'job_posts',
             'job-sources' => 'aggregation',
+            'crawler-runs' => 'aggregation',
+            'aggregation' => 'aggregation',
+            'aggregation-schedule' => 'aggregation',
             'aggregation-settings' => 'aggregation',
             'crawl-monitoring' => 'aggregation',
             'aggregated-jobs' => 'aggregation',
@@ -124,6 +145,7 @@ final class OperatorPermissions
             }
         }
 
-        return null;
+        // Unknown admin routes: staff admins only (operators blocked).
+        return '__staff_admin__';
     }
 }

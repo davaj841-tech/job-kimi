@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('name')->nullable();
             $table->string('national_code', 10)->nullable();
             $table->string('avatar')->nullable();
-            $table->enum('role', ['jobseeker', 'employer', 'operator', 'admin'])->default('jobseeker');
+            $table->enum('role', ['jobseeker', 'employer', 'operator', 'admin', 'super_admin'])->default('jobseeker');
             $table->decimal('wallet_balance', 15, 0)->default(0);
             $table->foreignId('subscription_plan_id')->nullable()->constrained('subscription_plans')->nullOnDelete();
             $table->timestamp('subscription_expires_at')->nullable();

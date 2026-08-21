@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# JobAzmoon — restore database from a gzipped mysqldump
-# Usage: ./scripts/restore.sh [path/to/db_YYYYMMDD_HHMMSS.sql.gz]
+# JobAzmoon — restore database (+ optional files tarball)
+# Usage:
+#   ./scripts/restore.sh path/to/db_YYYYMMDD_HHMMSS.sql.gz
+#   ./scripts/restore.sh path/to/db_....sql.gz path/to/files_....tar.gz
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -32,18 +34,33 @@ foreach (explode("\n", $env) as $line) {
 ')"
 
 BACKUP_FILE="${1:-}"
+FILES_TAR="${2:-}"
+
 if [[ -z "$BACKUP_FILE" ]]; then
   read -r -p "Backup file to restore (db_YYYYMMDD_HHMMSS.sql.gz): " BACKUP_FILE
 fi
 
 if [[ ! -f "$BACKUP_FILE" ]]; then
-  # Try under default backup dir
   if [[ -f "/var/backups/jobazmoon/$BACKUP_FILE" ]]; then
     BACKUP_FILE="/var/backups/jobazmoon/$BACKUP_FILE"
   else
     echo "ERROR: backup file not found: $BACKUP_FILE" >&2
     exit 1
   fi
+fi
+
+if [[ -n "$FILES_TAR" && ! -f "$FILES_TAR" ]]; then
+  if [[ -f "/var/backups/jobazmoon/$FILES_TAR" ]]; then
+    FILES_TAR="/var/backups/jobazmoon/$FILES_TAR"
+  else
+    echo "ERROR: files archive not found: $FILES_TAR" >&2
+    exit 1
+  fi
+fi
+
+if ! gzip -t "$BACKUP_FILE" 2>/dev/null; then
+  echo "ERROR: database dump failed gzip integrity check" >&2
+  exit 1
 fi
 
 DB_HOST="${DB_HOST:-127.0.0.1}"
@@ -59,6 +76,11 @@ fi
 
 echo "WARNING: This will overwrite database '${DB_DATABASE}' from:"
 echo "  $BACKUP_FILE"
+if [[ -n "$FILES_TAR" ]]; then
+  echo "And extract files from:"
+  echo "  $FILES_TAR"
+fi
+echo "Ensure APP_KEY in .env matches the original environment (not included in backup)."
 read -r -p "Type RESTORE to continue: " CONFIRM
 if [[ "$CONFIRM" != "RESTORE" ]]; then
   echo "Aborted."
@@ -70,7 +92,6 @@ php artisan down --retry=60 || true
 
 if command -v systemctl >/dev/null 2>&1; then
   sudo systemctl stop horizon 2>/dev/null || true
-  # nginx optional — keep serving maintenance if possible
 fi
 
 export MYSQL_PWD="$DB_PASSWORD"
@@ -78,6 +99,12 @@ echo "Restoring database..."
 gunzip -c "$BACKUP_FILE" | mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME"
 unset MYSQL_PWD
 
+if [[ -n "$FILES_TAR" ]]; then
+  echo "Restoring files archive..."
+  tar xzf "$FILES_TAR" -C "$ROOT"
+fi
+
+php artisan storage:link || true
 php artisan cache:clear || true
 php artisan config:clear || true
 php artisan queue:restart || true
@@ -89,5 +116,8 @@ fi
 php artisan up || true
 
 echo "Restore completed."
-echo "Next: restore files with tar if needed, then verify GET /health"
-echo "  tar xzf /var/backups/jobazmoon/files_YYYYMMDD_HHMMSS.tar.gz -C $ROOT"
+echo "Verify: curl -fsS \"\${APP_URL}/health\" (or GET /up)"
+if [[ -z "$FILES_TAR" ]]; then
+  echo "Files were NOT restored. If needed:"
+  echo "  tar xzf /var/backups/jobazmoon/files_YYYYMMDD_HHMMSS.tar.gz -C $ROOT"
+fi

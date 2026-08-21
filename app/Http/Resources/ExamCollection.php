@@ -9,6 +9,9 @@ class ExamCollection extends ResourceCollection
 {
     public $collects = ExamResource::class;
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [

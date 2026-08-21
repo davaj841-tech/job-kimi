@@ -122,11 +122,11 @@ class HomeFeedController extends BaseController
                     'duration_days' => $p->duration_days,
                     'features' => $p->features,
                 ])->values()->all(),
-                'classifications' => $classifications->map(fn ($c) => [
+                'classifications' => $classifications->map(fn (JobClassification $c) => [
                     'id' => $c->id,
                     'name' => $c->name,
                     'parent_id' => $c->parent_id,
-                    'child_ids' => $c->children?->pluck('id')->map(fn ($id) => (int) $id)->values()->all() ?? [],
+                    'child_ids' => $c->children?->pluck('id')->map(fn (mixed $id) => (int) $id)->values()->all() ?? [],
                 ])->values()->all(),
             ];
         });

@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Concerns\InteractsWithStaffAccess;
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
+use App\Support\StaffRoles;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,6 +17,8 @@ use Morilog\Jalali\Jalalian;
 
 class UserResource extends Resource
 {
+    use InteractsWithStaffAccess;
+
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
@@ -28,6 +32,31 @@ class UserResource extends Resource
     protected static ?string $navigationGroup = 'مدیریت کاربران';
 
     protected static ?int $navigationSort = 1;
+
+    public static function canViewAny(): bool
+    {
+        return self::superAdminOnly();
+    }
+
+    public static function canCreate(): bool
+    {
+        return self::canViewAny();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return self::canViewAny();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return self::canViewAny();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return self::canViewAny();
+    }
 
     public static function form(Form $form): Form
     {
@@ -52,6 +81,7 @@ class UserResource extends Resource
                             'employer' => 'کارفرما',
                             'operator' => 'اپراتور',
                             'admin' => 'ادمین',
+                            'super_admin' => 'سوپرادمین',
                         ])
                         ->required(),
                     Forms\Components\Select::make('status')
@@ -67,7 +97,10 @@ class UserResource extends Resource
                     Forms\Components\TextInput::make('wallet_balance')
                         ->label('موجودی کیف پول')
                         ->numeric()
-                        ->suffix('ریال'),
+                        ->suffix('ریال')
+                        ->disabled()
+                        ->dehydrated(false)
+                        ->helperText('موجودی فقط از بخش کیف پول تغییر می‌کند.'),
                     Forms\Components\Select::make('subscription_plan_id')
                         ->label('پلن اشتراک')
                         ->relationship('subscriptionPlan', 'name'),
@@ -99,9 +132,10 @@ class UserResource extends Resource
                     ->label('نقش')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'admin' => 'danger',
-                        'operator' => 'warning',
-                        'employer' => 'info',
+                        'super_admin' => 'danger',
+                        'admin' => 'warning',
+                        'operator' => 'info',
+                        'employer' => 'gray',
                         default => 'success',
                     }),
                 Tables\Columns\TextColumn::make('status')
@@ -132,6 +166,7 @@ class UserResource extends Resource
                         'employer' => 'کارفرما',
                         'operator' => 'اپراتور',
                         'admin' => 'ادمین',
+                        'super_admin' => 'سوپرادمین',
                     ]),
                 SelectFilter::make('status')
                     ->label('وضعیت')
@@ -154,21 +189,36 @@ class UserResource extends Resource
             ->actions([
                 ActionGroup::make([
                     Tables\Actions\EditAction::make()->label('ویرایش'),
-                    Tables\Actions\DeleteAction::make()->label('حذف'),
+                    Tables\Actions\DeleteAction::make()
+                        ->label('حذف')
+                        ->requiresConfirmation()
+                        ->visible(fn (User $record): bool => ! StaffRoles::isProtectedStaffAccount($record)
+                            || StaffRoles::isSuperAdmin(auth()->user())),
                 ])->label('عملیات'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف انتخاب‌شده‌ها'),
-                    Tables\Actions\BulkAction::make('activate')
-                        ->label('فعال‌سازی')
-                        ->icon('heroicon-o-check')
-                        ->action(fn ($records) => $records->each->update(['status' => 'active'])),
-                    Tables\Actions\BulkAction::make('deactivate')
-                        ->label('مسدودسازی')
-                        ->icon('heroicon-o-x-mark')
-                        ->color('warning')
-                        ->action(fn ($records) => $records->each->update(['status' => 'blocked'])),
+                    self::secureDeleteBulkAction('حذف انتخاب‌شده‌ها')
+                        ->action(function ($records): void {
+                            $records
+                                ->reject(fn (User $user) => StaffRoles::isProtectedStaffAccount($user))
+                                ->each->delete();
+                        }),
+                    self::secureBulkAction(
+                        Tables\Actions\BulkAction::make('activate')
+                            ->label('فعال‌سازی')
+                            ->icon('heroicon-o-check')
+                            ->action(fn ($records) => $records->each->update(['status' => 'active']))
+                    ),
+                    self::secureBulkAction(
+                        Tables\Actions\BulkAction::make('deactivate')
+                            ->label('مسدودسازی')
+                            ->icon('heroicon-o-x-mark')
+                            ->color('warning')
+                            ->action(fn ($records) => $records
+                                ->reject(fn (User $user) => StaffRoles::isProtectedStaffAccount($user))
+                                ->each->update(['status' => 'blocked']))
+                    ),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')

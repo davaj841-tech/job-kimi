@@ -117,10 +117,6 @@ function chipClass(id) {
     : 'bg-slate-100 text-desk-text hover:bg-slate-200'
 }
 
-function letter(job) {
-  return (job.company_name || job.classification_name || job.title || '؟').charAt(0)
-}
-
 function isRecent(job) {
   const d = job.published_at || job.created_at
   if (!d) return false

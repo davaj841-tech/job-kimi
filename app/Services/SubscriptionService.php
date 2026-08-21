@@ -4,12 +4,14 @@ namespace App\Services;
 
 use App\Events\PaymentSuccessful;
 use App\Events\SubscriptionExpired;
+use App\Exceptions\InsufficientBalanceException;
 use App\Listeners\DispatchAfterCommit;
 use App\Models\Coupon;
 use App\Models\Setting;
 use App\Models\SubscriptionPlan;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\WalletLedger;
 use Illuminate\Support\Facades\DB;
 
 class SubscriptionService
@@ -28,6 +30,10 @@ class SubscriptionService
     {
         if (! $plan->is_active) {
             return ['success' => false, 'message' => 'این پلن فعال نیست.', 'error' => 'plan_inactive'];
+        }
+
+        if ((int) $plan->price === 0 && (int) $plan->duration_days === 0) {
+            return ['success' => false, 'message' => 'پلن رایگان قابل خرید نیست.', 'error' => 'free_plan_not_purchasable'];
         }
 
         $original = (int) $plan->price;
@@ -66,46 +72,54 @@ class SubscriptionService
             return ['success' => false, 'message' => 'موجودی کیف پول کافی نیست.', 'error' => 'insufficient_balance'];
         }
 
-        return DB::transaction(function () use ($user, $plan, $amount, $original, $discount, $coupon) {
-            $locked = User::query()->whereKey($user->id)->lockForUpdate()->first();
+        try {
+            return DB::transaction(function () use ($user, $plan, $amount, $original, $discount, $coupon) {
+                $tx = Transaction::query()->create([
+                    'user_id' => $user->id,
+                    'amount' => $amount,
+                    'original_amount' => $original,
+                    'discount_amount' => $discount,
+                    'coupon_id' => $coupon?->id,
+                    'type' => 'purchase',
+                    'gateway' => 'wallet',
+                    'status' => 'success',
+                    'description' => 'خرید اشتراک '.$plan->name,
+                    'payable_type' => SubscriptionPlan::class,
+                    'payable_id' => $plan->id,
+                ]);
 
-            if ($amount > 0) {
-                if (! $locked || (int) $locked->wallet_balance < $amount) {
-                    return ['success' => false, 'message' => 'موجودی کیف پول کافی نیست.', 'error' => 'insufficient_balance'];
+                if ($amount > 0) {
+                    $this->walletService->debit($user, $amount, [
+                        'source_key' => 'subscription:'.$tx->id,
+                        'transaction' => $tx,
+                        'type' => WalletLedger::TYPE_PURCHASE,
+                        'tx_type' => 'purchase',
+                        'description' => $tx->description,
+                        'gateway' => 'wallet',
+                    ]);
                 }
-                $locked->decrement('wallet_balance', $amount);
-            }
 
-            $tx = Transaction::query()->create([
-                'user_id' => $locked->id,
-                'amount' => $amount,
-                'original_amount' => $original,
-                'discount_amount' => $discount,
-                'coupon_id' => $coupon?->id,
-                'type' => 'purchase',
-                'gateway' => 'wallet',
-                'status' => 'success',
-                'description' => 'خرید اشتراک '.$plan->name,
-                'payable_type' => SubscriptionPlan::class,
-                'payable_id' => $plan->id,
-            ]);
+                $locked = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
 
-            if ($coupon) {
-                $this->couponService->redeem($coupon);
-            }
+                if ($coupon) {
+                    $this->couponService->redeem($coupon);
+                }
 
-            $this->activate($locked, $plan);
-            $this->invoiceService->ensureInvoice($tx);
-            DispatchAfterCommit::handle($tx, static function (Transaction $transaction): void {
-                event(new PaymentSuccessful($transaction));
+                $this->activate($locked, $plan);
+                $this->invoiceService->ensureInvoice($tx);
+                DispatchAfterCommit::handle($tx, static function (Transaction $transaction): void {
+                    event(new PaymentSuccessful($transaction));
+                });
+
+                return [
+                    'success' => true,
+                    'message' => 'اشتراک فعال شد',
+                    'expires_at' => $locked->fresh()->subscription_expires_at?->toIso8601String(),
+                ];
             });
-
-            return [
-                'success' => true,
-                'message' => 'اشتراک فعال شد',
-                'expires_at' => $locked->fresh()->subscription_expires_at?->toIso8601String(),
-            ];
-        });
+        } catch (InsufficientBalanceException) {
+            return ['success' => false, 'message' => 'موجودی کیف پول کافی نیست.', 'error' => 'insufficient_balance'];
+        }
     }
 
     protected function subscribeWithGateway(
@@ -182,13 +196,21 @@ class SubscriptionService
 
     public function activate(User $user, SubscriptionPlan $plan, ?Transaction $transaction = null): void
     {
-        $startsFrom = $user->subscription_expires_at && $user->subscription_expires_at->isFuture()
-            ? $user->subscription_expires_at->copy()
+        $locked = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+
+        if ((int) $plan->duration_days < 1) {
+            throw new \InvalidArgumentException('Plan must have at least 1 duration day to activate.');
+        }
+
+        $startsFrom = $locked->subscription_expires_at && $locked->subscription_expires_at->isFuture()
+            ? $locked->subscription_expires_at->copy()
             : now();
 
-        $user->update([
+        $expiresAt = $startsFrom->copy()->addDays($plan->duration_days);
+
+        $locked->update([
             'subscription_plan_id' => $plan->id,
-            'subscription_expires_at' => $startsFrom->copy()->addDays($plan->duration_days),
+            'subscription_expires_at' => $expiresAt,
         ]);
 
         if ($transaction) {
@@ -223,9 +245,33 @@ class SubscriptionService
     public function expireIfNeeded(User $user): void
     {
         if ($user->subscription_plan_id && ! $this->isActive($user)) {
-            $user->update(['subscription_plan_id' => null]);
+            $user->update([
+                'subscription_plan_id' => null,
+                'subscription_expires_at' => $user->subscription_expires_at,
+            ]);
             event(new SubscriptionExpired($user->fresh()));
         }
+    }
+
+    /**
+     * Upgrade: cancel remaining days, activate new plan from now.
+     * Downgrade is not supported — user keeps current plan until expiry then purchases new.
+     */
+    /**
+     * @return array<string, mixed>
+     */
+    public function upgrade(User $user, SubscriptionPlan $newPlan, string $method, ?string $couponCode = null, ?string $gateway = null): array
+    {
+        if (! $newPlan->is_active || (int) $newPlan->duration_days < 1) {
+            return ['success' => false, 'message' => 'پلن انتخابی معتبر نیست.', 'error' => 'invalid_plan'];
+        }
+
+        $currentPlan = $user->subscriptionPlan;
+        if ($currentPlan instanceof SubscriptionPlan && (int) $newPlan->price <= (int) $currentPlan->price && $this->isActive($user)) {
+            return ['success' => false, 'message' => 'فقط ارتقا به پلن بالاتر ممکن است. پلن فعلی تا انقضا ادامه دارد.', 'error' => 'downgrade_not_allowed'];
+        }
+
+        return $this->subscribe($user, $newPlan, $method, $couponCode, $gateway);
     }
 
     public function freePlanExamLimit(): int

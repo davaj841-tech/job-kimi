@@ -2,18 +2,27 @@
 
 namespace App\Http\Resources;
 
+use App\Models\BlogPost;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin BlogPost
+ *
+ * @property-read BlogPost $resource
+ */
 class BlogPostResource extends JsonResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
             'title' => $this->title,
             'slug' => $this->slug,
-            'content' => $this->content,
+            'content' => \App\Support\HtmlSanitizer::clean($this->content),
             'excerpt' => $this->excerpt,
             'featured_image' => $this->featured_image,
             'featured_image_url' => $this->featured_image_url,

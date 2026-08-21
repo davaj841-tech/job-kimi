@@ -59,6 +59,7 @@ import { computed, onMounted, ref } from 'vue'
 import api from '../../api/client'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import PageShell from '../../components/layout/PageShell.vue'
+import { applySeoPayload } from '../../services/meta'
 import { unwrapItem } from '../../utils/format'
 
 const loading = ref(true)
@@ -88,8 +89,22 @@ onMounted(async () => {
   try {
     const { data } = await api.get('/pages/about')
     page.value = unwrapItem(data)
-    if (page.value?.meta_title) {
-      document.title = `${page.value.meta_title} | جاب‌آزمون`
+    if (page.value?.seo?.meta) {
+      applySeoPayload(page.value.seo, {
+        breadcrumbs: [
+          { name: 'خانه', url: `${window.location.origin}/` },
+          { name: page.value.title || 'درباره ما', url: `${window.location.origin}/about` },
+        ],
+      })
+    } else if (page.value) {
+      applySeoPayload({
+        meta: {
+          meta_title: page.value.meta_title || page.value.title || 'درباره ما',
+          meta_description: page.value.meta_description || '',
+          canonical_url: `${window.location.origin}/about`,
+        },
+        schema: page.value.schema,
+      })
     }
   } catch {
     page.value = null

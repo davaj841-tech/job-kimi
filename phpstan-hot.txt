@@ -1,0 +1,1 @@
+﻿C:\Users\Kardansoft\Desktop\job-kimi\app\Http\Controllers\Api\NotificationController.php:53:Call to an undefined method Illuminate\Database\Eloquent\Collection<int, Illuminate\Notifications\DatabaseNotification>::markAsRead(). [identifier=method.notFound]

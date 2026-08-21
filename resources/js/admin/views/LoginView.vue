@@ -33,26 +33,24 @@
 
       <!-- Password login -->
       <div v-if="tab === 'password' && !showForgot" class="space-y-4">
+        <form class="space-y-4" autocomplete="off" @submit.prevent="onPasswordLogin">
         <div>
           <label class="mb-1 block text-sm font-medium text-slate-700"
             >نام کاربری</label
           >
           <input
-            v-model="username"
+            :value="username"
+            name="admin_username"
             class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
             dir="ltr"
             lang="en"
             inputmode="text"
-            autocomplete="username"
-            autocapitalize="off"
+            autocomplete="off"
+            autocapitalize="characters"
             spellcheck="false"
             maxlength="20"
-            placeholder="admin"
-            @input="
-              username = String(username || '')
-                .toLowerCase()
-                .replace(/[^a-z0-9_]/g, '')
-            "
+            placeholder="نام کاربری"
+            @input="username = String($event.target.value || '').replace(/[^a-zA-Z0-9_]/g, '')"
           />
         </div>
         <div>
@@ -62,18 +60,19 @@
           <PasswordInput
             v-model="password"
             input-class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
-            autocomplete="current-password"
-            placeholder="••••••••"
+            autocomplete="new-password"
+            placeholder="رمز عبور"
             @enter="onPasswordLogin"
           />
         </div>
         <button
+          type="submit"
           class="h-11 w-full rounded-xl bg-orange-500 text-sm font-bold text-white hover:bg-orange-600 disabled:opacity-50"
           :disabled="auth.loading || !canSubmitPassword"
-          @click="onPasswordLogin"
         >
           ورود
         </button>
+        </form>
         <button
           type="button"
           class="w-full text-sm text-slate-500 underline"
@@ -102,7 +101,7 @@
             autocomplete="email"
             autocapitalize="off"
             spellcheck="false"
-            placeholder="admin@example.com"
+            placeholder="ایمیل ادمین"
             @keyup.enter="onForgot"
           />
         </div>
@@ -199,7 +198,7 @@ const info = ref('')
 
 const canSubmitPassword = computed(() => {
   const u = username.value.trim()
-  return /^[a-z0-9_]{3,20}$/.test(u) && password.value.length >= 8
+  return /^[a-zA-Z0-9_]{3,20}$/.test(u) && password.value.length >= 8
 })
 
 function selectPasswordTab() {

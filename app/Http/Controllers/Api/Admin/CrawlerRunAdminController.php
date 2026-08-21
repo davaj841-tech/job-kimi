@@ -112,6 +112,9 @@ class CrawlerRunAdminController extends BaseController
         return $this->successResponse(null, 'اجرا حذف شد.');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function serializeRun(CrawlerRun $run, bool $withErrors = false): array
     {
         $row = [
@@ -147,7 +150,7 @@ class CrawlerRunAdminController extends BaseController
                 'url' => $e->url,
                 'context' => $this->domains->sanitizeContext($e->context),
                 'occurred_at' => $e->occurred_at?->toIso8601String(),
-            ])->values();
+            ])->values()->all();
         }
 
         return $row;

@@ -47,18 +47,23 @@ class Resume extends Model
     {
         $photo = data_get($this->data, 'personal.photo');
 
-        if (! $photo) {
+        if (! is_string($photo) || $photo === '') {
             return null;
         }
 
-        if (Storage::disk('public')->exists($photo)) {
-            return Storage::disk('public')->path($photo);
+        $photo = str_replace('\\', '/', $photo);
+        if (str_contains($photo, '..') || str_starts_with($photo, '/') || preg_match('#^[a-zA-Z]:#', $photo)) {
+            return null;
         }
 
-        if (is_string($photo) && file_exists($photo)) {
-            return $photo;
+        if (! preg_match('#^(avatars|resumes)/[A-Za-z0-9._/-]+$#', $photo)) {
+            return null;
         }
 
-        return null;
+        if (! Storage::disk('public')->exists($photo)) {
+            return null;
+        }
+
+        return Storage::disk('public')->path($photo);
     }
 }

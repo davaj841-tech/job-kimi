@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\StaffRoles;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,41 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string|null $mobile
+ * @property string|null $username
+ * @property string|null $email
+ * @property string|null $name
+ * @property string|null $national_code
+ * @property string|null $province
+ * @property string|null $avatar
+ * @property string|null $home_phone
+ * @property string|null $military_status
+ * @property string|null $insurance_history
+ * @property string|null $birth_date
+ * @property string|null $birth_province
+ * @property string|null $birth_city
+ * @property string|null $marital_status
+ * @property string|null $field_of_study
+ * @property string|null $address
+ * @property string|null $postal_code
+ * @property string|null $role
+ * @property array<int, string>|null $operator_permissions
+ * @property string|null $status
+ * @property int|null $subscription_plan_id
+ * @property Carbon|null $subscription_expires_at
+ * @property numeric-string|float|int|null $wallet_balance
+ * @property bool $is_verified
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $locked_until
+ * @property-read SubscriptionPlan|null $subscriptionPlan
+ * @property-read Carbon|string|null $last_transaction_at
+ * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $unreadNotifications
+ */
 class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
@@ -38,7 +73,6 @@ class User extends Authenticatable implements FilamentUser
         'role',
         'operator_permissions',
         'status',
-        'wallet_balance',
         'subscription_plan_id',
         'subscription_expires_at',
         'otp_code',
@@ -74,28 +108,61 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return in_array($this->role, ['admin', 'operator'], true)
+        return StaffRoles::isStaffAdmin($this)
             && ($this->status ?? 'active') === 'active';
     }
 
+    /** @return BelongsTo<SubscriptionPlan, $this> */
     public function subscriptionPlan(): BelongsTo
     {
         return $this->belongsTo(SubscriptionPlan::class);
     }
 
+    /** @return HasMany<ExamAttempt, $this> */
     public function attempts(): HasMany
     {
         return $this->hasMany(ExamAttempt::class);
     }
 
+    /** @return HasMany<Resume, $this> */
     public function resumes(): HasMany
     {
         return $this->hasMany(Resume::class);
     }
 
+    /** @return HasMany<Transaction, $this> */
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    /** @return HasMany<WalletLedger, $this> */
+    public function walletLedgers(): HasMany
+    {
+        return $this->hasMany(WalletLedger::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(static function (User $user): void {
+            if (! $user->exists) {
+                return;
+            }
+            if ($user->isDirty('wallet_balance') && ! \App\Services\WalletService::isMutatingBalance()) {
+                $user->wallet_balance = $user->getOriginal('wallet_balance');
+            }
+        });
+
+        static::created(static function (User $user): void {
+            if (! \Illuminate\Support\Facades\Schema::hasTable('wallet_ledgers')) {
+                return;
+            }
+            $balance = (int) $user->wallet_balance;
+            if ($balance === 0) {
+                return;
+            }
+            app(\App\Services\WalletService::class)->recordOpeningBalance($user, $balance);
+        });
     }
 
     public function pdfPurchases(): HasMany
@@ -108,6 +175,11 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->subscription_expires_at !== null
             && $this->subscription_expires_at->isFuture();
+    }
+
+    public function isActiveAccount(): bool
+    {
+        return ($this->status ?? 'active') === 'active';
     }
 
     public function isBlocked(): bool

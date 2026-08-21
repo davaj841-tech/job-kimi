@@ -417,7 +417,7 @@ class AdminExamController extends BaseController
             return $this->errorResponse('نتیجه یافت نشد.', 404);
         }
 
-        if ($attempt->user_id !== $user->id && ! in_array($user->role, ['admin', 'operator'], true)) {
+        if ($attempt->user_id !== $user->id && ! \App\Support\OperatorPermissions::allows($user, 'exams')) {
             return $this->errorResponse('نتیجه یافت نشد.', 404);
         }
 
@@ -461,6 +461,9 @@ class AdminExamController extends BaseController
         return $this->successResponse($items);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function listItem(Exam $exam): array
     {
         return [
@@ -487,6 +490,9 @@ class AdminExamController extends BaseController
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function detailItem(Exam $exam): array
     {
         return array_merge($this->listItem($exam), [

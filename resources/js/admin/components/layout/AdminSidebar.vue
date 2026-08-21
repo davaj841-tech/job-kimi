@@ -11,7 +11,7 @@
           text-class="text-sm text-white"
         />
         <p class="truncate text-sm font-bold text-white/80">
-          {{ auth.isAdmin ? 'پنل مدیر' : 'پنل اپراتور' }}
+          {{ auth.isSuperAdmin ? 'پنل سوپرادمین' : auth.isStaffAdmin ? 'پنل مدیر' : 'پنل اپراتور' }}
         </p>
       </div>
       <button
@@ -55,7 +55,7 @@
 
     <div class="shrink-0 space-y-2 border-t border-white/10 p-4 text-xs text-white/50">
       <a
-        v-if="auth.isAdmin"
+        v-if="auth.isStaffAdmin"
         href="/filament"
         class="block text-desk-orange hover:text-white"
         >Filament ↗</a
@@ -133,6 +133,7 @@ const groups = [
     adminOnly: true,
     items: [
       { to: '/admin/backups', label: 'بکاپ', icon: '💾' },
+      { to: '/admin/system-updates', label: 'به‌روزرسانی', icon: '⬆' },
       { to: '/admin/audit-logs', label: 'حسابرسی', icon: '☰' },
       { to: '/admin/site-errors', label: 'خطاهای سایت', icon: '⚠' },
       { to: '/admin/settings', label: 'تنظیمات', icon: '⚙' },
@@ -143,7 +144,7 @@ const groups = [
 
 const visibleGroups = computed(() =>
   groups
-    .filter((g) => !g.adminOnly || auth.isAdmin)
+    .filter((g) => !g.adminOnly || auth.isSuperAdmin)
     .map((g) => ({
       ...g,
       items: g.items.filter((item) => auth.can(item.permission)),

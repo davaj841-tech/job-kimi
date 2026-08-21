@@ -27,6 +27,9 @@ class ContactMessage extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function replier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'replied_by');

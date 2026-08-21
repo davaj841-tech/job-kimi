@@ -395,7 +395,14 @@ async function onImport({ file, exam_id }) {
   try {
     const result = await store.importQuestions({ file, exam_id })
     importRef.value?.setResult(result)
-    toast.success('ورود اکسل انجام شد.')
+    const created = result?.created ?? 0
+    const skipped = result?.skipped ?? 0
+    if (created > 0) {
+      toast.success(`${created} سوال وارد شد${skipped ? ` (${skipped} رد شد)` : ''}.`)
+    } else {
+      toast.error(result?.errors?.[0] || 'هیچ سوالی وارد نشد.')
+      importRef.value?.setError(result?.errors?.[0] || 'هیچ سوالی وارد نشد. ستون‌های فارسی نمونه را بررسی کنید.')
+    }
     await examsStore.fetchExamOptions().catch(() => {})
     if (exam_id) {
       const next = new Set(expanded.value)
@@ -404,7 +411,14 @@ async function onImport({ file, exam_id }) {
       await loadExamQuestions(exam_id)
     }
   } catch (e) {
-    importRef.value?.setError(e.response?.data?.message || 'ورود ناموفق بود.')
+    const data = e.response?.data
+    const msg =
+      data?.errors?.file?.[0] ||
+      data?.errors?.exam_id?.[0] ||
+      data?.message ||
+      'ورود ناموفق بود.'
+    importRef.value?.setError(msg)
+    toast.error(msg)
   }
 }
 async function onExport() {

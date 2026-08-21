@@ -5,6 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property int $duration_days
+ * @property numeric-string|float|int|null $price
+ * @property array<int|string, mixed>|null $features
+ * @property bool|null $is_active
+ */
 class SubscriptionPlan extends Model
 {
     protected $fillable = [

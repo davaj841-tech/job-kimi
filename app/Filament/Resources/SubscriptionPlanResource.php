@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Concerns\InteractsWithStaffAccess;
 use App\Filament\Resources\SubscriptionPlanResource\Pages;
 use App\Models\SubscriptionPlan;
 use Filament\Forms;
@@ -12,6 +13,8 @@ use Filament\Tables\Table;
 
 class SubscriptionPlanResource extends Resource
 {
+    use InteractsWithStaffAccess;
+
     protected static ?string $model = SubscriptionPlan::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
@@ -23,6 +26,11 @@ class SubscriptionPlanResource extends Resource
     protected static ?string $pluralModelLabel = 'پلن‌های اشتراک';
 
     protected static ?string $navigationGroup = 'اشتراک و مالی';
+
+    public static function canViewAny(): bool
+    {
+        return self::staffAdminOnly();
+    }
 
     public static function form(Form $form): Form
     {
@@ -50,7 +58,7 @@ class SubscriptionPlanResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
+                    self::secureDeleteBulkAction(),
                 ]),
             ]);
     }

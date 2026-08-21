@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Concerns\InteractsWithStaffAccess;
 use App\Filament\Resources\ExamCategoryResource\Pages;
 use App\Models\ExamCategory;
 use Filament\Forms;
@@ -12,6 +13,8 @@ use Filament\Tables\Table;
 
 class ExamCategoryResource extends Resource
 {
+    use InteractsWithStaffAccess;
+
     protected static ?string $model = ExamCategory::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
@@ -23,6 +26,11 @@ class ExamCategoryResource extends Resource
     protected static ?string $pluralModelLabel = 'طبقه‌بندی‌های آزمون';
 
     protected static ?string $navigationGroup = 'آزمون‌ها';
+
+    public static function canViewAny(): bool
+    {
+        return self::staffAdminOnly();
+    }
 
     public static function form(Form $form): Form
     {
@@ -47,7 +55,7 @@ class ExamCategoryResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
+                    self::secureDeleteBulkAction(),
                 ]),
             ]);
     }

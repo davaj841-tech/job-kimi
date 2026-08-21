@@ -15,7 +15,7 @@ class AdminCreateCommand extends Command
                             {--name= : Display name}
                             {--mobile= : Optional mobile for OTP backup}
                             {--email= : Optional email for password reset}
-                            {--role=admin : admin or operator}';
+                            {--role=super_admin : super_admin, admin, or operator}';
 
     protected $description = 'Create or update an admin/operator user with username/password login';
 
@@ -26,7 +26,7 @@ class AdminCreateCommand extends Command
         $name = $this->option('name') ?: $this->ask('Name', 'Administrator');
         $mobile = $this->option('mobile') ?: $this->ask('Mobile (optional, for OTP backup)', '09120000000');
         $email = $this->option('email') ?: $this->ask('Email (optional, for password reset)', 'admin@jobazmoon.ir');
-        $role = $this->option('role') ?: $this->choice('Role', ['admin', 'operator'], 0);
+        $role = $this->option('role') ?: $this->choice('Role', ['super_admin', 'admin', 'operator'], 0);
 
         $validator = Validator::make([
             'username' => $username,
@@ -39,7 +39,7 @@ class AdminCreateCommand extends Command
             'password' => ['required', 'string', 'min:8', 'regex:/[A-Za-z]/', 'regex:/[0-9]/'],
             'mobile' => ['required', 'regex:/^09\d{9}$/'],
             'email' => ['nullable', 'email'],
-            'role' => ['required', 'in:admin,operator'],
+            'role' => ['required', 'in:super_admin,admin,operator'],
         ], [
             'username.regex' => 'Username must be 3-20 chars: a-z, 0-9, underscore.',
             'password.regex' => 'Password must contain at least one letter and one number.',

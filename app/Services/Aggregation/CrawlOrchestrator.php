@@ -23,7 +23,12 @@ class CrawlOrchestrator
     ) {}
 
     /**
-     * @return array{run: CrawlerRun, summary: array<string, mixed>, health: array<string, mixed>}
+     * @return array{
+     *     run: CrawlerRun|null,
+     *     summary: array<string, mixed>,
+     *     health: array<string, mixed>|null,
+     *     source: JobSource|null
+     * }
      */
     public function crawlSource(JobSource $source, bool $isManualTest = false): array
     {

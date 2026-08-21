@@ -17,13 +17,13 @@ class ContactMessageTest extends TestCase
     public function test_contact_form_returns_tracking_code(): void
     {
         Mail::fake();
-        $res = $this->postJson('/api/v1/contact', [
+        $res = $this->postJson('/api/v1/contact', $this->withAuthCaptcha([
             'name' => 'علی',
             'mobile' => '09123456789',
             'email' => 'ali@example.com',
             'subject' => 'support',
             'message' => 'سلام، نیاز به راهنمایی دارم.',
-        ]);
+        ]));
 
         $res->assertOk()
             ->assertJsonPath('success', true);

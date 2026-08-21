@@ -14,6 +14,7 @@ import { computed, onMounted, ref } from 'vue'
 import api from '../../api/client'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import PageShell from '../../components/layout/PageShell.vue'
+import { setPageMeta, applySeoPayload } from '../../services/meta'
 import { unwrapItem } from '../../utils/format'
 
 const props = defineProps({
@@ -37,8 +38,27 @@ onMounted(async () => {
   try {
     const { data } = await api.get(`/pages/${props.slug}`)
     page.value = unwrapItem(data)
-    if (page.value?.meta_title) {
-      document.title = `${page.value.meta_title} | جاب‌آزمون`
+    if (page.value) {
+      const pageUrl = `${window.location.origin}/${props.slug}`
+      if (page.value.seo?.meta) {
+        applySeoPayload(page.value.seo, {
+          breadcrumbs: [
+            { name: 'خانه', url: `${window.location.origin}/` },
+            { name: page.value.title, url: pageUrl },
+          ],
+        })
+      } else {
+        setPageMeta({
+          title: page.value.meta_title || page.value.title,
+          description: page.value.meta_description || '',
+          url: pageUrl,
+          schema: page.value.schema || null,
+          breadcrumbs: [
+            { name: 'خانه', url: `${window.location.origin}/` },
+            { name: page.value.title, url: pageUrl },
+          ],
+        })
+      }
     }
   } catch {
     page.value = null

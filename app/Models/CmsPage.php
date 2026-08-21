@@ -2,11 +2,23 @@
 
 namespace App\Models;
 
+use App\Traits\HasSeo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
+/**
+ * @property int $id
+ * @property string $title
+ * @property string|null $slug
+ * @property string|null $content
+ * @property string|null $meta_title
+ * @property string|null $meta_description
+ * @property bool $is_published
+ */
 class CmsPage extends Model
 {
+    use \App\Traits\HasSeo;
+
     protected $table = 'cms_pages';
 
     protected $fillable = [

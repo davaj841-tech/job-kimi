@@ -118,6 +118,7 @@ try {
 Remove-Item -Recurse -Force $Stage
 
 Copy-Item (Join-Path $ProjectRoot "cpanel-installer\install.php") (Join-Path $OutRoot "install.php") -Force
+Copy-Item -Recurse -Force (Join-Path $ProjectRoot "cpanel-installer\lib") (Join-Path $OutRoot "lib")
 Copy-Item $MyInvocation.MyCommand.Path (Join-Path $OutRoot "prepare-installer.ps1") -Force
 
 $ZipSize = [math]::Round((Get-Item $ZipPath).Length / 1MB, 1)
@@ -140,6 +141,7 @@ JobAzmoon — راهنمای نصب cPanel (بدون SSH / بدون Composer)
 2) PHP را روی 8.2 یا 8.3 بگذارید و افزونه‌های PDO, pdo_mysql, openssl, mbstring, xml, ctype, json, fileinfo, gd, zip, dom را فعال کنید.
 3) کل پوشه JobAzmoon-Installer را داخل public_html آپلود کنید:
      public_html/install.php
+     public_html/lib/InstallEngine.php
      public_html/package/jobazmoon-core.zip
 4) مرورگر: https://دامنه-شما/install.php
 5) مراحل را کامل کنید. سیستم پوشه job را کنار public_html می‌سازد:

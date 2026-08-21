@@ -1,7 +1,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useDebounceFn, useInfiniteScroll } from '@vueuse/core'
 import api from '../api/client'
-import { unwrapList, unwrapMeta } from '../utils/format'
+import { unwrapList, unwrapMeta, apiErrorMessage } from '../utils/format'
 
 const BOOKMARK_KEY = 'ja_job_bookmarks'
 
@@ -30,6 +30,8 @@ export function useJobList() {
   const loading = ref(false)
   const loadingMore = ref(false)
   const hasMore = ref(true)
+  const error = ref<string | null>(null)
+  const loadMoreError = ref<string | null>(null)
   const pagination = reactive({
     total: 0,
     current_page: 1,
@@ -79,6 +81,13 @@ export function useJobList() {
     if (isMore) loadingMore.value = true
     else loading.value = true
 
+    if (reset) {
+      error.value = null
+      loadMoreError.value = null
+    } else {
+      loadMoreError.value = null
+    }
+
     try {
       const params: Record<string, string | number> = {
         page: page.value,
@@ -107,9 +116,18 @@ export function useJobList() {
       const flagged = withBookmarkFlag(list)
       jobs.value = reset ? flagged : [...jobs.value, ...flagged]
       hasMore.value = pagination.current_page < pagination.last_page
-    } catch {
-      if (reset) jobs.value = []
-      hasMore.value = false
+      if (reset) error.value = null
+      loadMoreError.value = null
+    } catch (e) {
+      const message = apiErrorMessage(e, 'بارگذاری آگهی‌ها ناموفق بود.')
+      if (reset) {
+        error.value = message
+        jobs.value = []
+        hasMore.value = false
+      } else {
+        loadMoreError.value = message
+        page.value = Math.max(1, page.value - 1)
+      }
     } finally {
       loading.value = false
       loadingMore.value = false
@@ -180,6 +198,8 @@ export function useJobList() {
     loading,
     loadingMore,
     hasMore,
+    error,
+    loadMoreError,
     filters,
     pagination,
     classifications,

@@ -19,6 +19,10 @@ class BoardListingHtmlParser implements JobParserInterface
         return 'board_listing_html';
     }
 
+    /**
+     * @param  array<string, mixed>  $context
+     * @return list<array<string, mixed>>
+     */
     public function parse(mixed $payload, array $context = []): array
     {
         $html = is_string($payload) ? $payload : '';
@@ -44,6 +48,10 @@ class BoardListingHtmlParser implements JobParserInterface
         $max = (int) config('aggregation.board_listing.max_items', 80);
 
         foreach ($xpath->query('//a[@href]') ?: [] as $anchor) {
+            if (! $anchor instanceof \DOMElement) {
+                continue;
+            }
+
             if (count($items) >= $max) {
                 break;
             }

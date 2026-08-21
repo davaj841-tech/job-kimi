@@ -82,6 +82,17 @@
       leave-to-class="opacity-0"
     >
       <Card v-if="activeTab === 'profile'" key="profile" class="space-y-3 p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h3 class="text-sm font-bold dark:text-white">اطلاعات شخصی</h3>
+          <button
+            type="button"
+            class="rounded-xl border border-brand/30 bg-brand-soft px-3 py-1.5 text-xs font-bold text-brand transition hover:bg-brand hover:text-white disabled:opacity-60"
+            :disabled="fillingResume"
+            @click="fillFromResume"
+          >
+            {{ fillingResume ? '...' : 'پر کردن از رزومه' }}
+          </button>
+        </div>
         <form class="space-y-3 text-sm" @submit.prevent="saveProfile">
           <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
@@ -140,7 +151,7 @@
                 maxlength="10"
                 inputmode="numeric"
                 placeholder="۱۰ رقم"
-                @input="form.national_code = String($event.target.value || '').replace(/\D/g, '').slice(0, 10)"
+                @input="onNationalCodeInput"
               />
             </div>
             <JalaliBirthInput v-model="form.birth_date" />
@@ -186,7 +197,7 @@
                 maxlength="10"
                 inputmode="numeric"
                 placeholder="۱۰ رقم"
-                @input="form.postal_code = String($event.target.value || '').replace(/\D/g, '').slice(0, 10)"
+                @input="onPostalCodeInput"
               />
             </div>
             <div class="md:col-span-2">
@@ -244,30 +255,67 @@
         </RouterLink>
       </Card>
 
-      <Card v-else key="activity" class="p-5">
-        <h3 class="mb-3 text-sm font-bold dark:text-white">فعالیت اخیر</h3>
+      <Card v-else key="activity" class="space-y-5 p-5">
         <div v-if="activityLoading" class="space-y-2">
-          <Skeleton v-for="i in 4" :key="i" class="h-10 rounded-xl" />
+          <Skeleton v-for="i in 5" :key="i" class="h-12 rounded-xl" />
         </div>
-        <EmptyState
-          v-else-if="!activity.length"
-          title="فعالیتی ثبت نشده"
-          description="پس از استفاده از سایت، فعالیت اینجا دیده می‌شود."
-        />
-        <ul v-else class="space-y-2 text-sm">
-          <li
-            v-for="(row, idx) in activity"
-            :key="idx"
-            class="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-700/40"
-          >
-            <span class="truncate text-ink dark:text-slate-200">{{
-              row.page_url || row.route_name || 'بازدید'
-            }}</span>
-            <span class="shrink-0 text-xs text-ink-muted">{{
-              formatDate(row.created_at)
-            }}</span>
-          </li>
-        </ul>
+        <template v-else>
+          <section>
+            <h3 class="mb-3 text-sm font-bold dark:text-white">تاریخچه ورود و خروج</h3>
+            <EmptyState
+              v-if="!loginSessions.length"
+              title="ورود ثبت نشده"
+              description="پس از ورود به حساب، تاریخ و ساعت ورود و خروج اینجا نمایش داده می‌شود."
+            />
+            <ul v-else class="space-y-2 text-sm">
+              <li
+                v-for="row in loginSessions"
+                :key="row.id"
+                class="rounded-xl bg-slate-50 px-3 py-2.5 dark:bg-slate-700/40"
+              >
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <span class="font-medium text-ink dark:text-slate-100">
+                    ورود: {{ row.logged_in_label || formatDate(row.logged_in_at) }}
+                  </span>
+                  <Badge :variant="row.is_active ? 'success' : 'info'">
+                    {{ row.is_active ? 'نشست فعال' : 'خروج' }}
+                  </Badge>
+                </div>
+                <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted dark:text-slate-400">
+                  <span>
+                    خروج:
+                    {{
+                      row.is_active
+                        ? 'هنوز خارج نشده'
+                        : row.logged_out_label || formatDate(row.logged_out_at)
+                    }}
+                  </span>
+                  <span>مدت حضور: {{ row.duration_label || '—' }}</span>
+                </div>
+              </li>
+            </ul>
+          </section>
+
+          <section v-if="monthlySummary.length">
+            <h3 class="mb-2 text-sm font-bold dark:text-white">خلاصه ماه‌های گذشته</h3>
+            <p class="mb-3 text-xs text-ink-muted">
+              پس از اتمام هر ماه، مجموع ورودها و مدت حضور در آن ماه اینجا می‌آید.
+            </p>
+            <ul class="space-y-2 text-sm">
+              <li
+                v-for="m in monthlySummary"
+                :key="`${m.year}-${m.month}`"
+                class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-surface-line px-3 py-2 dark:border-slate-600"
+              >
+                <span class="font-medium dark:text-white">{{ m.label }}</span>
+                <span class="text-xs text-ink-muted">
+                  {{ m.sessions_count }} ورود ·
+                  {{ formatDurationFa(m.total_duration_seconds) }}
+                </span>
+              </li>
+            </ul>
+          </section>
+        </template>
       </Card>
     </Transition>
 
@@ -282,6 +330,7 @@
 </template>
 
 <script setup lang="ts">
+import type { AxiosError } from 'axios'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../api/client'
@@ -296,8 +345,8 @@ import Card from '../../components/ui/Card.vue'
 import Skeleton from '../../components/ui/Skeleton.vue'
 import { ACADEMIC_FIELDS } from '../../data/academicFields'
 import { useToast } from '../../composables/useToast'
-import { useAuthStore } from '../../stores/auth'
-import { apiErrorMessage, formatDate, formatPrice, unwrapItem } from '../../utils/format'
+import { useAuthStore, type User } from '../../stores/auth'
+import { apiErrorMessage, formatDate, formatPrice, unwrapItem, unwrapList } from '../../utils/format'
 import { IRAN_PROVINCES, citiesForProvince } from '../../utils/iranCities'
 
 const auth = useAuthStore()
@@ -314,8 +363,40 @@ const tabs = [
 
 const saving = ref(false)
 const pwdSaving = ref(false)
+const fillingResume = ref(false)
 const activityLoading = ref(false)
-const activity = ref<any[]>([])
+
+type LoginSessionRow = {
+  id: number
+  logged_in_at?: string | null
+  logged_out_at?: string | null
+  logged_in_label?: string | null
+  logged_out_label?: string | null
+  duration_seconds?: number
+  duration_label?: string | null
+  is_active?: boolean
+}
+
+type MonthlyRow = {
+  year: number
+  month: number
+  label: string
+  sessions_count: number
+  total_duration_seconds: number
+}
+
+type ActivityPayload = {
+  sessions?: LoginSessionRow[]
+  monthly?: MonthlyRow[]
+  items?: unknown[]
+}
+
+type ProfileApiError = {
+  message?: string
+}
+
+const loginSessions = ref<LoginSessionRow[]>([])
+const monthlySummary = ref<MonthlyRow[]>([])
 const form = reactive({
   name: '',
   email: '',
@@ -353,7 +434,7 @@ const initials = computed(() => {
 })
 
 function syncForm() {
-  const u = auth.user || {}
+  const u: User = auth.user || ({ id: 0, name: null, mobile: '' } as User)
   form.name = u.name || ''
   form.email = u.email || ''
   form.national_code = String(u.national_code || '').replace(/\D/g, '').slice(0, 10)
@@ -368,6 +449,20 @@ function syncForm() {
   form.address = u.address || ''
   form.postal_code = String(u.postal_code || '').replace(/\D/g, '').slice(0, 10)
   form.photo = u.avatar || ''
+}
+
+function sanitizeDigits(value: string, max: number): string {
+  return value.replace(/\D/g, '').slice(0, max)
+}
+
+function onNationalCodeInput(event: Event): void {
+  const target = event.target as HTMLInputElement | null
+  form.national_code = sanitizeDigits(target?.value || '', 10)
+}
+
+function onPostalCodeInput(event: Event): void {
+  const target = event.target as HTMLInputElement | null
+  form.postal_code = sanitizeDigits(target?.value || '', 10)
 }
 
 async function saveProfile() {
@@ -392,8 +487,8 @@ async function saveProfile() {
     })
     toast.success('پروفایل ذخیره شد')
     syncForm()
-  } catch (e: any) {
-    toast.error(apiErrorMessage(e) || 'ذخیره ناموفق بود')
+  } catch (e) {
+    toast.error(apiErrorMessage(e as AxiosError<ProfileApiError>) || 'ذخیره ناموفق بود')
   } finally {
     saving.value = false
   }
@@ -407,27 +502,88 @@ async function changePassword() {
     passwordForm.current = ''
     passwordForm.password = ''
     passwordForm.password_confirmation = ''
-  } catch (e: any) {
-    toast.error(apiErrorMessage(e) || 'تغییر رمز ناموفق بود')
+  } catch (e) {
+    toast.error(apiErrorMessage(e as AxiosError<ProfileApiError>) || 'تغییر رمز ناموفق بود')
   } finally {
     pwdSaving.value = false
   }
+}
+
+async function fillFromResume() {
+  fillingResume.value = true
+  try {
+    const { data } = await api.get('/resumes')
+    const resumes = unwrapList(data) as Array<{
+      is_active?: boolean
+      updated_at?: string
+      data?: { personal?: Record<string, string | null | undefined> }
+    }>
+
+    const pick =
+      resumes.find((r) => r.is_active && r.data?.personal) ||
+      [...resumes].sort((a, b) =>
+        String(b.updated_at || '').localeCompare(String(a.updated_at || ''))
+      )[0]
+
+    const p = pick?.data?.personal
+    if (!p || !Object.values(p).some((v) => String(v || '').trim())) {
+      toast.error('رزومه‌ای با اطلاعات شخصی یافت نشد.')
+      return
+    }
+
+    if (p.full_name) form.name = String(p.full_name)
+    if (p.email) form.email = String(p.email)
+    if (p.home_phone) form.home_phone = String(p.home_phone)
+    if (p.military_status) form.military_status = String(p.military_status)
+    if (p.insurance_history) form.insurance_history = String(p.insurance_history)
+    const nc = String(p.national_code || '').replace(/\D/g, '').slice(0, 10)
+    if (nc) form.national_code = nc
+    if (p.birth_date) form.birth_date = String(p.birth_date)
+    if (p.birth_province) form.birth_province = String(p.birth_province)
+    if (p.birth_city) form.birth_city = String(p.birth_city)
+    if (p.marital_status) form.marital_status = String(p.marital_status)
+    if (p.field_of_study) form.field_of_study = String(p.field_of_study)
+    if (p.address) form.address = String(p.address)
+    const pc = String(p.postal_code || '').replace(/\D/g, '').slice(0, 10)
+    if (pc) form.postal_code = pc
+    if (p.photo) form.photo = String(p.photo)
+
+    toast.success('اطلاعات از رزومه پر شد. برای ذخیره دکمه ذخیره را بزنید.')
+  } catch (e) {
+    toast.error(apiErrorMessage(e as AxiosError<ProfileApiError>) || 'خواندن رزومه ناموفق بود')
+  } finally {
+    fillingResume.value = false
+  }
+}
+
+function formatDurationFa(seconds: number): string {
+  const s = Math.max(0, Number(seconds) || 0)
+  if (s < 60) return `${s} ثانیه`
+  const hours = Math.floor(s / 3600)
+  const minutes = Math.floor((s % 3600) / 60)
+  const parts: string[] = []
+  if (hours) parts.push(`${hours} ساعت`)
+  if (minutes) parts.push(`${minutes} دقیقه`)
+  return parts.join(' و ') || 'کمتر از یک دقیقه'
 }
 
 async function loadActivity() {
   activityLoading.value = true
   try {
     const { data } = await api.get('/user/activity')
-    activity.value = (unwrapItem(data) as any)?.items || []
+    const payload = unwrapItem<ActivityPayload>(data)
+    loginSessions.value = payload?.sessions || []
+    monthlySummary.value = payload?.monthly || []
   } catch {
-    activity.value = []
+    loginSessions.value = []
+    monthlySummary.value = []
   } finally {
     activityLoading.value = false
   }
 }
 
 watch(activeTab, (tab) => {
-  if (tab === 'activity' && !activity.value.length) void loadActivity()
+  if (tab === 'activity') void loadActivity()
 })
 
 async function onLogout() {

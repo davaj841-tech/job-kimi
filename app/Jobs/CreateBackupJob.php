@@ -16,9 +16,28 @@ class CreateBackupJob implements ShouldQueue
 
     public int $timeout = 600;
 
+    public int $tries = 2;
+
     public function handle(BackupService $backups): void
     {
         $path = $backups->createBackup();
-        Log::info('Backup created', ['path' => $path]);
+        $verify = $backups->verifyBackup($path);
+
+        if (! ($verify['ok'] ?? false)) {
+            throw new \RuntimeException('Backup verify failed: '.($verify['message'] ?? 'unknown'));
+        }
+
+        Log::info('Backup created', [
+            'file' => basename($path),
+            'status' => $verify['manifest']['status'] ?? 'complete',
+            'warnings' => $verify['manifest']['warnings'] ?? [],
+        ]);
+    }
+
+    public function failed(?\Throwable $exception): void
+    {
+        Log::error('Backup job failed', [
+            'message' => $exception?->getMessage(),
+        ]);
     }
 }

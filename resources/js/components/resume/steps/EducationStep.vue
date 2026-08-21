@@ -59,11 +59,19 @@
           <JalaliMonthYear
             v-model="edu.start_date"
             label="از تاریخ"
+            :error="dateRangeError(edu)"
           />
           <JalaliMonthYear
             v-model="edu.end_date"
             label="تا تاریخ"
+            :error="dateRangeError(edu)"
           />
+          <p
+            v-if="dateRangeError(edu)"
+            class="md:col-span-2 text-xs text-red-600"
+          >
+            {{ dateRangeError(edu) }}
+          </p>
           <label class="block">
             <span class="mb-1.5 block text-xs font-medium text-desk-muted">معدل (اختیاری)</span>
             <input
@@ -91,6 +99,7 @@ import FormInput from '../FormInput.vue'
 import JalaliMonthYear from '../JalaliMonthYear.vue'
 import SearchSelect from '../SearchSelect.vue'
 import { ACADEMIC_FIELDS } from '../../../data/academicFields'
+import { compareJalaliMonth, RANGE_ORDER_ERROR } from '../../../utils/jalali'
 
 const degrees = ['دیپلم', 'کاردانی', 'کارشناسی', 'ارشد', 'دکترا']
 
@@ -98,6 +107,12 @@ const props = defineProps({
   modelValue: { type: Object, required: true },
 })
 const emit = defineEmits(['update:modelValue'])
+
+function dateRangeError(edu) {
+  if (!edu?.start_date || !edu?.end_date) return ''
+  const cmp = compareJalaliMonth(edu.start_date, edu.end_date)
+  return cmp !== null && cmp >= 0 ? RANGE_ORDER_ERROR : ''
+}
 
 const local = computed({
   get: () => props.modelValue,

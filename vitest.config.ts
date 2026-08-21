@@ -17,11 +17,14 @@ export default defineConfig({
     globals: true,
     setupFiles: ['resources/js/tests/setup.ts'],
     include: ['resources/js/**/*.spec.ts'],
+    // forks is more stable on Windows than threads (avoids pool worker timeouts)
     pool: 'forks',
     maxWorkers: 1,
+    fileParallelism: false,
     isolate: true,
-    testTimeout: 15000,
-    hookTimeout: 15000,
+    testTimeout: 20000,
+    hookTimeout: 20000,
+    teardownTimeout: 15000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],

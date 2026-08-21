@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Transaction;
 use App\Services\InvoiceService;
+use App\Support\OperatorPermissions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -19,8 +20,8 @@ class InvoiceController extends BaseController
         $tx = Transaction::query()->findOrFail($id);
         $user = $request->user();
 
-        if ($tx->user_id !== $user->id && ! in_array($user->role, ['admin', 'operator'], true)) {
-            return $this->errorResponse('دسترسی ندارید.', 403);
+        if ($tx->user_id !== $user->id && ! OperatorPermissions::allows($user, 'transactions')) {
+            return $this->errorResponse('فاکتور یافت نشد.', 404);
         }
 
         if ($tx->status !== 'success') {
@@ -37,7 +38,7 @@ class InvoiceController extends BaseController
 
     public function regenerate(Request $request, int $id): JsonResponse
     {
-        if (! in_array($request->user()->role, ['admin', 'operator'], true)) {
+        if (! OperatorPermissions::allows($request->user(), 'transactions')) {
             return $this->errorResponse('دسترسی ندارید.', 403);
         }
 
@@ -47,7 +48,7 @@ class InvoiceController extends BaseController
 
         return $this->successResponse([
             'invoice_number' => $tx->invoice_number,
-            'invoice_pdf' => $tx->invoice_pdf,
+            'invoice_pdf' => url('/api/v1/transactions/'.$tx->id.'/invoice'),
         ], 'فاکتور بازتولید شد.');
     }
 }

@@ -57,12 +57,12 @@ class InstallController extends Controller
         return view('install.database', [
             'step' => 2,
             'old' => [
-                'db_host' => old('db_host', env('DB_HOST', '127.0.0.1')),
-                'db_port' => old('db_port', env('DB_PORT', '3306')),
-                'db_database' => old('db_database', env('DB_DATABASE', '')),
-                'db_username' => old('db_username', env('DB_USERNAME', '')),
+                'db_host' => old('db_host', (string) config('database.connections.mysql.host', '127.0.0.1')),
+                'db_port' => old('db_port', (string) config('database.connections.mysql.port', '3306')),
+                'db_database' => old('db_database', (string) config('database.connections.mysql.database', '')),
+                'db_username' => old('db_username', (string) config('database.connections.mysql.username', '')),
                 'db_password' => old('db_password', ''),
-                'db_prefix' => old('db_prefix', env('DB_PREFIX', '')),
+                'db_prefix' => old('db_prefix', (string) config('database.connections.mysql.prefix', '')),
             ],
         ]);
     }
@@ -77,16 +77,25 @@ class InstallController extends Controller
             $this->createDatabaseIfMissing($data);
             $pdo = $this->pdoWithDatabase($data);
             $pdo->query('SELECT 1');
-        } catch (Throwable $e) {
+            $tableCount = (int) $pdo->query(
+                'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '.$pdo->quote($data['db_database'])
+            )->fetchColumn();
+        } catch (Throwable) {
             return response()->json([
                 'ok' => false,
-                'message' => $e->getMessage(),
+                'message' => 'اتصال به MySQL برقرار نشد. هاست، نام کاربری، رمز و نام پایگاه‌داده را بررسی کنید.',
+                'table_count' => 0,
+                'state' => 'connection_failed',
             ], 422);
         }
 
         return response()->json([
             'ok' => true,
-            'message' => 'اتصال برقرار شد و پایگاه‌داده آماده است.',
+            'message' => $tableCount === 0
+                ? 'اتصال برقرار شد. پایگاه‌داده خالی است.'
+                : 'اتصال برقرار شد. این پایگاه '.$tableCount.' جدول دارد — برای ادامه باید تأیید کنید.',
+            'table_count' => $tableCount,
+            'state' => $tableCount === 0 ? 'empty' : 'has_tables',
         ]);
     }
 
@@ -98,9 +107,21 @@ class InstallController extends Controller
 
         try {
             $this->createDatabaseIfMissing($data);
-            $this->pdoWithDatabase($data)->query('SELECT 1');
-        } catch (Throwable $e) {
-            return back()->withInput()->withErrors(['db' => $e->getMessage()]);
+            $pdo = $this->pdoWithDatabase($data);
+            $pdo->query('SELECT 1');
+            $tableCount = (int) $pdo->query(
+                'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '.$pdo->quote($data['db_database'])
+            )->fetchColumn();
+        } catch (Throwable) {
+            return back()->withInput()->withErrors([
+                'db' => 'اتصال به MySQL برقرار نشد. اطلاعات cPanel را بررسی کنید.',
+            ]);
+        }
+
+        if ($tableCount > 0 && ! $request->boolean('confirm_existing_db')) {
+            return back()->withInput()->withErrors([
+                'db' => 'این پایگاه '.$tableCount.' جدول دارد. برای ادامه گزینه تأیید را علامت بزنید.',
+            ]);
         }
 
         $this->writeEnv([
@@ -115,7 +136,10 @@ class InstallController extends Controller
         ]);
 
         $this->applyDatabaseConfig($data);
-        session(['install_step' => 3]);
+        session([
+            'install_step' => 3,
+            'install_db_state' => ['table_count' => $tableCount, 'state' => $tableCount === 0 ? 'empty' : 'has_tables'],
+        ]);
 
         return redirect()->route('install.migrate');
     }
@@ -166,12 +190,16 @@ class InstallController extends Controller
                 'output' => implode("\n", $lines),
             ]);
         } catch (Throwable $e) {
-            $lines[] = 'ERROR: '.$e->getMessage();
+            try {
+                Artisan::call('migrate:rollback', ['--force' => true]);
+            } catch (Throwable) {
+            }
+            $lines[] = 'ERROR: migration ناموفق بود.';
 
             return response()->json([
                 'ok' => false,
                 'output' => implode("\n", $lines),
-                'message' => $e->getMessage(),
+                'message' => 'اجرای migration ناموفق بود. log را بررسی کنید.',
             ], 500);
         }
     }
@@ -183,7 +211,7 @@ class InstallController extends Controller
         return view('install.admin', [
             'step' => 4,
             'old' => [
-                'site_name' => old('site_name', env('APP_NAME', '')),
+                'site_name' => old('site_name', (string) config('app.name', '')),
                 'name' => old('name', ''),
                 'email' => old('email', ''),
             ],
@@ -227,6 +255,7 @@ class InstallController extends Controller
         $this->writeEnv([
             'APP_INSTALLED' => 'true',
             'APP_DEBUG' => 'false',
+            'APP_ENV' => 'production',
         ]);
 
         File::put(
@@ -234,19 +263,26 @@ class InstallController extends Controller
             json_encode([
                 'installed_at' => now()->toIso8601String(),
                 'app_url' => config('app.url'),
+                'installer' => 'web',
             ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
         );
 
         try {
-            Artisan::call('config:clear');
-            Artisan::call('route:clear');
-            Artisan::call('view:clear');
-            Artisan::call('cache:clear');
+            Artisan::call('storage:link', ['--force' => true]);
         } catch (Throwable) {
-            // فایل نصب ساخته شده؛ پاکسازی کش نباید مانع پایان شود.
+            // symlink may fail on some hosts
         }
 
-        session()->forget('install_step');
+        try {
+            Artisan::call('optimize:clear');
+            Artisan::call('config:cache');
+            Artisan::call('route:cache');
+            Artisan::call('view:cache');
+        } catch (Throwable) {
+            // non-fatal on shared hosting
+        }
+
+        session()->forget(['install_step', 'install_db_state']);
 
         return view('install.finish', [
             'step' => 5,
@@ -289,7 +325,7 @@ class InstallController extends Controller
     protected function requirementChecks(): array
     {
         $phpOk = version_compare(PHP_VERSION, '8.2.0', '>=');
-        $extensions = ['openssl', 'pdo', 'pdo_mysql', 'mbstring', 'tokenizer', 'xml', 'ctype', 'json', 'bcmath', 'fileinfo', 'curl'];
+        $extensions = ['openssl', 'pdo', 'pdo_mysql', 'mbstring', 'tokenizer', 'xml', 'dom', 'ctype', 'json', 'fileinfo', 'gd', 'zip', 'curl'];
         $paths = [
             storage_path(),
             storage_path('app'),
@@ -334,6 +370,12 @@ class InstallController extends Controller
             'label' => 'فایل‌های migration',
             'ok' => $this->migrationCount() > 0,
             'detail' => (string) $this->migrationCount().' فایل در database/migrations',
+        ];
+
+        $checks[] = [
+            'label' => 'فایل manifest.json (npm run build)',
+            'ok' => app()->environment('testing') || is_file(public_path('build/manifest.json')),
+            'detail' => is_file(public_path('build/manifest.json')) ? 'موجود' : 'public/build/manifest.json یافت نشد',
         ];
 
         return $checks;
@@ -470,12 +512,12 @@ class InstallController extends Controller
         }
 
         $this->applyDatabaseConfig([
-            'db_host' => (string) env('DB_HOST', '127.0.0.1'),
-            'db_port' => (string) env('DB_PORT', '3306'),
-            'db_database' => (string) env('DB_DATABASE', ''),
-            'db_username' => (string) env('DB_USERNAME', ''),
-            'db_password' => (string) env('DB_PASSWORD', ''),
-            'db_prefix' => (string) env('DB_PREFIX', ''),
+            'db_host' => (string) ($_ENV['DB_HOST'] ?? '127.0.0.1'),
+            'db_port' => (string) ($_ENV['DB_PORT'] ?? '3306'),
+            'db_database' => (string) ($_ENV['DB_DATABASE'] ?? ''),
+            'db_username' => (string) ($_ENV['DB_USERNAME'] ?? ''),
+            'db_password' => (string) ($_ENV['DB_PASSWORD'] ?? ''),
+            'db_prefix' => (string) ($_ENV['DB_PREFIX'] ?? ''),
         ]);
     }
 
@@ -490,6 +532,7 @@ class InstallController extends Controller
         $fillable = $user->getFillable();
         $allowed = $fillable !== [] ? array_values(array_intersect($fillable, $columns)) : $columns;
 
+        /** @var array{name?: string, email?: string, password?: string, role?: string, status?: string, is_verified?: bool, username?: string, mobile?: string} $payload */
         $payload = [];
         $map = [
             'name' => $data['name'],

@@ -2,10 +2,8 @@
 
 namespace App\Services\Payment;
 
-use App\Models\Setting;
 use Illuminate\Support\Facades\Log;
 use SoapClient;
-use SoapFault;
 use Throwable;
 
 class ShaparakGateway implements PaymentGatewayInterface
@@ -22,19 +20,23 @@ class ShaparakGateway implements PaymentGatewayInterface
 
     protected function terminalId(): string
     {
-        return (string) (Setting::getFilled('shaparak_terminal_id') ?: Setting::getFilled('shaparak_merchant_id', ''));
+        return (string) (config('services.shaparak.terminal_id') ?: config('services.mellat.terminal_id', ''));
     }
 
     protected function username(): string
     {
-        return (string) Setting::getFilled('shaparak_username', '');
+        return (string) (config('services.shaparak.username') ?: config('services.mellat.username', ''));
     }
 
     protected function password(): string
     {
-        return (string) Setting::getFilled('shaparak_password', '');
+        return (string) (config('services.shaparak.password') ?: config('services.mellat.password', ''));
     }
 
+    /**
+     * @param  array<string, mixed>  $meta
+     * @return array{authority: ?string, payment_url: ?string, error: ?string}
+     */
     public function request(int $amount, string $description, string $callbackUrl, array $meta = []): array
     {
         if (! extension_loaded('soap')) {
@@ -87,13 +89,17 @@ class ShaparakGateway implements PaymentGatewayInterface
                 'payment_url' => 'https://bpm.shaparak.ir/pgwchannel/startpay.mellat?RefId='.urlencode($refId),
                 'error' => null,
             ];
-        } catch (SoapFault|Throwable $e) {
+        } catch (Throwable $e) {
             Log::error('Shaparak request exception', ['error' => $e->getMessage()]);
 
             return ['authority' => null, 'payment_url' => null, 'error' => 'خطا در اتصال به درگاه شاپرک.'];
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $meta
+     * @return array{success: bool, ref_id: ?string, error: ?string}
+     */
     public function verify(string $authority, int $amount, array $meta = []): array
     {
         if (! extension_loaded('soap')) {
@@ -103,6 +109,9 @@ class ShaparakGateway implements PaymentGatewayInterface
         $orderId = (int) ($meta['order_id'] ?? 0);
         $saleOrderId = (int) ($meta['sale_order_id'] ?? $orderId);
         $saleReferenceId = (int) ($meta['sale_reference_id'] ?? 0);
+        if ($saleOrderId <= 0 || $saleReferenceId <= 0) {
+            return ['success' => false, 'ref_id' => null, 'error' => 'شناسه مرجع شاپرک ناقص است.'];
+        }
 
         try {
             $client = new SoapClient('https://bpm.shaparak.ir/pgwchannel/services/pgw?wsdl', [
@@ -133,7 +142,7 @@ class ShaparakGateway implements PaymentGatewayInterface
             }
 
             return ['success' => true, 'ref_id' => $authority, 'error' => null];
-        } catch (SoapFault|Throwable $e) {
+        } catch (Throwable $e) {
             Log::error('Shaparak verify exception', ['error' => $e->getMessage()]);
 
             return ['success' => false, 'ref_id' => null, 'error' => 'خطا در تأیید پرداخت شاپرک.'];

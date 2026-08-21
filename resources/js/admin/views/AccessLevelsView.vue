@@ -30,16 +30,24 @@
             <span
               class="rounded-full px-2 py-0.5 text-[11px] font-bold"
               :class="
-                row.role === 'admin'
+                row.role === 'super_admin'
+                  ? 'bg-purple-50 text-purple-700'
+                  : row.role === 'admin'
                   ? 'bg-emerald-50 text-emerald-700'
                   : 'bg-orange-50 text-orange-700'
               "
             >
-              {{ row.role === 'admin' ? 'مدیر' : 'اپراتور' }}
+              {{
+                row.role === 'super_admin'
+                  ? 'سوپرادمین'
+                  : row.role === 'admin'
+                    ? 'مدیر'
+                    : 'اپراتور'
+              }}
             </span>
           </template>
           <template #cell-perms="{ row }">
-            <span v-if="row.role === 'admin'" class="text-xs text-slate-500"
+            <span v-if="row.role === 'super_admin' || row.role === 'admin'" class="text-xs text-slate-500"
               >همه دسترسی‌ها</span
             >
             <span v-else class="text-xs text-slate-600">
@@ -130,7 +138,7 @@ async function load() {
     const list = unwrapList(data)
     // also include operators that may come without role filter support
     rows.value = (list || []).filter(
-      (u) => u.role === 'operator' || u.role === 'admin'
+      (u) => u.role === 'operator' || u.role === 'admin' || u.role === 'super_admin'
     )
     if (!rows.value.length && list?.length) rows.value = list
   } catch (e) {

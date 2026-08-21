@@ -283,7 +283,7 @@ class ContentGeneratorService
                 return $this->outcome('skipped', false, $content, $content ? 'duplicate_unchanged' : 'duplicate_hash');
             }
             if ($outcome === 'failed' || ! $content) {
-                return $this->outcome('failed', false, $content, $content?->last_error ?? 'generation_failed');
+                return $this->outcome('failed', false, $content, $content->last_error ?? 'generation_failed');
             }
 
             $mode = (string) config('content.publish_mode', 'draft');
@@ -341,7 +341,7 @@ class ContentGeneratorService
                 ->latest('id')
                 ->limit(20)
                 ->get()
-                ->filter(fn (JobPost $j) => $j->source && $this->quality->sourceAllowed($j->source))
+                ->filter(fn (JobPost $j) => $j->source instanceof JobSource && $this->quality->sourceAllowed($j->source))
                 ->values();
 
             if ($jobs->count() < 2) {
@@ -444,7 +444,7 @@ class ContentGeneratorService
             ->latest('updated_at')
             ->limit(100)
             ->get()
-            ->filter(fn (JobPost $j) => $j->source
+            ->filter(fn (JobPost $j) => $j->source instanceof JobSource
                 && $this->quality->sourceAllowed($j->source)
                 && $this->quality->hasEnoughFactualFields($j))
             ->values();
@@ -470,6 +470,9 @@ class ContentGeneratorService
         return true;
     }
 
+    /**
+     * @return array{published: int, failed: int}
+     */
     public function publishScheduled(int $limit = 20): array
     {
         $stats = ['published' => 0, 'failed' => 0];
@@ -500,6 +503,9 @@ class ContentGeneratorService
         return $stats;
     }
 
+    /**
+     * @return array{published: int, failed: int}
+     */
     public function publishPending(int $limit = 20): array
     {
         // Backward-compatible alias: publish due scheduled items, then eligible drafts when mode is publish.

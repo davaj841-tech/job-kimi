@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div class="relative" dir="ltr">
     <input
       :value="modelValue"
       :type="visible ? 'text' : 'password'"
@@ -9,14 +9,15 @@
       :autocomplete="autocomplete"
       :dir="dir"
       :lang="lang"
-      class="pe-10"
+      class="!pr-10"
       @input="$emit('update:modelValue', $event.target.value)"
       @keyup.enter="$emit('enter')"
     />
     <button
       type="button"
-      class="absolute left-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 hover:text-slate-700"
+      class="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-md p-1 text-slate-400 hover:text-slate-700"
       :aria-label="visible ? 'مخفی کردن رمز' : 'نمایش رمز'"
+      tabindex="-1"
       @click="visible = !visible"
     >
       <EyeSlashIcon v-if="visible" class="h-5 w-5" />

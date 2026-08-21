@@ -8,17 +8,29 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
+/**
+ * @implements WithMapping<SiteError>
+ */
 class SiteErrorsExport implements FromCollection, WithHeadings, WithMapping
 {
+    /**
+     * @param  Collection<int, SiteError>  $rows
+     */
     public function __construct(
         protected Collection $rows
     ) {}
 
+    /**
+     * @return Collection<int, SiteError>
+     */
     public function collection(): Collection
     {
         return $this->rows;
     }
 
+    /**
+     * @return list<string>
+     */
     public function headings(): array
     {
         return [
@@ -40,6 +52,7 @@ class SiteErrorsExport implements FromCollection, WithHeadings, WithMapping
 
     /**
      * @param  SiteError  $row
+     * @return list<mixed>
      */
     public function map($row): array
     {

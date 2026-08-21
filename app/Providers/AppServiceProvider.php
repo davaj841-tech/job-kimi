@@ -17,8 +17,15 @@ use App\Listeners\NotifyUserOfApproval;
 use App\Listeners\SendExpiryReminder;
 use App\Listeners\SendWelcomeNotification;
 use App\Listeners\UpdateUserStats;
+use App\Models\BlogPost;
+use App\Models\CmsPage;
+use App\Models\Exam;
 use App\Models\Feature;
+use App\Models\GeneratedContent;
+use App\Models\JobPost;
+use App\Models\PdfProduct;
 use App\Observers\FeatureObserver;
+use App\Observers\SeoContentObserver;
 use App\Services\Aggregation\CrawlerResolver;
 use App\Services\Aggregation\DuplicateDetector;
 use App\Services\Aggregation\JobNormalizer;
@@ -92,6 +99,10 @@ class AppServiceProvider extends ServiceProvider
 
         Feature::observe(FeatureObserver::class);
 
+        foreach ([Exam::class, JobPost::class, BlogPost::class, CmsPage::class, GeneratedContent::class, PdfProduct::class] as $model) {
+            $model::observe(SeoContentObserver::class);
+        }
+
         Request::macro('trustedIp', function (): ?string {
             /** @var Request $this */
             return app(IpHelper::class)->getClientIp($this);
@@ -112,15 +123,37 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('otp', function (Request $request) {
-            return Limit::perMinute(3)->by(($request->input('mobile') ?: '').'|'.$request->ip());
+            $mobile = \App\Support\IranMobile::normalize((string) $request->input('mobile', ''))
+                ?: (string) $request->input('mobile', '');
+
+            return Limit::perMinute(3)->by($mobile.'|'.$request->ip());
         });
 
         RateLimiter::for('login', function (Request $request) {
-            return Limit::perMinute(5)->by(($request->input('mobile') ?: $request->input('login') ?: '').'|'.$request->ip());
+            $id = (string) ($request->input('mobile') ?: $request->input('login') ?: '');
+            $id = \App\Support\IranMobile::normalize($id) ?: $id;
+
+            return Limit::perMinute(5)->by($id.'|'.$request->ip());
         });
 
         RateLimiter::for('admin-login', function (Request $request) {
             return Limit::perMinute(5)->by(($request->input('username') ?: '').'|'.$request->ip());
+        });
+
+        RateLimiter::for('contact', function (Request $request) {
+            return Limit::perMinute(5)->by((string) $request->ip());
+        });
+
+        RateLimiter::for('newsletter', function (Request $request) {
+            return Limit::perMinute(5)->by((string) $request->ip());
+        });
+
+        RateLimiter::for('coupon', function (Request $request) {
+            return Limit::perMinute(10)->by((string) $request->ip());
+        });
+
+        RateLimiter::for('payment-callback', function (Request $request) {
+            return Limit::perMinute(30)->by((string) $request->ip());
         });
     }
 }

@@ -87,7 +87,7 @@ class AggregateJobsDispatchCommand extends Command
                     $source->schedule_mode ?: 'global',
                     $source->crawl_frequency,
                     $schedule->minimumIntervalMinutes($source).'m',
-                    $source->last_crawled_at?->toDateTimeString() ?? 'never',
+                    ($source->last_crawled_at instanceof \Carbon\CarbonInterface ? $source->last_crawled_at->toDateTimeString() : null) ?? 'never',
                 ];
             })->all()
         );

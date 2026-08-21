@@ -1,7 +1,7 @@
 {{-- DomPDF paints LTR; visual RTL = last table cell is the rightmost. --}}
 @php
-    $eduPeriod = $eduPeriod ?? static fn ($edu) => '';
-    $expPeriod = $expPeriod ?? static fn ($exp) => '';
+    $eduPeriod = $eduPeriod ?? static fn ($edu) => ['start' => '', 'end' => ''];
+    $expPeriod = $expPeriod ?? static fn ($exp) => ['start' => '', 'end' => ''];
 @endphp
 
 @if($isSide)
@@ -21,9 +21,12 @@
                         <th>عنوان</th>
                     </tr>
                     @foreach($experience as $exp)
+                        @php $period = $expPeriod($exp); @endphp
                         <tr>
                             <td>{{ $exp['description'] ?? '' }}</td>
-                            <td class="num">{{ $expPeriod($exp) }}</td>
+                            <td class="period-cell">
+                                @include('pdf.resumes.partials.period_cell', ['start' => $period['start'] ?? '', 'end' => $period['end'] ?? ''])
+                            </td>
                             <td>{{ $exp['company'] ?? '' }}</td>
                             <td>{{ $exp['title'] ?? '' }}</td>
                         </tr>
@@ -40,9 +43,12 @@
                         <th>مقطع / رشته</th>
                     </tr>
                     @foreach($education as $edu)
+                        @php $period = $eduPeriod($edu); @endphp
                         <tr>
                             <td class="num">{{ $edu['gpa'] ?? '' }}</td>
-                            <td class="num">{{ $eduPeriod($edu) }}</td>
+                            <td class="period-cell">
+                                @include('pdf.resumes.partials.period_cell', ['start' => $period['start'] ?? '', 'end' => $period['end'] ?? ''])
+                            </td>
                             <td>{{ $edu['university'] ?? '' }}</td>
                             <td>{{ trim(($edu['degree'] ?? '').' '.($edu['field'] ?? '')) }}</td>
                         </tr>
@@ -138,48 +144,64 @@
         <div class="sec"><h2>معرفی</h2><div class="text">{{ $summary }}</div></div>
     @endif
 
-    @if(!empty($experience))
-        <div class="sec">
-            <h2>سوابق شغلی</h2>
-            <table class="grid-table" cellspacing="0" cellpadding="0">
-                <tr>
-                    <th>توضیحات</th>
-                    <th>از تاریخ تا تاریخ</th>
-                    <th>محل کار</th>
-                    <th>عنوان</th>
-                </tr>
-                @foreach($experience as $exp)
-                    <tr>
-                        <td>{{ $exp['description'] ?? '' }}</td>
-                        <td class="num">{{ $expPeriod($exp) }}</td>
-                        <td>{{ $exp['company'] ?? '' }}</td>
-                        <td>{{ $exp['title'] ?? '' }}</td>
-                    </tr>
-                @endforeach
-            </table>
-        </div>
-    @endif
-
-    @if(!empty($education))
-        <div class="sec">
-            <h2>تحصیلات</h2>
-            <table class="grid-table" cellspacing="0" cellpadding="0">
-                <tr>
-                    <th>معدل</th>
-                    <th>از تاریخ تا تاریخ</th>
-                    <th>دانشگاه</th>
-                    <th>مقطع / رشته</th>
-                </tr>
-                @foreach($education as $edu)
-                    <tr>
-                        <td class="num">{{ $edu['gpa'] ?? '' }}</td>
-                        <td class="num">{{ $eduPeriod($edu) }}</td>
-                        <td>{{ $edu['university'] ?? '' }}</td>
-                        <td>{{ trim(($edu['degree'] ?? '').' '.($edu['field'] ?? '')) }}</td>
-                    </tr>
-                @endforeach
-            </table>
-        </div>
+    @if(!empty($experience) || !empty($education))
+        <table class="two-col" cellspacing="0" cellpadding="0">
+            <tr>
+                {{-- DomPDF LTR: سلول دوم راست‌ترین است — اول (راست) تحصیلات، بعد سوابق شغلی --}}
+                <td class="col-gap-l">
+                    @if(!empty($experience))
+                        <div class="sec" style="margin:0;">
+                            <h2>سوابق شغلی</h2>
+                            <table class="grid-table" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <th>توضیحات</th>
+                                    <th>از تاریخ تا تاریخ</th>
+                                    <th>محل کار</th>
+                                    <th>عنوان</th>
+                                </tr>
+                                @foreach($experience as $exp)
+                                    @php $period = $expPeriod($exp); @endphp
+                                    <tr>
+                                        <td>{{ $exp['description'] ?? '' }}</td>
+                                        <td class="period-cell">
+                                            @include('pdf.resumes.partials.period_cell', ['start' => $period['start'] ?? '', 'end' => $period['end'] ?? ''])
+                                        </td>
+                                        <td>{{ $exp['company'] ?? '' }}</td>
+                                        <td>{{ $exp['title'] ?? '' }}</td>
+                                    </tr>
+                                @endforeach
+                            </table>
+                        </div>
+                    @endif
+                </td>
+                <td class="col-gap-r">
+                    @if(!empty($education))
+                        <div class="sec" style="margin:0;">
+                            <h2>تحصیلات</h2>
+                            <table class="grid-table" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <th>معدل</th>
+                                    <th>از تاریخ تا تاریخ</th>
+                                    <th>دانشگاه</th>
+                                    <th>مقطع / رشته</th>
+                                </tr>
+                                @foreach($education as $edu)
+                                    @php $period = $eduPeriod($edu); @endphp
+                                    <tr>
+                                        <td class="num">{{ $edu['gpa'] ?? '' }}</td>
+                                        <td class="period-cell">
+                                            @include('pdf.resumes.partials.period_cell', ['start' => $period['start'] ?? '', 'end' => $period['end'] ?? ''])
+                                        </td>
+                                        <td>{{ $edu['university'] ?? '' }}</td>
+                                        <td>{{ trim(($edu['degree'] ?? '').' '.($edu['field'] ?? '')) }}</td>
+                                    </tr>
+                                @endforeach
+                            </table>
+                        </div>
+                    @endif
+                </td>
+            </tr>
+        </table>
     @endif
 
     @if(!empty($skills))

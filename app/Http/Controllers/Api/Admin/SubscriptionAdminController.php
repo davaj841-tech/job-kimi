@@ -185,12 +185,16 @@ class SubscriptionAdminController extends BaseController
     {
         $user = User::query()->findOrFail($id);
         $user->update([
+            'subscription_plan_id' => null,
             'subscription_expires_at' => now()->subMinute(),
         ]);
 
         return $this->successResponse(null, 'اشتراک لغو شد.');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function validatePlan(Request $request, bool $requireAll = true): array
     {
         $rules = [

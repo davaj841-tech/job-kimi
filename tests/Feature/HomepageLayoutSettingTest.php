@@ -50,7 +50,7 @@ class HomepageLayoutSettingTest extends TestCase
 
     public function test_saving_homepage_theme_syncs_palette_colors(): void
     {
-        Sanctum::actingAs(User::factory()->create(['role' => 'admin', 'status' => 'active']));
+        Sanctum::actingAs(User::factory()->create(['role' => 'super_admin', 'status' => 'active']));
 
         $this->putJson('/api/v1/admin/settings', [
             'group' => 'homepage',
@@ -66,7 +66,7 @@ class HomepageLayoutSettingTest extends TestCase
 
     public function test_saving_custom_theme_colors(): void
     {
-        Sanctum::actingAs(User::factory()->create(['role' => 'admin', 'status' => 'active']));
+        Sanctum::actingAs(User::factory()->create(['role' => 'super_admin', 'status' => 'active']));
 
         $this->putJson('/api/v1/admin/settings', [
             'group' => 'homepage',

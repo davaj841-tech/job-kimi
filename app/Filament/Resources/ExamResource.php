@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Concerns\InteractsWithStaffAccess;
+use App\Filament\Forms\SeoFormSchema;
 use App\Filament\Resources\ExamResource\Pages;
 use App\Models\Exam;
 use Filament\Forms;
@@ -13,6 +15,8 @@ use Morilog\Jalali\Jalalian;
 
 class ExamResource extends Resource
 {
+    use InteractsWithStaffAccess;
+
     protected static ?string $model = Exam::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
@@ -26,6 +30,11 @@ class ExamResource extends Resource
     protected static ?string $navigationGroup = 'مدیریت محتوا';
 
     protected static ?int $navigationSort = 1;
+
+    public static function canViewAny(): bool
+    {
+        return self::staffAdminOnly();
+    }
 
     public static function form(Form $form): Form
     {
@@ -75,6 +84,7 @@ class ExamResource extends Resource
                                 'any' => 'همه',
                             ]),
                         ])->columns(2),
+                    SeoFormSchema::section(),
                 ])
                 ->columnSpanFull(),
         ]);
@@ -154,17 +164,21 @@ class ExamResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
-                    Tables\Actions\BulkAction::make('publish')
-                        ->label('انتشار')
-                        ->icon('heroicon-o-check')
-                        ->color('success')
-                        ->action(fn ($records) => $records->each->update(['status' => 'published'])),
-                    Tables\Actions\BulkAction::make('archive')
-                        ->label('بایگانی')
-                        ->icon('heroicon-o-archive-box')
-                        ->color('warning')
-                        ->action(fn ($records) => $records->each->update(['status' => 'archived'])),
+                    self::secureDeleteBulkAction(),
+                    self::secureBulkAction(
+                        Tables\Actions\BulkAction::make('publish')
+                            ->label('انتشار')
+                            ->icon('heroicon-o-check')
+                            ->color('success')
+                            ->action(fn ($records) => $records->each->update(['status' => 'published']))
+                    ),
+                    self::secureBulkAction(
+                        Tables\Actions\BulkAction::make('archive')
+                            ->label('بایگانی')
+                            ->icon('heroicon-o-archive-box')
+                            ->color('warning')
+                            ->action(fn ($records) => $records->each->update(['status' => 'archived']))
+                    ),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')

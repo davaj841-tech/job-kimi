@@ -50,7 +50,7 @@ class JobPostStoreRequest extends FormRequest
             'remove_attachment_ids' => ['nullable', 'array'],
             'remove_attachment_ids.*' => ['integer'],
             'is_featured' => ['sometimes', 'boolean'],
-            'status' => ['sometimes', 'in:pending,approved,rejected'],
+            'status' => ['sometimes', 'in:pending,approved,rejected,draft,expired'],
             'auto_catalog' => ['sometimes', 'boolean'],
             'exam_ids' => ['nullable', 'array'],
             'exam_ids.*' => ['integer', 'exists:exams,id'],

@@ -44,15 +44,15 @@
               {{ c.name }}
             </option>
           </select>
-          <input
+          <JalaliDatepicker
             v-model="store.filters.deadline_from"
-            type="date"
-            class="field"
+            label="مهلت از"
+            :error="deadlineRangeError"
           />
-          <input
+          <JalaliDatepicker
             v-model="store.filters.deadline_to"
-            type="date"
-            class="field"
+            label="مهلت تا"
+            :error="deadlineRangeError"
           />
           <input
             v-model="store.filters.search"
@@ -61,6 +61,7 @@
             @keyup.enter="apply"
           />
         </div>
+        <p v-if="deadlineRangeError" class="mt-2 text-xs text-red-600">{{ deadlineRangeError }}</p>
         <div class="mt-3 flex gap-2">
           <button class="btn-orange" @click="apply">اعمال فیلتر</button>
           <button class="btn-muted" @click="clear">پاک کردن</button>
@@ -163,14 +164,16 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
 import DataTable from '../components/ui/DataTable.vue'
+import JalaliDatepicker from '../components/ui/JalaliDatepicker.vue'
 import ClassificationManagerModal from '../components/jobs/ClassificationManagerModal.vue'
 import JobImportModal from '../components/jobs/JobImportModal.vue'
 import JobPostModal from '../components/jobs/JobPostModal.vue'
 import PaginationBar from '../components/ui/PaginationBar.vue'
 import { formatDate } from '../../utils/format'
+import { compareIsoDate, RANGE_ORDER_ERROR } from '../../utils/jalali'
 import { useToast } from '../../composables/useToast'
 import { useJobPostsStore } from '../stores/jobPosts'
 
@@ -182,6 +185,11 @@ const classOpen = ref(false)
 const editing = ref(null)
 const importRef = ref(null)
 const confirm = reactive({ open: false, title: '', message: '', action: null })
+
+const deadlineRangeError = computed(() => {
+  const cmp = compareIsoDate(store.filters.deadline_from, store.filters.deadline_to)
+  return cmp !== null && cmp >= 0 ? RANGE_ORDER_ERROR : ''
+})
 
 const columns = [
   { key: 'index', label: '#' },
@@ -248,6 +256,10 @@ function isExpired(deadline) {
 }
 
 async function apply() {
+  if (deadlineRangeError.value) {
+    toast.error(deadlineRangeError.value)
+    return
+  }
   await store.fetchJobPosts(1)
 }
 async function clear() {

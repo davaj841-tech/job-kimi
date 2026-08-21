@@ -13,12 +13,14 @@ class ExamSubject extends Model
         'icon',
         'sort_order',
         'is_active',
+        'is_unmatched',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'is_unmatched' => 'boolean',
             'sort_order' => 'integer',
         ];
     }

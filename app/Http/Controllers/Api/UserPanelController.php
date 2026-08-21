@@ -6,6 +6,7 @@ use App\Http\Resources\UserResource;
 use App\Models\ExamAttempt;
 use App\Models\PageView;
 use App\Repositories\ExamRepository;
+use App\Services\Auth\LoginSessionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -58,10 +59,12 @@ class UserPanelController extends BaseController
 
     public function activity(Request $request): JsonResponse
     {
-        $items = PageView::query()
+        $report = app(LoginSessionService::class)->reportForUser($request->user(), 60);
+
+        $pageViews = PageView::query()
             ->where('user_id', $request->user()->id)
             ->latest('id')
-            ->limit(30)
+            ->limit(20)
             ->get(['page_url', 'route_name', 'created_at'])
             ->map(fn (PageView $row) => [
                 'page_url' => $row->page_url,
@@ -70,7 +73,11 @@ class UserPanelController extends BaseController
             ])
             ->all();
 
-        return $this->successResponse(['items' => $items]);
+        return $this->successResponse([
+            'sessions' => $report['sessions'],
+            'monthly' => $report['monthly'],
+            'items' => $pageViews,
+        ]);
     }
 
     public function updatePassword(Request $request): JsonResponse
@@ -90,15 +97,18 @@ class UserPanelController extends BaseController
 
         $user->update(['password' => $data['password']]);
 
+        $currentId = $user->currentAccessToken()?->id;
+        $user->tokens()->when($currentId, fn ($q) => $q->where('id', '!=', $currentId))->delete();
+
         return $this->successResponse(new UserResource($user->fresh()->load('subscriptionPlan')), 'رمز عبور به‌روزرسانی شد.');
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, ExamAttempt>  $attempts
+     * @param  \Illuminate\Database\Eloquent\Collection<int, ExamAttempt>|\Illuminate\Support\Collection<int, ExamAttempt>|iterable<ExamAttempt>  $attempts
      * @return list<array<string, mixed>>
      */
-    protected function mapAttempts($attempts): array
+    protected function mapAttempts(iterable $attempts): array
     {
-        return $attempts->map(fn (ExamAttempt $attempt) => $attempt->toHistoryItem())->values()->all();
+        return collect($attempts)->map(fn (ExamAttempt $attempt) => $attempt->toHistoryItem())->values()->all();
     }
 }

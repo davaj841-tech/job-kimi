@@ -15,6 +15,12 @@ class ContactController extends BaseController
 
     public function store(Request $request): JsonResponse
     {
+        if ($request->filled('mobile')) {
+            $request->merge([
+                'mobile' => \App\Support\IranMobile::normalize((string) $request->input('mobile')) ?? $request->input('mobile'),
+            ]);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'mobile' => ['required', 'string', 'regex:/^09\d{9}$/'],

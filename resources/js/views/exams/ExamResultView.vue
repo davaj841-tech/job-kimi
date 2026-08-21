@@ -342,6 +342,7 @@
 </template>
 
 <script setup lang="ts">
+import type { AxiosError } from 'axios'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -364,15 +365,72 @@ import { renderKatexHtml } from '../../utils/renderKatexHtml'
 import { optionFaLetter, optionText } from '../../utils/examAnswers'
 import { useExamStore } from '../../stores/exam'
 import { useExamSessionStore } from '../../stores/examSession'
+import type { ExamQuestion, ExamStartPayload } from '../../types/exam'
 
 const route = useRoute()
 const router = useRouter()
 const examStore = useExamStore()
 const session = useExamSessionStore()
 const loading = ref(true)
-const result = ref<any>(null)
-const analysis = ref<any>(null)
-const sheet = ref<any[]>([])
+type ExamRetryApiError = { message?: string }
+
+type ExamResultAttempt = {
+  exam_title?: string | null
+  exam?: { title?: string | null; total_questions?: number | string | null } | null
+  total_correct?: number | string | null
+  total_wrong?: number | string | null
+  percentage?: number | string | null
+  is_retry_wrong?: boolean | null
+  parent_attempt_id?: number | string | null
+  retry_mode?: string | null
+}
+
+type SubjectAnalysisRow = {
+  subject: string
+  [key: string]: unknown
+}
+
+type ExamResultAnalysis = {
+  passed?: boolean | null
+  is_retry_wrong?: boolean | null
+  parent_attempt_id?: number | string | null
+  retry_mode?: string | null
+  by_subject?: SubjectAnalysisRow[] | null
+  total_questions?: number | string | null
+  total_correct?: number | string | null
+  total_wrong?: number | string | null
+  percentage?: number | string | null
+  rank?: number | string | null
+}
+
+type AnswerSheetRow = {
+  id?: string | number
+  number?: string | number | null
+  question_text?: string | null
+  correct_answer?: string | null
+  correct_answer_label?: string | null
+  correct_answer_text?: string | null
+  user_answer?: string | null
+  user_answer_label?: string | null
+  user_answer_text?: string | null
+  explanation?: string | null
+  is_blank?: boolean
+  is_correct?: boolean
+  options?: Record<string, string | null | undefined>
+  option_a?: string | null
+  option_b?: string | null
+  option_c?: string | null
+  option_d?: string | null
+}
+
+type RetryWrongPayload = ExamStartPayload & {
+  duration_minutes?: number
+  questions?: ExamQuestion[]
+}
+
+const result = ref<ExamResultAttempt | null>(null)
+const analysis = ref<ExamResultAnalysis | null>(null)
+const sheet = ref<AnswerSheetRow[]>([])
 const showSheet = ref(true)
 const sheetFilter = ref('all')
 const reviewMode = ref<string | null>(null)
@@ -396,7 +454,7 @@ const retryMode = computed(
 )
 const subjects = computed(() => analysis.value?.by_subject || [])
 const chartSubjects = computed(() =>
-  subjects.value.map((row: any) => ({
+  subjects.value.map((row: SubjectAnalysisRow) => ({
     ...row,
     emoji: subjectEmoji(row.subject),
   }))
@@ -545,13 +603,13 @@ async function retry(mode: 'blank' | 'wrong') {
     const { data } = await api.post(`/exams/${examId}/retry-wrong/${attemptId}`, {
       mode,
     })
-    const payload = data.data || {}
+    const payload = (data.data || {}) as RetryWrongPayload
     session.resetSessionUx()
     const perPage = Math.max(1, Math.min(20, Number(payload.per_page) || 5))
     session.setQuestionsPerPage(perPage)
     examStore.current = {
       examId: Number(examId),
-      attemptId: payload.attempt_id || payload.attempt?.id,
+      attemptId: Number(payload.attempt_id || payload.attempt?.id || 0),
       questions: payload.questions || [],
       duration: payload.duration_minutes || 20,
       title:
@@ -569,7 +627,8 @@ async function retry(mode: 'blank' | 'wrong') {
     examStore.saveCache()
     router.push(`/exams/${examId}/take`)
   } catch (e) {
-    error.value = e.response?.data?.message || 'شروع مرور ممکن نشد.'
+    const err = e as AxiosError<ExamRetryApiError>
+    error.value = err.response?.data?.message || 'شروع مرور ممکن نشد.'
   } finally {
     retrying.value = false
   }
@@ -606,8 +665,9 @@ async function submitRating() {
   try {
     await api.post(`/exams/${route.params.id}/rate`, { rating: rating.value })
     ratingMsg.value = 'امتیاز ثبت شد. متشکریم!'
-  } catch (e: any) {
-    ratingMsg.value = e.response?.data?.message || 'ثبت امتیاز ممکن نشد.'
+  } catch (e) {
+    const err = e as AxiosError<ExamRetryApiError>
+    ratingMsg.value = err.response?.data?.message || 'ثبت امتیاز ممکن نشد.'
   } finally {
     ratingSaving.value = false
   }

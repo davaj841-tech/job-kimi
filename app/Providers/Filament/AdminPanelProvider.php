@@ -9,6 +9,7 @@ use App\Filament\Widgets\LatestNotifications;
 use App\Filament\Widgets\RecentExamsTable;
 use App\Filament\Widgets\RecentTransactionsTable;
 use App\Filament\Widgets\RevenueChart;
+use App\Filament\Widgets\SeoDashboardWidget;
 use App\Filament\Widgets\StatsOverview;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -71,6 +72,7 @@ class AdminPanelProvider extends PanelProvider
                 RecentExamsTable::class,
                 RecentTransactionsTable::class,
                 LatestNotifications::class,
+                SeoDashboardWidget::class,
                 Widgets\AccountWidget::class,
             ])
             ->middleware([

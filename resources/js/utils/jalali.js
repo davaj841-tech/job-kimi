@@ -174,3 +174,78 @@ export function formatJalaliDateTime(value) {
 export function nowJalaliClock() {
   return formatJalaliDateTime(new Date());
 }
+
+/** Convert JS weekday (0=Sun) to Persian week index (0=Sat … 6=Fri). */
+export function persianWeekdayIndex(jsDay) {
+  return (Number(jsDay) + 1) % 7;
+}
+
+/** Weekday of a Jalali date: 0=شنبه … 6=جمعه */
+export function jalaliWeekday(jy, jm, jd) {
+  const g = toGregorian(Number(jy), Number(jm), Number(jd));
+  const d = new Date(g.gy, g.gm - 1, g.gd);
+  return persianWeekdayIndex(d.getDay());
+}
+
+export function toFaDigits(value) {
+  return String(value ?? '').replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[d]);
+}
+
+export function fromFaDigits(value) {
+  return String(value ?? '').replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+}
+
+/** Compare Jalali day strings DD/MM/YYYY. Returns -1 / 0 / 1, or null if invalid. */
+export function compareJalaliDate(a, b) {
+  const pa = parseJalaliDay(a);
+  const pb = parseJalaliDay(b);
+  if (!pa || !pb) return null;
+  const ka = pa.jy * 10000 + pa.jm * 100 + pa.jd;
+  const kb = pb.jy * 10000 + pb.jm * 100 + pb.jd;
+  return ka === kb ? 0 : ka < kb ? -1 : 1;
+}
+
+/** Compare YYYY-MM (Jalali month). */
+export function compareJalaliMonth(a, b) {
+  const pa = parseJalaliMonth(a);
+  const pb = parseJalaliMonth(b);
+  if (!pa || !pb) return null;
+  const ka = pa.jy * 100 + pa.jm;
+  const kb = pb.jy * 100 + pb.jm;
+  return ka === kb ? 0 : ka < kb ? -1 : 1;
+}
+
+/** Compare Gregorian ISO YYYY-MM-DD. */
+export function compareIsoDate(a, b) {
+  const sa = String(a || '').slice(0, 10);
+  const sb = String(b || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(sa) || !/^\d{4}-\d{2}-\d{2}$/.test(sb)) return null;
+  return sa === sb ? 0 : sa < sb ? -1 : 1;
+}
+
+export function parseJalaliDay(value) {
+  const s = fromFaDigits(value);
+  const m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(String(s || '').trim());
+  if (!m) return null;
+  return { jd: Number(m[1]), jm: Number(m[2]), jy: Number(m[3]) };
+}
+
+export function formatJalaliDayParts({ jy, jm, jd }) {
+  if (!jy || !jm || !jd) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(jd)}/${pad(jm)}/${jy}`;
+}
+
+export function parseJalaliMonth(value) {
+  const s = fromFaDigits(value);
+  const m = /^(\d{4})[/.-](\d{1,2})$/.exec(String(s || '').trim());
+  if (!m) return null;
+  return { jy: Number(m[1]), jm: Number(m[2]) };
+}
+
+export function formatJalaliMonthParts({ jy, jm }) {
+  if (!jy || !jm) return '';
+  return `${jy}-${String(jm).padStart(2, '0')}`;
+}
+
+export const RANGE_ORDER_ERROR = 'تاریخ شروع باید کوچک‌تر از تاریخ پایان باشد.';

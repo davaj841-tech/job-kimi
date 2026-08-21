@@ -15,7 +15,13 @@ Schedule::job(new CrawlJobsJob)->dailyAt('06:00')->when(
 );
 Schedule::job(new SendExamReminderJob)->dailyAt('08:00');
 Schedule::job(new SendSubscriptionExpiryNotification)->dailyAt('09:00');
-Schedule::command('backup:run')->dailyAt('03:00');
+Schedule::command('payments:expire-pending')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping(10);
+
+Schedule::command('jobs:expire')
+    ->dailyAt('00:30')
+    ->withoutOverlapping(10);
 
 // Aggregation: check admin-configured times every minute; only dispatches queue jobs.
 // Never crawls HTTP inline. Requires: * * * * * php artisan schedule:run
@@ -61,3 +67,13 @@ Schedule::call(function () {
         // Unique job covers longer windows; lock covers the tick burst.
     }
 })->everyMinute()->name('content-generate-daily')->withoutOverlapping(5);
+
+// SEO scheduled tasks
+Schedule::job(new \App\Jobs\Seo\CheckBrokenLinksJob)->dailyAt('03:00')->withoutOverlapping(30);
+Schedule::job(new \App\Jobs\Seo\RunSeoAuditJob('full'))->weeklyOn(1, '04:00')->withoutOverlapping(60);
+
+// Application ZIP backup (DB + private + public). Requires schedule:run cron.
+Schedule::command('backup:run')
+    ->dailyAt('03:15')
+    ->withoutOverlapping(120)
+    ->appendOutputTo(storage_path('logs/backup-schedule.log'));

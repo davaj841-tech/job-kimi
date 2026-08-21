@@ -98,7 +98,7 @@ class JobPostRepository
             ->withCount(['exams as related_exams_count', 'pdfProducts as related_pdfs_count']);
 
         $status = $filters['status'] ?? 'all';
-        if ($status !== 'all' && $status !== '' && in_array($status, ['pending', 'approved', 'rejected'], true)) {
+        if ($status !== 'all' && $status !== '' && in_array($status, ['pending', 'approved', 'rejected', 'draft', 'expired'], true)) {
             $query->where('status', $status);
         }
 

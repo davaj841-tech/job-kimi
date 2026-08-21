@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { setPageMeta } from '../services/meta'
+import { applySeoPayload } from '../services/meta'
 import api from '../api/client'
 import ExamsSection from '../components/home/ExamsSection.vue'
 import FileStoreStrip from '../components/home/FileStoreStrip.vue'
@@ -101,13 +101,31 @@ function persistCache(data: any) {
 }
 
 onMounted(() => {
-  setPageMeta({
-    title: 'جاب‌آزمون | آمادگی استخدام',
-    description:
-      'آزمون‌های استخدامی، آگهی‌های شغلی، فروشگاه PDF و رزومه‌ساز جاب‌آزمون',
-    url: typeof window !== 'undefined' ? window.location.href : undefined,
-    type: 'website',
-  } as any)
+  void api.get('/settings/public').then(({ data }) => {
+    const seo = data?.data?.seo
+    if (seo?.meta) {
+      applySeoPayload(seo)
+    } else {
+      applySeoPayload({
+        meta: {
+          meta_title: 'جاب‌آزمون | آمادگی استخدام',
+          meta_description:
+            'آزمون‌های استخدامی، آگهی‌های شغلی، فروشگاه PDF و رزومه‌ساز جاب‌آزمون',
+          canonical_url: typeof window !== 'undefined' ? `${window.location.origin}/` : '/',
+          og_type: 'website',
+        },
+      })
+    }
+  }).catch(() => {
+    applySeoPayload({
+      meta: {
+        meta_title: 'جاب‌آزمون | آمادگی استخدام',
+        meta_description:
+          'آزمون‌های استخدامی، آگهی‌های شغلی، فروشگاه PDF و رزومه‌ساز جاب‌آزمون',
+        canonical_url: typeof window !== 'undefined' ? `${window.location.origin}/` : '/',
+      },
+    })
+  })
 
   hydrateFromCache()
   void ensureLoaded()

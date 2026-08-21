@@ -3,17 +3,27 @@
 namespace App\Exports;
 
 use App\Models\Question;
+use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
+/**
+ * @implements WithMapping<Question>
+ */
 class QuestionsExport implements FromQuery, WithHeadings, WithMapping
 {
+    /**
+     * @param  array<string, mixed>  $filters
+     */
     public function __construct(
         protected array $filters = []
     ) {}
 
-    public function query()
+    /**
+     * @return Builder<Question>
+     */
+    public function query(): Builder
     {
         $query = Question::query()->with('exam:id,slug')->latest();
 
@@ -37,7 +47,7 @@ class QuestionsExport implements FromQuery, WithHeadings, WithMapping
     }
 
     /**
-     * @return array<string, mixed>
+     * @return list<string>
      */
     public function headings(): array
     {
@@ -56,7 +66,8 @@ class QuestionsExport implements FromQuery, WithHeadings, WithMapping
     }
 
     /**
-     * @return array<string, mixed>
+     * @param  Question  $question
+     * @return list<mixed>
      */
     public function map($question): array
     {

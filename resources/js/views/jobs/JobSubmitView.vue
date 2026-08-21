@@ -49,17 +49,20 @@
       />
 
       <div>
-        <label class="mb-1 block text-xs text-desk-muted"
-          >مهلت ثبت‌نام * (سال / ماه / روز)</label
-        >
-        <JalaliDatepicker v-model="form.registration_deadline" />
+        <JalaliDatepicker
+          v-model="form.registration_deadline"
+          label="مهلت ثبت‌نام *"
+          :error="jobDateError"
+        />
       </div>
       <div>
-        <label class="mb-1 block text-xs text-desk-muted"
-          >تاریخ آزمون (سال / ماه / روز)</label
-        >
-        <JalaliDatepicker v-model="form.exam_date" />
+        <JalaliDatepicker
+          v-model="form.exam_date"
+          label="تاریخ آزمون"
+          :error="jobDateError"
+        />
       </div>
+      <p v-if="jobDateError" class="text-xs text-red-600">{{ jobDateError }}</p>
 
       <input
         v-model="form.registration_link"
@@ -73,13 +76,14 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../api/client'
 import ErrorBanner from '../../components/ErrorBanner.vue'
 import PageShell from '../../components/layout/PageShell.vue'
 import JalaliDatepicker from '../../admin/components/ui/JalaliDatepicker.vue'
 import { apiErrorMessage } from '../../utils/format'
+import { compareIsoDate } from '../../utils/jalali'
 import { useToast } from '../../composables/useToast'
 
 const router = useRouter()
@@ -121,6 +125,14 @@ const form = reactive({
   registration_link: '',
 })
 
+const jobDateError = computed(() => {
+  if (!form.registration_deadline || !form.exam_date) return ''
+  const cmp = compareIsoDate(form.registration_deadline, form.exam_date)
+  return cmp !== null && cmp >= 0
+    ? 'مهلت ثبت‌نام باید قبل از تاریخ آزمون باشد.'
+    : ''
+})
+
 onMounted(async () => {
   try {
     const { data } = await api.get('/job-posts/filters')
@@ -139,6 +151,10 @@ async function submit() {
   saving.value = true
   error.value = ''
   try {
+    if (jobDateError.value) {
+      error.value = jobDateError.value
+      return
+    }
     const payload = {
       title: form.title,
       job_classification_id: form.job_classification_id,

@@ -11,6 +11,17 @@ class VerifyOtpRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $mobile = \App\Support\IranMobile::normalize($this->input('mobile'));
+        if ($mobile !== null) {
+            $this->merge(['mobile' => $mobile]);
+        }
+        if ($this->has('code')) {
+            $this->merge(['code' => preg_replace('/\D+/', '', (string) $this->input('code'))]);
+        }
+    }
+
     /** @return array<string, mixed> */
     public function rules(): array
     {

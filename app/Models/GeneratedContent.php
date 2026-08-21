@@ -4,12 +4,45 @@ namespace App\Models;
 
 use App\Enums\Content\ContentStatus;
 use App\Enums\Content\ContentType;
+use App\Traits\HasSeo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $title
+ * @property string|null $slug
+ * @property string|null $excerpt
+ * @property string|null $content
+ * @property ContentType|null $content_type
+ * @property ContentStatus|null $status
+ * @property string|null $source_type
+ * @property int|null $source_id
+ * @property int|null $job_post_id
+ * @property int|null $job_classification_id
+ * @property bool|null $auto_catalog
+ * @property array<int, int>|null $exam_ids
+ * @property array<int, int>|null $pdf_ids
+ * @property int|null $blog_post_id
+ * @property Carbon|null $published_at
+ * @property Carbon|null $scheduled_for
+ * @property string|null $content_hash
+ * @property array<string, mixed>|null $metadata
+ * @property int|null $generation_attempts
+ * @property string|null $last_error
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read JobPost|null $jobPost
+ * @property-read BlogPost|null $blogPost
+ *
+ * @method static Builder<static> published()
+ */
 class GeneratedContent extends Model
 {
+    use HasSeo;
+
     protected $fillable = [
         'title',
         'slug',
@@ -50,16 +83,26 @@ class GeneratedContent extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<JobPost, $this>
+     */
     public function jobPost(): BelongsTo
     {
         return $this->belongsTo(JobPost::class);
     }
 
+    /**
+     * @return BelongsTo<BlogPost, $this>
+     */
     public function blogPost(): BelongsTo
     {
         return $this->belongsTo(BlogPost::class);
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', ContentStatus::Published->value)

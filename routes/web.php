@@ -9,6 +9,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/robots.txt', RobotsController::class)->name('robots');
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+Route::get('/sitemaps/pages.xml', [SitemapController::class, 'pages']);
+Route::get('/sitemaps/jobs.xml', [SitemapController::class, 'jobs']);
+Route::get('/sitemaps/exams.xml', [SitemapController::class, 'exams']);
+Route::get('/sitemaps/articles.xml', [SitemapController::class, 'articles']);
+Route::get('/sitemaps/blog.xml', [SitemapController::class, 'blog']);
+Route::get('/sitemaps/files.xml', [SitemapController::class, 'files']);
 Route::get('/health', HealthController::class)->name('health');
 Route::post('/csp-report', [CspReportController::class, 'store'])
     ->middleware('throttle:10,1')

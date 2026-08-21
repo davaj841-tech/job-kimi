@@ -9,6 +9,9 @@ class JobPostCollection extends ResourceCollection
 {
     public $collects = JobPostResource::class;
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [

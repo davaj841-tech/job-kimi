@@ -18,6 +18,7 @@ import { useRoute } from 'vue-router'
 import api from '../api/client'
 import LoadingSpinner from '../components/LoadingSpinner.vue'
 import PageShell from '../components/layout/PageShell.vue'
+import { setPageMeta, applySeoPayload } from '../services/meta'
 import { unwrapItem } from '../utils/format'
 
 const route = useRoute()
@@ -29,8 +30,27 @@ async function load() {
   try {
     const { data } = await api.get(`/pages/${route.params.slug}`)
     page.value = unwrapItem(data)
-    if (page.value?.meta_title)
-      document.title = `${page.value.meta_title} | جاب‌آزمون`
+    if (page.value) {
+      if (page.value.seo?.meta) {
+        applySeoPayload(page.value.seo, {
+          breadcrumbs: [
+            { name: 'خانه', url: `${window.location.origin}/` },
+            { name: page.value.title, url: `${window.location.origin}/page/${route.params.slug}` },
+          ],
+        })
+      } else {
+        setPageMeta({
+          title: page.value.meta_title || page.value.title,
+          description: page.value.meta_description || '',
+          url: `${window.location.origin}/page/${route.params.slug}`,
+          schema: page.value.schema || null,
+          breadcrumbs: [
+            { name: 'خانه', url: `${window.location.origin}/` },
+            { name: page.value.title, url: `${window.location.origin}/page/${route.params.slug}` },
+          ],
+        })
+      }
+    }
   } catch {
     page.value = null
   } finally {

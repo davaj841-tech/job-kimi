@@ -62,6 +62,11 @@
             placeholder="پیام شما *"
           />
         </div>
+        <AuthCaptchaField
+          :mode="captchaMode"
+          :site-key="turnstileSiteKey"
+          @update="onCaptcha"
+        />
         <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
         <p v-if="success" class="text-sm text-emerald-600">{{ success }}</p>
         <p
@@ -127,7 +132,9 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import PageShell from '../../components/layout/PageShell.vue'
+import AuthCaptchaField from '../../components/auth/AuthCaptchaField.vue'
 import api from '../../api/client'
+import { applySeoPayload, setPageMeta } from '../../services/meta'
 import { apiErrorMessage, unwrapItem, toFaDigits } from '../../utils/format'
 import { useSiteTheme } from '../../composables/useSiteTheme'
 
@@ -139,10 +146,23 @@ const trackingCode = ref('')
 const page = ref(null)
 const supportEmail = ref('')
 const supportPhone = ref('')
+const captchaMode = ref('math')
+const turnstileSiteKey = ref('')
+const captcha = reactive({
+  turnstile_token: '',
+  captcha_id: '',
+  captcha_answer: '',
+})
 const { whatsappUrl, instagramUrl, ensureLoaded } = useSiteTheme()
 
 const waIcon = `<svg viewBox="0 0 24 24" width="18" height="18"><path fill="#fff" d="M12 2.1A9.9 9.9 0 0 0 3.4 17L2 22l5.2-1.4A9.9 9.9 0 1 0 12 2.1Zm5.7 14.3c-.2.7-1.3 1.2-1.8 1.3-.5.1-1 .2-3.3-.7-2.7-1.1-4.5-3.8-4.6-4-.1-.2-1-1.3-1-2.5s.6-1.8.9-2c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2 0 .4-.1.5l-.4.5c-.2.2-.4.4-.2.7.2.4.9 1.5 2 2.4 1.3 1.1 2.4 1.4 2.7 1.6.4.2.6.1.8-.1l.6-.7c.2-.2.4-.2.7-.1l2 .9c.3.1.5.2.5.4 0 .1 0 .8-.3 1.5Z"/></svg>`
 const igIcon = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><rect x="3" y="3" width="18" height="18" rx="5" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="4" stroke="#fff" stroke-width="1.8"/><circle cx="17.2" cy="6.8" r="1" fill="#fff"/></svg>`
+
+function onCaptcha(payload) {
+  captcha.turnstile_token = payload.turnstile_token || ''
+  captcha.captcha_id = payload.captcha_id || ''
+  captcha.captcha_answer = payload.captcha_answer || ''
+}
 
 onMounted(async () => {
   void ensureLoaded()
@@ -151,12 +171,36 @@ onMounted(async () => {
     const s = data?.data || {}
     supportEmail.value = s.support_email || ''
     supportPhone.value = s.support_phone || ''
+    captchaMode.value = s.captcha_mode === 'turnstile' ? 'turnstile' : 'math'
+    turnstileSiteKey.value = s.turnstile_site_key || ''
   } catch {
     // ignore
   }
   try {
     const { data } = await api.get('/pages/contact')
     page.value = unwrapItem(data)
+    if (page.value) {
+      const pageUrl = `${window.location.origin}/contact`
+      if (page.value.seo?.meta) {
+        applySeoPayload(page.value.seo, {
+          breadcrumbs: [
+            { name: 'خانه', url: `${window.location.origin}/` },
+            { name: page.value.title || 'تماس با ما', url: pageUrl },
+          ],
+        })
+      } else {
+        setPageMeta({
+          title: page.value.meta_title || page.value.title || 'تماس با ما',
+          description: page.value.meta_description || '',
+          url: pageUrl,
+          schema: page.value.schema || null,
+          breadcrumbs: [
+            { name: 'خانه', url: `${window.location.origin}/` },
+            { name: page.value.title || 'تماس با ما', url: pageUrl },
+          ],
+        })
+      }
+    }
   } catch {
     page.value = null
   }
@@ -168,7 +212,12 @@ async function submit() {
   success.value = ''
   trackingCode.value = ''
   try {
-    const { data } = await api.post('/contact', { ...form })
+    const { data } = await api.post('/contact', {
+      ...form,
+      ...(captchaMode.value === 'turnstile'
+        ? { turnstile_token: captcha.turnstile_token }
+        : { captcha_id: captcha.captcha_id, captcha_answer: captcha.captcha_answer }),
+    })
     trackingCode.value = data?.data?.tracking_code || ''
     success.value = trackingCode.value
       ? `پیام شما ثبت شد. شماره پیگیری: ${toFaDigits(trackingCode.value)}`

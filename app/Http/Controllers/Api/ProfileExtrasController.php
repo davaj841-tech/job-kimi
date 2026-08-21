@@ -34,6 +34,9 @@ class ProfileExtrasController extends BaseController
         return $this->successResponse($prefs, 'تنظیمات اعلان ذخیره شد.');
     }
 
+    /**
+     * @return array{email: array<string, bool>, sms: array<string, bool>, push: array<string, bool>}
+     */
     protected function defaults(): array
     {
         $types = [

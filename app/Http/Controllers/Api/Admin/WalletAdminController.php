@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Api\BaseController;
 use App\Http\Resources\TransactionResource;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\WalletLedger;
+use App\Services\AuditLogService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +22,9 @@ class WalletAdminController extends BaseController
     public function stats(): JsonResponse
     {
         $totalBalance = (int) User::query()->sum('wallet_balance');
+        $ledgerTotal = (int) WalletLedger::query()
+            ->selectRaw("COALESCE(SUM(CASE WHEN direction = 'credit' THEN amount ELSE -amount END), 0) as total")
+            ->value('total');
         $chargesToday = Transaction::query()
             ->where('type', 'deposit')
             ->where('status', 'success')
@@ -32,6 +38,8 @@ class WalletAdminController extends BaseController
 
         return $this->successResponse([
             'total_balance' => $totalBalance,
+            'ledger_total' => $ledgerTotal,
+            'reconciled' => $totalBalance === $ledgerTotal,
             'charges_today' => $chargesToday,
             'charge_amount_today' => $chargeAmountToday,
         ]);
@@ -72,7 +80,7 @@ class WalletAdminController extends BaseController
             ->groupBy('user_id')
             ->pluck('total', 'user_id');
 
-        $data = collect($items->items())->map(function (User $user) use ($deposits, $withdrawals) {
+        $data = $items->getCollection()->map(function (User $user) use ($deposits, $withdrawals): array {
             return [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -128,8 +136,9 @@ class WalletAdminController extends BaseController
     public function charge(Request $request, int $id): JsonResponse
     {
         $user = User::query()->findOrFail($id);
+        $maxCharge = max(1000, (int) Setting::get('max_wallet_charge', 50_000_000));
         $data = $request->validate([
-            'amount' => ['required', 'integer', 'min:1000'],
+            'amount' => ['required', 'integer', 'min:1000', 'max:'.$maxCharge],
             'description' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -138,6 +147,12 @@ class WalletAdminController extends BaseController
             (int) $data['amount'],
             $data['description'] ?? 'شارژ دستی توسط ادمین'
         );
+
+        app(AuditLogService::class)->log('wallet.admin_charged', $user, null, [
+            'amount' => (int) $data['amount'],
+            'transaction_id' => $tx->id,
+            'description' => $data['description'] ?? 'شارژ دستی توسط ادمین',
+        ]);
 
         return $this->successResponse([
             'balance' => $this->walletService->getBalance($user),
@@ -148,8 +163,9 @@ class WalletAdminController extends BaseController
     public function deduct(Request $request, int $id): JsonResponse
     {
         $user = User::query()->findOrFail($id);
+        $maxCharge = max(1000, (int) Setting::get('max_wallet_charge', 50_000_000));
         $data = $request->validate([
-            'amount' => ['required', 'integer', 'min:1000'],
+            'amount' => ['required', 'integer', 'min:1000', 'max:'.$maxCharge],
             'reason' => ['required', 'string', 'max:500'],
         ]);
 
@@ -162,6 +178,12 @@ class WalletAdminController extends BaseController
         if (! $tx) {
             return $this->errorResponse('موجودی کافی نیست.', 422);
         }
+
+        app(AuditLogService::class)->log('wallet.admin_deducted', $user, null, [
+            'amount' => (int) $data['amount'],
+            'transaction_id' => $tx->id,
+            'reason' => $data['reason'],
+        ]);
 
         return $this->successResponse([
             'balance' => $this->walletService->getBalance($user),

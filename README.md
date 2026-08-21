@@ -106,7 +106,6 @@ job-kimi/
 ├── .github/workflows/ci.yml
 ├── app/                    # Actions, Controllers, Filament, Services, …
 ├── docs/
-│   ├── BACKUP.md           # RTO 4h / RPO 24h
 │   ├── PERFORMANCE.md      # ایندکس‌ها و نکات پرفورمنس
 │   ├── MONITORING_CHECKLIST.md
 │   ├── PRODUCTION_CHECKLIST.md
@@ -117,7 +116,7 @@ job-kimi/
 ├── routes/api/*.php
 ├── scripts/backup.sh
 ├── scripts/restore.sh
-├── deploy.sh
+├── BACKUP-RESTORE.md       # RTO 4h / RPO 24h — بکاپ و بازیابی
 ├── tests/
 └── README.md
 ```
@@ -250,7 +249,7 @@ DEPLOY_SECRET='your-secret-key' ./deploy.sh production
 - [`docs/PRODUCTION_CHECKLIST.md`](docs/PRODUCTION_CHECKLIST.md)
 - [`docs/STAGING_CHECKLIST.md`](docs/STAGING_CHECKLIST.md)
 - [`docs/MONITORING_CHECKLIST.md`](docs/MONITORING_CHECKLIST.md) — Sentry / Horizon / Telescope / CF / CSP / Zarinpal
-- [`docs/BACKUP.md`](docs/BACKUP.md) — RTO 4h / RPO 24h
+- [`BACKUP-RESTORE.md`](BACKUP-RESTORE.md) — RTO 4h / RPO 24h
 - [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)
 
 Health: `GET /health` و `GET /up`
@@ -275,7 +274,7 @@ Health: `GET /health` و `GET /up`
 |-----|--------|
 | [HOSTING.md](docs/HOSTING.md) | استقرار روی هاست / VPS |
 | [QUESTIONS_IMPORT.md](docs/QUESTIONS_IMPORT.md) | ورود گروهی سوالات آزمون |
-| [BACKUP.md](docs/BACKUP.md) | بکاپ و بازیابی |
+| [BACKUP-RESTORE.md](BACKUP-RESTORE.md) | بکاپ و بازیابی |
 | [PERFORMANCE.md](docs/PERFORMANCE.md) | ایندکس و پرفورمنس |
 | [MONITORING_CHECKLIST.md](docs/MONITORING_CHECKLIST.md) | مانیتورینگ بعد از deploy |
 | [GITHUB_PROTECTION.md](docs/GITHUB_PROTECTION.md) | محافظت branch |

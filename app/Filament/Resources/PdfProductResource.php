@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Concerns\InteractsWithStaffAccess;
+use App\Filament\Forms\SeoFormSchema;
 use App\Filament\Resources\PdfProductResource\Pages;
 use App\Models\PdfProduct;
 use Filament\Forms;
@@ -12,6 +14,8 @@ use Filament\Tables\Table;
 
 class PdfProductResource extends Resource
 {
+    use InteractsWithStaffAccess;
+
     protected static ?string $model = PdfProduct::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
@@ -23,6 +27,11 @@ class PdfProductResource extends Resource
     protected static ?string $pluralModelLabel = 'محصولات PDF';
 
     protected static ?string $navigationGroup = 'مدیریت محتوا';
+
+    public static function canViewAny(): bool
+    {
+        return self::staffAdminOnly();
+    }
 
     public static function form(Form $form): Form
     {
@@ -54,6 +63,7 @@ class PdfProductResource extends Resource
                         ->helperText('۰ = رایگان — هر PDF جداگانه خریداری می‌شود'),
                     Forms\Components\Toggle::make('is_active')->label('منتشر / فعال')->default(true),
                 ]),
+            SeoFormSchema::section(),
         ]);
     }
 
@@ -91,7 +101,7 @@ class PdfProductResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('حذف'),
+                    self::secureDeleteBulkAction(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')

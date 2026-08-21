@@ -10,6 +10,10 @@ class CheckInstalled
 {
     public function handle(Request $request, Closure $next): Response
     {
+        if (app()->environment('testing')) {
+            return $next($request);
+        }
+
         if (is_file(storage_path('installed'))) {
             return $next($request);
         }
@@ -19,6 +23,12 @@ class CheckInstalled
         }
 
         if ($request->is('up') || $request->is('health')) {
+            return $next($request);
+        }
+
+        // API health check endpoint for monitoring.
+        // Exempt from /install redirect so uptime checks work.
+        if ($request->is('api/v1/health')) {
             return $next($request);
         }
 

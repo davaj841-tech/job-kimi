@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createMemoryHistory } from 'vue-router'
 import App from '../App.vue'
 
 vi.mock('@/api', () => ({
@@ -12,18 +12,25 @@ vi.mock('@/api', () => ({
 }))
 
 describe('App.vue', () => {
+  let wrapper: VueWrapper | null = null
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = null
+  })
+
   it('mounts with router and pinia', async () => {
     const pinia = createPinia()
     setActivePinia(pinia)
 
     const router = createRouter({
-      history: createWebHistory(),
+      history: createMemoryHistory(),
       routes: [{ path: '/', component: { template: '<div>Home</div>' } }],
     })
     await router.push('/')
     await router.isReady()
 
-    const wrapper = mount(App, {
+    wrapper = mount(App, {
       global: {
         plugins: [pinia, router],
         stubs: {

@@ -179,16 +179,30 @@ class QuestionsImport implements ToCollection, WithHeadingRow
         $flat = [];
         foreach ($row as $key => $value) {
             $k = $this->normalizeHeader((string) $key);
+            if ($k === '' || is_int($key) || ctype_digit((string) $key)) {
+                // Fallback numeric columns rarely happen with heading row
+                continue;
+            }
             $flat[$k] = $value;
+            // Also index by ASCII slug form (when default Excel slug formatter is active)
+            $slug = Str::slug((string) $key, '_');
+            if ($slug !== '' && $slug !== $k) {
+                $flat[$slug] = $value;
+            }
         }
 
         $out = [];
         foreach ($map as $canonical => $aliases) {
             foreach ($aliases as $alias) {
-                $ak = $this->normalizeHeader($alias);
-                if (array_key_exists($ak, $flat) && $flat[$ak] !== null && $flat[$ak] !== '') {
-                    $out[$canonical] = $flat[$ak];
-                    break;
+                $candidates = array_unique(array_filter([
+                    $this->normalizeHeader($alias),
+                    Str::slug($alias, '_'),
+                ]));
+                foreach ($candidates as $ak) {
+                    if ($ak !== '' && array_key_exists($ak, $flat) && $flat[$ak] !== null && $flat[$ak] !== '') {
+                        $out[$canonical] = $flat[$ak];
+                        break 2;
+                    }
                 }
             }
         }
@@ -213,10 +227,11 @@ class QuestionsImport implements ToCollection, WithHeadingRow
     protected function resolveSubject(
         string $raw,
         array $alias,
-        Collection $bySlug,
-        Collection $byName
+        Collection &$bySlug,
+        Collection &$byName
     ): string {
-        $key = mb_strtolower(trim($raw));
+        $name = trim($raw);
+        $key = mb_strtolower($name);
         if ($key === '') {
             return 'general';
         }
@@ -235,17 +250,66 @@ class QuestionsImport implements ToCollection, WithHeadingRow
             return (string) $byName->get($key)->slug;
         }
 
-        // Prefer a stable slug; fall back to general for empty labels
-        $slug = Str::slug($raw, '-');
+        $slug = Str::slug($name, '-');
         if ($slug === '') {
-            $slug = 'general';
+            $slug = 'unmatched-'.substr(hash('sha256', $key), 0, 12);
+        }
+        $slug = Str::limit($slug, 64, '');
+
+        if ($bySlug->has(strtolower($slug))) {
+            return (string) $bySlug->get(strtolower($slug))->slug;
         }
 
-        if ($bySlug->has($slug)) {
-            return (string) $bySlug->get($slug)->slug;
+        if (isset($alias[$slug])) {
+            return $alias[$slug];
         }
 
-        return Str::limit(isset($alias[$slug]) ? $alias[$slug] : $slug, 64, '');
+        // نام درس در مدیریت نیست → به‌عنوان «نامرتبط» بساز تا ادمین اصلاح/ادغام کند
+        $baseSlug = $slug;
+        $i = 1;
+        while (
+            $bySlug->has(strtolower($slug))
+            || ExamSubject::query()->where('slug', $slug)->exists()
+        ) {
+            $slug = Str::limit($baseSlug, 50, '').'-'.$i;
+            $i++;
+        }
+
+        // اگر همین نام قبلاً با حروف متفاوت ثبت شده
+        $existingName = ExamSubject::query()
+            ->whereRaw('LOWER(name) = ?', [$key])
+            ->first();
+        if ($existingName) {
+            $bySlug->put(strtolower((string) $existingName->slug), $existingName);
+            $byName->put($key, $existingName);
+
+            return (string) $existingName->slug;
+        }
+
+        $uniqueName = $name;
+        if (ExamSubject::query()->where('name', $uniqueName)->exists()) {
+            $uniqueName = Str::limit($name.' (وارداتی)', 100, '');
+            $n = 2;
+            while (ExamSubject::query()->where('name', $uniqueName)->exists()) {
+                $uniqueName = Str::limit($name." (وارداتی {$n})", 100, '');
+                $n++;
+            }
+        }
+
+        $created = ExamSubject::query()->create([
+            'name' => $uniqueName,
+            'slug' => $slug,
+            'icon' => '❓',
+            'sort_order' => 9000 + (int) ExamSubject::query()->where('is_unmatched', true)->count(),
+            'is_active' => true,
+            'is_unmatched' => true,
+        ]);
+
+        $bySlug->put(strtolower((string) $created->slug), $created);
+        $byName->put(mb_strtolower((string) $created->name), $created);
+        $byName->put($key, $created);
+
+        return (string) $created->slug;
     }
 
     protected function resolveExam(string $slug, string $title): ?Exam

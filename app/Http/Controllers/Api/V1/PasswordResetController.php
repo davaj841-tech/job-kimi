@@ -31,16 +31,17 @@ class PasswordResetController extends BaseController
         ]);
 
         $identifier = trim($data['identifier']);
+        $mobile = \App\Support\IranMobile::normalize($identifier);
 
-        if (preg_match('/^09\d{9}$/', $identifier)) {
-            $user = User::query()->where('mobile', $identifier)->first();
+        if ($mobile) {
+            $user = User::query()->where('mobile', $mobile)->first();
             if (! $user) {
                 return $this->successResponse(['channel' => 'mobile'], 'در صورت وجود حساب، کد تایید ارسال شد.');
             }
 
-            $result = $this->otpAuthService->sendOtp($identifier);
+            $result = $this->otpAuthService->sendOtp($mobile);
             if (! $result['success']) {
-                return $this->errorResponse($result['message'], 429);
+                return $this->errorResponse($result['message'], $result['http'] ?? 429);
             }
 
             return $this->successResponse([
@@ -70,17 +71,25 @@ class PasswordResetController extends BaseController
 
     public function verifyOtpReset(Request $request): JsonResponse
     {
+        if ($request->filled('mobile')) {
+            $normalized = \App\Support\IranMobile::normalize((string) $request->input('mobile'));
+            if ($normalized) {
+                $request->merge(['mobile' => $normalized]);
+            }
+        }
+
         $data = $request->validate([
             'mobile' => ['required', 'regex:/^09\d{9}$/'],
             'code' => ['required', 'string', 'min:4', 'max:6'],
             'password' => ['required', 'string', 'confirmed', Password::min(8)],
         ], [
+            'mobile.regex' => 'شماره موبایل نامعتبر است.',
             'password.confirmed' => 'تکرار رمز عبور مطابقت ندارد.',
         ]);
 
         $verify = $this->otpAuthService->verifyOtp($data['mobile'], $data['code']);
         if (! ($verify['success'] ?? false)) {
-            return $this->errorResponse($verify['message'] ?? 'کد نامعتبر است.', 422);
+            return $this->errorResponse($verify['message'] ?? 'کد نامعتبر است.', $verify['http'] ?? 422);
         }
 
         /** @var User $user */

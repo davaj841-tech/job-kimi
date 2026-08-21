@@ -10,9 +10,11 @@ use App\Http\Controllers\Api\Admin\AIContentController;
 use App\Http\Controllers\Api\Admin\AnalyticsAdminController;
 use App\Http\Controllers\Api\Admin\AuditLogAdminController;
 use App\Http\Controllers\Api\Admin\BackupAdminController;
+use App\Http\Controllers\Api\Admin\SystemUpdateAdminController;
 use App\Http\Controllers\Api\Admin\BannerAdminController;
 use App\Http\Controllers\Api\Admin\BlogPostAdminController;
 use App\Http\Controllers\Api\Admin\ContactMessageAdminController;
+use App\Http\Controllers\Api\Admin\CouponAdminController;
 use App\Http\Controllers\Api\Admin\CrawlerRunAdminController;
 use App\Http\Controllers\Api\Admin\ExamSubjectAdminController;
 use App\Http\Controllers\Api\Admin\JobClassificationAdminController;
@@ -38,7 +40,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth:sanctum', 'subscription.check', 'role:admin,operator', 'operator.perm'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'role:super_admin,admin,operator', 'operator.perm'])->prefix('admin')->group(function () {
     Route::get('/dashboard-stats', [AdminDashboardController::class, 'stats']);
 
     Route::get('/users', [AdminUserController::class, 'index']);
@@ -202,7 +204,15 @@ Route::middleware(['auth:sanctum', 'subscription.check', 'role:admin,operator', 
     Route::post('/backups', [BackupAdminController::class, 'store']);
     Route::post('/backups/restore', [BackupAdminController::class, 'restore']);
     Route::get('/backups/download', [BackupAdminController::class, 'download']);
+    Route::get('/backups/verify', [BackupAdminController::class, 'verify']);
     Route::delete('/backups', [BackupAdminController::class, 'destroy']);
+
+    Route::get('/system-updates/status', [SystemUpdateAdminController::class, 'status']);
+    Route::get('/system-updates/history', [SystemUpdateAdminController::class, 'history']);
+    Route::get('/system-updates/{id}', [SystemUpdateAdminController::class, 'show'])->whereNumber('id');
+    Route::post('/system-updates/validate', [SystemUpdateAdminController::class, 'validateUpload']);
+    Route::post('/system-updates/install', [SystemUpdateAdminController::class, 'install']);
+    Route::post('/system-updates/{id}/rollback', [SystemUpdateAdminController::class, 'rollback'])->whereNumber('id');
 
     Route::get('/audit-logs', [AuditLogAdminController::class, 'index']);
     Route::get('/audit-logs/report', [AuditLogAdminController::class, 'report']);

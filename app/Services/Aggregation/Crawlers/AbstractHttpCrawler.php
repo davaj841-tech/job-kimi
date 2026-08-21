@@ -59,12 +59,16 @@ abstract class AbstractHttpCrawler implements JobSourceCrawlerInterface
         }
 
         $all = [];
+        $delay = (int) config('aggregation.http.endpoint_delay_ms', 1000);
+        $isFirst = true;
         foreach ($endpoints as $ep) {
+            if (! $isFirst && $delay > 0) {
+                usleep($delay * 1000);
+            }
+            $isFirst = false;
             try {
                 $all = array_merge($all, $this->crawlEndpoint($source, $ep));
             } catch (Throwable $e) {
-                // Re-throw so orchestrator records crawl_failed for this source.
-                // Other sources remain unaffected because dispatch/pilot loops per source.
                 throw $e;
             }
         }

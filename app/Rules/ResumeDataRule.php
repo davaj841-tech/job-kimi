@@ -68,7 +68,7 @@ class ResumeDataRule implements ValidationRule
         }
 
         foreach ($value['education'] ?? [] as $edu) {
-            if (! isset($edu['gpa']) || $edu['gpa'] === null || $edu['gpa'] === '') {
+            if (! is_array($edu) || ! isset($edu['gpa']) || $edu['gpa'] === '') {
                 continue;
             }
             if ((float) $edu['gpa'] > 20) {

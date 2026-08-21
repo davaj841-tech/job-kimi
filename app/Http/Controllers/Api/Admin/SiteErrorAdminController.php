@@ -99,7 +99,10 @@ class SiteErrorAdminController extends BaseController
         return $this->successResponse(null, 'خطاهای حل‌شده پاک شدند.');
     }
 
-    protected function filteredQuery(Request $request)
+    /**
+     * @return \Illuminate\Database\Eloquent\Builder<SiteError>
+     */
+    protected function filteredQuery(Request $request): \Illuminate\Database\Eloquent\Builder
     {
         $data = $request->validate([
             'search' => ['nullable', 'string', 'max:200'],

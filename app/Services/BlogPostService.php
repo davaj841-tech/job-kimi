@@ -40,7 +40,7 @@ class BlogPostService
     }
 
     /**
-     * @return array{prev_post: ?array{slug: string, title: string}, next_post: ?array{slug: string, title: string}}
+     * @return array{prev_post: ?array{id: int, slug: string, title: string}, next_post: ?array{id: int, slug: string, title: string}}
      */
     public function getPrevNext(BlogPost $post): array
     {
@@ -48,17 +48,17 @@ class BlogPostService
             ->where('status', 'published')
             ->where('created_at', '<', $post->created_at)
             ->orderByDesc('created_at')
-            ->first(['slug', 'title']);
+            ->first(['id', 'slug', 'title']);
 
         $next = BlogPost::query()
             ->where('status', 'published')
             ->where('created_at', '>', $post->created_at)
             ->orderBy('created_at')
-            ->first(['slug', 'title']);
+            ->first(['id', 'slug', 'title']);
 
         return [
-            'prev_post' => $prev ? ['slug' => $prev->slug, 'title' => $prev->title] : null,
-            'next_post' => $next ? ['slug' => $next->slug, 'title' => $next->title] : null,
+            'prev_post' => $prev ? ['id' => $prev->id, 'slug' => $prev->slug, 'title' => $prev->title] : null,
+            'next_post' => $next ? ['id' => $next->id, 'slug' => $next->slug, 'title' => $next->title] : null,
         ];
     }
 
@@ -105,6 +105,12 @@ class BlogPostService
         return $data;
     }
 
+    /**
+     * @return array{exams: array<int, mixed>, pdfs: array<int, mixed>}
+     */
+    /**
+     * @return array{exams: array<int, mixed>, pdfs: array<int, mixed>}
+     */
     public function relatedCatalog(BlogPost $post): array
     {
         return app(CatalogAttachService::class)->resolve(

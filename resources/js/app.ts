@@ -19,7 +19,7 @@ function registerPwa() {
       registerSW({
         immediate: true,
         onOfflineReady() {
-          console.log('App ready to work offline')
+          /* PWA precache ready */
         },
       })
     })

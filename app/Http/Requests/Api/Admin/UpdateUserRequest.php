@@ -12,6 +12,14 @@ class UpdateUserRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $mobile = \App\Support\IranMobile::normalize($this->input('mobile'));
+        if ($mobile !== null) {
+            $this->merge(['mobile' => $mobile]);
+        }
+    }
+
     /** @return array<string, mixed> */
     public function rules(): array
     {
@@ -23,7 +31,7 @@ class UpdateUserRequest extends FormRequest
             'mobile' => ['required', 'regex:/^09\d{9}$/', Rule::unique('users', 'mobile')->ignore($id)],
             'national_code' => ['nullable', 'string', 'max:10'],
             'username' => ['nullable', 'regex:/^[a-z0-9_]{3,20}$/', Rule::unique('users', 'username')->ignore($id)],
-            'role' => ['sometimes', 'in:jobseeker,employer,operator,admin'],
+            'role' => ['sometimes', 'in:jobseeker,employer,operator,admin,super_admin'],
             'operator_permissions' => ['sometimes', 'nullable', 'array'],
             'operator_permissions.*' => ['string'],
             'status' => ['sometimes', 'in:active,blocked'],

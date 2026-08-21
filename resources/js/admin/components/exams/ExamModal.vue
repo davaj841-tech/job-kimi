@@ -4,7 +4,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
   >
     <div
-      class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+      class="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
     >
       <div class="mb-4 flex items-center justify-between">
         <h3 class="text-lg font-bold text-slate-800">
@@ -61,7 +61,10 @@
           <label class="mb-1 block text-xs font-medium text-slate-600"
             >توضیحات</label
           >
-          <textarea v-model="form.description" rows="3" class="input" />
+          <p class="mb-2 text-[11px] text-slate-400">
+            ویرایشگر کامل: فرمت متن، جدول، فرمول LaTeX، تصویر و لینک.
+          </p>
+          <RichEditor v-model="form.description" size="exam" />
         </div>
         <div>
           <label class="mb-1 block text-xs font-medium text-slate-600"
@@ -221,6 +224,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useExamSubjectsStore } from '../../stores/examSubjects'
+import RichEditor from '../ui/RichEditor.vue'
 
 const props = defineProps({
   open: Boolean,

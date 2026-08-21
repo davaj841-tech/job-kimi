@@ -2,11 +2,20 @@
 
 namespace App\Http\Resources;
 
+use App\Models\SubscriptionPlan;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin SubscriptionPlan
+ *
+ * @property-read SubscriptionPlan $resource
+ */
 class SubscriptionPlanResource extends JsonResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         $features = is_array($this->features) ? $this->features : [];

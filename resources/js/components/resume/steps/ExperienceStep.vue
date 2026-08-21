@@ -40,12 +40,14 @@
               <JalaliMonthYear
                 v-model="exp.start_date"
                 label="از تاریخ"
+                :error="dateRangeError(exp)"
               />
               <div class="flex items-end gap-2">
                 <JalaliMonthYear
                   v-model="exp.end_date"
                   label="تا تاریخ"
                   :disabled="exp.is_current"
+                  :error="dateRangeError(exp)"
                   class="flex-1"
                 />
                 <label class="mb-2 flex items-center gap-1.5 whitespace-nowrap text-xs">
@@ -57,6 +59,12 @@
                   تا الان
                 </label>
               </div>
+              <p
+                v-if="dateRangeError(exp)"
+                class="md:col-span-2 text-xs text-red-600"
+              >
+                {{ dateRangeError(exp) }}
+              </p>
             </div>
             <div class="relative">
               <textarea
@@ -120,11 +128,18 @@ import {
 import Sortable from 'sortablejs'
 import FormInput from '../FormInput.vue'
 import JalaliMonthYear from '../JalaliMonthYear.vue'
+import { compareJalaliMonth, RANGE_ORDER_ERROR } from '../../../utils/jalali'
 
 const props = defineProps({
   modelValue: { type: Object, required: true },
 })
 const emit = defineEmits(['update:modelValue', 'ai-enhance'])
+
+function dateRangeError(exp) {
+  if (exp?.is_current || !exp?.start_date || !exp?.end_date) return ''
+  const cmp = compareJalaliMonth(exp.start_date, exp.end_date)
+  return cmp !== null && cmp >= 0 ? RANGE_ORDER_ERROR : ''
+}
 
 const local = computed({
   get: () => props.modelValue,

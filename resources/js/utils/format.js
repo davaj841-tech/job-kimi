@@ -58,6 +58,9 @@ export function unwrapItem(payload) {
 }
 
 export function apiErrorMessage(error, fallback = 'خطایی رخ داد.') {
+    if (error?.globalErrorNotified) {
+        return '';
+    }
     const errors = error?.response?.data?.errors;
     if (errors && typeof errors === 'object') {
         const first = Object.values(errors).flat()[0];

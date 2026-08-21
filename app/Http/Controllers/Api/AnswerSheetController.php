@@ -133,7 +133,7 @@ class AnswerSheetController extends BaseController
         }
 
         $isOwner = $attempt->user_id === $user->id;
-        $isStaff = in_array($user->role, ['admin', 'operator'], true);
+        $isStaff = \App\Support\OperatorPermissions::allows($user, 'exams');
 
         if (! $isOwner && ! $isStaff) {
             return null;

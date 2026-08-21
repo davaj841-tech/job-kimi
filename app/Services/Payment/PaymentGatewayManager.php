@@ -19,6 +19,10 @@ class PaymentGatewayManager
 
     public function driver(?string $name = null): PaymentGatewayInterface
     {
+        if (config('payment.fake') && ! app()->isProduction()) {
+            return app(FakePaymentGateway::class);
+        }
+
         $name = $name ?: $this->defaultName();
 
         if (! isset($this->drivers[$name])) {

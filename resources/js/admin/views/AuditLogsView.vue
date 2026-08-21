@@ -42,9 +42,10 @@
           class="field"
           placeholder="موجودیت"
         />
-        <input v-model="filters.date_from" type="date" class="field" />
-        <input v-model="filters.date_to" type="date" class="field" />
+        <JalaliDatepicker v-model="filters.date_from" label="از تاریخ" :error="dateRangeError" />
+        <JalaliDatepicker v-model="filters.date_to" label="تا تاریخ" :error="dateRangeError" />
       </div>
+      <p v-if="dateRangeError" class="text-xs text-red-600">{{ dateRangeError }}</p>
       <div class="flex flex-wrap gap-2">
         <button class="btn-orange" @click="applyFilters">اعمال فیلتر</button>
         <button
@@ -149,12 +150,14 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import adminApi from '../api/client'
 import DataTable from '../components/ui/DataTable.vue'
+import JalaliDatepicker from '../components/ui/JalaliDatepicker.vue'
 import PaginationBar from '../components/ui/PaginationBar.vue'
 import { useToast } from '../../composables/useToast'
 import { formatDateTime, unwrapList, unwrapMeta } from '../../utils/format'
+import { compareIsoDate, RANGE_ORDER_ERROR } from '../../utils/jalali'
 
 const toast = useToast()
 const rows = ref([])
@@ -168,6 +171,11 @@ const filters = reactive({
   entity_type: '',
   date_from: '',
   date_to: '',
+})
+
+const dateRangeError = computed(() => {
+  const cmp = compareIsoDate(filters.date_from, filters.date_to)
+  return cmp !== null && cmp >= 0 ? RANGE_ORDER_ERROR : ''
 })
 const columns = [
   { key: 'created_at', label: 'زمان' },
@@ -211,6 +219,10 @@ async function loadReport() {
 }
 
 async function applyFilters() {
+  if (dateRangeError.value) {
+    toast.error(dateRangeError.value)
+    return
+  }
   await loadReport()
   await load(1)
 }
@@ -231,6 +243,10 @@ async function load(page = 1) {
 async function deleteRange() {
   if (!filters.date_from || !filters.date_to) {
     toast.error('بازه تاریخ را مشخص کنید.')
+    return
+  }
+  if (dateRangeError.value) {
+    toast.error(dateRangeError.value)
     return
   }
   if (

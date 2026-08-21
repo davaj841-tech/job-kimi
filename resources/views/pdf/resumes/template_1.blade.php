@@ -33,30 +33,34 @@
             color: {{ $accent ?? '#1a365d' }};
             border-bottom: 1.5px solid {{ $accent ?? '#1a365d' }};
             padding: 0 0 3px 0;
+            text-align: right;
+            direction: ltr;
+        }
+        .two-col h2 {
+            text-align: right;
         }
         .sec { margin: 0 0 9px; }
         .facts { width: 100%; border-collapse: collapse; }
         .facts > tbody > tr > td { width: 50%; padding: 2px 4px 3px; vertical-align: top; }
         .fact-pair { width: 100%; border-collapse: collapse; }
-        .fact-k {
-            width: 1%;
-            white-space: nowrap;
-            font-size: 9.5px;
-            color: #64748b;
+        .fact-line {
             text-align: right;
-            padding: 1px 0 1px 4px;
-            vertical-align: top;
-        }
-        .fact-v {
+            direction: ltr;
             font-size: 9.5px;
-            text-align: left;
-            unicode-bidi: isolate;
-            padding: 1px 6px 1px 0;
+            padding: 1px 0;
             vertical-align: top;
-            font-weight: 700;
             color: #0f172a;
+            font-weight: 700;
+            white-space: nowrap;
         }
-        .grid-table { width: 100%; border-collapse: collapse; margin: 2px 0 8px; }
+        .fact-k, .fact-v { /* legacy hooks for dark sidebar overrides */ }
+        .side.dark .fact-line { color: #fff; }
+        .grid-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2px 0 8px;
+            border: 1px solid {{ $accent ?? '#1a365d' }};
+        }
         .grid-table th {
             font-size: 8.5px;
             color: #fff;
@@ -64,15 +68,34 @@
             padding: 4px 5px;
             text-align: right;
             font-weight: 700;
+            border: 1px solid {{ $accent ?? '#1a365d' }};
         }
         .grid-table td {
             font-size: 9px;
             padding: 5px 5px;
-            border-bottom: 1px solid #e2e8f0;
+            border: 1px solid #cbd5e1;
             text-align: right;
             vertical-align: top;
         }
         .grid-table .num { text-align: left; unicode-bidi: isolate; }
+        .period-cell { text-align: center; vertical-align: middle; white-space: nowrap; }
+        .period-inline {
+            font-size: 8.5px;
+            color: {{ $accent ?? '#1a365d' }};
+            font-weight: 700;
+            direction: ltr;
+            unicode-bidi: isolate;
+            white-space: nowrap;
+        }
+        .two-col { width: 100%; border-collapse: collapse; margin: 0 0 8px; }
+        .two-col > tbody > tr > td { width: 50%; vertical-align: top; }
+        .two-col > tbody > tr > td.col-gap-l {
+            padding-left: 10px;
+            border-right: 1.5px solid {{ $accent ?? '#1a365d' }};
+        }
+        .two-col > tbody > tr > td.col-gap-r {
+            padding-right: 10px;
+        }
         .k { color: #64748b; }
         .item { margin: 0 0 7px; padding: 0 8px 0 0; border-right: 2px solid #e2e8f0; }
         .title { font-weight: 700; font-size: 10.5px; margin: 0; }
@@ -102,8 +125,7 @@
         .side.dark { background: {{ $header ?? '#0f172a' }}; color: #fff; }
         .side.dark h2, .side.dark .name, .side.dark .role, .side.dark .k, .side.dark .sub { color: #fff; border-color: rgba(255,255,255,.35); }
         .side.dark .chip { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.25); color: #fff; }
-        .side.dark .fact-k { color: rgba(255,255,255,.75); }
-        .side.dark .fact-v { color: #fff; }
+        .side.dark .fact-line { color: #fff; }
         .pad { padding: 2px 10px 0 4px; }
         .bar { height: 7px; background: {{ $header ?? '#1a365d' }}; margin: -10mm -11mm 10px; }
         .head-name { padding-right: 12px; vertical-align: middle; text-align: right; }
@@ -156,20 +178,14 @@
     $eduPeriod = static function ($edu) use ($fmtYm) {
         $start = $fmtYm($edu['start_date'] ?? '') ?: (string) ($edu['start_year'] ?? '');
         $end = $fmtYm($edu['end_date'] ?? '') ?: (string) ($edu['end_year'] ?? '');
-        if ($start === '' && $end === '') {
-            return '';
-        }
 
-        return $end === '' ? $start : $start.' تا '.$end;
+        return ['start' => $start, 'end' => $end];
     };
     $expPeriod = static function ($exp) use ($fmtYm) {
         $start = $fmtYm($exp['start_date'] ?? '');
         $end = ! empty($exp['is_current']) ? 'اکنون' : $fmtYm($exp['end_date'] ?? '');
-        if ($start === '' && $end === '') {
-            return '';
-        }
 
-        return $end === '' ? $start : $start.' تا '.$end;
+        return ['start' => $start, 'end' => $end];
     };
 @endphp
 
