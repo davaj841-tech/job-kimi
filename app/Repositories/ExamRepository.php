@@ -11,6 +11,10 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ExamRepository
 {
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, Exam>
+     */
     public function getPublished(array $filters): LengthAwarePaginator
     {
         $query = Exam::query()

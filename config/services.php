@@ -82,4 +82,9 @@ return [
         'secret' => env('TURNSTILE_SECRET_KEY'),
     ],
 
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-4'),
+    ],
+
 ];

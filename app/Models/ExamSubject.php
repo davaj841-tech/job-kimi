@@ -25,6 +25,7 @@ class ExamSubject extends Model
         ];
     }
 
+    /** @return HasMany<Question, $this> */
     public function questions(): HasMany
     {
         return $this->hasMany(Question::class, 'subject', 'slug');

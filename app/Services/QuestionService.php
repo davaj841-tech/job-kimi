@@ -38,6 +38,9 @@ class QuestionService
         ];
     }
 
+    /**
+     * @param  array<string, mixed>  $filters
+     */
     public function exportToExcel(array $filters): BinaryFileResponse
     {
         $fileName = 'questions-'.now()->format('Ymd-His').'.xlsx';

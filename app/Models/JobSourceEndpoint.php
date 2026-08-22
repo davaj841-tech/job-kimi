@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class JobSourceEndpoint extends Model
 {
+    /** @use HasFactory<\Database\Factories\JobSourceEndpointFactory> */
     use HasFactory;
 
     protected $fillable = [

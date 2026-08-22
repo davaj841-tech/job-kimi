@@ -10,14 +10,45 @@ import router from './router'
 import { useFeatureStore } from './stores/feature'
 import { useSiteTheme } from './composables/useSiteTheme'
 
-function registerPwa() {
+function activateWaitingWorker(reg: ServiceWorkerRegistration): void {
+  if (reg.waiting) {
+    reg.waiting.postMessage({ type: 'SKIP_WAITING' })
+  }
+}
+
+function registerPwa(): void {
   if (!('serviceWorker' in navigator)) return
+
   // SW lives under /build so precache paths resolve correctly; scope is whole site.
   navigator.serviceWorker
     .register('/build/sw.js', { scope: '/' })
+    .then((reg) => {
+      activateWaitingWorker(reg)
+
+      reg.addEventListener('updatefound', () => {
+        const worker = reg.installing
+        if (!worker) return
+        worker.addEventListener('statechange', () => {
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+            activateWaitingWorker(reg)
+            window.location.reload()
+          }
+        })
+      })
+
+      let refreshing = false
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return
+        refreshing = true
+        window.location.reload()
+      })
+    })
     .catch(() => {
       registerSW({
         immediate: true,
+        onNeedRefresh() {
+          window.location.reload()
+        },
         onOfflineReady() {
           /* PWA precache ready */
         },

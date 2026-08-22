@@ -33,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path(env('FILAMENT_PATH', 'filament'))
+            ->path((string) config('app.filament_path', 'filament'))
             ->login()
             ->brandName('جاب‌آزمون')
             ->font('Vazirmatn')

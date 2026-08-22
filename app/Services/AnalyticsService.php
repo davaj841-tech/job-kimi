@@ -42,6 +42,9 @@ class AnalyticsService
         ]);
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function visits(?string $from, ?string $to, string $groupBy = 'day'): array
     {
         $fromAt = $from ? Carbon::parse($from)->startOfDay() : now()->subDays(29)->startOfDay();
@@ -89,6 +92,9 @@ class AnalyticsService
         return "DATE_FORMAT({$column}, '{$format}')";
     }
 
+    /**
+     * @return list<array{page: string|null, count: int}>
+     */
     public function topPages(int $limit = 10, ?Carbon $from = null, ?Carbon $to = null): array
     {
         $q = PageView::query()
@@ -108,6 +114,9 @@ class AnalyticsService
         ])->all();
     }
 
+    /**
+     * @return list<array{device: string|int, count: int}>
+     */
     public function devices(?Carbon $from = null, ?Carbon $to = null): array
     {
         $q = PageView::query()->select('user_agent');

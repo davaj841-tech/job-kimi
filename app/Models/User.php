@@ -44,12 +44,15 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $locked_until
+ * @property string|null $otp_code
+ * @property Carbon|null $otp_expires_at
  * @property-read SubscriptionPlan|null $subscriptionPlan
  * @property-read Carbon|string|null $last_transaction_at
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $unreadNotifications
  */
 class User extends Authenticatable implements FilamentUser
 {
+    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     protected $fillable = [
@@ -165,6 +168,7 @@ class User extends Authenticatable implements FilamentUser
         });
     }
 
+    /** @return HasMany<PdfPurchase, $this> */
     public function pdfPurchases(): HasMany
     {
         return $this->hasMany(PdfPurchase::class);

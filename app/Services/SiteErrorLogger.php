@@ -8,6 +8,9 @@ use Throwable;
 
 class SiteErrorLogger
 {
+    /**
+     * @param  array<string, mixed>  $context
+     */
     public function report(Throwable $e, array $context = []): void
     {
         try {

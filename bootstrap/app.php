@@ -120,11 +120,14 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             if ($e instanceof \Illuminate\Http\Exceptions\ThrottleRequestsException) {
+                $retryAfter = (int) ($e->getHeaders()['Retry-After'] ?? 60);
+                $minutes = max(1, (int) ceil($retryAfter / 60));
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'تعداد درخواست‌ها بیش از حد مجاز است. کمی بعد دوباره تلاش کنید.',
+                    'message' => "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً {$minutes} دقیقه دیگر تلاش کنید.",
                     'errors' => null,
-                ], 429);
+                ], 429, $e->getHeaders());
             }
 
             return null;

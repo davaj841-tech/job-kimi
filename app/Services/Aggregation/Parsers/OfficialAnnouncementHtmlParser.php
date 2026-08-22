@@ -43,6 +43,9 @@ class OfficialAnnouncementHtmlParser implements JobParserInterface
         $items = [];
 
         foreach ($xpath->query('//a[@href]') ?: [] as $anchor) {
+            if (! $anchor instanceof \DOMElement) {
+                continue;
+            }
             $title = trim(preg_replace('/\s+/u', ' ', $anchor->textContent ?? '') ?? '');
             $href = trim((string) $anchor->getAttribute('href'));
             if ($title === '' || $href === '' || str_starts_with($href, '#')) {

@@ -24,11 +24,13 @@ class AiContent extends Model
         ];
     }
 
+    /** @return BelongsTo<User, $this> */
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    /** @return HasMany<BlogPost, $this> */
     public function blogPosts(): HasMany
     {
         return $this->hasMany(BlogPost::class);

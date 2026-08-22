@@ -275,6 +275,30 @@ class AuthController extends BaseController
     }
 
     /**
+     * رفرش توکن
+     *
+     * ابطال توکن فعلی و صدور توکن Sanctum جدید.
+     *
+     * @group احراز هویت
+     *
+     * @authenticated
+     *
+     * @response 200 {"success":true,"message":"توکن تمدید شد.","data":{"token":"...","user":{}}}
+     */
+    public function refresh(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $this->otpAuthService->revokeCurrentToken($user, $request);
+        $token = $this->otpAuthService->issueToken($user, 'api');
+        $user->load('subscriptionPlan');
+
+        return $this->successResponse([
+            'token' => $token,
+            'user' => new UserResource($user),
+        ], 'توکن تمدید شد.');
+    }
+
+    /**
      * پروفایل فعلی
      *
      * دریافت اطلاعات کاربر لاگین‌شده.

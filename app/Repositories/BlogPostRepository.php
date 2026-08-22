@@ -10,6 +10,7 @@ class BlogPostRepository
 {
     /**
      * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, BlogPost>
      */
     public function getPublished(array $filters): LengthAwarePaginator
     {
@@ -49,6 +50,7 @@ class BlogPostRepository
 
     /**
      * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, BlogPost>
      */
     public function getAdminList(array $filters): LengthAwarePaginator
     {
@@ -73,6 +75,9 @@ class BlogPostRepository
         return $query->latest()->paginate($filters['per_page'] ?? 15);
     }
 
+    /**
+     * @return Collection<int, BlogPost>
+     */
     public function getRelated(BlogPost $post, int $limit = 5): Collection
     {
         return BlogPost::query()

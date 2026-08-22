@@ -13,7 +13,7 @@ export default defineConfig({
     },
   },
   test: {
-    environment: 'jsdom',
+    environment: 'happy-dom',
     globals: true,
     setupFiles: ['resources/js/tests/setup.ts'],
     include: ['resources/js/**/*.spec.ts'],
@@ -32,9 +32,14 @@ export default defineConfig({
       include: [
         'resources/js/App.vue',
         'resources/js/stores/exam.ts',
+        'resources/js/stores/examStore.ts',
         'resources/js/stores/auth.ts',
+        'resources/js/composables/useAuth.ts',
         'resources/js/components/LoginForm.vue',
         'resources/js/components/EmptyState.vue',
+        'resources/js/components/ExamTimer.vue',
+        'resources/js/components/PaymentGateway.vue',
+        'resources/js/utils/validators.ts',
       ],
       thresholds: {
         lines: 60,

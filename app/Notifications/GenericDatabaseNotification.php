@@ -15,14 +15,21 @@ class GenericDatabaseNotification extends Notification implements ShouldQueue
         public string $title,
         public string $message,
         public ?string $link = null,
+        /** @var array<string, mixed> */
         public array $extra = []
     ) {}
 
+    /**
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
         return ['database'];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(object $notifiable): array
     {
         return array_merge([

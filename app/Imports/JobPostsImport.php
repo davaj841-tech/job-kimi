@@ -23,6 +23,9 @@ class JobPostsImport implements ToCollection, WithHeadingRow
         protected ?int $createdBy = null
     ) {}
 
+    /**
+     * @param  Collection<int, mixed>  $rows
+     */
     public function collection(Collection $rows): void
     {
         foreach ($rows as $index => $row) {

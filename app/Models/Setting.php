@@ -26,7 +26,7 @@ class Setting extends Model
             return Cache::remember("setting.{$key}", 3600, function () use ($key, $default) {
                 $setting = static::query()->where('key', $key)->first();
 
-                return $setting?->value ?? $default;
+                return $setting->value ?? $default;
             });
         } catch (Throwable) {
             return $default;

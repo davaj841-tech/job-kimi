@@ -10,11 +10,17 @@ use Illuminate\Support\Facades\DB;
 
 class AiContentRepository
 {
+    /**
+     * @return Collection<int, AiContent>
+     */
     public function getPending(): Collection
     {
         return AiContent::query()->where('status', 'pending')->latest()->get();
     }
 
+    /**
+     * @return Collection<int, AiContent>
+     */
     public function getByType(string $type): Collection
     {
         return AiContent::query()->where('type', $type)->latest()->get();

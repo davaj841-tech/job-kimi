@@ -31,10 +31,19 @@ use Illuminate\Support\Str;
  * @property int|null $consecutive_failures
  * @property string|null $schedule_mode
  * @property string|null $crawl_frequency
+ * @property array<int, array{time?: string, enabled?: bool, label?: string|null}>|null $custom_schedule_times
  * @property-read \Illuminate\Database\Eloquent\Collection<int, JobSourceEndpoint> $endpoints
+ *
+ * @method static Builder<static> enabled()
+ * @method static Builder<static> approved()
+ * @method static Builder<static> whitelisted()
+ * @method static Builder<static> dispatchable()
+ * @method static Builder<static> ofQualityStatus(JobSourceQualityStatus|string $status)
+ * @method static Builder<static> ofReliability(JobSourceReliability|string $level)
  */
 class JobSource extends Model
 {
+    /** @use HasFactory<\Database\Factories\JobSourceFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -134,38 +143,59 @@ class JobSource extends Model
         return $this->hasMany(JobSourceEndpoint::class)->orderBy('sort_order')->orderBy('id');
     }
 
+    /** @return HasMany<CrawlerRun, $this> */
     public function crawlerRuns(): HasMany
     {
         return $this->hasMany(CrawlerRun::class);
     }
 
+    /** @return HasMany<CrawlerError, $this> */
     public function crawlerErrors(): HasMany
     {
         return $this->hasMany(CrawlerError::class);
     }
 
+    /** @return HasMany<JobPost, $this> */
     public function jobPosts(): HasMany
     {
         return $this->hasMany(JobPost::class);
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeEnabled(Builder $query): Builder
     {
         return $query->where('is_enabled', true);
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeApproved(Builder $query): Builder
     {
         return $query->where('is_approved', true);
     }
 
-    /** Admin whitelist: enabled + approved (domain allowlist members). */
+    /**
+     * Admin whitelist: enabled + approved (domain allowlist members).
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeWhitelisted(Builder $query): Builder
     {
         return $query->enabled()->approved();
     }
 
-    /** Sources that may be dispatched by the aggregator (whitelist + crawlable quality + not in backoff). */
+    /**
+     * Sources that may be dispatched by the aggregator (whitelist + crawlable quality + not in backoff).
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeDispatchable(Builder $query): Builder
     {
         return $query->whitelisted()
@@ -181,6 +211,10 @@ class JobSource extends Model
             ->orderBy('id');
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeOfQualityStatus(Builder $query, JobSourceQualityStatus|string $status): Builder
     {
         $value = $status instanceof JobSourceQualityStatus ? $status->value : $status;
@@ -203,6 +237,10 @@ class JobSource extends Model
         return true;
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeOfReliability(Builder $query, JobSourceReliability|string $level): Builder
     {
         $value = $level instanceof JobSourceReliability ? $level->value : $level;

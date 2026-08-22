@@ -90,6 +90,9 @@ class AchievementService
         ));
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function forUser(User $user): array
     {
         $this->seedDefaults();

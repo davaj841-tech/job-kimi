@@ -1,14 +1,14 @@
 # JobAzmoon (جاب‌آزمون)
 
-پلتفرم فارسی و RTL برای آمادگی آزمون‌های استخدامی، شامل آزمون آنلاین، آگهی استخدام، فروشگاه PDF، اشتراک، کیف پول و پنل ادمین.
+[![CI](https://img.shields.io/github/actions/workflow/status/davaj841-tech/job-kimi/ci.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/davaj841-tech/job-kimi/actions/workflows/ci.yml)
+[![PHPStan](https://img.shields.io/badge/PHPStan-level%206-ef394e?logo=php&logoColor=white)](phpstan.neon)
+[![Laravel Pint](https://img.shields.io/badge/code%20style-Pint-ef394e?logo=laravel&logoColor=white)](https://laravel.com/docs/pint)
+[![Vue 3 + Vite](https://img.shields.io/badge/Vue%203%20%2B%20Vite-ef394e?logo=vuedotjs&logoColor=white)](https://vuejs.org)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-ef394e?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-ef394e?logo=open-source-initiative&logoColor=white)](LICENSE)
+[![PHP](https://img.shields.io/badge/PHP-8.2%2B-ef394e?logo=php&logoColor=white)](https://www.php.net)
 
-[![PHP](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://php.net)
-[![Laravel](https://img.shields.io/badge/Laravel-11-red)](https://laravel.com)
-[![Vue](https://img.shields.io/badge/Vue-3-green)](https://vuejs.org)
-[![PWA](https://img.shields.io/badge/PWA-enabled-blue)](#)
-[![API](https://img.shields.io/badge/API-v1-informational)](#api)
-[![PHPStan](https://img.shields.io/badge/PHPStan-level%206-brightgreen)](#)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+پلتفرم فارسی و RTL برای آمادگی آزمون‌های استخدامی، شامل آزمون آنلاین، آگهی استخدام، فروشگاه PDF، اشتراک، کیف پول و پنل ادمین.
 
 ---
 
@@ -278,6 +278,7 @@ Health: `GET /health` و `GET /up`
 | [PERFORMANCE.md](docs/PERFORMANCE.md) | ایندکس و پرفورمنس |
 | [MONITORING_CHECKLIST.md](docs/MONITORING_CHECKLIST.md) | مانیتورینگ بعد از deploy |
 | [GITHUB_PROTECTION.md](docs/GITHUB_PROTECTION.md) | محافظت branch |
+| [RELEASING.md](docs/RELEASING.md) | تگ semver و GitHub Release |
 | [screenshots/README.md](docs/screenshots/README.md) | تولید اسکرین‌شات |
 
 ---

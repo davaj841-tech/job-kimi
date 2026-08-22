@@ -57,6 +57,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class JobPost extends Model
 {
+    /** @use HasFactory<\Database\Factories\JobPostFactory> */
     use HasFactory;
     use HasSeo;
 
@@ -183,6 +184,6 @@ class JobPost extends Model
 
     public function getClassificationNameAttribute(): ?string
     {
-        return $this->classification?->name ?? $this->company_name;
+        return $this->classification->name ?? $this->company_name;
     }
 }

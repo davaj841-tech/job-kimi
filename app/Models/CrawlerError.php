@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  */
 class CrawlerError extends Model
 {
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory;
 
     protected $fillable = [

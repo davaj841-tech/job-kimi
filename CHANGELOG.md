@@ -1,23 +1,132 @@
 # Changelog
 
-فرمت بر اساس [Keep a Changelog](https://keepachangelog.com/fa/1.1.0/) و [Semantic Versioning](https://semver.org/lang/fa/).
+تمام تغییرات قابل‌توجه این پروژه در این فایل مستند می‌شود.
+
+فرمت بر اساس [Keep a Changelog](https://keepachangelog.com/fa/1.1.0/) و نسخه‌گذاری بر اساس [Semantic Versioning](https://semver.org/lang/fa/).
 
 ## [Unreleased]
 
 ### Added
-- TypeScript migration (gradual)
-- Docker Compose setup
-- CONTRIBUTING.md and CHANGELOG.md
+- داشبورد پیشرفت کاربر (KPI، تاریخچه نمره، رادار مهارت، برنامه روزانه و streak)
+- تست‌های Feature برای چرخه عمر آزمون، احراز هویت OTP و محدودیت نرخ API
+- تست‌های Unit برای Payment، Idempotency و Wallet
+- کارخانه‌ها و سیدر دمو با داده‌های فارسی (`DemoDataSeeder`)
+- محدودیت نرخ اختصاصی برای OTP، آزمون، پرداخت و API ادمین
 
-## [1.0.0] - 2026-08-09
+### Changed
+- پاک‌سازی کامل PHPStan level 6 / Larastan بدون `phpstan-baseline.neon`
+- تنظیم `reportUnmatchedIgnoredErrors: true` در `phpstan.neon`
+
+### Fixed
+- مسیر گم‌شده `POST /api/v1/auth/refresh` برای تمدید توکن Sanctum
+
+### Security
+- پیام‌های یکسان و فارسی برای پاسخ ۴۲۹ (Throttle) در سطح route و exception handler
+
+## [1.4.0] - ۱۴۰۴-۰۹-۲۰
 
 ### Added
-- Laravel 11 + Vue 3 PWA
-- آزمون آنلاین با autosave
-- فروشگاه PDF و اشتراک
-- کیف پول و درگاه زرین‌پال
-- رزومه‌ساز با AI Suggest
-- تجمیع آگهی استخدام (Crawler)
-- پنل ادمین Vue SPA + Filament
-- CI/CD با GitHub Actions
-- PHPStan Level 6
+- پشتیبانی کامل PWA با نصب روی موبایل/دسکتاپ
+- صفحه و کش آفلاین (`offline.html`) برای ادامه کار بدون اینترنت
+- precache دارایی‌های حیاتی و به‌روزرسانی Service Worker با reload خودکار
+- کش پاسخ‌های API منتخب برای نمایش محتوا در حالت آفلاین
+
+### Changed
+- بهبود تجربه موبایل و رفتار نصب PWA در SPA کاربر
+- همگام‌سازی وضعیت آنلاین/آفلاین در لایه Vue و Service Worker
+
+### Fixed
+- رفع مشکل به‌روزرسانی قدیمی ماندن کش پس از deploy جدید
+- اصلاح نمایش صفحه آفلاین هنگام قطع ناگهانی شبکه در حین آزمون
+
+### Security
+- محدود کردن محتوای کش آفلاین آزمون به شناسه سؤال و کلید پاسخ (بدون ذخیره credential)
+
+## [1.3.0] - ۱۴۰۴-۰۷-۱۵
+
+### Added
+- سیستم Feature Flags (`features` + سرویس مرکزی + `GET /api/v1/features`)
+- پنل مدیریت Filament در مسیر `/filament`
+- مدیریت پرچم‌ها و تنظیمات محصول از پنل ادمین
+- یکپارچه‌سازی تدریجی منابع Filament با مدل‌های اصلی (آزمون، کاربر، تراکنش و …)
+
+### Changed
+- جداسازی واضح‌تر بین Admin SPA (`/admin`) و Filament (`/filament`)
+- امکان فعال/غیرفعال کردن قابلیت‌ها بدون redeploy کامل
+
+### Fixed
+- رفع ناسازگاری وضعیت feature بین کش و پاسخ API
+- اصلاح دسترسی ادمین به منابع Filament پس از تغییر نقش کاربر
+
+### Security
+- محدود کردن مدیریت Feature Flags به نقش‌های ادمین مجاز
+- سخت‌گیری بیشتر روی policyهای پنل Filament برای عملیات حساس
+
+## [1.2.0] - ۱۴۰۴-۰۵-۱۰
+
+### Added
+- رزومه‌ساز چندمرحله‌ای با ذخیره پیش‌نویس
+- پیشنهاد و خلاصه‌سازی رزومه با AI Suggest
+- قالب‌ها و خروجی قابل استفاده برای ارسال به آگهی‌های استخدام
+- ارتباط رزومه با پروفایل کاربر و داشبورد پیشرفت
+
+### Changed
+- بهبود جریان ساخت رزومه و اعتبارسنجی فیلدهای اجباری
+- یکپارچه‌سازی بهتر رزومه با آگهی‌های تجمیع‌شده
+
+### Fixed
+- رفع خطای پاسخ نامعتبر مدل AI هنگام پیشنهاد/خلاصه رزومه
+- اصلاح ذخیره ناقص بخش‌های اختیاری رزومه
+
+### Security
+- محدود کردن فراخوانی سرویس AI به کاربران احرازهویت‌شده و سهمیه منطقی درخواست
+- جلوگیری از نشت کلید/پیکربندی ارائه‌دهنده AI در پاسخ‌های API
+
+## [1.1.0] - ۱۴۰۴-۰۳-۲۵
+
+### Added
+- فروشگاه PDF با خرید محصول و دانلود پس از پرداخت موفق
+- کیف پول کاربر با موجودی، ledger و تراکنش‌های بدهکار/بستانکار
+- پرداخت اشتراک و PDF از طریق کیف پول یا درگاه
+- طرح‌های اشتراک و فعال‌سازی دسترسی پس از خرید
+
+### Changed
+- گسترش سرویس پرداخت برای پشتیبانی از خرید محصول و شارژ کیف پول
+- یکپارچه‌سازی موجودی کیف پول با جریان اشتراک و فروشگاه
+
+### Fixed
+- رفع اعتبارسنجی موجودی ناکافی پیش از کسر از کیف پول
+- اصلاح وضعیت تراکنش هنگام شکست verify درگاه
+
+### Security
+- verify ایدمپوتنت پرداخت برای جلوگیری از شارژ/اعتبار تکراری
+- جلوگیری از تغییر مستقیم `wallet_balance` خارج از `WalletService`
+
+## [1.0.0] - ۱۴۰۴-۰۱-۱۵
+
+### Added
+- راه‌اندازی اولیه پلتفرم JobAzmoon روی Laravel 11 و Vue 3
+- آزمون آنلاین با شروع، autosave، زمان‌بندی، نمره‌دهی و لیدربورد
+- احراز هویت API با Laravel Sanctum
+- درگاه پرداخت زرین‌پال برای خرید اشتراک/دسترسی پولی
+- اسکلت SPA کاربر، پنل ادمین Vue و API نسخه `v1`
+- ساختار پایه آگهی استخدام، تیکت و صفحات ثابت
+
+### Changed
+- تعریف معماری اولیه backend/frontend و قرارداد API عمومی
+
+### Fixed
+- رفع مسائل اولیه مهاجرت و seed برای محیط توسعه محلی
+
+### Security
+- محافظت مسیرهای حساس API با middleware احراز هویت
+- ذخیره امن تنظیمات درگاه و کلیدهای محیطی در `.env` (بدون commit)
+
+---
+
+[Unreleased]: https://github.com/davaj841-tech/job-kimi/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/davaj841-tech/job-kimi/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/davaj841-tech/job-kimi/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/davaj841-tech/job-kimi/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/davaj841-tech/job-kimi/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/davaj841-tech/job-kimi/releases/tag/v1.0.0

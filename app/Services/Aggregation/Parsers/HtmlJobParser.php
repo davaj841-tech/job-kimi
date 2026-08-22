@@ -43,6 +43,7 @@ class HtmlJobParser implements JobParserInterface
     }
 
     /**
+     * @param  array<string, mixed>  $context
      * @return array<int, array<string, mixed>>
      */
     protected function parseJsonLd(string $html, array $context): array
@@ -92,10 +93,11 @@ class HtmlJobParser implements JobParserInterface
             }
         }
 
-        return array_values(array_filter($items, fn ($row) => filled($row['title'] ?? null)));
+        return array_values(array_filter($items, fn ($row) => filled($row['title'])));
     }
 
     /**
+     * @param  array<string, mixed>  $context
      * @return array<int, array<string, mixed>>
      */
     protected function parseEmbeddedJson(string $html, array $context): array
@@ -108,6 +110,7 @@ class HtmlJobParser implements JobParserInterface
     }
 
     /**
+     * @param  array<string, mixed>  $context
      * @return array<string, mixed>|null
      */
     protected function parseOpenGraph(string $html, array $context): ?array

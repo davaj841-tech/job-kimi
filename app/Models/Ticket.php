@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ticket extends Model
 {
+    /** @use HasFactory<\Database\Factories\TicketFactory> */
+    use HasFactory;
+
     protected $fillable = [
         'user_id', 'tracking_code', 'subject', 'message', 'category', 'status', 'priority', 'assigned_to',
     ];
@@ -46,6 +50,7 @@ class Ticket extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
+    /** @return HasMany<TicketReply, $this> */
     public function replies(): HasMany
     {
         return $this->hasMany(TicketReply::class)->latest();

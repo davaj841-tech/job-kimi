@@ -65,8 +65,8 @@ Route::get('/subscription-plans', [SubscriptionController::class, 'plans']);
 Route::get('/pdf-products', [PDFProductController::class, 'index']);
 Route::get('/pdf-products/{id}', [PDFProductController::class, 'show'])->whereNumber('id');
 
-Route::get('/exams', [ExamController::class, 'index'])->middleware('cache.response:300');
-Route::get('/exams/{slug}', [ExamController::class, 'show']);
+Route::get('/exams', [ExamController::class, 'index'])->middleware(['throttle:exams', 'cache.response:300']);
+Route::get('/exams/{slug}', [ExamController::class, 'show'])->middleware('throttle:exams');
 
 Route::post('/contact', [ContactController::class, 'store'])->middleware(['auth.captcha', 'throttle:contact']);
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->middleware('throttle:newsletter');

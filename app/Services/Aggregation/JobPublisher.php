@@ -12,6 +12,9 @@ use App\Models\JobSource;
  */
 class JobPublisher implements JobPublisherInterface
 {
+    /**
+     * @param  array<string, mixed>  $normalized
+     */
     public function publish(array $normalized, JobSource $source, bool $autoApprove = false): JobPost
     {
         unset($autoApprove);
@@ -19,6 +22,9 @@ class JobPublisher implements JobPublisherInterface
         return JobPost::query()->create($this->payload($normalized, $source));
     }
 
+    /**
+     * @param  array<string, mixed>  $normalized
+     */
     public function updateExisting(JobPost $post, array $normalized, JobSource $source): JobPost
     {
         // Refuse to mutate manual (null source) or foreign-source posts.
@@ -32,6 +38,7 @@ class JobPublisher implements JobPublisherInterface
     }
 
     /**
+     * @param  array<string, mixed>  $normalized
      * @return array<string, mixed>
      */
     protected function payload(array $normalized, JobSource $source, ?JobPost $existing = null): array
@@ -72,8 +79,8 @@ class JobPublisher implements JobPublisherInterface
             'job_source_id' => $source->id,
             'external_id' => array_key_exists('external_id', $normalized) ? $normalized['external_id'] : $existing?->external_id,
             'content_hash' => array_key_exists('content_hash', $normalized) ? $normalized['content_hash'] : $existing?->content_hash,
-            'status' => $existing?->status ?? 'pending',
-            'is_featured' => $existing?->is_featured ?? false,
+            'status' => $existing !== null ? $existing->status : 'pending',
+            'is_featured' => $existing !== null ? $existing->is_featured : false,
             'created_by' => $existing?->created_by,
             'approved_by' => $existing?->approved_by,
         ];

@@ -14,6 +14,18 @@ class PaymentService
     ) {}
 
     /**
+     * ایجاد درخواست پرداخت در درگاه (alias برای initiate).
+     *
+     * @param  array<string, mixed>  $meta
+     * @return array{authority: ?string, payment_url: ?string, error: ?string}
+     */
+    public function create(string $gateway, int $amount, string $description, string $callback, array $meta = []): array
+    {
+        return $this->initiate($gateway, $amount, $description, $callback, $meta);
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
      * @return array{authority: ?string, payment_url: ?string, error: ?string}
      */
     public function initiate(string $gateway, int $amount, string $description, string $callback, array $meta = []): array
@@ -28,11 +40,20 @@ class PaymentService
     }
 
     /**
+     * @param  array<string, mixed>  $meta
      * @return array{success: bool, ref_id: ?string, error: ?string}
      */
     public function verify(string $gateway, string $authority, int $amount, array $meta = []): array
     {
         return $this->gateways->driver($gateway)->verify($authority, $amount, $meta);
+    }
+
+    /**
+     * بازگشت وجه تراکنش تکمیل‌شده از طریق کیف پول.
+     */
+    public function refund(Transaction $transaction): Transaction
+    {
+        return app(WalletService::class)->refund($transaction);
     }
 
     /** Backward-compatible aliases */
@@ -116,7 +137,7 @@ class PaymentService
     }
 
     /**
-     * @return array<string, mixed>
+     * @return list<array{name: string, display_name: string|null, is_default: bool}>
      */
     public function activeGateways(): array
     {

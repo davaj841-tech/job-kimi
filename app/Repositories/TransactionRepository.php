@@ -11,6 +11,7 @@ class TransactionRepository
 {
     /**
      * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, Transaction>
      */
     public function getByUser(User $user, array $filters): LengthAwarePaginator
     {
@@ -37,6 +38,7 @@ class TransactionRepository
 
     /**
      * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, Transaction>
      */
     public function getAll(array $filters): LengthAwarePaginator
     {
@@ -69,6 +71,9 @@ class TransactionRepository
         return $query->latest()->paginate($filters['per_page'] ?? 15);
     }
 
+    /**
+     * @return Collection<int, Transaction>
+     */
     public function getPending(): Collection
     {
         return Transaction::query()->where('status', 'pending')->latest()->get();
@@ -79,9 +84,6 @@ class TransactionRepository
         return Transaction::query()->where('reference_id', $ref)->first();
     }
 
-    /**
-     * @return Collection<int, Transaction>
-     */
     /**
      * @return Collection<int, Transaction>
      */

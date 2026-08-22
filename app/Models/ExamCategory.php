@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
  */
 class ExamCategory extends Model
 {
+    /** @use HasFactory<\Database\Factories\ExamCategoryFactory> */
     use HasFactory;
     use \App\Traits\HasSeo;
 
@@ -34,6 +35,7 @@ class ExamCategory extends Model
         });
     }
 
+    /** @return HasMany<Exam, $this> */
     public function exams(): HasMany
     {
         return $this->hasMany(Exam::class, 'category_id');

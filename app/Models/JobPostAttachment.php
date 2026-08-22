@@ -25,6 +25,7 @@ class JobPostAttachment extends Model
         ];
     }
 
+    /** @return BelongsTo<JobPost, $this> */
     public function jobPost(): BelongsTo
     {
         return $this->belongsTo(JobPost::class);

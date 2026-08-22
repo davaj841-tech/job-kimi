@@ -17,6 +17,10 @@ use Illuminate\Support\Carbon;
  * @property string|null $referrer
  * @property Carbon|null $created_at
  * @property-read User|null $user
+ * @property-read mixed $bucket
+ * @property-read mixed $page_views
+ * @property-read mixed $unique_visitors
+ * @property-read mixed $count
  */
 class PageView extends Model
 {
@@ -32,6 +36,7 @@ class PageView extends Model
         return ['created_at' => 'datetime'];
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

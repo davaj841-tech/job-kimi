@@ -631,7 +631,7 @@ Return JSON array: [{question_text, option_a, option_b, option_c, option_d, corr
 
     protected function apiKey(): ?string
     {
-        $key = Setting::getFilled('ai_api_key', env('OPENAI_API_KEY', ''));
+        $key = Setting::getFilled('ai_api_key', (string) config('services.openai.key', ''));
 
         return $key !== '' && $key !== null ? (string) $key : null;
     }

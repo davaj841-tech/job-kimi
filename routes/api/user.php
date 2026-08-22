@@ -25,6 +25,7 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check'])->group(
     Route::put('/user/profile', [AuthController::class, 'updateProfile']);
     Route::put('/user/settings', [ProfileExtrasController::class, 'updateNotificationPreferences']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::post('/auth/refresh', [AuthController::class, 'refresh'])->middleware('throttle:login');
     Route::post('/admin/auth/logout', [AdminAuthController::class, 'logout']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
 

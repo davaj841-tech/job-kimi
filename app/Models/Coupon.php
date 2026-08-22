@@ -5,7 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $code
+ * @property string $type
+ * @property numeric-string|float|int|null $value
+ * @property int|null $max_uses
+ * @property int $used_count
+ * @property numeric-string|float|int|null $min_purchase
+ * @property string $applicable_to
+ * @property Carbon|null $starts_at
+ * @property Carbon|null $expires_at
+ * @property bool $is_active
+ * @property int|null $created_by
+ */
 class Coupon extends Model
 {
     use SoftDeletes;
@@ -28,6 +43,7 @@ class Coupon extends Model
         ];
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

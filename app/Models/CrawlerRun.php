@@ -27,6 +27,7 @@ use Illuminate\Support\Carbon;
  */
 class CrawlerRun extends Model
 {
+    /** @use HasFactory<\Database\Factories\CrawlerRunFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -75,6 +76,10 @@ class CrawlerRun extends Model
         return $this->hasMany(CrawlerError::class);
     }
 
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
     public function scopeStatus(Builder $query, CrawlerRunStatus|string $status): Builder
     {
         $value = $status instanceof CrawlerRunStatus ? $status->value : $status;

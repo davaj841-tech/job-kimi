@@ -16,6 +16,7 @@ class BlogPostService
 
     /**
      * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, BlogPost>
      */
     public function getPublishedList(array $filters): LengthAwarePaginator
     {

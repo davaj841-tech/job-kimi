@@ -7,6 +7,7 @@ use App\Models\ExamSubject;
 use App\Models\Question;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -105,7 +106,7 @@ class ExamSubjectAdminController extends BaseController
         }
 
         $oldSlug = $item->slug;
-        $payload = collect($data)->except(['merge_into_id'])->all();
+        $payload = Arr::except($data, ['merge_into_id']);
 
         // با ویرایش دستی، دیگر نامرتبط نیست
         if (array_key_exists('name', $payload) || array_key_exists('slug', $payload)) {

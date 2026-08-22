@@ -84,6 +84,48 @@ final class IdempotencyService
     }
 
     /**
+     * اگر کلید قبلاً پردازش شده باشد، خطای Conflict (۴۰۹) پرتاب می‌کند.
+     */
+    public function ensureUnique(string $key): void
+    {
+        if ($this->isProcessed($key)) {
+            throw new IdempotencyException('Idempotency key already processed.', 409);
+        }
+    }
+
+    /**
+     * گرفتن قفل کوتاه‌مدت روی کلید (برای جلوگیری از پردازش موازی).
+     */
+    public function acquireLock(string $key, ?int $seconds = null): bool
+    {
+        $seconds = max(1, $seconds ?? (int) config('idempotency.lock_timeout', 10));
+
+        return Cache::lock($this->lockCacheKey($key), $seconds)->get();
+    }
+
+    /**
+     * آزادسازی قفل کلید.
+     */
+    public function releaseLock(string $key): void
+    {
+        Cache::lock($this->lockCacheKey($key))->forceRelease();
+    }
+
+    /**
+     * آیا قفل هنوز فعال است؟
+     */
+    public function isLocked(string $key): bool
+    {
+        $lock = Cache::lock($this->lockCacheKey($key), 1);
+        if (! $lock->get()) {
+            return true;
+        }
+        $lock->release();
+
+        return false;
+    }
+
+    /**
      * Lock the transaction and run side effects at most once.
      *
      * @template T
@@ -154,5 +196,10 @@ final class IdempotencyService
     private function cacheKey(string $key): string
     {
         return 'idempotency:processed:'.$key;
+    }
+
+    private function lockCacheKey(string $key): string
+    {
+        return 'idempotency:lock:'.$key;
     }
 }

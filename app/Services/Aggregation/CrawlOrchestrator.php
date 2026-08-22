@@ -187,7 +187,7 @@ class CrawlOrchestrator
 
         $summary = [
             'source_id' => $source->id,
-            'status' => $run->status?->value ?? (string) $run->status,
+            'status' => $run->status !== null ? $run->status->value : (string) $run->status,
             'found' => $found,
             'created' => $created,
             'updated' => $updated,
@@ -212,6 +212,9 @@ class CrawlOrchestrator
         ];
     }
 
+    /**
+     * @param  array<string, mixed>  $context
+     */
     protected function logError(
         JobSource $source,
         CrawlerRun $run,

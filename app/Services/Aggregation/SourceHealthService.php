@@ -97,9 +97,9 @@ class SourceHealthService
 
         return [
             'outcome' => $outcome,
-            'quality_changed' => $previousQuality !== $source->quality_status?->value,
+            'quality_changed' => $previousQuality !== ($source->quality_status !== null ? $source->quality_status->value : null),
             'previous_quality' => $previousQuality,
-            'quality_status' => $source->quality_status?->value ?? JobSourceQualityStatus::Active->value,
+            'quality_status' => $source->quality_status !== null ? $source->quality_status->value : JobSourceQualityStatus::Active->value,
             'backoff_until' => $source->health_backoff_until?->toIso8601String(),
         ];
     }

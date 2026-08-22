@@ -55,7 +55,7 @@ class DateNormalizer
         ] as $format) {
             try {
                 $dt = Carbon::createFromFormat($format, $raw);
-                if ($dt !== false) {
+                if ($dt instanceof Carbon) {
                     // Date-only formats must not inherit the current clock time.
                     if (in_array($format, ['Y-m-d', 'd/m/Y', 'Y/m/d', 'm/d/Y'], true)) {
                         $dt = $dt->startOfDay();

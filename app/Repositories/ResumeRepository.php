@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ResumeRepository
 {
+    /**
+     * @return Collection<int, Resume>
+     */
     public function getByUser(User $user): Collection
     {
         return Resume::query()
@@ -23,6 +26,9 @@ class ResumeRepository
             ->find($id);
     }
 
+    /**
+     * @return Collection<int, Resume>
+     */
     public function getRecent(User $user, int $limit = 5): Collection
     {
         return Resume::query()

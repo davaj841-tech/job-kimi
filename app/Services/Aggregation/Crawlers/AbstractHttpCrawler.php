@@ -131,7 +131,7 @@ abstract class AbstractHttpCrawler implements JobSourceCrawlerInterface
             }
         }
 
-        $type = $endpoint->endpoint_type?->value
+        $type = ($endpoint->endpoint_type !== null ? $endpoint->endpoint_type->value : null)
             ?? $endpoint->parser_type
             ?? $this->expectedType()->value;
 

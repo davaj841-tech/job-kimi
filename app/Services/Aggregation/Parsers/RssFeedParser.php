@@ -67,6 +67,10 @@ class RssFeedParser implements JobParserInterface
         return array_values(array_filter($items, fn ($row) => filled($row['title'] ?? null)));
     }
 
+    /**
+     * @param  array<string, mixed>  $context
+     * @return array<string, mixed>
+     */
     protected function mapItem(\SimpleXMLElement $item, array $context): array
     {
         $link = trim((string) ($item->link ?? ''));

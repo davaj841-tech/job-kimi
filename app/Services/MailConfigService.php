@@ -75,6 +75,9 @@ class MailConfigService
         $this->queueTo($user->email, new ExamReminderMail($title, $user->name, $examDate, $url));
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function sendContactForm(array $data): void
     {
         $admin = Setting::get('support_email') ?: Setting::get('smtp_from_address') ?: config('mail.from.address');

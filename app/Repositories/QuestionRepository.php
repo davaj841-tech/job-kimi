@@ -8,11 +8,18 @@ use Illuminate\Database\Eloquent\Collection;
 
 class QuestionRepository
 {
+    /**
+     * @return Collection<int, Question>
+     */
     public function getByExam(int $examId): Collection
     {
         return Question::query()->where('exam_id', $examId)->get();
     }
 
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, Question>
+     */
     public function getFiltered(array $filters): LengthAwarePaginator
     {
         $query = Question::query()->with('exam:id,title,slug');

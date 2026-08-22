@@ -60,6 +60,9 @@ class SubscriptionService
         return $this->subscribeWithGateway($user, $plan, $amount, $original, $discount, $coupon, $gateway);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function subscribeWithWallet(
         User $user,
         SubscriptionPlan $plan,
@@ -122,6 +125,9 @@ class SubscriptionService
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function subscribeWithGateway(
         User $user,
         SubscriptionPlan $plan,

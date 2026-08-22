@@ -12,6 +12,7 @@ class PDFProductRepository
 {
     /**
      * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, PdfProduct>
      */
     public function getActive(array $filters): LengthAwarePaginator
     {
@@ -98,6 +99,7 @@ class PDFProductRepository
 
     /**
      * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, PdfProduct>
      */
     public function getAdminList(array $filters): LengthAwarePaginator
     {

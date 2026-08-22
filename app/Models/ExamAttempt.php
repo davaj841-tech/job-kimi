@@ -34,6 +34,7 @@ use Illuminate\Support\Carbon;
  */
 class ExamAttempt extends Model
 {
+    /** @use HasFactory<\Database\Factories\ExamAttemptFactory> */
     use HasFactory;
 
     protected $fillable = [

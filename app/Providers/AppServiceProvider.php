@@ -122,38 +122,112 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
-        RateLimiter::for('otp', function (Request $request) {
-            $mobile = \App\Support\IranMobile::normalize((string) $request->input('mobile', ''))
-                ?: (string) $request->input('mobile', '');
+        // OTP ارسال — ۵ درخواست در ۱۰ دقیقه (بر اساس IP)
+        RateLimiter::for('otp-send', function (Request $request) {
+            return Limit::perMinutes(10, 5)
+                ->by('otp-send:'.$request->ip())
+                ->response(fn (Request $request, array $headers) => $this->throttleJsonResponse($headers));
+        });
 
-            return Limit::perMinute(3)->by($mobile.'|'.$request->ip());
+        // سازگاری با نام قبلی throttle:otp
+        RateLimiter::for('otp', function (Request $request) {
+            return Limit::perMinutes(10, 5)
+                ->by('otp-send:'.$request->ip())
+                ->response(fn (Request $request, array $headers) => $this->throttleJsonResponse($headers));
+        });
+
+        // OTP تأیید — ۱۰ درخواست در ۱۵ دقیقه (بر اساس IP)
+        RateLimiter::for('otp-verify', function (Request $request) {
+            return Limit::perMinutes(15, 10)
+                ->by('otp-verify:'.$request->ip())
+                ->response(fn (Request $request, array $headers) => $this->throttleJsonResponse($headers));
         });
 
         RateLimiter::for('login', function (Request $request) {
             $id = (string) ($request->input('mobile') ?: $request->input('login') ?: '');
             $id = \App\Support\IranMobile::normalize($id) ?: $id;
 
-            return Limit::perMinute(5)->by($id.'|'.$request->ip());
+            return Limit::perMinute(5)
+                ->by($id.'|'.$request->ip())
+                ->response(fn (Request $request, array $headers) => $this->throttleJsonResponse($headers));
         });
 
         RateLimiter::for('admin-login', function (Request $request) {
-            return Limit::perMinute(5)->by(($request->input('username') ?: '').'|'.$request->ip());
+            return Limit::perMinute(5)
+                ->by(($request->input('username') ?: '').'|'.$request->ip())
+                ->response(fn (Request $request, array $headers) => $this->throttleJsonResponse($headers));
+        });
+
+        // آزمون‌ها — ۶۰ درخواست در دقیقه (کاربر لاگین‌شده؛ در غیر این صورت IP)
+        RateLimiter::for('exams', function (Request $request) {
+            $key = $request->user()?->id
+                ? 'exams:user:'.$request->user()->id
+                : 'exams:ip:'.$request->ip();
+
+            return Limit::perMinute(60)
+                ->by($key)
+                ->response(fn (Request $request, array $headers) => $this->throttleJsonResponse($headers));
+        });
+
+        // پرداخت — ۱۰ درخواست در ساعت برای هر کاربر
+        RateLimiter::for('payment', function (Request $request) {
+            $key = $request->user()?->id
+                ? 'payment:user:'.$request->user()->id
+                : 'payment:ip:'.$request->ip();
+
+            return Limit::perHour(10)
+                ->by($key)
+                ->response(fn (Request $request, array $headers) => $this->throttleJsonResponse($headers));
+        });
+
+        // ادمین — ۱۰۰ درخواست در دقیقه برای هر ادمین
+        RateLimiter::for('admin-api', function (Request $request) {
+            $key = $request->user()?->id
+                ? 'admin:user:'.$request->user()->id
+                : 'admin:ip:'.$request->ip();
+
+            return Limit::perMinute(100)
+                ->by($key)
+                ->response(fn (Request $request, array $headers) => $this->throttleJsonResponse($headers));
         });
 
         RateLimiter::for('contact', function (Request $request) {
-            return Limit::perMinute(5)->by((string) $request->ip());
+            return Limit::perMinute(5)
+                ->by((string) $request->ip())
+                ->response(fn (Request $request, array $headers) => $this->throttleJsonResponse($headers));
         });
 
         RateLimiter::for('newsletter', function (Request $request) {
-            return Limit::perMinute(5)->by((string) $request->ip());
+            return Limit::perMinute(5)
+                ->by((string) $request->ip())
+                ->response(fn (Request $request, array $headers) => $this->throttleJsonResponse($headers));
         });
 
         RateLimiter::for('coupon', function (Request $request) {
-            return Limit::perMinute(10)->by((string) $request->ip());
+            return Limit::perMinute(10)
+                ->by((string) $request->ip())
+                ->response(fn (Request $request, array $headers) => $this->throttleJsonResponse($headers));
         });
 
         RateLimiter::for('payment-callback', function (Request $request) {
-            return Limit::perMinute(30)->by((string) $request->ip());
+            return Limit::perMinute(30)
+                ->by((string) $request->ip())
+                ->response(fn (Request $request, array $headers) => $this->throttleJsonResponse($headers));
         });
+    }
+
+    /**
+     * @param  array<string, string>  $headers
+     */
+    protected function throttleJsonResponse(array $headers): \Illuminate\Http\JsonResponse
+    {
+        $retryAfter = (int) ($headers['Retry-After'] ?? 60);
+        $minutes = max(1, (int) ceil($retryAfter / 60));
+
+        return response()->json([
+            'success' => false,
+            'message' => "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً {$minutes} دقیقه دیگر تلاش کنید.",
+            'errors' => null,
+        ], 429, $headers);
     }
 }

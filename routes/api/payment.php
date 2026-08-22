@@ -18,7 +18,7 @@ Route::match(['get', 'post'], '/wallet/verify', [WalletController::class, 'verif
 Route::match(['get', 'post'], '/subscription/verify', [SubscriptionController::class, 'verifySubscription'])->middleware('throttle:payment-callback');
 Route::match(['get', 'post'], '/pdf-products/{id}/verify', [PDFProductController::class, 'verifyPurchase'])->middleware('throttle:payment-callback')->whereNumber('id');
 
-Route::middleware(['auth:sanctum', 'user.active', 'subscription.check'])->group(function () {
+Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'throttle:payment'])->group(function () {
     Route::get('/wallet', [WalletController::class, 'index'])->middleware('feature:wallet');
     Route::post('/wallet/charge', [WalletController::class, 'charge'])->middleware('feature:wallet');
 

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: پرسش و گفتگو (GitHub Discussions)
+    url: https://github.com/davaj841-tech/job-kimi/discussions
+    about: برای سؤال، ایده کلی، و گفتگوی غیرباگ از Discussions استفاده کنید.
+  - name: گزارش امنیتی (خصوصی)
+    url: https://github.com/davaj841-tech/job-kimi/blob/main/SECURITY.md
+    about: آسیب‌پذیری را Issue عمومی نکنید؛ طبق SECURITY.md به security@jobazmoon.ir گزارش دهید.
+  - name: راهنمای مشارکت
+    url: https://github.com/davaj841-tech/job-kimi/blob/main/CONTRIBUTING.md
+    about: راه‌اندازی محیط توسعه، استاندارد کد، و چک‌لیست قبل از PR.

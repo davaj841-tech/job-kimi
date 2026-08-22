@@ -22,6 +22,9 @@ class OtpAuthService
         protected AuditLogService $audit
     ) {}
 
+    /**
+     * @return array<string, mixed>
+     */
     public function sendOtp(string $mobile): array
     {
         $mobile = IranMobile::normalize($mobile);
@@ -110,6 +113,9 @@ class OtpAuthService
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function verifyOtp(string $mobile, string $code, ?string $province = null): array
     {
         $mobile = IranMobile::normalize($mobile);

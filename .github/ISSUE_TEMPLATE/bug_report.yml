@@ -1,0 +1,106 @@
+name: گزارش باگ
+description: مشکلی در رفتار نرم‌افزار پیدا کرده‌اید
+title: "[باگ]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        قبل از ثبت Issue جدید، Issues باز را جستجو کنید.
+        برای مسائل **امنیتی** از Issue عمومی استفاده نکنید؛ به [`SECURITY.md`](../../SECURITY.md) مراجعه کنید.
+
+  - type: input
+    id: title_summary
+    attributes:
+      label: عنوان خلاصه
+      description: یک جمله کوتاه درباره مشکل
+      placeholder: مثلاً موجودی کیف پول بعد از verify زرین‌پال دو بار کم می‌شود
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: توضیح
+      description: مشکل را با جزئیات بنویسید
+      placeholder: چه اتفاقی افتاد و در چه بخشی از اپلیکیشن؟
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: مراحل بازتولید
+      description: مراحل دقیق برای تکرار مشکل
+      placeholder: |
+        1. برو به `...`
+        2. کلیک روی `...`
+        3. مشاهده خطا
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: رفتار مورد انتظار (Expected)
+      description: چه اتفاقی باید می‌افتاد؟
+      placeholder: بعد از پرداخت موفق، موجودی یک‌بار شارژ شود.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: رفتار واقعی (Actual)
+      description: چه اتفاقی افتاد؟
+      placeholder: موجودی دو بار شارژ شد و تراکنش تکراری ثبت گردید.
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: اسکرین‌شات / شواهد
+      description: در صورت امکان تصویر، ویدیو کوتاه، یا لاگ مرتبط (بدون secret و توکن) ضمیمه کنید
+      placeholder: تصویر را اینجا بکشید و رها کنید، یا لینک بگذارید.
+
+  - type: input
+    id: os
+    attributes:
+      label: سیستم‌عامل (OS)
+      description: مثلاً Windows 11، macOS 14، Ubuntu 22.04، Android 14
+      placeholder: Windows 11
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: مرورگر / کلاینت
+      description: مرورگر، نسخه، یا نصب PWA
+      placeholder: Chrome 128 / PWA نصب‌شده
+    validations:
+      required: true
+
+  - type: input
+    id: php_version
+    attributes:
+      label: نسخه PHP
+      description: اگر روی سرور/لوکال خودتان تست کرده‌اید
+      placeholder: 8.2.28
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment_extra
+    attributes:
+      label: جزئیات بیشتر محیط (اختیاری)
+      description: نسخه Node، مرورگر موبایل، commit/تگ، یا تنظیمات مرتبط
+      placeholder: |
+        - Node: 20.x
+        - تگ: v1.4.0
+        - دیتابیس: MySQL 8

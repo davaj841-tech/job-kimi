@@ -62,6 +62,6 @@ class CrawlerResolver
             }
         }
 
-        throw new RuntimeException('No crawler supports type: '.($source->crawler_type?->value ?? 'null'));
+        throw new RuntimeException('No crawler supports type: '.($source->crawler_type !== null ? $source->crawler_type->value : 'null'));
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JobDuplicate extends Model
 {
+    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory> */
     use HasFactory;
 
     protected $fillable = [
@@ -24,11 +25,13 @@ class JobDuplicate extends Model
         ];
     }
 
+    /** @return BelongsTo<JobPost, $this> */
     public function originalJob(): BelongsTo
     {
         return $this->belongsTo(JobPost::class, 'original_job_post_id');
     }
 
+    /** @return BelongsTo<JobPost, $this> */
     public function duplicateJob(): BelongsTo
     {
         return $this->belongsTo(JobPost::class, 'duplicate_job_post_id');

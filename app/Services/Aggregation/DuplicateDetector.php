@@ -94,6 +94,9 @@ class DuplicateDetector implements DuplicateDetectorInterface
         ];
     }
 
+    /**
+     * @return array{is_duplicate: bool, original: JobPost|null, score: float|null, reason: string|null}
+     */
     protected function hit(JobPost $original, float $score, string $reason): array
     {
         return [

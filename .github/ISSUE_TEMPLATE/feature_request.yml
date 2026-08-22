@@ -1,0 +1,63 @@
+name: درخواست قابلیت
+description: پیشنهاد ویژگی یا بهبود جدید برای JobAzmoon
+title: "[قابلیت]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        پیشنهاد خود را شفاف بنویسید تا بتوانیم اولویت و امکان‌پذیری را بررسی کنیم.
+        اگر سؤال کلی دارید، به‌جای Issue از Discussions استفاده کنید.
+
+  - type: input
+    id: title_summary
+    attributes:
+      label: عنوان
+      description: خلاصه کوتاه از پیشنهاد
+      placeholder: مثلاً فیلتر آزمون‌ها بر اساس سازمان استخدام‌کننده
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: مشکل فعلی
+      description: چه نیاز یا دردی الان برطرف نشده است؟
+      placeholder: کاربران نمی‌توانند آزمون‌های یک سازمان خاص را سریع پیدا کنند و باید کل لیست را بگردند.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: راه‌حل پیشنهادی
+      description: ایده شما برای حل مشکل چیست؟
+      placeholder: افزودن فیلتر چندانتخابی سازمان در صفحه لیست آزمون‌ها، همراه با ذخیره آخرین فیلتر در localStorage.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: راه‌حل‌های جایگزین
+      description: گزینه‌های دیگری که در نظر دارید (اختیاری)
+      placeholder: جستجوی متنی قوی‌تر، یا دسته‌بندی جداگانه به‌جای فیلتر.
+
+  - type: dropdown
+    id: willing_to_pr
+    attributes:
+      label: آیا مایل به ارسال Pull Request هستید؟
+      description: اگر خودتان می‌توانید پیاده‌سازی کنید، اعلام کنید
+      options:
+        - "بله — آماده‌ام PR بفرستم"
+        - "شاید — در صورت راهنمایی"
+        - "خیر — فقط پیشنهاد می‌دهم"
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: جزئیات بیشتر (اختیاری)
+      description: وایرفریم، لینک نمونه، اولویت کسب‌وکار، یا محدودیت‌های فنی
+      placeholder: اسکرین‌شات یا لینک طرح را اینجا بگذارید.

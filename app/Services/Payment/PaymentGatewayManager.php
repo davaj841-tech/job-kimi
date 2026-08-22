@@ -42,6 +42,9 @@ class PaymentGatewayManager
         return (string) Setting::get('payment_gateway', 'zarinpal');
     }
 
+    /**
+     * @return list<array{name: string, display_name: string|null, is_default: bool}>
+     */
     public function activeList(): array
     {
         $rows = PaymentGateway::query()->active()->get();

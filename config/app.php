@@ -132,4 +132,6 @@ return [
     'trusted_proxies' => env('TRUSTED_PROXIES', ''),
     'trusted_proxies_v6' => env('TRUSTED_PROXIES_V6', ''),
 
+    'filament_path' => env('FILAMENT_PATH', 'filament'),
+
 ];

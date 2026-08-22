@@ -16,6 +16,18 @@ services:
     depends_on:
       - db
       - redis
+    healthcheck:
+      # PHP-FPM خودش HTTP سرو نمی‌کند؛ از طریق nginx در شبکه داخلی چک می‌شود.
+      # ok و degraded هر دو برای load balancer سالم‌اند؛ فقط down شکست می‌خورد.
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://nginx/health | grep -Eq '\"status\"[[:space:]]*:[[:space:]]*\"(ok|degraded)\"'",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   nginx:
     image: nginx:alpine

@@ -124,11 +124,8 @@ class AggregationScheduleService
     {
         $mode = $source->schedule_mode ?: 'global';
         if ($mode === 'custom') {
-            $times = is_array($source->custom_schedule_times) ? $source->custom_schedule_times : [];
+            $times = $source->custom_schedule_times ?? [];
             foreach ($times as $row) {
-                if (! is_array($row)) {
-                    continue;
-                }
                 if (($row['enabled'] ?? true) && ($row['time'] ?? '') === $slot) {
                     return true;
                 }
@@ -235,7 +232,7 @@ class AggregationScheduleService
             'max_concurrent' => max(1, min(20, (int) ($config['max_concurrent'] ?? 5))),
             'dispatch_delay_seconds' => max(0, min(300, (int) ($config['dispatch_delay_seconds'] ?? 0))),
             'retry_tries' => max(1, min(5, (int) ($config['retry_tries'] ?? 2))),
-            'times' => array_values($times),
+            'times' => $times,
         ];
     }
 

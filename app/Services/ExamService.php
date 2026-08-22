@@ -174,7 +174,7 @@ class ExamService
     public function autosaveAnswers(ExamAttempt $attempt, array $answers, ?int $ttlSeconds = null): void
     {
         $attempt->loadMissing('exam');
-        $ttl = $ttlSeconds ?? max(60, ((int) ($attempt->exam?->duration_minutes ?? 60)) * 60 + 600);
+        $ttl = $ttlSeconds ?? max(60, ((int) ($attempt->exam->duration_minutes ?? 60)) * 60 + 600);
 
         Cache::put($this->autosaveKey($attempt->id), [
             'answers' => $answers,
@@ -314,9 +314,7 @@ class ExamService
 
         foreach ($bySubject as $slug => &$row) {
             $row['subject_label'] = self::subjectDisplayName($slug, $labels[$slug] ?? null);
-            $row['percentage'] = $row['total'] > 0
-                ? round(($row['correct'] / $row['total']) * 100, 1)
-                : 0;
+            $row['percentage'] = round(($row['correct'] / $row['total']) * 100, 1);
         }
         unset($row);
 

@@ -21,6 +21,9 @@ class QuestionsImport implements ToCollection, WithHeadingRow
 
     public function __construct(protected ?int $forcedExamId = null) {}
 
+    /**
+     * @param  Collection<int, mixed>  $rows
+     */
     public function collection(Collection $rows): void
     {
         $answerMap = [
@@ -117,10 +120,6 @@ class QuestionsImport implements ToCollection, WithHeadingRow
                 $this->errors[] = "ردیف {$rowNumber}: آزمون یافت نشد (نام یا شناسه آزمون را بررسی کنید).";
 
                 continue;
-            }
-
-            if (! in_array($difficulty, ['easy', 'medium', 'hard'], true)) {
-                $difficulty = 'medium';
             }
 
             if ($source !== '' || $examYear !== '') {

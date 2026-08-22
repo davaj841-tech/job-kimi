@@ -1,6 +1,5 @@
 includes:
     - vendor/larastan/larastan/extension.neon
-    - phpstan-baseline.neon
 
 parameters:
     paths:
@@ -8,7 +7,6 @@ parameters:
     level: 6
     tmpDir: storage/framework/cache/phpstan
     treatPhpDocTypesAsCertain: false
-    # Stale baseline entries from earlier refactors; keep level 6 and real findings.
-    reportUnmatchedIgnoredErrors: false
+    reportUnmatchedIgnoredErrors: true
     excludePaths:
         - app/Filament/*

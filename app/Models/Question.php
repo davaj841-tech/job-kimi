@@ -31,6 +31,7 @@ use Illuminate\Support\Carbon;
  */
 class Question extends Model
 {
+    /** @use HasFactory<\Database\Factories\QuestionFactory> */
     use HasFactory;
     use \App\Traits\HasSeo;
 

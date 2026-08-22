@@ -40,7 +40,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'role:super_admin,admin,operator', 'operator.perm'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'role:super_admin,admin,operator', 'operator.perm', 'throttle:admin-api'])->prefix('admin')->group(function () {
     Route::get('/dashboard-stats', [AdminDashboardController::class, 'stats']);
 
     Route::get('/users', [AdminUserController::class, 'index']);

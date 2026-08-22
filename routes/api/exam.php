@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth:sanctum', 'user.active', 'subscription.check'])->group(function () {
+Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'throttle:exams'])->group(function () {
     Route::post('/exams/{id}/rate', [ExamRatingController::class, 'store'])->whereNumber('id');
 
     Route::post('/exams', [ExamController::class, 'store'])->middleware(['role:super_admin,admin,operator', 'operator.perm']);

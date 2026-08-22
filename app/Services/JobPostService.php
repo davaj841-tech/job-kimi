@@ -21,12 +21,16 @@ class JobPostService
 
     /**
      * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, JobPost>
      */
     public function getPublicList(array $filters): LengthAwarePaginator
     {
         return $this->jobPostRepository->getApproved($filters);
     }
 
+    /**
+     * @return Collection<int, JobPost>
+     */
     public function getPendingForReview(): Collection
     {
         return $this->jobPostRepository->getPending();

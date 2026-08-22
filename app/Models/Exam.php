@@ -40,6 +40,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[ObservedBy([ExamObserver::class])]
 class Exam extends Model
 {
+    /** @use HasFactory<\Database\Factories\ExamFactory> */
     use HasFactory;
     use HasUniqueSlug;
     use \App\Traits\HasSeo;

@@ -12,6 +12,7 @@ class JobPostRepository
 {
     /**
      * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, JobPost>
      */
     public function getApproved(array $filters): LengthAwarePaginator
     {
@@ -90,6 +91,7 @@ class JobPostRepository
 
     /**
      * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, JobPost>
      */
     public function getAdminList(array $filters): LengthAwarePaginator
     {
@@ -203,6 +205,9 @@ class JobPostRepository
         ];
     }
 
+    /**
+     * @return Collection<int, JobPost>
+     */
     public function getByCreator(User $user): Collection
     {
         return JobPost::query()
@@ -277,6 +282,9 @@ class JobPostRepository
         ];
     }
 
+    /**
+     * @return Collection<int, JobPost>
+     */
     public function getPending(): Collection
     {
         return JobPost::query()
@@ -287,6 +295,7 @@ class JobPostRepository
     }
 
     /**
+     * @param  \Illuminate\Database\Eloquent\Builder<JobPost>  $query
      * @param  array<string, mixed>  $filters
      */
     protected function applyLocationFilters($query, array $filters): void

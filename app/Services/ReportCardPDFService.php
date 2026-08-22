@@ -43,7 +43,7 @@ class ReportCardPDFService
         return $this->persianText->reshapeHtml($html);
     }
 
-    public function download(ExamAttempt $attempt)
+    public function download(ExamAttempt $attempt): \Illuminate\Http\Response
     {
         $html = $this->renderHtml($attempt);
         $pdf = $this->persianFont->applyOptions(app('dompdf.wrapper'));
@@ -53,7 +53,7 @@ class ReportCardPDFService
         return $pdf->download($filename);
     }
 
-    public function stream(ExamAttempt $attempt)
+    public function stream(ExamAttempt $attempt): \Illuminate\Http\Response
     {
         $html = $this->renderHtml($attempt);
         $pdf = $this->persianFont->applyOptions(app('dompdf.wrapper'));

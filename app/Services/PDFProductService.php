@@ -14,6 +14,7 @@ use App\Models\WalletLedger;
 use App\Notifications\GenericDatabaseNotification;
 use App\Repositories\PDFProductRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -31,6 +32,7 @@ class PDFProductService
 
     /**
      * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, PdfProduct>
      */
     public function getAvailable(array $filters): LengthAwarePaginator
     {
@@ -74,6 +76,9 @@ class PDFProductService
         return $this->purchaseWithGateway($user, $pdf, $amount, $original, $discount, $coupon, $gateway);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function purchaseWithWallet(
         User $user,
         PdfProduct $pdf,
@@ -144,6 +149,9 @@ class PDFProductService
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function purchaseWithGateway(
         User $user,
         PdfProduct $pdf,
@@ -277,7 +285,7 @@ class PDFProductService
     /**
      * @param  array<string, mixed>  $data
      */
-    public function storeUploaded(array $data, $file, $thumbnail = null): PdfProduct
+    public function storeUploaded(array $data, UploadedFile $file, ?UploadedFile $thumbnail = null): PdfProduct
     {
         $uuid = (string) Str::uuid();
         $filePath = $file->storeAs('pdfs', $uuid.'.pdf', 'local');
