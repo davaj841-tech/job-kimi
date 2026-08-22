@@ -1,0 +1,8 @@
+# type(scope): subject
+#
+# Types: feat, fix, docs, style, refactor, test, chore, perf, security
+# Scope: exam, payment, wallet, auth, api, admin, crawler, seo, test, ci, docs
+#
+# Body: توضیحات بیشتر (اختیاری)
+#
+# Footer: Fixes #123, Closes #456

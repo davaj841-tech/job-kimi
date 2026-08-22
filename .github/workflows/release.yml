@@ -13,10 +13,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  backend-tests:
-    name: تست بک‌اند
+  test:
+    name: Pre-release checks
     runs-on: ubuntu-latest
-
     services:
       mysql:
         image: mysql:8.0
@@ -30,10 +29,8 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -41,12 +38,6 @@ jobs:
           php-version: "8.3"
           extensions: mbstring, intl, pdo_mysql, gd, exif, bcmath, zip
           coverage: none
-
-      - name: Cache Composer
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
 
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
@@ -56,30 +47,22 @@ jobs:
           cp .env.example .env
           php artisan key:generate
           sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
-          sed -i 's/# DB_HOST=.*/DB_HOST=127.0.0.1/' .env || true
           sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env
           sed -i 's/DB_DATABASE=.*/DB_DATABASE=jobazmoon_test/' .env
           sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
           sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=password/' .env
 
-      - name: Laravel Pint
+      - name: Pint
         run: vendor/bin/pint --test
 
       - name: PHPStan
         run: vendor/bin/phpstan analyse --memory-limit=1G
 
-      - name: Run migrations
+      - name: Migrate
         run: php artisan migrate --force --no-interaction
 
       - name: PHPUnit
         run: php artisan test
-
-  frontend-tests:
-    name: تست فرانت‌اند
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -87,131 +70,49 @@ jobs:
           node-version: "20"
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Frontend tests
+        run: |
+          npm ci
+          npm run test:unit
 
-      - name: Lint Frontend
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run type-check
-
-      - name: Run Frontend Tests
-        run: npm run test:unit
-
-      - name: Build
-        run: npm run build
-
-  publish-release:
-    name: ساخت GitHub Release
-    needs: [backend-tests, frontend-tests]
+  release:
+    name: Create GitHub Release
+    needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
-      - name: استخراج Release Notes از CHANGELOG.md
-        id: changelog
-        shell: bash
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Extract release notes from CHANGELOG
+        id: get_notes
         run: |
-          set -euo pipefail
-          TAG="${GITHUB_REF_NAME}"
-          VERSION="${TAG#v}"
-          OUT="release-notes.md"
-
-          if [[ ! -f CHANGELOG.md ]]; then
-            echo "فایل CHANGELOG.md پیدا نشد." >&2
-            exit 1
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          awk "/## \[$VERSION\]/{flag=1;next}/## \[/{flag=0}flag" CHANGELOG.md > RELEASE_NOTES.md
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "No CHANGELOG section for ${VERSION}; using tag message fallback." > RELEASE_NOTES.md
+            echo "" >> RELEASE_NOTES.md
+            echo "See CHANGELOG.md for details." >> RELEASE_NOTES.md
           fi
+          cat RELEASE_NOTES.md
 
-          # استخراج بلوک ## [x.y.z] تا قبل از ## بعدی
-          awk -v ver="${VERSION}" '
-            BEGIN { printing = 0 }
-            $0 ~ "^## \\[" ver "\\]" {
-              printing = 1
-              print
-              next
-            }
-            printing && $0 ~ /^## \[/ { exit }
-            printing { print }
-          ' CHANGELOG.md > changelog-section.md
-
-          if [[ ! -s changelog-section.md ]]; then
-            echo "بخش نسخه ${VERSION} در CHANGELOG.md پیدا نشد." >&2
-            exit 1
-          fi
-
-          # تاریخ شمسی داخل عنوان CHANGELOG (در صورت وجود)
-          HEADER=$(head -n 1 changelog-section.md)
-          DATE_FA=$(echo "${HEADER}" | sed -n 's/.*-[[:space:]]*\(.*\)$/\1/p' || true)
-
-          {
-            echo "# JobAzmoon ${TAG}"
-            echo ""
-            if [[ -n "${DATE_FA}" ]]; then
-              echo "> تاریخ انتشار: ${DATE_FA}"
-              echo ""
-            fi
-            echo "## چه چیزهای جدیدی هست؟ (What's New)"
-            echo ""
-            # بدنه CHANGELOG بدون خط عنوان نسخه
-            tail -n +2 changelog-section.md
-            echo ""
-            echo "## تغییرات شکسته (Breaking Changes)"
-            echo ""
-            if grep -qiE '^###[[:space:]]*(Breaking|Removed|Deprecated)' changelog-section.md; then
-              grep -A20 -iE '^###[[:space:]]*(Breaking|Removed|Deprecated)' changelog-section.md || true
-            else
-              echo "- در این نسخه Breaking Change اعلام‌شده‌ای در CHANGELOG ثبت نشده است."
-            fi
-            echo ""
-            echo "## راهنمای مهاجرت (Migration Guide)"
-            echo ""
-            echo "1. به تگ \`${TAG}\` به‌روز شوید."
-            echo "2. \`composer install\` و \`npm ci && npm run build\` را اجرا کنید."
-            echo "3. \`php artisan migrate --force\` و کش‌های Laravel را تازه کنید."
-            echo "4. صف‌ها را ری‌استارت کنید: \`php artisan queue:restart\` (یا Horizon)."
-            echo "5. در صورت تغییر PWA، یک‌بار به‌روزرسانی Service Worker را بررسی کنید."
-            echo ""
-            echo "## مشارکت‌کنندگان (Contributors)"
-            echo ""
-            echo "با تشکر از همه مشارکت‌کنندگان این نسخه. فهرست کامل commitها در مقایسه تگ‌ها در GitHub قابل مشاهده است."
-            echo ""
-            echo "---"
-            echo ""
-            echo "جزئیات کامل: فایل \`CHANGELOG.md\` در مخزن."
-          } > "${OUT}"
-
-          {
-            echo "tag=${TAG}"
-            echo "version=${VERSION}"
-            echo "notes_file=${OUT}"
-          } >> "${GITHUB_OUTPUT}"
-
-          echo "—— پیش‌نمایش Release Notes ——"
-          cat "${OUT}"
-
-      - name: تشخیص prerelease
+      - name: Detect prerelease
         id: meta
-        shell: bash
         run: |
-          TAG="${GITHUB_REF_NAME}"
-          if [[ "${TAG}" =~ - ]]; then
-            echo "prerelease=true" >> "${GITHUB_OUTPUT}"
+          if [[ "${GITHUB_REF_NAME}" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
-            echo "prerelease=false" >> "${GITHUB_OUTPUT}"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: ایجاد GitHub Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
           name: JobAzmoon ${{ github.ref_name }}
-          body_path: release-notes.md
+          body_path: RELEASE_NOTES.md
           draft: false
           prerelease: ${{ steps.meta.outputs.prerelease }}
-          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -41,9 +41,11 @@ $step = (int) ($_SESSION['step'] ?? 1);
 $errors = [];
 $result = null;
 $dbState = $_SESSION['db_state'] ?? ['state' => 'unknown', 'table_count' => 0];
+$installStatus = $engine->installationStatus();
 $locked = $engine->isLocked() && ($step !== 5 || empty($result));
+$blockedStatus = in_array($installStatus, ['incomplete', 'corrupted'], true) && $step !== 5;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ! $locked) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ! $locked && ! $blockedStatus) {
     if (! csrf_ok()) {
         $errors[] = 'نشست امنیتی نامعتبر است. صفحه را تازه کنید.';
     } else {
@@ -171,6 +173,16 @@ $dbState = $_SESSION['db_state'] ?? $dbState;
             <p class="font-bold text-amber-900">این سایت قبلاً نصب شده است.</p>
             <p class="mt-2">نصب‌کننده قفل شده و دوباره قابل اجرا نیست. اگر فایل <code>install.php</code> هنوز روی هاست است، فوراً حذفش کنید.</p>
             <a href="/" class="mt-4 inline-block rounded-xl bg-rose-500 px-5 py-2 text-sm font-bold text-white">ورود به سایت</a>
+        </div>
+    <?php elseif ($blockedStatus): ?>
+        <div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm leading-7">
+            <?php if ($installStatus === 'incomplete'): ?>
+                <p class="font-bold text-red-900">نصب ناقص تشخیص داده شد.</p>
+                <p class="mt-2">پوشه <code>job</code> (یا فایل artisan) وجود دارد ولی نشانگر <code>storage/installed</code> نیست. برای جلوگیری از بازنویسی داده‌ها، نصب متوقف شده است. پوشه job را در File Manager بررسی یا پس از پشتیبان‌گیری پاک کنید و دوباره تلاش کنید.</p>
+            <?php else: ?>
+                <p class="font-bold text-red-900">وضعیت نصب خراب به‌نظر می‌رسد.</p>
+                <p class="mt-2">ترکیب فایل‌های .env / vendor / bootstrap / نشانگر نصب ناسازگار است. نصب‌کننده از ادامه خودداری می‌کند — فایل‌های job را دستی بررسی کنید.</p>
+            <?php endif; ?>
         </div>
     <?php else: ?>
         <?php
@@ -301,18 +313,39 @@ $dbState = $_SESSION['db_state'] ?? $dbState;
                 <h3 class="mb-2 font-bold">گزارش نهایی</h3>
                 <ul class="divide-y text-sm">
                     <?php foreach ($result['verify'] as $c): ?>
-                        <li class="flex justify-between py-2">
-                            <span><?= h($c['label']) ?></span>
-                            <span class="<?= $c['ok'] ? 'text-emerald-600' : 'text-red-600' ?>"><?= $c['ok'] ? 'PASS' : 'FAIL' ?></span>
+                        <?php
+                        $level = $c['level'] ?? ($c['ok'] ? 'pass' : 'fail');
+                        $levelClass = match ($level) {
+                            'warning' => 'text-amber-600',
+                            'fail' => 'text-red-600',
+                            default => 'text-emerald-600',
+                        };
+                        $levelLabel = match ($level) {
+                            'warning' => 'WARN',
+                            'fail' => 'FAIL',
+                            default => 'PASS',
+                        };
+                        ?>
+                        <li class="flex justify-between gap-3 py-2">
+                            <span>
+                                <?= h($c['label']) ?>
+                                <?php if (! empty($c['detail'])): ?>
+                                    <span class="block text-xs text-slate-500"><?= h($c['detail']) ?></span>
+                                <?php endif; ?>
+                            </span>
+                            <span class="<?= $levelClass ?>"><?= $levelLabel ?></span>
                         </li>
                     <?php endforeach; ?>
                 </ul>
                 <?php if (empty($result['installer_removed'])): ?>
-                    <p class="mt-4 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-700">فایل install.php حذف نشد. فوراً از File Manager پاک کنید.</p>
+                    <div class="mt-4 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+                        <p class="font-bold">هشدار امنیتی: فایل install.php هنوز روی سرور است.</p>
+                        <p class="mt-2 leading-7">فوراً از File Manager آن را حذف کنید. در صورت امکان یک قانون Deny برای install.php در .htaccess اضافه شده است، ولی حذف فایل الزامی است.</p>
+                    </div>
                 <?php else: ?>
                     <p class="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">install.php به‌صورت خودکار حذف شد.</p>
                 <?php endif; ?>
-                <p class="mt-4 text-xs text-slate-500">Cron پیشنهادی: <code dir="ltr">* * * * * php /home/USER/job/artisan schedule:run</code></p>
+                <p class="mt-4 text-xs text-slate-500">Cron پیشنهادی: <code dir="ltr">* * * * * php <?= h($jobDir) ?>/artisan schedule:run >> /dev/null 2>&amp;1</code></p>
                 <a class="mt-4 inline-block rounded-xl bg-rose-500 px-5 py-3 text-sm font-bold text-white" href="/">ورود به سایت</a>
             </div>
         <?php endif; ?>

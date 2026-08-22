@@ -1,12 +1,13 @@
 # JobAzmoon (جاب‌آزمون)
 
-[![CI](https://img.shields.io/github/actions/workflow/status/davaj841-tech/job-kimi/ci.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/davaj841-tech/job-kimi/actions/workflows/ci.yml)
-[![PHPStan](https://img.shields.io/badge/PHPStan-level%206-ef394e?logo=php&logoColor=white)](phpstan.neon)
-[![Laravel Pint](https://img.shields.io/badge/code%20style-Pint-ef394e?logo=laravel&logoColor=white)](https://laravel.com/docs/pint)
-[![Vue 3 + Vite](https://img.shields.io/badge/Vue%203%20%2B%20Vite-ef394e?logo=vuedotjs&logoColor=white)](https://vuejs.org)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-ef394e?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-ef394e?logo=open-source-initiative&logoColor=white)](LICENSE)
-[![PHP](https://img.shields.io/badge/PHP-8.2%2B-ef394e?logo=php&logoColor=white)](https://www.php.net)
+![CI](https://img.shields.io/github/actions/workflow/status/davaj841-tech/job-kimi/ci.yml?branch=main&label=CI&style=flat-square)
+![PHPStan](https://img.shields.io/badge/PHPStan-level%206-brightgreen?style=flat-square)
+![Pint](https://img.shields.io/badge/code%20style-Laravel%20Pint-FF2D20?style=flat-square)
+![Vue](https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square&logo=vue.js)
+![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite)
+![Tailwind](https://img.shields.io/badge/Tailwind-3-06B6D4?style=flat-square&logo=tailwindcss)
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
+![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=flat-square&logo=php)
 
 پلتفرم فارسی و RTL برای آمادگی آزمون‌های استخدامی، شامل آزمون آنلاین، آگهی استخدام، فروشگاه PDF، اشتراک، کیف پول و پنل ادمین.
 
@@ -295,5 +296,26 @@ Health: `GET /health` و `GET /up`
 4. در صورت تغییر API: `php artisan scribe:generate`
 5. بدون breaking change غیرضروری روی `/api/v1/*`
 6. Pull Request (قالب: `.github/PULL_REQUEST_TEMPLATE.md`)
+
+### Commit (Conventional Commits)
+
+یک‌بار در کلون محلی:
+
+```bash
+git config commit.template .gitmessage
+```
+
+یا اسکریپت تعاملی:
+
+```bash
+./scripts/commit.sh
+```
+
+### Release
+
+```bash
+./scripts/release.sh
+./scripts/tag-historical.sh --push   # فقط برای تگ‌های تاریخی v1.0.0…v1.4.0
+```
 
 گزارش باگ: [Issues](https://github.com/davaj841-tech/job-kimi/issues)

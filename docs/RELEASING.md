@@ -54,12 +54,26 @@ git push origin v1.5.0
 
 ---
 
-## ۳. GitHub Action خودکار
+## ۳. اسکریپت‌ها و Action
 
-با push شدن تگ مطابق `v*.*.*` ورک‌فلو [`.github/workflows/release.yml`](../.github/workflows/release.yml):
+| فایل | نقش |
+|------|-----|
+| [`scripts/release.sh`](../scripts/release.sh) | چک تست‌ها، آپدیت CHANGELOG، commit + tag + push |
+| [`scripts/tag-historical.sh`](../scripts/tag-historical.sh) | ساخت تگ‌های v1.0.0…v1.4.0 |
+| [`scripts/commit.sh`](../scripts/commit.sh) | commit تعاملی Conventional Commits |
+| [`.github/workflows/release.yml`](../.github/workflows/release.yml) | با push تگ `v*.*.*` → تست + GitHub Release |
+
+```bash
+# انتشار نسخه جدید
+./scripts/release.sh
+
+# تگ‌های تاریخی (یک‌بار)
+./scripts/tag-historical.sh --push
+```
+
+با push شدن تگ `v*.*.*` ورک‌فلو Release:
 
 1. تست‌های backend و frontend را اجرا می‌کند  
 2. بخش همان نسخه را از `CHANGELOG.md` استخراج می‌کند  
-3. با قالب فارسی Release می‌سازد  
+3. GitHub Release می‌سازد  
 
-نیازی به ساخت دستی Release نیست مگر بخواهید متن را ویرایش کنید.
