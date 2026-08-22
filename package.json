@@ -1,5 +1,11 @@
 {
+  "name": "job-kimi",
   "private": true,
+  "description": "JobAzmoon Frontend — Vue 3 PWA for Iranian job exam preparation",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davaj841-tech/job-kimi.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

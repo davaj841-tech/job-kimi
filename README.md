@@ -1,13 +1,15 @@
 # JobAzmoon (جاب‌آزمون)
 
-![CI](https://img.shields.io/github/actions/workflow/status/davaj841-tech/job-kimi/ci.yml?branch=main&label=CI&style=flat-square)
-![PHPStan](https://img.shields.io/badge/PHPStan-level%206-brightgreen?style=flat-square)
-![Pint](https://img.shields.io/badge/code%20style-Laravel%20Pint-FF2D20?style=flat-square)
-![Vue](https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square&logo=vue.js)
-![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite)
-![Tailwind](https://img.shields.io/badge/Tailwind-3-06B6D4?style=flat-square&logo=tailwindcss)
-![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
-![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=flat-square&logo=php)
+<p align="center">
+  <img src="https://img.shields.io/github/actions/workflow/status/davaj841-tech/job-kimi/ci.yml?branch=main&label=CI&style=flat-square&logo=github" alt="CI">
+  <img src="https://img.shields.io/badge/PHPStan-level%206-brightgreen?style=flat-square" alt="PHPStan">
+  <img src="https://img.shields.io/badge/code%20style-Laravel%20Pint-FF2D20?style=flat-square" alt="Pint">
+  <img src="https://img.shields.io/badge/Vue-3-4FC08D?style=flat-square&logo=vue.js" alt="Vue">
+  <img src="https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite" alt="Vite">
+  <img src="https://img.shields.io/badge/Tailwind-3-06B6D4?style=flat-square&logo=tailwindcss" alt="Tailwind">
+  <img src="https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=flat-square&logo=php" alt="PHP">
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License">
+</p>
 
 پلتفرم فارسی و RTL برای آمادگی آزمون‌های استخدامی، شامل آزمون آنلاین، آگهی استخدام، فروشگاه PDF، اشتراک، کیف پول و پنل ادمین.
 
@@ -48,6 +50,38 @@ JobAzmoon یک SPA/PWA است با:
 | ![Wallet](docs/screenshots/wallet.png) | ![Plans](docs/screenshots/subscription.png) | ![Start](docs/screenshots/exam-start.png) |
 
 راهنما و اسکریپت: [`docs/screenshots/README.md`](docs/screenshots/README.md) و `npm run screenshots`
+
+## 🚀 شروع سریع
+
+```bash
+# ۱. کلون
+git clone https://github.com/davaj841-tech/job-kimi.git
+cd job-kimi
+
+# ۲. وابستگی‌ها
+composer install
+npm install
+
+# ۳. تنظیمات
+cp .env.example .env
+php artisan key:generate
+# .env را ویرایش کن (DB, Redis, Zarinpal, ...)
+
+# ۴. دیتابیس
+php artisan migrate --seed
+
+# ۵. بیلد
+npm run build
+
+# ۶. توسعه
+composer run dev
+```
+
+یا یک‌فرمان:
+
+```bash
+./scripts/setup.sh
+```
 
 ---
 
@@ -280,6 +314,7 @@ Health: `GET /health` و `GET /up`
 | [MONITORING_CHECKLIST.md](docs/MONITORING_CHECKLIST.md) | مانیتورینگ بعد از deploy |
 | [GITHUB_PROTECTION.md](docs/GITHUB_PROTECTION.md) | محافظت branch |
 | [RELEASING.md](docs/RELEASING.md) | تگ semver و GitHub Release |
+| [COMMIT_HISTORY.md](docs/COMMIT_HISTORY.md) | پیام‌های قدیمی commit و سیاست از این به بعد |
 | [screenshots/README.md](docs/screenshots/README.md) | تولید اسکرین‌شات |
 
 ---
@@ -315,7 +350,14 @@ git config commit.template .gitmessage
 
 ```bash
 ./scripts/release.sh
-./scripts/tag-historical.sh --push   # فقط برای تگ‌های تاریخی v1.0.0…v1.4.0
+```
+
+### 🏷️ تگ‌گذاری تاریخی (فقط یک‌بار)
+
+اگر تگ‌های v1.0.0 تا v1.4.0 هنوز push نشده‌اند:
+
+```bash
+./scripts/tag-historical.sh --push
 ```
 
 گزارش باگ: [Issues](https://github.com/davaj841-tech/job-kimi/issues)

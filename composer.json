@@ -1,9 +1,11 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "jobazmoon/platform",
+    "name": "davaj841-tech/job-kimi",
     "type": "project",
-    "description": "JobAzmoon — Persian PWA for employment exam prep, job listings, and subscriptions.",
-    "keywords": ["jobazmoon", "laravel", "vue", "pwa", "exams"],
+    "description": "پلتفرم فارسی آزمون آنلاین استخدامی با PWA، فروشگاه PDF، رزومه‌ساز AI و سیستم اشتراک",
+    "keywords": ["laravel", "vue", "pwa", "exam", "iran", "rtl", "job", "recruitment"],
+    "homepage": "https://github.com/davaj841-tech/job-kimi",
+    "readme": "README.md",
     "license": "MIT",
     "require": {
         "php": "^8.2",
