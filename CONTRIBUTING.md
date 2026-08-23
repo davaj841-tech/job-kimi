@@ -119,9 +119,20 @@ npm run format:check
 npm run type-check
 ```
 
-### پیام Commit
+### 🚨 Commit Messages (اجباری)
 
-فرمت Conventional Commits:
+همه commit ها **باید** از [Conventional Commits](https://www.conventionalcommits.org/) پیروی کنند.
+
+قبل از اولین commit، حتماً hook را نصب کنید:
+
+```bash
+./scripts/install-hooks.sh
+git config commit.template .gitmessage
+```
+
+اگر hook نصب باشد، commit با پیام بد **reject** می‌شود.
+
+فرمت:
 
 ```text
 type(scope): description
@@ -140,15 +151,20 @@ type(scope): description
 | `chore` | نگهداری، وابستگی، CI |
 | `perf` | بهبود عملکرد |
 | `security` | اصلاح امنیتی |
+| `ci` / `build` / `revert` | CI، بیلد، برگرداندن commit |
 
 مثال‌ها:
 
 ```bash
+./scripts/commit.sh
+# یا
 git commit -m "feat(exam): add autosave retry on network failure"
 git commit -m "fix(wallet): prevent double debit on verify timeout"
 git commit -m "docs(api): regenerate Scribe after payment endpoints"
 git commit -m "chore(ci): raise phpstan memory limit to 1G"
 ```
+
+❌ ممنوع: `14050601`، `ok`، `committed`، `delete file`
 
 - پیام را به **انگلیسی** و در زمان حال امری بنویسید (`add` نه `added`).
 - در صورت نیاز، جزئیات بیشتر را در بدنه commit بنویسید.

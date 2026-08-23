@@ -40,5 +40,8 @@ php artisan storage:link || true
 echo "🏗️  Building frontend..."
 npm run build
 
+# Install git hooks
+bash scripts/install-hooks.sh
+
 echo ""
 echo "✅ Setup complete! Run 'composer run dev' to start development."

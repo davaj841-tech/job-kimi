@@ -323,6 +323,58 @@ Health: `GET /health` و `GET /up`
 
 [MIT License](LICENSE)
 
+## ⚠️ مهم: تگ‌گذاری (فقط یک‌بار باید اجرا شود)
+
+اگر صفحه [Releases](https://github.com/davaj841-tech/job-kimi/releases) خالی است، این دستور را اجرا کن:
+
+```bash
+./scripts/tag-historical.sh --push
+```
+
+> ⚠️ **هشدار**: این دستور فقط یک‌بار اجرا شود. اگر تگ‌ها قبلاً push شده‌اند، دوباره اجرا نکنید.
+
+## 📝 نحوه Commit (اجباری)
+
+**هیچ‌وقت** مستقیماً `git commit -m "..."` با پیام دلخواه نزنید.
+
+### روش درست
+
+```bash
+# روش ۱: تعاملی (توصیه‌شده)
+./scripts/commit.sh
+
+# روش ۲: دستی (فقط اگر فرمت درست باشد)
+git commit -m "feat(scope): description"
+
+# نصب hook (یک‌بار در هر کلون)
+./scripts/install-hooks.sh
+git config commit.template .gitmessage
+```
+
+### فرمت صحیح
+
+```text
+type(scope): description
+
+Types: feat, fix, docs, style, refactor, test, chore, perf, security, ci, build, revert
+Scope: exam, payment, wallet, auth, api, admin, crawler, seo, test, ci, docs, repo
+
+مثال:
+  feat(exam): add autosave retry on network failure
+  fix(wallet): prevent double debit on verify timeout
+```
+
+### روش نادرست (❌ ممنوع)
+
+```bash
+git commit -m "14050601"
+git commit -m "ok"
+git commit -m "committed"
+git commit -m "delete file"
+```
+
+اگر hook نصب باشد، این پیام‌ها **reject** می‌شوند.
+
 ## مشارکت
 
 1. Branch از `main`: `feature/…` یا `fix/…`
@@ -332,32 +384,11 @@ Health: `GET /health` و `GET /up`
 5. بدون breaking change غیرضروری روی `/api/v1/*`
 6. Pull Request (قالب: `.github/PULL_REQUEST_TEMPLATE.md`)
 
-### Commit (Conventional Commits)
-
-یک‌بار در کلون محلی:
-
-```bash
-git config commit.template .gitmessage
-```
-
-یا اسکریپت تعاملی:
-
-```bash
-./scripts/commit.sh
-```
-
 ### Release
 
 ```bash
 ./scripts/release.sh
-```
-
-### 🏷️ تگ‌گذاری تاریخی (فقط یک‌بار)
-
-اگر تگ‌های v1.0.0 تا v1.4.0 هنوز push نشده‌اند:
-
-```bash
-./scripts/tag-historical.sh --push
+./scripts/check-repo-health.sh
 ```
 
 گزارش باگ: [Issues](https://github.com/davaj841-tech/job-kimi/issues)

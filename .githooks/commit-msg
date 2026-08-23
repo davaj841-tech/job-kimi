@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Validates Conventional Commits before allowing git commit.
+# Installed via: ./scripts/install-hooks.sh  (core.hooksPath=.githooks)
+
+set -euo pipefail
+
+MSG_FILE="${1:-}"
+if [[ -z "$MSG_FILE" || ! -f "$MSG_FILE" ]]; then
+  echo "commit-msg hook: missing message file" >&2
+  exit 1
+fi
+
+# First non-comment, non-empty line = subject
+SUBJECT="$(grep -vE '^\s*(#|$)' "$MSG_FILE" | head -n 1 | tr -d '\r')"
+
+# Allow merge / revert commits produced by git itself
+if [[ "$SUBJECT" =~ ^Merge\  ]] || [[ "$SUBJECT" =~ ^Revert\  ]]; then
+  exit 0
+fi
+
+PATTERN='^(feat|fix|docs|style|refactor|test|chore|perf|security|ci|build|revert)(\([^)]+\))?: .{1,100}$'
+
+if echo "$SUBJECT" | grep -qE "$PATTERN"; then
+  exit 0
+fi
+
+RED='\033[0;31m'
+NC='\033[0m'
+
+echo -e "${RED}"
+echo "❌ Commit message نامعتبر است!"
+echo ""
+echo "فرمت صحیح:"
+echo "  type(scope): description"
+echo ""
+echo "Types: feat, fix, docs, style, refactor, test, chore, perf, security, ci, build, revert"
+echo ""
+echo "مثال:"
+echo "  feat(exam): add user dashboard progress charts"
+echo ""
+echo "پیام شما:"
+echo "  ${SUBJECT:-<empty>}"
+echo ""
+echo "برای commit تعاملی از دستور زیر استفاده کن:"
+echo "  ./scripts/commit.sh"
+echo -e "${NC}"
+
+exit 1
