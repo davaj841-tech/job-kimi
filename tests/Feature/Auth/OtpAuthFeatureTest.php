@@ -96,6 +96,11 @@ class OtpAuthFeatureTest extends TestCase
 
     public function test_rejects_invalid_iranian_mobile_formats(): void
     {
+        $this->withoutMiddleware([
+            \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            \Illuminate\Routing\Middleware\ThrottleRequestsWithRedis::class,
+        ]);
+
         $invalidMobiles = [
             '08121234567',
             '0912123456',

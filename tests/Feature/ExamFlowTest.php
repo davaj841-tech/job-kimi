@@ -25,6 +25,9 @@ class ExamFlowTest extends TestCase
             'total_marks' => 100,
             'passing_score' => 50,
             'total_questions' => $questionCount,
+            'is_free' => true,
+            'price' => 0,
+            'subscription_required' => 'free',
         ], $examAttrs));
 
         $answers = ['a', 'b', 'c', 'd'];
@@ -96,7 +99,11 @@ class ExamFlowTest extends TestCase
     public function test_exam_auto_submits_after_timeout(): void
     {
         $user = User::factory()->create();
-        $exam = $this->createExamWithQuestions(['duration_minutes' => 30]);
+        $exam = $this->createExamWithQuestions([
+            'duration_minutes' => 30,
+            'is_free' => true,
+            'subscription_required' => 'free',
+        ]);
 
         Sanctum::actingAs($user);
 

@@ -147,6 +147,8 @@ $reqs = $engine->requirements();
 $token = $_SESSION['csrf'];
 $siteOld = $_SESSION['site'] ?? [];
 $dbOld = $_SESSION['db'] ?? [];
+// Never echo secrets into HTML (password fields stay empty; step 4/5 never print them).
+unset($siteOld['password'], $siteOld['password_confirmation'], $dbOld['pass']);
 $dbState = $_SESSION['db_state'] ?? $dbState;
 ?>
 <!DOCTYPE html>

@@ -313,6 +313,24 @@ final class InstallEngine
     }
 
     /**
+     * Guard for existing databases: require explicit confirmation when tables exist.
+     * Never DROP tables. Used by runInstall and unit tests.
+     *
+     * @param  array{ok?: bool, state?: string, table_count?: int, message?: string}  $dbTest
+     *
+     * @throws RuntimeException
+     */
+    public function assertDatabaseInstallAllowed(array $dbTest, bool $confirmedExistingDb): void
+    {
+        if (($dbTest['state'] ?? '') === 'has_tables' && ! $confirmedExistingDb) {
+            $count = (int) ($dbTest['table_count'] ?? 0);
+            throw new RuntimeException(
+                'این پایگاه‌داده '.$count.' جدول دارد. برای ادامه باید تأیید صریح بدهید.'
+            );
+        }
+    }
+
+    /**
      * @param  array{site_name: string, url: string, name: string, email: string, mobile: string, password: string, password_confirmation?: string}  $site
      * @return list<string>
      */
@@ -377,11 +395,7 @@ final class InstallEngine
         if (! $dbTest['ok']) {
             throw new RuntimeException($dbTest['message']);
         }
-        if ($dbTest['state'] === 'has_tables' && ! $confirmedExistingDb) {
-            throw new RuntimeException(
-                'این پایگاه‌داده '.$dbTest['table_count'].' جدول دارد. برای ادامه باید تأیید صریح بدهید.'
-            );
-        }
+        $this->assertDatabaseInstallAllowed($dbTest, $confirmedExistingDb);
 
         $siteErrors = $this->validateSiteInput(array_merge($site, [
             'password_confirmation' => $site['password_confirmation'] ?? $site['password'] ?? '',
