@@ -11,7 +11,9 @@
     </div>
     <div class="min-w-0">
       <p class="text-sm text-ink-muted dark:text-slate-400">{{ label }}</p>
-      <p class="truncate text-xl font-bold text-ink dark:text-white sm:text-2xl">
+      <p
+        class="truncate text-xl font-bold text-ink dark:text-white sm:text-2xl"
+      >
         {{ displayValue }}
       </p>
       <p v-if="trend" class="mt-0.5 text-xs" :class="trendColor">{{ trend }}</p>
@@ -68,9 +70,7 @@ onMounted(() => {
 
 const displayValue = computed(() => {
   const n = props.animate ? animated.value : props.value
-  const formatted = toFaDigits(
-    Number.isInteger(n) ? n : n.toFixed(1)
-  )
+  const formatted = toFaDigits(Number.isInteger(n) ? n : n.toFixed(1))
   return `${props.prefix}${formatted}${props.suffix}`
 })
 </script>

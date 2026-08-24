@@ -1,166 +1,158 @@
 <template>
-      <div class="space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-bold text-gray-800">
-          مدیریت آگهی‌های استخدام
-        </h1>
-        <div class="flex gap-2">
-          <button class="btn-muted" @click="classOpen = true">
-            طبقه‌بندی‌ها
-          </button>
-          <button class="btn-dark" @click="openCreate">آگهی جدید</button>
-          <button class="btn-muted" @click="importOpen = true">
-            ورود Excel
-          </button>
-        </div>
+  <div class="space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-bold text-gray-800">مدیریت آگهی‌های استخدام</h1>
+      <div class="flex gap-2">
+        <button class="btn-muted" @click="classOpen = true">
+          طبقه‌بندی‌ها
+        </button>
+        <button class="btn-dark" @click="openCreate">آگهی جدید</button>
+        <button class="btn-muted" @click="importOpen = true">ورود Excel</button>
       </div>
-
-      <div class="rounded-xl bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-          <select v-model="store.filters.status" class="field">
-            <option value="">همه وضعیت‌ها</option>
-            <option value="pending">در انتظار</option>
-            <option value="approved">تایید شده</option>
-            <option value="rejected">رد شده</option>
-          </select>
-          <select v-model="store.filters.province" class="field">
-            <option value="">همه استان‌ها</option>
-            <option
-              v-for="p in store.filterOptions.provinces"
-              :key="p"
-              :value="p"
-            >
-              {{ p }}
-            </option>
-          </select>
-          <input v-model="store.filters.city" class="field" placeholder="شهر" />
-          <select v-model="store.filters.job_classification_id" class="field">
-            <option value="">همه طبقه‌بندی‌ها</option>
-            <option
-              v-for="c in store.classifications"
-              :key="c.id"
-              :value="c.id"
-            >
-              {{ c.name }}
-            </option>
-          </select>
-          <JalaliDatepicker
-            v-model="store.filters.deadline_from"
-            label="مهلت از"
-            :error="deadlineRangeError"
-          />
-          <JalaliDatepicker
-            v-model="store.filters.deadline_to"
-            label="مهلت تا"
-            :error="deadlineRangeError"
-          />
-          <input
-            v-model="store.filters.search"
-            class="field lg:col-span-2"
-            placeholder="جستجو عنوان/طبقه‌بندی"
-            @keyup.enter="apply"
-          />
-        </div>
-        <p v-if="deadlineRangeError" class="mt-2 text-xs text-red-600">{{ deadlineRangeError }}</p>
-        <div class="mt-3 flex gap-2">
-          <button class="btn-orange" @click="apply">اعمال فیلتر</button>
-          <button class="btn-muted" @click="clear">پاک کردن</button>
-        </div>
-      </div>
-
-      <DataTable
-        :columns="columns"
-        :rows="store.posts"
-        :loading="store.loading"
-        actions
-      >
-        <template #cell-index="{ index }">{{ fa(rowNum(index)) }}</template>
-        <template #cell-title="{ row }">
-          <button
-            class="text-right font-medium hover:text-orange-600"
-            @click="openEdit(row)"
-          >
-            {{ row.title }}
-          </button>
-        </template>
-        <template #cell-location="{ row }">{{ locationText(row) }}</template>
-        <template #cell-registration_deadline="{ row }">{{
-          formatDate(row.registration_deadline)
-        }}</template>
-        <template #cell-status="{ row }">
-          <span class="inline-flex flex-wrap items-center gap-1">
-            <span
-              class="rounded-full px-2 py-0.5 text-xs font-bold"
-              :class="statusClass(row.status)"
-              >{{ statusLabel(row.status) }}</span
-            >
-            <span
-              v-if="isExpired(row.registration_deadline)"
-              class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700"
-            >
-              منقضی
-            </span>
-          </span>
-        </template>
-        <template #cell-view_count="{ row }">{{ fa(row.view_count) }}</template>
-        <template #actions="{ row }">
-          <div class="flex flex-wrap justify-end gap-1">
-            <button class="act" @click="openEdit(row)">مشاهده</button>
-            <button
-              v-if="row.status === 'pending'"
-              class="act text-emerald-700"
-              @click="askApprove(row)"
-            >
-              تایید
-            </button>
-            <button
-              v-if="row.status === 'pending'"
-              class="act text-red-600"
-              @click="askReject(row)"
-            >
-              رد
-            </button>
-            <button class="act" @click="openEdit(row)">ویرایش</button>
-            <button class="act text-red-600" @click="askDelete(row)">
-              حذف
-            </button>
-          </div>
-        </template>
-      </DataTable>
-
-      <PaginationBar :meta="store.meta" @page="go" />
     </div>
 
-    <JobPostModal
-      :open="modalOpen"
-      :post="editing"
-      :provinces="
-        store.filterOptions.provinces.length
-          ? store.filterOptions.provinces
-          : defaultProvinces
-      "
-      :classifications="store.classifications"
-      @close="modalOpen = false"
-      @saved="onSaved"
-    />
-    <ClassificationManagerModal
-      :open="classOpen"
-      @close="classOpen = false"
-      @changed="onClassChanged"
-    />
-    <JobImportModal
-      ref="importRef"
-      :open="importOpen"
-      @close="importOpen = false"
-      @imported="onImport"
-    />
-    <ConfirmDialog
-      :open="confirm.open"
-      :title="confirm.title"
-      :message="confirm.message"
-      @cancel="confirm.open = false"
-      @confirm="runConfirm"
-    />
+    <div class="rounded-xl bg-white p-4 shadow-sm">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <select v-model="store.filters.status" class="field">
+          <option value="">همه وضعیت‌ها</option>
+          <option value="pending">در انتظار</option>
+          <option value="approved">تایید شده</option>
+          <option value="rejected">رد شده</option>
+        </select>
+        <select v-model="store.filters.province" class="field">
+          <option value="">همه استان‌ها</option>
+          <option
+            v-for="p in store.filterOptions.provinces"
+            :key="p"
+            :value="p"
+          >
+            {{ p }}
+          </option>
+        </select>
+        <input v-model="store.filters.city" class="field" placeholder="شهر" />
+        <select v-model="store.filters.job_classification_id" class="field">
+          <option value="">همه طبقه‌بندی‌ها</option>
+          <option v-for="c in store.classifications" :key="c.id" :value="c.id">
+            {{ c.name }}
+          </option>
+        </select>
+        <JalaliDatepicker
+          v-model="store.filters.deadline_from"
+          label="مهلت از"
+          :error="deadlineRangeError"
+        />
+        <JalaliDatepicker
+          v-model="store.filters.deadline_to"
+          label="مهلت تا"
+          :error="deadlineRangeError"
+        />
+        <input
+          v-model="store.filters.search"
+          class="field lg:col-span-2"
+          placeholder="جستجو عنوان/طبقه‌بندی"
+          @keyup.enter="apply"
+        />
+      </div>
+      <p v-if="deadlineRangeError" class="mt-2 text-xs text-red-600">
+        {{ deadlineRangeError }}
+      </p>
+      <div class="mt-3 flex gap-2">
+        <button class="btn-orange" @click="apply">اعمال فیلتر</button>
+        <button class="btn-muted" @click="clear">پاک کردن</button>
+      </div>
+    </div>
+
+    <DataTable
+      :columns="columns"
+      :rows="store.posts"
+      :loading="store.loading"
+      actions
+    >
+      <template #cell-index="{ index }">{{ fa(rowNum(index)) }}</template>
+      <template #cell-title="{ row }">
+        <button
+          class="text-right font-medium hover:text-orange-600"
+          @click="openEdit(row)"
+        >
+          {{ row.title }}
+        </button>
+      </template>
+      <template #cell-location="{ row }">{{ locationText(row) }}</template>
+      <template #cell-registration_deadline="{ row }">{{
+        formatDate(row.registration_deadline)
+      }}</template>
+      <template #cell-status="{ row }">
+        <span class="inline-flex flex-wrap items-center gap-1">
+          <span
+            class="rounded-full px-2 py-0.5 text-xs font-bold"
+            :class="statusClass(row.status)"
+            >{{ statusLabel(row.status) }}</span
+          >
+          <span
+            v-if="isExpired(row.registration_deadline)"
+            class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-700"
+          >
+            منقضی
+          </span>
+        </span>
+      </template>
+      <template #cell-view_count="{ row }">{{ fa(row.view_count) }}</template>
+      <template #actions="{ row }">
+        <div class="flex flex-wrap justify-end gap-1">
+          <button class="act" @click="openEdit(row)">مشاهده</button>
+          <button
+            v-if="row.status === 'pending'"
+            class="act text-emerald-700"
+            @click="askApprove(row)"
+          >
+            تایید
+          </button>
+          <button
+            v-if="row.status === 'pending'"
+            class="act text-red-600"
+            @click="askReject(row)"
+          >
+            رد
+          </button>
+          <button class="act" @click="openEdit(row)">ویرایش</button>
+          <button class="act text-red-600" @click="askDelete(row)">حذف</button>
+        </div>
+      </template>
+    </DataTable>
+
+    <PaginationBar :meta="store.meta" @page="go" />
+  </div>
+
+  <JobPostModal
+    :open="modalOpen"
+    :post="editing"
+    :provinces="
+      store.filterOptions.provinces.length
+        ? store.filterOptions.provinces
+        : defaultProvinces
+    "
+    :classifications="store.classifications"
+    @close="modalOpen = false"
+    @saved="onSaved"
+  />
+  <ClassificationManagerModal
+    :open="classOpen"
+    @close="classOpen = false"
+    @changed="onClassChanged"
+  />
+  <JobImportModal
+    ref="importRef"
+    :open="importOpen"
+    @close="importOpen = false"
+    @imported="onImport"
+  />
+  <ConfirmDialog
+    :open="confirm.open"
+    :title="confirm.title"
+    :message="confirm.message"
+    @cancel="confirm.open = false"
+    @confirm="runConfirm"
+  />
 </template>
 
 <script setup>
@@ -187,7 +179,10 @@ const importRef = ref(null)
 const confirm = reactive({ open: false, title: '', message: '', action: null })
 
 const deadlineRangeError = computed(() => {
-  const cmp = compareIsoDate(store.filters.deadline_from, store.filters.deadline_to)
+  const cmp = compareIsoDate(
+    store.filters.deadline_from,
+    store.filters.deadline_to
+  )
   return cmp !== null && cmp >= 0 ? RANGE_ORDER_ERROR : ''
 })
 

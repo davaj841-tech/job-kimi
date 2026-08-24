@@ -3,8 +3,12 @@
     <div class="mx-auto max-w-7xl px-4">
       <div class="mb-3 flex items-end justify-between gap-3">
         <div>
-          <h2 class="text-lg font-black text-desk-text sm:text-xl">📄 فروشگاه فایل</h2>
-          <p class="mt-0.5 text-xs text-desk-muted">جزوه‌ها و فایل‌های PDF آمادگی آزمون</p>
+          <h2 class="text-lg font-black text-desk-text sm:text-xl">
+            📄 فروشگاه فایل
+          </h2>
+          <p class="mt-0.5 text-xs text-desk-muted">
+            جزوه‌ها و فایل‌های PDF آمادگی آزمون
+          </p>
         </div>
         <RouterLink
           to="/pdfs"
@@ -14,10 +18,7 @@
         </RouterLink>
       </div>
 
-      <div
-        v-if="loading"
-        class="py-8 text-center text-sm text-desk-muted"
-      >
+      <div v-if="loading" class="py-8 text-center text-sm text-desk-muted">
         در حال بارگذاری...
       </div>
       <HomeRail v-else-if="cards.length">
@@ -40,16 +41,15 @@
               >PDF</span
             >
           </div>
-          <p class="line-clamp-2 flex-1 text-sm font-bold text-desk-text">{{ file.title }}</p>
+          <p class="line-clamp-2 flex-1 text-sm font-bold text-desk-text">
+            {{ file.title }}
+          </p>
           <p class="mt-1 text-[11px] font-bold text-desk-orange">
             {{ formatPrice(file.price) }}
           </p>
         </RouterLink>
       </HomeRail>
-      <p
-        v-else
-        class="py-8 text-center text-sm text-desk-muted"
-      >
+      <p v-else class="py-8 text-center text-sm text-desk-muted">
         فایلی یافت نشد.
       </p>
     </div>

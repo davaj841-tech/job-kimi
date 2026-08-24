@@ -40,7 +40,9 @@
           <div class="mb-2 flex items-center gap-2">
             <span class="text-lg">{{ s.icon || '❓' }}</span>
             <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-bold text-slate-800">{{ s.name }}</p>
+              <p class="truncate text-sm font-bold text-slate-800">
+                {{ s.name }}
+              </p>
               <p class="text-[11px] text-slate-400" dir="ltr">{{ s.slug }}</p>
             </div>
             <span
@@ -54,11 +56,7 @@
               <label class="label">تخصیص به درس مورد نظر</label>
               <select v-model="assignMap[s.id]" class="field">
                 <option value="">انتخاب درس مقصد…</option>
-                <option
-                  v-for="t in matchedSubjects"
-                  :key="t.id"
-                  :value="t.id"
-                >
+                <option v-for="t in matchedSubjects" :key="t.id" :value="t.id">
                   {{ t.icon || '📘' }} {{ t.name }}
                 </option>
               </select>
@@ -82,11 +80,7 @@
         <div>
           <label class="label">آیکون</label>
           <select v-model="form.icon" class="field text-center text-lg">
-            <option
-              v-for="ic in iconOptions"
-              :key="ic"
-              :value="ic"
-            >
+            <option v-for="ic in iconOptions" :key="ic" :value="ic">
               {{ ic }}
             </option>
           </select>
@@ -150,7 +144,9 @@
           <div class="flex min-w-0 items-center gap-2">
             <span class="text-lg">{{ s.icon || '📘' }}</span>
             <div class="min-w-0">
-              <p class="truncate text-sm font-bold text-slate-800">{{ s.name }}</p>
+              <p class="truncate text-sm font-bold text-slate-800">
+                {{ s.name }}
+              </p>
               <p class="text-[11px] text-slate-400" dir="ltr">{{ s.slug }}</p>
             </div>
             <span
@@ -201,13 +197,43 @@ const subjectsStore = useExamSubjectsStore()
 const toast = useToast()
 
 const iconOptions = [
-  '📘', '📗', '📕', '📙', '📚', '📖',
-  '🧮', '🔢', '✏️', '📝', '🖊️',
-  '🧠', '💡', '🔬', '⚗️', '🧪',
-  '🌍', '📜', '🕌', '✝️', '🔤',
-  '🗣️', '📐', '📊', '💻', '⚙️',
-  '🏛️', '⚖️', '🏥', '💼', '🎯',
-  '⭐', '✅', '📌', '🗂️', '📁', '❓',
+  '📘',
+  '📗',
+  '📕',
+  '📙',
+  '📚',
+  '📖',
+  '🧮',
+  '🔢',
+  '✏️',
+  '📝',
+  '🖊️',
+  '🧠',
+  '💡',
+  '🔬',
+  '⚗️',
+  '🧪',
+  '🌍',
+  '📜',
+  '🕌',
+  '✝️',
+  '🔤',
+  '🗣️',
+  '📐',
+  '📊',
+  '💻',
+  '⚙️',
+  '🏛️',
+  '⚖️',
+  '🏥',
+  '💼',
+  '🎯',
+  '⭐',
+  '✅',
+  '📌',
+  '🗂️',
+  '📁',
+  '❓',
 ]
 
 const saving = ref(false)

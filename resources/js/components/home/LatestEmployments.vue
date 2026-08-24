@@ -3,8 +3,12 @@
     <div class="mx-auto max-w-7xl px-4">
       <div class="mb-3 flex items-end justify-between gap-3">
         <div>
-          <h2 class="text-lg font-black text-desk-text sm:text-xl">💼 آخرین استخدام‌ها</h2>
-          <p class="mt-0.5 text-xs text-desk-muted">فرصت‌های تازه، فیلترشده بر اساس رسته</p>
+          <h2 class="text-lg font-black text-desk-text sm:text-xl">
+            💼 آخرین استخدام‌ها
+          </h2>
+          <p class="mt-0.5 text-xs text-desk-muted">
+            فرصت‌های تازه، فیلترشده بر اساس رسته
+          </p>
         </div>
         <RouterLink
           to="/jobs"
@@ -38,10 +42,7 @@
         </button>
       </div>
 
-      <div
-        v-if="loading"
-        class="py-8 text-center text-sm text-desk-muted"
-      >
+      <div v-if="loading" class="py-8 text-center text-sm text-desk-muted">
         در حال بارگذاری...
       </div>
       <HomeRail v-else-if="cards.length">
@@ -66,13 +67,12 @@
           <p class="line-clamp-2 flex-1 text-sm font-bold text-desk-text">
             {{ job.classification_name || job.company_name || job.title }}
           </p>
-          <p class="mt-1 line-clamp-1 text-[11px] text-desk-muted">{{ job.title }}</p>
+          <p class="mt-1 line-clamp-1 text-[11px] text-desk-muted">
+            {{ job.title }}
+          </p>
         </button>
       </HomeRail>
-      <p
-        v-else
-        class="py-8 text-center text-sm text-desk-muted"
-      >
+      <p v-else class="py-8 text-center text-sm text-desk-muted">
         آگهی‌ای یافت نشد.
       </p>
     </div>
@@ -96,22 +96,30 @@ const cards = computed(() => {
   const list = props.jobs || []
   if (!selected.value) return list.slice(0, 12)
   const parent = (props.classifications || []).find(
-    (c) => Number(c.id) === Number(selected.value),
+    (c) => Number(c.id) === Number(selected.value)
   )
   const ids = new Set([
     Number(selected.value),
     ...(parent?.child_ids || []).map(Number),
   ])
-  return list.filter((j) => {
-    if (ids.has(Number(j.job_classification_id))) return true
-    if (ids.has(Number(j.classification_parent_id))) return true
-    if (parent && j.classification_name && j.classification_name === parent.name) return true
-    return false
-  }).slice(0, 12)
+  return list
+    .filter((j) => {
+      if (ids.has(Number(j.job_classification_id))) return true
+      if (ids.has(Number(j.classification_parent_id))) return true
+      if (
+        parent &&
+        j.classification_name &&
+        j.classification_name === parent.name
+      )
+        return true
+      return false
+    })
+    .slice(0, 12)
 })
 
 function chipClass(id) {
-  const on = id === null ? !selected.value : Number(selected.value) === Number(id)
+  const on =
+    id === null ? !selected.value : Number(selected.value) === Number(id)
   return on
     ? 'bg-desk-dark text-white'
     : 'bg-slate-100 text-desk-text hover:bg-slate-200'

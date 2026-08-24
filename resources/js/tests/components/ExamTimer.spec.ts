@@ -17,10 +17,14 @@ describe('ExamTimer.vue', () => {
       props: { endsAt, intervalMs: 1000 },
     })
 
-    expect(wrapper.get('[data-testid="exam-timer-value"]').text()).toMatch(/01:0[45]/)
+    expect(wrapper.get('[data-testid="exam-timer-value"]').text()).toMatch(
+      /01:0[45]/
+    )
     vi.advanceTimersByTime(1000)
     await flushPromises()
-    expect(wrapper.get('[data-testid="exam-timer-value"]').text()).toMatch(/01:0[34]/)
+    expect(wrapper.get('[data-testid="exam-timer-value"]').text()).toMatch(
+      /01:0[34]/
+    )
   })
 
   it('هشدار ۵ دقیقه مانده را emit می‌کند', async () => {
@@ -30,7 +34,9 @@ describe('ExamTimer.vue', () => {
     })
 
     // دقیقاً روی آستانه ۵ دقیقه → warning
-    expect(wrapper.find('[data-testid="exam-timer-warning"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="exam-timer-warning"]').exists()).toBe(
+      true
+    )
     expect(wrapper.emitted('warning')).toBeTruthy()
 
     vi.advanceTimersByTime(1000)

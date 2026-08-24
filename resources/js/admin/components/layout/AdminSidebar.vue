@@ -3,7 +3,9 @@
     class="flex h-dvh w-64 shrink-0 flex-col bg-desk-dark text-white transition-transform duration-300 lg:translate-x-0"
     :class="open ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'"
   >
-    <div class="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 px-4 py-4">
+    <div
+      class="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 px-4 py-4"
+    >
       <div class="flex min-w-0 items-center gap-2.5">
         <SiteBrandLogo
           variant="desktop"
@@ -11,7 +13,13 @@
           text-class="text-sm text-white"
         />
         <p class="truncate text-sm font-bold text-white/80">
-          {{ auth.isSuperAdmin ? 'پنل سوپرادمین' : auth.isStaffAdmin ? 'پنل مدیر' : 'پنل اپراتور' }}
+          {{
+            auth.isSuperAdmin
+              ? 'پنل سوپرادمین'
+              : auth.isStaffAdmin
+                ? 'پنل مدیر'
+                : 'پنل اپراتور'
+          }}
         </p>
       </div>
       <button
@@ -30,7 +38,9 @@
       @scroll="onScroll"
     >
       <div v-for="group in visibleGroups" :key="group.title">
-        <p class="mb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-white/35">
+        <p
+          class="mb-1 px-3 text-[10px] font-bold uppercase tracking-wider text-white/35"
+        >
           {{ group.title }}
         </p>
         <div class="space-y-0.5">
@@ -53,7 +63,9 @@
       </div>
     </nav>
 
-    <div class="shrink-0 space-y-2 border-t border-white/10 p-4 text-xs text-white/50">
+    <div
+      class="shrink-0 space-y-2 border-t border-white/10 p-4 text-xs text-white/50"
+    >
       <a
         v-if="auth.isStaffAdmin"
         href="/filament"
@@ -91,20 +103,60 @@ const groups = [
     items: [
       { to: '/admin/dashboard', label: 'داشبورد', icon: '▣' },
       { to: '/admin/users', label: 'کاربران', icon: '◎', permission: 'users' },
-      { to: '/admin/access-levels', label: 'سطح دسترسی', icon: '🔐', permission: 'users' },
-      { to: '/admin/tickets', label: 'تیکت‌ها', icon: '✉', permission: 'tickets' },
-      { to: '/admin/contact-messages', label: 'پیام‌های تماس', icon: '✉', permission: 'tickets' },
+      {
+        to: '/admin/access-levels',
+        label: 'سطح دسترسی',
+        icon: '🔐',
+        permission: 'users',
+      },
+      {
+        to: '/admin/tickets',
+        label: 'تیکت‌ها',
+        icon: '✉',
+        permission: 'tickets',
+      },
+      {
+        to: '/admin/contact-messages',
+        label: 'پیام‌های تماس',
+        icon: '✉',
+        permission: 'tickets',
+      },
     ],
   },
   {
     title: 'محتوا',
     items: [
-      { to: '/admin/exams', label: 'آزمون‌ها', icon: '☰', permission: 'exams' },
-      { to: '/admin/questions', label: 'سوالات', icon: '❓', permission: 'questions' },
+      {
+        to: '/admin/exams',
+        label: 'آزمون‌ها',
+        icon: '☰',
+        permission: 'exams',
+      },
+      {
+        to: '/admin/questions',
+        label: 'سوالات',
+        icon: '❓',
+        permission: 'questions',
+      },
       { to: '/admin/blog-posts', label: 'بلاگ', icon: '◈', permission: 'blog' },
-      { to: '/admin/generated-contents', label: 'تولید محتوا', icon: '✎', permission: 'generated_contents' },
-      { to: '/admin/pdf-products', label: 'فایل‌ها', icon: '▤', permission: 'pdf' },
-      { to: '/admin/banners', label: 'بنرها', icon: '▣', permission: 'banners' },
+      {
+        to: '/admin/generated-contents',
+        label: 'تولید محتوا',
+        icon: '✎',
+        permission: 'generated_contents',
+      },
+      {
+        to: '/admin/pdf-products',
+        label: 'فایل‌ها',
+        icon: '▤',
+        permission: 'pdf',
+      },
+      {
+        to: '/admin/banners',
+        label: 'بنرها',
+        icon: '▣',
+        permission: 'banners',
+      },
       { to: '/admin/pages', label: 'صفحات', icon: '▤', permission: 'pages' },
       { to: '/admin/ai', label: 'هوش مصنوعی', icon: '✦', permission: 'ai' },
     ],
@@ -112,20 +164,65 @@ const groups = [
   {
     title: 'آگهی و تجمیع',
     items: [
-      { to: '/admin/job-posts', label: 'آگهی‌ها', icon: '▢', permission: 'job_posts' },
-      { to: '/admin/job-sources', label: 'منابع تجمیع', icon: '◎', permission: 'aggregation' },
-      { to: '/admin/aggregation-settings', label: 'زمان‌بندی تجمیع', icon: '◷', permission: 'aggregation' },
-      { to: '/admin/crawl-monitoring', label: 'پایش خزش', icon: '◷', permission: 'aggregation' },
-      { to: '/admin/aggregated-jobs', label: 'بررسی تجمیع', icon: '☑', permission: 'aggregation' },
+      {
+        to: '/admin/job-posts',
+        label: 'آگهی‌ها',
+        icon: '▢',
+        permission: 'job_posts',
+      },
+      {
+        to: '/admin/job-sources',
+        label: 'منابع تجمیع',
+        icon: '◎',
+        permission: 'aggregation',
+      },
+      {
+        to: '/admin/aggregation-settings',
+        label: 'زمان‌بندی تجمیع',
+        icon: '◷',
+        permission: 'aggregation',
+      },
+      {
+        to: '/admin/crawl-monitoring',
+        label: 'پایش خزش',
+        icon: '◷',
+        permission: 'aggregation',
+      },
+      {
+        to: '/admin/aggregated-jobs',
+        label: 'بررسی تجمیع',
+        icon: '☑',
+        permission: 'aggregation',
+      },
     ],
   },
   {
     title: 'مالی',
     items: [
-      { to: '/admin/subscriptions', label: 'اشتراک‌ها', icon: '★', permission: 'subscriptions' },
-      { to: '/admin/transactions', label: 'تراکنش‌ها', icon: '₪', permission: 'transactions' },
-      { to: '/admin/coupons', label: 'کد تخفیف', icon: '%', permission: 'coupons' },
-      { to: '/admin/wallets', label: 'کیف پول‌ها', icon: '◈', permission: 'wallets' },
+      {
+        to: '/admin/subscriptions',
+        label: 'اشتراک‌ها',
+        icon: '★',
+        permission: 'subscriptions',
+      },
+      {
+        to: '/admin/transactions',
+        label: 'تراکنش‌ها',
+        icon: '₪',
+        permission: 'transactions',
+      },
+      {
+        to: '/admin/coupons',
+        label: 'کد تخفیف',
+        icon: '%',
+        permission: 'coupons',
+      },
+      {
+        to: '/admin/wallets',
+        label: 'کیف پول‌ها',
+        icon: '◈',
+        permission: 'wallets',
+      },
     ],
   },
   {

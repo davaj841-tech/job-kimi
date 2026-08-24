@@ -1,4 +1,9 @@
-export const OPTION_FA: Record<string, string> = { a: 'الف', b: 'ب', c: 'ج', d: 'د' }
+export const OPTION_FA: Record<string, string> = {
+  a: 'الف',
+  b: 'ب',
+  c: 'ج',
+  d: 'د',
+}
 
 export type AnswerOptionItem = {
   options?: Record<string, string | null | undefined>
@@ -9,8 +14,12 @@ export type AnswerOptionItem = {
   [key: string]: unknown
 }
 
-export function optionFaLetter(key: string | number | null | undefined): string {
-  const k = String(key || '').trim().toLowerCase()
+export function optionFaLetter(
+  key: string | number | null | undefined
+): string {
+  const k = String(key || '')
+    .trim()
+    .toLowerCase()
   return OPTION_FA[k] || ''
 }
 

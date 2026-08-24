@@ -5,7 +5,9 @@
         v-if="modelValue"
         class="fixed inset-0 z-50 flex flex-col bg-slate-900/70"
       >
-        <div class="flex items-center justify-between bg-white px-4 py-3 dark:bg-slate-900">
+        <div
+          class="flex items-center justify-between bg-white px-4 py-3 dark:bg-slate-900"
+        >
           <p class="text-sm font-bold">پیش‌نمایش رزومه A4</p>
           <button
             type="button"
@@ -17,10 +19,7 @@
         </div>
         <div class="flex-1 overflow-auto bg-slate-300 p-4 dark:bg-slate-800">
           <div class="preview-full mx-auto shadow-2xl">
-            <ResumePreview
-              :data="data"
-              :template-id="templateId"
-            />
+            <ResumePreview :data="data" :template-id="templateId" />
           </div>
         </div>
       </div>

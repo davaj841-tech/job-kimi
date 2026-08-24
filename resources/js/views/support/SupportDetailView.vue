@@ -5,7 +5,11 @@
   >
     <div v-if="ticket" class="mb-4">
       <h1 class="text-lg font-black">{{ ticket.subject }}</h1>
-      <p v-if="ticket.tracking_code" class="mt-1 text-sm font-bold text-brand" dir="ltr">
+      <p
+        v-if="ticket.tracking_code"
+        class="mt-1 text-sm font-bold text-brand"
+        dir="ltr"
+      >
         شماره پیگیری: {{ ticket.tracking_code }}
       </p>
       <p class="text-xs text-ink-muted">

@@ -16,10 +16,7 @@
           :alt="companyName"
           class="h-full w-full object-cover"
         />
-        <BuildingOfficeIcon
-          v-else
-          class="h-6 w-6 text-desk-muted"
-        />
+        <BuildingOfficeIcon v-else class="h-6 w-6 text-desk-muted" />
       </div>
 
       <div class="min-w-0 flex-1">
@@ -32,9 +29,7 @@
             </h3>
             <p class="mt-0.5 truncate text-xs text-desk-muted">
               {{ companyName }}
-              <span
-                v-if="job.is_featured"
-                class="mr-1 text-desk-orange"
+              <span v-if="job.is_featured" class="mr-1 text-desk-orange"
                 >· ویژه</span
               >
             </p>
@@ -63,10 +58,7 @@
             <MapPinIcon class="h-3.5 w-3.5" />
             {{ location }}
           </span>
-          <span
-            v-if="jobTypeLabel"
-            class="inline-flex items-center gap-1"
-          >
+          <span v-if="jobTypeLabel" class="inline-flex items-center gap-1">
             <BriefcaseIcon class="h-3.5 w-3.5" />
             {{ jobTypeLabel }}
           </span>
@@ -79,7 +71,9 @@
             class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium"
             :class="deadlineClass"
           >
-            <template v-if="daysLeft > 0">{{ toFaDigits(daysLeft) }} روز مانده</template>
+            <template v-if="daysLeft > 0"
+              >{{ toFaDigits(daysLeft) }} روز مانده</template
+            >
             <template v-else-if="daysLeft === 0">امروز آخرین فرصت</template>
             <template v-else>منقضی</template>
           </span>
@@ -128,13 +122,16 @@ const companyName = computed(
     props.job.organization_name ||
     props.job.classification_name ||
     props.job.company_name ||
-    'سازمان',
+    'سازمان'
 )
 
 const logo = computed(() => props.job.company?.logo || null)
 
 const location = computed(
-  () => props.job.location || [props.job.city, props.job.province].filter(Boolean).join('، ') || 'سراسر کشور',
+  () =>
+    props.job.location ||
+    [props.job.city, props.job.province].filter(Boolean).join('، ') ||
+    'سراسر کشور'
 )
 
 const jobTypeLabel = computed(() => {
@@ -143,7 +140,7 @@ const jobTypeLabel = computed(() => {
 })
 
 const timeAgo = computed(() =>
-  formatDistanceToNow(props.job.published_at || props.job.created_at),
+  formatDistanceToNow(props.job.published_at || props.job.created_at)
 )
 
 const daysLeft = computed(() => {
@@ -160,8 +157,10 @@ const daysLeft = computed(() => {
 const deadlineClass = computed(() => {
   if (daysLeft.value === null) return ''
   if (daysLeft.value < 0) return 'bg-slate-100 text-slate-500 dark:bg-slate-800'
-  if (daysLeft.value <= 3) return 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-  if (daysLeft.value <= 7) return 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400'
+  if (daysLeft.value <= 3)
+    return 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+  if (daysLeft.value <= 7)
+    return 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400'
   return 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
 })
 </script>

@@ -29,16 +29,11 @@
         </div>
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
           <label class="block">
-            <span class="mb-1.5 block text-xs font-medium text-desk-muted">مقطع *</span>
-            <select
-              v-model="edu.degree"
-              class="input-field"
+            <span class="mb-1.5 block text-xs font-medium text-desk-muted"
+              >مقطع *</span
             >
-              <option
-                v-for="d in degrees"
-                :key="d"
-                :value="d"
-              >
+            <select v-model="edu.degree" class="input-field">
+              <option v-for="d in degrees" :key="d" :value="d">
                 {{ d }}
               </option>
             </select>
@@ -68,12 +63,14 @@
           />
           <p
             v-if="dateRangeError(edu)"
-            class="md:col-span-2 text-xs text-red-600"
+            class="text-xs text-red-600 md:col-span-2"
           >
             {{ dateRangeError(edu) }}
           </p>
           <label class="block">
-            <span class="mb-1.5 block text-xs font-medium text-desk-muted">معدل (اختیاری)</span>
+            <span class="mb-1.5 block text-xs font-medium text-desk-muted"
+              >معدل (اختیاری)</span
+            >
             <input
               :value="edu.gpa ?? ''"
               class="input-field text-left"
@@ -84,7 +81,9 @@
               @input="onGpa(edu, $event)"
               @blur="normalizeGpa(edu)"
             />
-            <span class="mt-1 block text-[11px] text-desk-muted">دو رقم صحیح و یک رقم اعشار؛ مثلاً ۱۸۵ می‌شود ۱۸.۵</span>
+            <span class="mt-1 block text-[11px] text-desk-muted"
+              >دو رقم صحیح و یک رقم اعشار؛ مثلاً ۱۸۵ می‌شود ۱۸.۵</span
+            >
           </label>
         </div>
       </div>
@@ -139,7 +138,9 @@ function removeEducation(index) {
 }
 
 function onGpa(edu, e) {
-  const digits = String(e.target.value || '').replace(/\D/g, '').slice(0, 3)
+  const digits = String(e.target.value || '')
+    .replace(/\D/g, '')
+    .slice(0, 3)
   if (digits.length <= 2) {
     edu.gpa = digits
     return

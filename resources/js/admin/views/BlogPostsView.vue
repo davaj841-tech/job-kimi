@@ -1,113 +1,111 @@
 <template>
-      <div class="space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-bold text-gray-800">مدیریت مقالات</h1>
-        <div class="flex gap-2">
-          <button class="btn-dark" @click="openCreate">مقاله جدید</button>
-          <button class="btn-orange" @click="aiOpen = true">تولید با AI</button>
-        </div>
+  <div class="space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-bold text-gray-800">مدیریت مقالات</h1>
+      <div class="flex gap-2">
+        <button class="btn-dark" @click="openCreate">مقاله جدید</button>
+        <button class="btn-orange" @click="aiOpen = true">تولید با AI</button>
       </div>
-
-      <div class="rounded-xl bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <input
-            v-model="store.filters.search"
-            class="field"
-            placeholder="جستجو عنوان"
-            @keyup.enter="apply"
-          />
-          <select v-model="store.filters.status" class="field">
-            <option value="">همه وضعیت‌ها</option>
-            <option value="draft">پیش‌نویس</option>
-            <option value="published">منتشر شده</option>
-          </select>
-          <input
-            v-model="store.filters.category"
-            class="field"
-            placeholder="طبقه‌بندی"
-          />
-        </div>
-        <div class="mt-3 flex gap-2">
-          <button class="btn-orange" @click="apply">اعمال فیلتر</button>
-          <button class="btn-muted" @click="clear">پاک کردن</button>
-        </div>
-      </div>
-
-      <DataTable
-        :columns="columns"
-        :rows="store.posts"
-        :loading="store.loading"
-        actions
-      >
-        <template #cell-index="{ index }">{{ fa(rowNum(index)) }}</template>
-        <template #cell-title="{ row }">
-          <button
-            class="text-right font-medium hover:text-orange-600"
-            @click="openEdit(row)"
-          >
-            {{ row.title }}
-          </button>
-        </template>
-        <template #cell-author_name="{ row }">{{
-          row.author_name || '—'
-        }}</template>
-        <template #cell-status="{ row }">
-          <span
-            class="rounded-full px-2 py-0.5 text-xs font-bold"
-            :class="
-              row.status === 'published'
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-slate-100 text-slate-600'
-            "
-          >
-            {{ row.status === 'published' ? 'منتشر شده' : 'پیش‌نویس' }}
-          </span>
-        </template>
-        <template #cell-created_at="{ row }">{{
-          formatDate(row.created_at)
-        }}</template>
-        <template #actions="{ row }">
-          <div class="flex flex-wrap justify-end gap-1">
-            <button class="act" @click="openEdit(row)">ویرایش</button>
-            <button class="act" @click="togglePublish(row)">
-              {{ row.status === 'published' ? 'پیش‌نویس' : 'انتشار' }}
-            </button>
-            <a
-              class="act"
-              :href="`/blog/${row.slug}`"
-              target="_blank"
-              rel="noopener"
-              >پیش‌نمایش</a
-            >
-            <button class="act text-red-600" @click="askDelete(row)">
-              حذف
-            </button>
-          </div>
-        </template>
-      </DataTable>
-
-      <PaginationBar :meta="store.meta" @page="go" />
     </div>
 
-    <BlogPostModal
-      :open="modalOpen"
-      :post="editing"
-      @close="modalOpen = false"
-      @saved="onSaved"
-    />
-    <BlogAIGenerateModal
-      ref="aiRef"
-      :open="aiOpen"
-      @close="aiOpen = false"
-      @generate="onGenerate"
-    />
-    <ConfirmDialog
-      :open="confirm.open"
-      :title="confirm.title"
-      :message="confirm.message"
-      @cancel="confirm.open = false"
-      @confirm="runConfirm"
-    />
+    <div class="rounded-xl bg-white p-4 shadow-sm">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <input
+          v-model="store.filters.search"
+          class="field"
+          placeholder="جستجو عنوان"
+          @keyup.enter="apply"
+        />
+        <select v-model="store.filters.status" class="field">
+          <option value="">همه وضعیت‌ها</option>
+          <option value="draft">پیش‌نویس</option>
+          <option value="published">منتشر شده</option>
+        </select>
+        <input
+          v-model="store.filters.category"
+          class="field"
+          placeholder="طبقه‌بندی"
+        />
+      </div>
+      <div class="mt-3 flex gap-2">
+        <button class="btn-orange" @click="apply">اعمال فیلتر</button>
+        <button class="btn-muted" @click="clear">پاک کردن</button>
+      </div>
+    </div>
+
+    <DataTable
+      :columns="columns"
+      :rows="store.posts"
+      :loading="store.loading"
+      actions
+    >
+      <template #cell-index="{ index }">{{ fa(rowNum(index)) }}</template>
+      <template #cell-title="{ row }">
+        <button
+          class="text-right font-medium hover:text-orange-600"
+          @click="openEdit(row)"
+        >
+          {{ row.title }}
+        </button>
+      </template>
+      <template #cell-author_name="{ row }">{{
+        row.author_name || '—'
+      }}</template>
+      <template #cell-status="{ row }">
+        <span
+          class="rounded-full px-2 py-0.5 text-xs font-bold"
+          :class="
+            row.status === 'published'
+              ? 'bg-emerald-100 text-emerald-700'
+              : 'bg-slate-100 text-slate-600'
+          "
+        >
+          {{ row.status === 'published' ? 'منتشر شده' : 'پیش‌نویس' }}
+        </span>
+      </template>
+      <template #cell-created_at="{ row }">{{
+        formatDate(row.created_at)
+      }}</template>
+      <template #actions="{ row }">
+        <div class="flex flex-wrap justify-end gap-1">
+          <button class="act" @click="openEdit(row)">ویرایش</button>
+          <button class="act" @click="togglePublish(row)">
+            {{ row.status === 'published' ? 'پیش‌نویس' : 'انتشار' }}
+          </button>
+          <a
+            class="act"
+            :href="`/blog/${row.slug}`"
+            target="_blank"
+            rel="noopener"
+            >پیش‌نمایش</a
+          >
+          <button class="act text-red-600" @click="askDelete(row)">حذف</button>
+        </div>
+      </template>
+    </DataTable>
+
+    <PaginationBar :meta="store.meta" @page="go" />
+  </div>
+
+  <BlogPostModal
+    :open="modalOpen"
+    :post="editing"
+    @close="modalOpen = false"
+    @saved="onSaved"
+  />
+  <BlogAIGenerateModal
+    ref="aiRef"
+    :open="aiOpen"
+    @close="aiOpen = false"
+    @generate="onGenerate"
+  />
+  <ConfirmDialog
+    :open="confirm.open"
+    :title="confirm.title"
+    :message="confirm.message"
+    @cancel="confirm.open = false"
+    @confirm="runConfirm"
+  />
 </template>
 
 <script setup>

@@ -151,7 +151,10 @@ export const useAuthStore = defineStore('auth', () => {
       if (typeof body.mobile === 'string' && body.mobile) {
         body.mobile = normalizeIranMobile(body.mobile) || body.mobile
       }
-      const { data } = await api.post('/auth/register', withCaptcha(body, captcha))
+      const { data } = await api.post(
+        '/auth/register',
+        withCaptcha(body, captcha)
+      )
       if (data.data?.token) {
         applyAuthPayload(data)
       }

@@ -1,107 +1,117 @@
 <template>
-      <div class="space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-bold text-gray-800">تراکنش‌های مالی</h1>
-      </div>
-
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          title="درآمد امروز"
-          :value="fa(store.stats.revenue_today)"
-          icon="₪"
-          color="#059669"
-        />
-        <StatCard
-          title="درآمد هفته"
-          :value="fa(store.stats.revenue_week)"
-          icon="₪"
-          color="#2563eb"
-        />
-        <StatCard
-          title="درآمد ماه"
-          :value="fa(store.stats.revenue_month)"
-          icon="₪"
-          color="#0f2744"
-        />
-        <StatCard
-          title="موفق / ناموفق"
-          :value="`${fa(store.stats.success_count)} / ${fa(store.stats.failed_count)}`"
-          icon="◎"
-          color="#f97316"
-        />
-      </div>
-
-      <div class="rounded-xl bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
-          <JalaliDatepicker v-model="store.filters.date_from" label="از تاریخ" :error="dateRangeError" />
-          <JalaliDatepicker v-model="store.filters.date_to" label="تا تاریخ" :error="dateRangeError" />
-          <select v-model="store.filters.gateway" class="field">
-            <option value="">همه درگاه‌ها</option>
-            <option value="zarinpal">زرین‌پال</option>
-            <option value="wallet">کیف پول</option>
-          </select>
-          <select v-model="store.filters.type" class="field">
-            <option value="">همه انواع</option>
-            <option value="deposit">واریز</option>
-            <option value="purchase">خرید</option>
-            <option value="refund">بازگشت وجه</option>
-            <option value="withdrawal">برداشت</option>
-          </select>
-          <select v-model="store.filters.status" class="field">
-            <option value="">همه وضعیت‌ها</option>
-            <option value="success">موفق</option>
-            <option value="pending">در انتظار</option>
-            <option value="failed">ناموفق</option>
-          </select>
-        </div>
-        <p v-if="dateRangeError" class="mt-2 text-xs text-red-600">{{ dateRangeError }}</p>
-        <div class="mt-3 flex gap-2">
-          <button class="btn-orange" @click="apply">اعمال فیلتر</button>
-          <button class="btn-muted" @click="clear">پاک کردن</button>
-        </div>
-      </div>
-
-      <DataTable
-        :columns="columns"
-        :rows="store.transactions"
-        :loading="store.loading"
-        actions
-      >
-        <template #cell-index="{ index }">{{ fa(rowNum(index)) }}</template>
-        <template #cell-user="{ row }">{{ row.user_name || '—' }}</template>
-        <template #cell-amount="{ row }">{{ fa(row.amount) }}</template>
-        <template #cell-type="{ row }">
-          <span
-            class="rounded-full px-2 py-0.5 text-xs font-bold"
-            :class="typeClass(row.type)"
-            >{{ typeLabel(row.type) }}</span
-          >
-        </template>
-        <template #cell-gateway="{ row }">{{
-          gatewayLabel(row.gateway)
-        }}</template>
-        <template #cell-status="{ row }">
-          <span
-            class="rounded-full px-2 py-0.5 text-xs font-bold"
-            :class="statusClass(row.status)"
-            >{{ statusLabel(row.status) }}</span
-          >
-        </template>
-        <template #cell-created_at="{ row }">{{
-          formatDateTime(row.created_at)
-        }}</template>
-        <template #actions="{ row }">
-          <button class="act" @click="openDetail(row)">جزئیات</button>
-        </template>
-      </DataTable>
-      <PaginationBar :meta="store.meta" @page="go" />
+  <div class="space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-bold text-gray-800">تراکنش‌های مالی</h1>
     </div>
 
-    <TransactionDetailModal
-      :open="detailOpen"
-      :tx="selected"
-      @close="detailOpen = false"
-    />
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <StatCard
+        title="درآمد امروز"
+        :value="fa(store.stats.revenue_today)"
+        icon="₪"
+        color="#059669"
+      />
+      <StatCard
+        title="درآمد هفته"
+        :value="fa(store.stats.revenue_week)"
+        icon="₪"
+        color="#2563eb"
+      />
+      <StatCard
+        title="درآمد ماه"
+        :value="fa(store.stats.revenue_month)"
+        icon="₪"
+        color="#0f2744"
+      />
+      <StatCard
+        title="موفق / ناموفق"
+        :value="`${fa(store.stats.success_count)} / ${fa(store.stats.failed_count)}`"
+        icon="◎"
+        color="#f97316"
+      />
+    </div>
+
+    <div class="rounded-xl bg-white p-4 shadow-sm">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
+        <JalaliDatepicker
+          v-model="store.filters.date_from"
+          label="از تاریخ"
+          :error="dateRangeError"
+        />
+        <JalaliDatepicker
+          v-model="store.filters.date_to"
+          label="تا تاریخ"
+          :error="dateRangeError"
+        />
+        <select v-model="store.filters.gateway" class="field">
+          <option value="">همه درگاه‌ها</option>
+          <option value="zarinpal">زرین‌پال</option>
+          <option value="wallet">کیف پول</option>
+        </select>
+        <select v-model="store.filters.type" class="field">
+          <option value="">همه انواع</option>
+          <option value="deposit">واریز</option>
+          <option value="purchase">خرید</option>
+          <option value="refund">بازگشت وجه</option>
+          <option value="withdrawal">برداشت</option>
+        </select>
+        <select v-model="store.filters.status" class="field">
+          <option value="">همه وضعیت‌ها</option>
+          <option value="success">موفق</option>
+          <option value="pending">در انتظار</option>
+          <option value="failed">ناموفق</option>
+        </select>
+      </div>
+      <p v-if="dateRangeError" class="mt-2 text-xs text-red-600">
+        {{ dateRangeError }}
+      </p>
+      <div class="mt-3 flex gap-2">
+        <button class="btn-orange" @click="apply">اعمال فیلتر</button>
+        <button class="btn-muted" @click="clear">پاک کردن</button>
+      </div>
+    </div>
+
+    <DataTable
+      :columns="columns"
+      :rows="store.transactions"
+      :loading="store.loading"
+      actions
+    >
+      <template #cell-index="{ index }">{{ fa(rowNum(index)) }}</template>
+      <template #cell-user="{ row }">{{ row.user_name || '—' }}</template>
+      <template #cell-amount="{ row }">{{ fa(row.amount) }}</template>
+      <template #cell-type="{ row }">
+        <span
+          class="rounded-full px-2 py-0.5 text-xs font-bold"
+          :class="typeClass(row.type)"
+          >{{ typeLabel(row.type) }}</span
+        >
+      </template>
+      <template #cell-gateway="{ row }">{{
+        gatewayLabel(row.gateway)
+      }}</template>
+      <template #cell-status="{ row }">
+        <span
+          class="rounded-full px-2 py-0.5 text-xs font-bold"
+          :class="statusClass(row.status)"
+          >{{ statusLabel(row.status) }}</span
+        >
+      </template>
+      <template #cell-created_at="{ row }">{{
+        formatDateTime(row.created_at)
+      }}</template>
+      <template #actions="{ row }">
+        <button class="act" @click="openDetail(row)">جزئیات</button>
+      </template>
+    </DataTable>
+    <PaginationBar :meta="store.meta" @page="go" />
+  </div>
+
+  <TransactionDetailModal
+    :open="detailOpen"
+    :tx="selected"
+    @close="detailOpen = false"
+  />
 </template>
 
 <script setup>

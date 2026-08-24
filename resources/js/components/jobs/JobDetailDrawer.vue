@@ -61,10 +61,7 @@
             />
           </div>
 
-          <div
-            v-else-if="job"
-            class="flex-1 overflow-y-auto pb-24"
-          >
+          <div v-else-if="job" class="flex-1 overflow-y-auto pb-24">
             <div class="p-6 text-center">
               <div
                 class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800"
@@ -78,11 +75,7 @@
             </div>
 
             <div class="grid grid-cols-2 gap-3 px-5">
-              <InfoBox
-                :icon="MapPinIcon"
-                label="موقعیت"
-                :value="location"
-              />
+              <InfoBox :icon="MapPinIcon" label="موقعیت" :value="location" />
               <InfoBox
                 :icon="BriefcaseIcon"
                 label="نوع همکاری"
@@ -101,10 +94,7 @@
               />
             </div>
 
-            <div
-              v-if="tags.length"
-              class="mt-4 flex flex-wrap gap-2 px-5"
-            >
+            <div v-if="tags.length" class="mt-4 flex flex-wrap gap-2 px-5">
               <span
                 v-for="tag in tags"
                 :key="tag"
@@ -114,23 +104,17 @@
               </span>
             </div>
 
-            <div
-              v-if="job.description"
-              class="mt-6 px-5"
-            >
+            <div v-if="job.description" class="mt-6 px-5">
               <h3 class="mb-3 text-sm font-bold text-desk-text dark:text-white">
                 توضیحات
               </h3>
               <div
-                class="prose prose-sm max-w-none leading-relaxed text-desk-muted dark:prose-invert"
+                class="prose prose-sm dark:prose-invert max-w-none leading-relaxed text-desk-muted"
                 v-html="job.description"
               />
             </div>
 
-            <div
-              v-if="requirementItems.length"
-              class="mt-6 px-5"
-            >
+            <div v-if="requirementItems.length" class="mt-6 px-5">
               <h3 class="mb-3 text-sm font-bold text-desk-text dark:text-white">
                 نیازمندی‌ها
               </h3>
@@ -147,23 +131,17 @@
                 </li>
               </ul>
             </div>
-            <div
-              v-else-if="job.requirements"
-              class="mt-6 px-5"
-            >
+            <div v-else-if="job.requirements" class="mt-6 px-5">
               <h3 class="mb-3 text-sm font-bold text-desk-text dark:text-white">
                 نیازمندی‌ها
               </h3>
               <div
-                class="prose prose-sm max-w-none text-desk-muted dark:prose-invert"
+                class="prose prose-sm dark:prose-invert max-w-none text-desk-muted"
                 v-html="job.requirements"
               />
             </div>
 
-            <div
-              v-if="job.source_url"
-              class="mt-6 px-5"
-            >
+            <div v-if="job.source_url" class="mt-6 px-5">
               <a
                 :href="job.source_url"
                 target="_blank"
@@ -265,7 +243,7 @@ watch(
       }
     }
   },
-  { immediate: true },
+  { immediate: true }
 )
 
 const companyName = computed(
@@ -274,14 +252,14 @@ const companyName = computed(
     job.value?.organization_name ||
     job.value?.classification_name ||
     job.value?.company_name ||
-    '—',
+    '—'
 )
 
 const location = computed(
   () =>
     job.value?.location ||
     [job.value?.city, job.value?.province].filter(Boolean).join('، ') ||
-    'سراسر کشور',
+    'سراسر کشور'
 )
 
 const jobTypeLabel = computed(() => {
@@ -325,7 +303,7 @@ const requirementItems = computed(() => {
 })
 
 const applyHref = computed(
-  () => job.value?.registration_link || job.value?.source_url || null,
+  () => job.value?.registration_link || job.value?.source_url || null
 )
 
 function close() {

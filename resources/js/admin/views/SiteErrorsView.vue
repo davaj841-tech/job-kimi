@@ -1,124 +1,127 @@
 <template>
-      <div class="space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-bold text-gray-800">خطاهای سایت</h1>
-        <div class="flex flex-wrap gap-2">
-          <button type="button" class="btn-muted" :disabled="exporting" @click="exportExcel">
-            {{ exporting ? '...' : 'خروجی اکسل' }}
-          </button>
-          <button type="button" class="btn-muted" @click="clearResolved">
-            پاک‌سازی حل‌شده‌ها
-          </button>
-          <button type="button" class="btn-orange" @click="runAutoHeal">
-            خودترمیمی خودکار
-          </button>
-        </div>
-      </div>
-
-      <div class="rounded-xl bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <input
-            v-model="filters.search"
-            class="field md:col-span-2"
-            placeholder="جستجو در پیام / کلاس / URL"
-            @keyup.enter="load(1)"
-          />
-          <select v-model="filters.resolved" class="field">
-            <option value="0">حل‌نشده</option>
-            <option value="1">حل‌شده</option>
-            <option value="">همه</option>
-          </select>
-        </div>
-        <div class="mt-3 flex gap-2">
-          <button type="button" class="btn-orange" @click="load(1)">
-            اعمال فیلتر
-          </button>
-          <button type="button" class="btn-muted" @click="clear">
-            پاک کردن
-          </button>
-        </div>
-      </div>
-
-      <div
-        v-if="loading"
-        class="rounded-xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm"
-      >
-        در حال بارگذاری...
-      </div>
-
-      <div v-else class="space-y-3">
-        <article
-          v-for="row in rows"
-          :key="row.id"
-          class="rounded-xl bg-white p-4 shadow-sm"
+  <div class="space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-bold text-gray-800">خطاهای سایت</h1>
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="btn-muted"
+          :disabled="exporting"
+          @click="exportExcel"
         >
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <p class="text-base font-bold text-slate-800">
-                {{ row.message_fa || row.message || 'بدون پیام' }}
-              </p>
-              <p
-                v-if="row.message_fa && row.message"
-                class="mt-1 text-xs text-slate-500"
-                dir="ltr"
-              >
-                {{ row.message }}
-              </p>
-              <div class="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
-                <span
-                  class="rounded-md bg-slate-100 px-2 py-0.5 font-mono"
-                  dir="ltr"
-                >
-                  {{ row.exception_class || row.class || '—' }}
-                </span>
-                <span>تکرار: {{ fa(row.occurrences) }}</span>
-                <span
-                  >آخرین:
-                  {{ formatDateTime(row.last_seen_at || row.last_seen) }}</span
-                >
-                <span v-if="row.resolved_at" class="font-bold text-emerald-600"
-                  >حل‌شده</span
-                >
-              </div>
-            </div>
-            <div class="flex shrink-0 gap-1">
-              <button
-                v-if="!row.resolved_at"
-                type="button"
-                class="act text-emerald-700"
-                @click="resolve(row)"
-              >
-                حل شد
-              </button>
-              <button
-                type="button"
-                class="act text-red-600"
-                @click="askDelete(row)"
-              >
-                حذف
-              </button>
-            </div>
-          </div>
-        </article>
-
-        <p
-          v-if="!rows.length"
-          class="rounded-xl bg-white py-8 text-center text-slate-500 shadow-sm"
-        >
-          خطایی یافت نشد
-        </p>
+          {{ exporting ? '...' : 'خروجی اکسل' }}
+        </button>
+        <button type="button" class="btn-muted" @click="clearResolved">
+          پاک‌سازی حل‌شده‌ها
+        </button>
+        <button type="button" class="btn-orange" @click="runAutoHeal">
+          خودترمیمی خودکار
+        </button>
       </div>
-
-      <PaginationBar :meta="meta" @page="load" />
     </div>
 
-    <ConfirmDialog
-      :open="confirm.open"
-      :title="confirm.title"
-      :message="confirm.message"
-      @cancel="confirm.open = false"
-      @confirm="runConfirm"
-    />
+    <div class="rounded-xl bg-white p-4 shadow-sm">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <input
+          v-model="filters.search"
+          class="field md:col-span-2"
+          placeholder="جستجو در پیام / کلاس / URL"
+          @keyup.enter="load(1)"
+        />
+        <select v-model="filters.resolved" class="field">
+          <option value="0">حل‌نشده</option>
+          <option value="1">حل‌شده</option>
+          <option value="">همه</option>
+        </select>
+      </div>
+      <div class="mt-3 flex gap-2">
+        <button type="button" class="btn-orange" @click="load(1)">
+          اعمال فیلتر
+        </button>
+        <button type="button" class="btn-muted" @click="clear">پاک کردن</button>
+      </div>
+    </div>
+
+    <div
+      v-if="loading"
+      class="rounded-xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm"
+    >
+      در حال بارگذاری...
+    </div>
+
+    <div v-else class="space-y-3">
+      <article
+        v-for="row in rows"
+        :key="row.id"
+        class="rounded-xl bg-white p-4 shadow-sm"
+      >
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <p class="text-base font-bold text-slate-800">
+              {{ row.message_fa || row.message || 'بدون پیام' }}
+            </p>
+            <p
+              v-if="row.message_fa && row.message"
+              class="mt-1 text-xs text-slate-500"
+              dir="ltr"
+            >
+              {{ row.message }}
+            </p>
+            <div class="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+              <span
+                class="rounded-md bg-slate-100 px-2 py-0.5 font-mono"
+                dir="ltr"
+              >
+                {{ row.exception_class || row.class || '—' }}
+              </span>
+              <span>تکرار: {{ fa(row.occurrences) }}</span>
+              <span
+                >آخرین:
+                {{ formatDateTime(row.last_seen_at || row.last_seen) }}</span
+              >
+              <span v-if="row.resolved_at" class="font-bold text-emerald-600"
+                >حل‌شده</span
+              >
+            </div>
+          </div>
+          <div class="flex shrink-0 gap-1">
+            <button
+              v-if="!row.resolved_at"
+              type="button"
+              class="act text-emerald-700"
+              @click="resolve(row)"
+            >
+              حل شد
+            </button>
+            <button
+              type="button"
+              class="act text-red-600"
+              @click="askDelete(row)"
+            >
+              حذف
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <p
+        v-if="!rows.length"
+        class="rounded-xl bg-white py-8 text-center text-slate-500 shadow-sm"
+      >
+        خطایی یافت نشد
+      </p>
+    </div>
+
+    <PaginationBar :meta="meta" @page="load" />
+  </div>
+
+  <ConfirmDialog
+    :open="confirm.open"
+    :title="confirm.title"
+    :message="confirm.message"
+    @cancel="confirm.open = false"
+    @confirm="runConfirm"
+  />
 </template>
 
 <script setup>

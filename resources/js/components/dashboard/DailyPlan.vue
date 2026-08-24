@@ -1,6 +1,8 @@
 <template>
   <Card class="p-4">
-    <h3 class="mb-4 text-lg font-bold text-ink dark:text-white">برنامه پیشنهادی امروز</h3>
+    <h3 class="mb-4 text-lg font-bold text-ink dark:text-white">
+      برنامه پیشنهادی امروز
+    </h3>
     <div class="space-y-3">
       <div
         v-for="item in items"
@@ -15,7 +17,9 @@
         </span>
         <div class="min-w-0 flex-1">
           <p class="font-medium text-ink dark:text-white">{{ item.title }}</p>
-          <p class="text-xs text-ink-muted dark:text-slate-400">{{ item.meta }}</p>
+          <p class="text-xs text-ink-muted dark:text-slate-400">
+            {{ item.meta }}
+          </p>
         </div>
         <RouterLink
           v-if="item.link"

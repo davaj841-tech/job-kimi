@@ -1,46 +1,46 @@
 <template>
-      <div class="space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-bold text-gray-800">تنظیمات سیستم</h1>
-        <div class="flex items-center gap-2">
-          <span v-if="store.dirty" class="text-xs text-orange-600"
-            >تغییرات ذخیره‌نشده</span
-          >
-          <button class="btn-orange" :disabled="store.saving" @click="save">
-            {{ store.saving ? '...' : 'ذخیره تنظیمات' }}
-          </button>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="s in sections"
-          :key="s.key"
-          class="btn-muted"
-          :class="active === s.key ? 'ring-2 ring-orange-400' : ''"
-          @click="switchSection(s.key)"
+  <div class="space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-bold text-gray-800">تنظیمات سیستم</h1>
+      <div class="flex items-center gap-2">
+        <span v-if="store.dirty" class="text-xs text-orange-600"
+          >تغییرات ذخیره‌نشده</span
         >
-          {{ s.label }}
+        <button class="btn-orange" :disabled="store.saving" @click="save">
+          {{ store.saving ? '...' : 'ذخیره تنظیمات' }}
         </button>
       </div>
-
-      <div class="rounded-xl bg-white p-5 shadow-sm">
-        <div
-          v-if="store.loading"
-          class="py-10 text-center text-sm text-slate-400"
-        >
-          در حال بارگذاری...
-        </div>
-        <SettingsForm
-          v-else
-          :model-value="form"
-          :fields="currentFields"
-          @update:model-value="onFormUpdate"
-          @dirty="store.markDirty()"
-          @upload="onUpload"
-        />
-      </div>
     </div>
+
+    <div class="flex flex-wrap gap-2">
+      <button
+        v-for="s in sections"
+        :key="s.key"
+        class="btn-muted"
+        :class="active === s.key ? 'ring-2 ring-orange-400' : ''"
+        @click="switchSection(s.key)"
+      >
+        {{ s.label }}
+      </button>
+    </div>
+
+    <div class="rounded-xl bg-white p-5 shadow-sm">
+      <div
+        v-if="store.loading"
+        class="py-10 text-center text-sm text-slate-400"
+      >
+        در حال بارگذاری...
+      </div>
+      <SettingsForm
+        v-else
+        :model-value="form"
+        :fields="currentFields"
+        @update:model-value="onFormUpdate"
+        @dirty="store.markDirty()"
+        @upload="onUpload"
+      />
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -75,7 +75,12 @@ const fieldMap = {
   general: [
     { key: 'site_name', label: 'نام سایت', type: 'text' },
     { key: 'site_description', label: 'توضیحات سایت', type: 'textarea' },
-    { key: 'site_logo', label: 'لوگوی سایت', type: 'image', uploadType: 'logo' },
+    {
+      key: 'site_logo',
+      label: 'لوگوی سایت',
+      type: 'image',
+      uploadType: 'logo',
+    },
     {
       key: 'site_favicon',
       label: 'فاوآیکون / آیکون سایت',
@@ -268,8 +273,17 @@ const fieldMap = {
 
 const paymentFieldsByGateway = {
   zarinpal: [
-    { key: 'zarinpal_merchant_id', label: 'شناسه پذیرنده', type: 'text', ltr: true },
-    { key: 'zarinpal_sandbox', label: 'حالت آزمایشی (Sandbox)', type: 'toggle' },
+    {
+      key: 'zarinpal_merchant_id',
+      label: 'شناسه پذیرنده',
+      type: 'text',
+      ltr: true,
+    },
+    {
+      key: 'zarinpal_sandbox',
+      label: 'حالت آزمایشی (Sandbox)',
+      type: 'toggle',
+    },
   ],
   nextpay: [
     { key: 'nextpay_api_key', label: 'کلید API', type: 'text', ltr: true },
@@ -281,14 +295,29 @@ const paymentFieldsByGateway = {
     { key: 'idpay_sandbox', label: 'حالت آزمایشی (Sandbox)', type: 'toggle' },
   ],
   mellat: [
-    { key: 'mellat_terminal_id', label: 'شماره ترمینال', type: 'text', ltr: true },
+    {
+      key: 'mellat_terminal_id',
+      label: 'شماره ترمینال',
+      type: 'text',
+      ltr: true,
+    },
     { key: 'mellat_username', label: 'نام کاربری', type: 'text', ltr: true },
     { key: 'mellat_password', label: 'رمز درگاه', type: 'text', ltr: true },
     { key: 'mellat_active', label: 'فعال بودن درگاه', type: 'toggle' },
   ],
   shaparak: [
-    { key: 'shaparak_merchant_id', label: 'شناسه پذیرنده', type: 'text', ltr: true },
-    { key: 'shaparak_terminal_id', label: 'شماره ترمینال', type: 'text', ltr: true },
+    {
+      key: 'shaparak_merchant_id',
+      label: 'شناسه پذیرنده',
+      type: 'text',
+      ltr: true,
+    },
+    {
+      key: 'shaparak_terminal_id',
+      label: 'شماره ترمینال',
+      type: 'text',
+      ltr: true,
+    },
     { key: 'shaparak_username', label: 'نام کاربری', type: 'text', ltr: true },
     { key: 'shaparak_password', label: 'رمز درگاه', type: 'text', ltr: true },
     { key: 'shaparak_active', label: 'فعال بودن درگاه', type: 'toggle' },

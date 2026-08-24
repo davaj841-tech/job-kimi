@@ -1,6 +1,8 @@
 <template>
   <Card class="p-4">
-    <h3 class="mb-4 text-lg font-bold text-ink dark:text-white">تحلیل مهارت‌ها</h3>
+    <h3 class="mb-4 text-lg font-bold text-ink dark:text-white">
+      تحلیل مهارت‌ها
+    </h3>
     <div v-if="!labels.length" class="py-10 text-center text-sm text-ink-muted">
       دادهٔ کافی برای نمودار نیست
     </div>
@@ -12,7 +14,10 @@
         <span class="inline-block h-2 w-4 rounded bg-emerald-500" /> شما
       </span>
       <span class="flex items-center gap-1">
-        <span class="inline-block h-0.5 w-4 border-t-2 border-dashed border-slate-400" /> میانگین
+        <span
+          class="inline-block h-0.5 w-4 border-t-2 border-dashed border-slate-400"
+        />
+        میانگین
       </span>
     </div>
   </Card>
@@ -33,7 +38,14 @@ import {
 import Card from '../ui/Card.vue'
 import { toFaDigits } from '@/utils/format'
 
-ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
+ChartJS.register(
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend
+)
 
 const props = defineProps<{
   labels: string[]

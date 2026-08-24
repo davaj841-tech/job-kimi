@@ -72,7 +72,12 @@ const items = computed(() =>
       href: androidBazaarUrl.value,
       img: '/icons/cafebazaar-icon.png',
     },
-    { key: 'apk', label: 'دانلود مستقیم', href: androidDirectUrl.value, icon: apk },
+    {
+      key: 'apk',
+      label: 'دانلود مستقیم',
+      href: androidDirectUrl.value,
+      icon: apk,
+    },
   ].filter((x) => !!x.href)
 )
 </script>

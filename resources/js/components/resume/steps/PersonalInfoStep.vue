@@ -1,7 +1,9 @@
 <template>
   <div class="space-y-5">
     <div class="flex items-center justify-between gap-2">
-      <h2 class="text-lg font-bold text-desk-text dark:text-white">اطلاعات شخصی</h2>
+      <h2 class="text-lg font-bold text-desk-text dark:text-white">
+        اطلاعات شخصی
+      </h2>
       <button
         type="button"
         class="text-sm font-medium text-brand hover:underline"
@@ -44,17 +46,12 @@
         maxlength="11"
       />
       <label class="block">
-        <span class="mb-1.5 block text-xs font-medium text-desk-muted">وضعیت سربازی</span>
-        <select
-          v-model="local.personal.military_status"
-          class="input-field"
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted"
+          >وضعیت سربازی</span
         >
+        <select v-model="local.personal.military_status" class="input-field">
           <option value="">انتخاب کنید</option>
-          <option
-            v-for="m in militaryOptions"
-            :key="m"
-            :value="m"
-          >
+          <option v-for="m in militaryOptions" :key="m" :value="m">
             {{ m }}
           </option>
         </select>
@@ -79,13 +76,12 @@
           @input="onNational"
         />
       </label>
-      <JalaliBirthInput
-        v-model="local.personal.birth_date"
-        required
-      />
+      <JalaliBirthInput v-model="local.personal.birth_date" required />
 
       <label class="block">
-        <span class="mb-1.5 block text-xs font-medium text-desk-muted">استان محل تولد *</span>
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted"
+          >استان محل تولد *</span
+        >
         <select
           v-model="local.personal.birth_province"
           class="input-field"
@@ -93,18 +89,16 @@
           @change="onProvinceChange"
         >
           <option value="">انتخاب استان</option>
-          <option
-            v-for="p in IRAN_PROVINCES"
-            :key="p"
-            :value="p"
-          >
+          <option v-for="p in IRAN_PROVINCES" :key="p" :value="p">
             {{ p }}
           </option>
         </select>
       </label>
 
       <label class="block">
-        <span class="mb-1.5 block text-xs font-medium text-desk-muted">شهرستان محل تولد *</span>
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted"
+          >شهرستان محل تولد *</span
+        >
         <select
           v-model="local.personal.birth_city"
           class="input-field"
@@ -112,18 +106,16 @@
           :disabled="!local.personal.birth_province"
         >
           <option value="">انتخاب شهرستان</option>
-          <option
-            v-for="c in cityOptions"
-            :key="c"
-            :value="c"
-          >
+          <option v-for="c in cityOptions" :key="c" :value="c">
             {{ c }}
           </option>
         </select>
       </label>
 
       <label class="block">
-        <span class="mb-1.5 block text-xs font-medium text-desk-muted">وضعیت تاهل *</span>
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted"
+          >وضعیت تاهل *</span
+        >
         <select
           v-model="local.personal.marital_status"
           class="input-field"
@@ -150,7 +142,9 @@
         class="md:col-span-2"
       />
       <label class="block">
-        <span class="mb-1.5 block text-xs font-medium text-desk-muted">کد پستی</span>
+        <span class="mb-1.5 block text-xs font-medium text-desk-muted"
+          >کد پستی</span
+        >
         <input
           :value="local.personal.postal_code"
           class="input-field text-left"

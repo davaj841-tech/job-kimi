@@ -36,7 +36,9 @@ function asUrl(v: unknown): string {
 
 function applyFavicon(href: string) {
   if (typeof document === 'undefined' || !href) return
-  let link = document.querySelector<HTMLLinkElement>('link[rel="icon"][data-ja]')
+  let link = document.querySelector<HTMLLinkElement>(
+    'link[rel="icon"][data-ja]'
+  )
   if (!link) {
     link = document.createElement('link')
     link.rel = 'icon'
@@ -107,9 +109,12 @@ export function applySiteTheme(input: {
   if ('whatsapp_url' in input) whatsappUrl.value = asUrl(input.whatsapp_url)
   if ('rubika_url' in input) rubikaUrl.value = asUrl(input.rubika_url)
   if ('bale_url' in input) baleUrl.value = asUrl(input.bale_url)
-  if ('android_play_url' in input) androidPlayUrl.value = asUrl(input.android_play_url)
-  if ('android_bazaar_url' in input) androidBazaarUrl.value = asUrl(input.android_bazaar_url)
-  if ('android_direct_url' in input) androidDirectUrl.value = asUrl(input.android_direct_url)
+  if ('android_play_url' in input)
+    androidPlayUrl.value = asUrl(input.android_play_url)
+  if ('android_bazaar_url' in input)
+    androidBazaarUrl.value = asUrl(input.android_bazaar_url)
+  if ('android_direct_url' in input)
+    androidDirectUrl.value = asUrl(input.android_direct_url)
   if ('site_favicon' in input) {
     siteFavicon.value = asUrl(input.site_favicon)
     applyFavicon(siteFavicon.value)
@@ -123,7 +128,8 @@ export function applySiteTheme(input: {
   }
   if ('site_font_size' in input) {
     const n = Number(input.site_font_size)
-    if (Number.isFinite(n)) fontSize.value = Math.min(20, Math.max(13, Math.round(n)))
+    if (Number.isFinite(n))
+      fontSize.value = Math.min(20, Math.max(13, Math.round(n)))
   }
 
   const preset = themePreset(layout.value)

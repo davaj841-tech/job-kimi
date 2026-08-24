@@ -29,7 +29,10 @@ function registerPwa(): void {
         const worker = reg.installing
         if (!worker) return
         worker.addEventListener('statechange', () => {
-          if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+          if (
+            worker.state === 'installed' &&
+            navigator.serviceWorker.controller
+          ) {
             activateWaitingWorker(reg)
             window.location.reload()
           }

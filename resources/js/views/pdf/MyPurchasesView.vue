@@ -3,8 +3,12 @@
     <div class="mx-auto max-w-7xl px-4">
       <div class="mb-6 flex items-center justify-between gap-3">
         <div>
-          <h1 class="text-2xl font-black text-desk-text dark:text-white">کتابخانه من</h1>
-          <p class="mt-1 text-sm text-desk-muted">PDFهای خریداری‌شده · دسترسی دائمی</p>
+          <h1 class="text-2xl font-black text-desk-text dark:text-white">
+            کتابخانه من
+          </h1>
+          <p class="mt-1 text-sm text-desk-muted">
+            PDFهای خریداری‌شده · دسترسی دائمی
+          </p>
         </div>
         <RouterLink
           to="/pdfs"
@@ -20,9 +24,7 @@
         title="هنوز PDFی خریداری نکرده‌اید"
         description="هر فایل جداگانه خریداری می‌شود و برای همیشه مال شماست."
       >
-        <RouterLink
-          to="/pdfs"
-          class="btn-primary max-w-xs"
+        <RouterLink to="/pdfs" class="btn-primary max-w-xs"
           >رفتن به فروشگاه</RouterLink
         >
       </EmptyState>

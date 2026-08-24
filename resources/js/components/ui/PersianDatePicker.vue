@@ -1,6 +1,9 @@
 <template>
   <div ref="rootEl" class="pdp relative" :class="{ 'pdp--disabled': disabled }">
-    <label v-if="label" class="mb-1.5 block text-xs font-medium text-desk-muted dark:text-slate-400">
+    <label
+      v-if="label"
+      class="mb-1.5 block text-xs font-medium text-desk-muted dark:text-slate-400"
+    >
       {{ label }}
       <span v-if="required" class="text-brand">*</span>
     </label>
@@ -19,13 +22,21 @@
       >
         {{ displayText || placeholder }}
       </span>
-      <svg class="h-4 w-4 shrink-0 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg
+        class="h-4 w-4 shrink-0 text-brand"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
         <rect x="3" y="5" width="18" height="16" rx="2" />
         <path d="M3 9h18M8 3v4M16 3v4" />
       </svg>
     </button>
 
-    <p v-if="error" class="mt-1 text-xs text-red-600 dark:text-red-400">{{ error }}</p>
+    <p v-if="error" class="mt-1 text-xs text-red-600 dark:text-red-400">
+      {{ error }}
+    </p>
 
     <Teleport to="body">
       <div
@@ -36,24 +47,68 @@
         @mousedown.prevent
       >
         <div class="pdp-head">
-          <button type="button" class="pdp-nav" aria-label="ماه بعد" @click="shiftMonth(1)">
-            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M7.05 4.55a1 1 0 011.4 0l5 5a1 1 0 010 1.4l-5 5a1 1 0 11-1.4-1.4L11.1 10 7.05 5.95a1 1 0 010-1.4z"/></svg>
+          <button
+            type="button"
+            class="pdp-nav"
+            aria-label="ماه بعد"
+            @click="shiftMonth(1)"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                d="M7.05 4.55a1 1 0 011.4 0l5 5a1 1 0 010 1.4l-5 5a1 1 0 11-1.4-1.4L11.1 10 7.05 5.95a1 1 0 010-1.4z"
+              />
+            </svg>
           </button>
 
           <!-- راست به چپ: ماه سپس سال -->
           <div class="flex flex-1 items-center justify-center gap-1">
-            <button type="button" class="pdp-meta-btn" :class="{ 'is-open': monthOpen }" @click="toggleMonthList">
+            <button
+              type="button"
+              class="pdp-meta-btn"
+              :class="{ 'is-open': monthOpen }"
+              @click="toggleMonthList"
+            >
               <span class="font-bold">{{ monthName }}</span>
-              <svg class="h-3 w-3 opacity-70" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+              <svg
+                class="h-3 w-3 opacity-70"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                />
+              </svg>
             </button>
-            <button type="button" class="pdp-meta-btn" :class="{ 'is-open': yearOpen }" @click="toggleYearList">
+            <button
+              type="button"
+              class="pdp-meta-btn"
+              :class="{ 'is-open': yearOpen }"
+              @click="toggleYearList"
+            >
               <span class="font-bold">{{ fa(view.jy) }}</span>
-              <svg class="h-3 w-3 opacity-70" viewBox="0 0 20 20" fill="currentColor"><path d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"/></svg>
+              <svg
+                class="h-3 w-3 opacity-70"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                />
+              </svg>
             </button>
           </div>
 
-          <button type="button" class="pdp-nav" aria-label="ماه قبل" @click="shiftMonth(-1)">
-            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M12.95 4.55a1 1 0 010 1.4L8.9 10l4.05 4.05a1 1 0 11-1.4 1.4l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.4 0z"/></svg>
+          <button
+            type="button"
+            class="pdp-nav"
+            aria-label="ماه قبل"
+            @click="shiftMonth(-1)"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                d="M12.95 4.55a1 1 0 010 1.4L8.9 10l4.05 4.05a1 1 0 11-1.4 1.4l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.4 0z"
+              />
+            </svg>
           </button>
         </div>
 
@@ -80,7 +135,9 @@
             class="pdp-list-opt"
             :class="{
               'is-active':
-                (selected && selected.jy === view.jy && selected.jm === i + 1) ||
+                (selected &&
+                  selected.jy === view.jy &&
+                  selected.jm === i + 1) ||
                 (!selected && view.jm === i + 1),
             }"
             @click="pickMonth(i + 1)"
@@ -114,8 +171,12 @@
         </template>
 
         <div class="pdp-foot">
-          <button type="button" class="pdp-link" @click="clearValue">پاک کردن</button>
-          <button type="button" class="pdp-link" @click="pickToday">امروز</button>
+          <button type="button" class="pdp-link" @click="clearValue">
+            پاک کردن
+          </button>
+          <button type="button" class="pdp-link" @click="pickToday">
+            امروز
+          </button>
         </div>
       </div>
     </Teleport>
@@ -123,7 +184,15 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch,
+} from 'vue'
 import {
   formatJalaliDayParts,
   formatJalaliMonthParts,
@@ -197,7 +266,12 @@ const cells = computed(() => {
   const firstWd = jalaliWeekday(view.jy, view.jm, 1)
   const out = Array.from({ length: firstWd }, () => null)
   for (let jd = 1; jd <= len; jd += 1) {
-    out.push({ jy: view.jy, jm: view.jm, jd, wd: jalaliWeekday(view.jy, view.jm, jd) })
+    out.push({
+      jy: view.jy,
+      jm: view.jm,
+      jd,
+      wd: jalaliWeekday(view.jy, view.jm, jd),
+    })
   }
   while (out.length % 7 !== 0) out.push(null)
   return out
@@ -375,9 +449,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .pdp-trigger {
-  @apply flex h-10 w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition
-    hover:border-orange-300 focus:border-orange-400 disabled:cursor-not-allowed disabled:opacity-60
-    dark:border-slate-600 dark:bg-slate-800;
+  @apply flex h-10 w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-orange-300 focus:border-orange-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800;
 }
 .pdp-pop {
   position: absolute;
@@ -429,7 +501,9 @@ onBeforeUnmount(() => {
   font-size: 13px;
   font-weight: 600;
   color: #334155;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 .pdp-day:not(.is-empty):hover {
   background: #fff7ed;

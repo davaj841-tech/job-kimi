@@ -6,7 +6,9 @@
       <p class="page-sub mb-5">
         {{ article.content_type_label }}
         <span v-if="article.company_name"> · {{ article.company_name }}</span>
-        <span v-if="article.source_name"> · منبع: {{ article.source_name }}</span>
+        <span v-if="article.source_name">
+          · منبع: {{ article.source_name }}</span
+        >
       </p>
       <p v-if="article.excerpt" class="mb-5 text-sm leading-7 text-desk-text">
         {{ article.excerpt }}

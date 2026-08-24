@@ -1,18 +1,8 @@
 <template>
-  <div
-    class="p-3 rounded-xl border"
-    :class="boxClass"
-  >
-    <component
-      :is="icon"
-      class="mb-2 h-5 w-5"
-      :class="iconClass"
-    />
+  <div class="rounded-xl border p-3" :class="boxClass">
+    <component :is="icon" class="mb-2 h-5 w-5" :class="iconClass" />
     <p class="text-xs text-desk-muted">{{ label }}</p>
-    <p
-      class="mt-0.5 text-sm font-bold"
-      :class="valueClass"
-    >
+    <p class="mt-0.5 text-sm font-bold" :class="valueClass">
       {{ value }}
     </p>
   </div>
@@ -30,8 +20,10 @@ const props = defineProps({
 })
 
 const boxClass = computed(() => {
-  if (props.alert) return 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10'
-  if (props.highlight) return 'border-brand/30 bg-brand-soft dark:border-brand/40 dark:bg-brand/10'
+  if (props.alert)
+    return 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/10'
+  if (props.highlight)
+    return 'border-brand/30 bg-brand-soft dark:border-brand/40 dark:bg-brand/10'
   return 'border-surface-line bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60'
 })
 

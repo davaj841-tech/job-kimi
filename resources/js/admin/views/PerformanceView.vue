@@ -23,7 +23,10 @@
         <button class="btn-muted" :disabled="busy" @click="toggleAuto">
           {{ auto ? 'خاموش کردن سرعت خودکار' : 'فعال‌سازی سرعت خودکار' }}
         </button>
-        <p class="mt-2 text-xs font-bold" :class="auto ? 'text-emerald-600' : 'text-slate-400'">
+        <p
+          class="mt-2 text-xs font-bold"
+          :class="auto ? 'text-emerald-600' : 'text-slate-400'"
+        >
           وضعیت: {{ auto ? 'فعال' : 'خاموش' }}
         </p>
       </div>
@@ -35,7 +38,9 @@
     <ul v-if="log.length" class="list-disc pr-5 text-sm text-slate-600">
       <li v-for="(item, i) in log" :key="i">{{ item }}</li>
     </ul>
-    <p v-if="message" class="text-sm font-bold text-emerald-700">{{ message }}</p>
+    <p v-if="message" class="text-sm font-bold text-emerald-700">
+      {{ message }}
+    </p>
     <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
   </div>
 </template>

@@ -11,7 +11,8 @@
       افزودن خودکار بر اساس طبقه‌بندی
     </label>
     <p class="text-[11px] text-slate-400">
-      آزمون و PDF همان رسته به‌صورت خودکار می‌آید. در کنار آن می‌توانید موردی را دستی انتخاب کنید.
+      آزمون و PDF همان رسته به‌صورت خودکار می‌آید. در کنار آن می‌توانید موردی را
+      دستی انتخاب کنید.
     </p>
 
     <div>
@@ -21,7 +22,9 @@
         class="mb-2 h-9 w-full rounded-lg border border-slate-200 px-2 text-xs"
         placeholder="جستجوی آزمون…"
       />
-      <div class="max-h-36 overflow-y-auto rounded-lg border border-slate-100 p-2">
+      <div
+        class="max-h-36 overflow-y-auto rounded-lg border border-slate-100 p-2"
+      >
         <label
           v-for="item in filteredExams"
           :key="item.id"
@@ -45,13 +48,17 @@
     </div>
 
     <div>
-      <label class="mb-1 block text-xs text-slate-500">انتخاب دستی فایل PDF</label>
+      <label class="mb-1 block text-xs text-slate-500"
+        >انتخاب دستی فایل PDF</label
+      >
       <input
         v-model="pdfQ"
         class="mb-2 h-9 w-full rounded-lg border border-slate-200 px-2 text-xs"
         placeholder="جستجوی فایل…"
       />
-      <div class="max-h-36 overflow-y-auto rounded-lg border border-slate-100 p-2">
+      <div
+        class="max-h-36 overflow-y-auto rounded-lg border border-slate-100 p-2"
+      >
         <label
           v-for="item in filteredPdfs"
           :key="item.id"
@@ -85,7 +92,11 @@ const props = defineProps({
   examIds: { type: Array, default: () => [] },
   pdfIds: { type: Array, default: () => [] },
 })
-const emit = defineEmits(['update:autoCatalog', 'update:examIds', 'update:pdfIds'])
+const emit = defineEmits([
+  'update:autoCatalog',
+  'update:examIds',
+  'update:pdfIds',
+])
 
 const exams = ref([])
 const pdfs = ref([])
@@ -116,15 +127,21 @@ function unwrap(payload) {
 function toggle(kind, id, on) {
   const key = kind === 'exam' ? 'examIds' : 'pdfIds'
   const cur = [...(props[key] || [])].map(Number)
-  const next = on ? [...new Set([...cur, Number(id)])] : cur.filter((x) => x !== Number(id))
+  const next = on
+    ? [...new Set([...cur, Number(id)])]
+    : cur.filter((x) => x !== Number(id))
   emit(kind === 'exam' ? 'update:examIds' : 'update:pdfIds', next)
 }
 
 onMounted(async () => {
   try {
     const [e, p] = await Promise.all([
-      adminApi.get('/admin/exams', { params: { per_page: 100, status: 'published' } }),
-      adminApi.get('/admin/pdf-products', { params: { per_page: 100, is_active: 1 } }),
+      adminApi.get('/admin/exams', {
+        params: { per_page: 100, status: 'published' },
+      }),
+      adminApi.get('/admin/pdf-products', {
+        params: { per_page: 100, is_active: 1 },
+      }),
     ])
     exams.value = unwrap(e).map((i) => ({ id: Number(i.id), title: i.title }))
     pdfs.value = unwrap(p).map((i) => ({ id: Number(i.id), title: i.title }))

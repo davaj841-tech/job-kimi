@@ -1,7 +1,9 @@
 <template>
   <div class="exam-room flex min-h-dvh flex-col">
     <header class="exam-header sticky top-0 z-50">
-      <div class="mx-auto flex h-14 max-w-6xl items-center gap-3 px-3 sm:h-[3.75rem] sm:px-5">
+      <div
+        class="mx-auto flex h-14 max-w-6xl items-center gap-3 px-3 sm:h-[3.75rem] sm:px-5"
+      >
         <button
           type="button"
           class="exam-icon-btn"
@@ -12,10 +14,16 @@
         </button>
 
         <div class="min-w-0 flex-1">
-          <div class="mb-1 flex items-center justify-between gap-2 text-[11px] sm:text-xs">
-            <span class="truncate font-medium text-[#0f2744]">{{ examTitle }}</span>
+          <div
+            class="mb-1 flex items-center justify-between gap-2 text-[11px] sm:text-xs"
+          >
+            <span class="truncate font-medium text-[#0f2744]">{{
+              examTitle
+            }}</span>
             <span class="shrink-0 tabular-nums text-slate-500">
-              {{ toFaDigits(session.answeredCount) }}/{{ toFaDigits(session.questions.length) }}
+              {{ toFaDigits(session.answeredCount) }}/{{
+                toFaDigits(session.questions.length)
+              }}
             </span>
           </div>
           <div class="h-1.5 overflow-hidden rounded-full bg-slate-200/80">
@@ -28,7 +36,9 @@
 
         <div class="exam-timer shrink-0" :class="timerClass">
           <ClockIcon class="h-4 w-4" />
-          <span class="font-mono text-sm font-bold tabular-nums sm:text-base">{{ timerText }}</span>
+          <span class="font-mono text-sm font-bold tabular-nums sm:text-base">{{
+            timerText
+          }}</span>
         </div>
 
         <button
@@ -40,8 +50,12 @@
         </button>
       </div>
 
-      <div class="mx-auto max-w-6xl border-t border-slate-200/70 px-3 py-2 sm:px-5">
-        <div class="scrollbar-hide -mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 pb-0.5">
+      <div
+        class="mx-auto max-w-6xl border-t border-slate-200/70 px-3 py-2 sm:px-5"
+      >
+        <div
+          class="scrollbar-hide -mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 pb-0.5"
+        >
           <button
             type="button"
             class="exam-chip"
@@ -68,22 +82,48 @@
             type="button"
             class="exam-tool"
             :class="session.remainingOnly ? 'exam-tool-on' : ''"
-            :disabled="!session.unansweredInFilter.length && !session.remainingOnly"
+            :disabled="
+              !session.unansweredInFilter.length && !session.remainingOnly
+            "
             @click="session.toggleRemaining()"
           >
             مانده‌ها
             <span
               v-if="session.unansweredInFilter.length"
               class="rounded bg-amber-100 px-1.5 text-[10px] text-amber-800"
-            >{{ toFaDigits(session.unansweredInFilter.length) }}</span>
+              >{{ toFaDigits(session.unansweredInFilter.length) }}</span
+            >
           </button>
-          <button type="button" class="exam-tool" @click="session.showAnswerSheet = true">
+          <button
+            type="button"
+            class="exam-tool"
+            @click="session.showAnswerSheet = true"
+          >
             پاسخبرگ
           </button>
-          <div class="mr-auto flex overflow-hidden rounded-lg border border-slate-200 bg-white">
-            <button type="button" class="exam-font-btn" aria-label="کوچک‌تر" @click="session.bumpFont(-1)">−</button>
-            <span class="border-x border-slate-200 px-2 py-1 text-[10px] text-slate-400">قلم</span>
-            <button type="button" class="exam-font-btn" aria-label="بزرگ‌تر" @click="session.bumpFont(1)">+</button>
+          <div
+            class="mr-auto flex overflow-hidden rounded-lg border border-slate-200 bg-white"
+          >
+            <button
+              type="button"
+              class="exam-font-btn"
+              aria-label="کوچک‌تر"
+              @click="session.bumpFont(-1)"
+            >
+              −
+            </button>
+            <span
+              class="border-x border-slate-200 px-2 py-1 text-[10px] text-slate-400"
+              >قلم</span
+            >
+            <button
+              type="button"
+              class="exam-font-btn"
+              aria-label="بزرگ‌تر"
+              @click="session.bumpFont(1)"
+            >
+              +
+            </button>
           </div>
         </div>
       </div>
@@ -132,13 +172,19 @@
               aria-label="علامت‌گذاری"
               @click="session.toggleFlag(item.id)"
             >
-              <BookmarkIcon class="h-5 w-5" :class="session.isFlagged(item.id) ? 'fill-current' : ''" />
+              <BookmarkIcon
+                class="h-5 w-5"
+                :class="session.isFlagged(item.id) ? 'fill-current' : ''"
+              />
             </button>
           </div>
 
           <div
             class="exam-question mb-5 text-[#0f172a]"
-            :style="{ fontSize: `${1.08 * session.fontScale}rem`, lineHeight: 1.9 }"
+            :style="{
+              fontSize: `${1.08 * session.fontScale}rem`,
+              lineHeight: 1.9,
+            }"
             v-html="renderKatexHtml(item.question_text)"
           />
 
@@ -148,14 +194,25 @@
               :key="opt.key"
               type="button"
               class="exam-option"
-              :class="examStore.answers[item.id] === opt.key ? 'exam-option-selected' : ''"
+              :class="
+                examStore.answers[item.id] === opt.key
+                  ? 'exam-option-selected'
+                  : ''
+              "
               @click="selectAnswer(item.id, opt.key)"
             >
               <span
                 class="exam-option-letter"
-                :class="examStore.answers[item.id] === opt.key ? 'exam-option-letter-on' : ''"
+                :class="
+                  examStore.answers[item.id] === opt.key
+                    ? 'exam-option-letter-on'
+                    : ''
+                "
               >
-                <CheckIcon v-if="examStore.answers[item.id] === opt.key" class="h-4 w-4" />
+                <CheckIcon
+                  v-if="examStore.answers[item.id] === opt.key"
+                  class="h-4 w-4"
+                />
                 <template v-else>{{ PERSIAN_LETTERS[optIdx] }}</template>
               </span>
               <span
@@ -174,7 +231,7 @@
             type="button"
             class="exam-nav-btn"
             :disabled="session.isFirstInFilter"
-            @click="session.prev(); scrollCurrent()"
+            @click="goPrevInFilter"
           >
             <ArrowRightIcon class="h-5 w-5" />
             قبلی
@@ -184,7 +241,7 @@
             class="exam-nav-btn"
             :class="session.isLastInFilter ? '' : 'exam-nav-btn-primary'"
             :disabled="session.isLastInFilter"
-            @click="session.next(); scrollCurrent()"
+            @click="goNextInFilter"
           >
             بعدی
             <ArrowLeftIcon class="h-5 w-5" />
@@ -200,7 +257,9 @@
       </section>
 
       <aside class="hidden lg:block">
-        <div class="exam-nav-panel sticky top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto">
+        <div
+          class="exam-nav-panel sticky top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto"
+        >
           <div class="mb-3 flex items-center justify-between">
             <h3 class="text-sm font-bold text-[#0f2744]">پیمایش</h3>
             <button
@@ -228,33 +287,60 @@
               />
             </button>
           </div>
-          <ul class="mt-4 space-y-2 border-t border-slate-200 pt-3 text-[11px] text-slate-500">
-            <li class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded bg-[#ef394e]" /> پاسخ‌داده‌شده</li>
-            <li class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded bg-amber-500" /> علامت‌گذاری</li>
-            <li class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded bg-slate-200" /> بدون پاسخ</li>
+          <ul
+            class="mt-4 space-y-2 border-t border-slate-200 pt-3 text-[11px] text-slate-500"
+          >
+            <li class="flex items-center gap-2">
+              <span class="h-2.5 w-2.5 rounded bg-[#ef394e]" /> پاسخ‌داده‌شده
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-2.5 w-2.5 rounded bg-amber-500" /> علامت‌گذاری
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-2.5 w-2.5 rounded bg-slate-200" /> بدون پاسخ
+            </li>
           </ul>
         </div>
       </aside>
     </main>
 
     <div class="exam-sync">
-      <span v-if="examStore.offline" class="font-medium text-amber-700">آفلاین — ذخیره محلی</span>
+      <span v-if="examStore.offline" class="font-medium text-amber-700"
+        >آفلاین — ذخیره محلی</span
+      >
       <template v-else>
-        <CloudArrowUpIcon v-if="syncing" class="h-4 w-4 animate-pulse text-[#ef394e]" />
+        <CloudArrowUpIcon
+          v-if="syncing"
+          class="h-4 w-4 animate-pulse text-[#ef394e]"
+        />
         <CheckCircleIcon v-else class="h-4 w-4 text-emerald-600" />
-        <span>{{ syncing ? 'در حال ذخیره...' : examStore.lastSyncedAt ? 'ذخیره شد' : 'آماده' }}</span>
+        <span>{{
+          syncing
+            ? 'در حال ذخیره...'
+            : examStore.lastSyncedAt
+              ? 'ذخیره شد'
+              : 'آماده'
+        }}</span>
       </template>
     </div>
 
-    <p v-if="submitError" class="fixed inset-x-0 bottom-20 z-40 px-4 text-center text-xs text-[#ef394e]">
+    <p
+      v-if="submitError"
+      class="fixed inset-x-0 bottom-20 z-40 px-4 text-center text-xs text-[#ef394e]"
+    >
       {{ submitError }}
     </p>
 
-    <AnswerSheetModal v-model="session.showAnswerSheet" @submit="session.showSubmitConfirm = true" />
+    <AnswerSheetModal
+      v-model="session.showAnswerSheet"
+      @submit="session.showSubmitConfirm = true"
+    />
     <ExitConfirmModal v-model="session.showExitConfirm" @confirm="exitExam" />
     <SubmitConfirmModal
       v-model="session.showSubmitConfirm"
-      :unanswered="Math.max(0, session.questions.length - session.answeredCount)"
+      :unanswered="
+        Math.max(0, session.questions.length - session.answeredCount)
+      "
       :flagged="session.flaggedCount"
       :loading="submitting"
       @confirm="submit"
@@ -460,6 +546,16 @@ function exitExam() {
   router.push('/exams')
 }
 
+function goPrevInFilter() {
+  session.prev()
+  scrollCurrent()
+}
+
+function goNextInFilter() {
+  session.next()
+  scrollCurrent()
+}
+
 function onTouchStart(e: TouchEvent) {
   touchX = e.changedTouches[0]?.clientX || 0
 }
@@ -606,8 +702,10 @@ async function submit() {
     router.replace(`/exams/${examId}/result/${attemptId}`)
   } catch (e: unknown) {
     examStore.saveCache()
-    submitError.value =
-      apiErrorMessage(e, 'ثبت آزمون ناموفق بود. لطفاً دوباره تلاش کنید.')
+    submitError.value = apiErrorMessage(
+      e,
+      'ثبت آزمون ناموفق بود. لطفاً دوباره تلاش کنید.'
+    )
     submitting.value = false
   }
 }
@@ -616,7 +714,11 @@ async function submit() {
 <style scoped>
 .exam-room {
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(15, 39, 68, 0.06), transparent),
+    radial-gradient(
+      ellipse 80% 50% at 50% -10%,
+      rgba(15, 39, 68, 0.06),
+      transparent
+    ),
     linear-gradient(180deg, #f4f7fb 0%, #eef2f7 100%);
   color: #0f172a;
 }
@@ -745,7 +847,10 @@ async function submit() {
   background: #fff;
   padding: 0.9rem 1rem;
   text-align: right;
-  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
 }
 .exam-option:hover {
   border-color: #cbd5e1;

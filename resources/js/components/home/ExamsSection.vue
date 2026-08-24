@@ -3,8 +3,12 @@
     <div class="mx-auto max-w-7xl px-4">
       <div class="mb-3 flex items-end justify-between gap-3">
         <div>
-          <h2 class="text-lg font-black text-desk-text sm:text-xl">📝 آزمون‌های آنلاین</h2>
-          <p class="mt-0.5 text-xs text-desk-muted">تمرین هدفمند برای آزمون‌های استخدامی</p>
+          <h2 class="text-lg font-black text-desk-text sm:text-xl">
+            📝 آزمون‌های آنلاین
+          </h2>
+          <p class="mt-0.5 text-xs text-desk-muted">
+            تمرین هدفمند برای آزمون‌های استخدامی
+          </p>
         </div>
         <RouterLink
           to="/exams"
@@ -69,9 +73,7 @@
         v-else
         class="rounded-2xl border border-dashed border-desk-blue/30 bg-surface p-8 text-center"
       >
-        <p class="text-sm text-desk-muted">
-          هنوز آزمونی منتشر نشده است.
-        </p>
+        <p class="text-sm text-desk-muted">هنوز آزمونی منتشر نشده است.</p>
       </div>
     </div>
   </section>

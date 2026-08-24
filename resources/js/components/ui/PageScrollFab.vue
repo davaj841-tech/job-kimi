@@ -50,6 +50,9 @@ function toBottom() {
     node.scrollTo({ top: node.scrollHeight, behavior: 'smooth' })
     return
   }
-  window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+  window.scrollTo({
+    top: document.documentElement.scrollHeight,
+    behavior: 'smooth',
+  })
 }
 </script>

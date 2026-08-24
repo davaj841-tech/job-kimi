@@ -4,17 +4,19 @@
     <template v-else-if="exam">
       <div class="mb-2 flex items-start gap-3">
         <span class="text-3xl" aria-hidden="true">📝</span>
-        <h1 class="page-title mb-0 flex-1 leading-8 sm:text-2xl">{{ exam.title }}</h1>
+        <h1 class="page-title mb-0 flex-1 leading-8 sm:text-2xl">
+          {{ exam.title }}
+        </h1>
       </div>
       <div class="mb-3 flex flex-wrap items-center gap-3">
         <StarRating :avg="exam.avg_rating || 0" readonly show-value />
-        <span
-          v-if="exam.ratings_count"
-          class="text-xs text-desk-muted"
-        >
+        <span v-if="exam.ratings_count" class="text-xs text-desk-muted">
           ({{ exam.ratings_count }} رأی)
         </span>
-        <button class="text-xs font-bold text-brand hover:underline" @click="shareOpen = true">
+        <button
+          class="text-xs font-bold text-brand hover:underline"
+          @click="shareOpen = true"
+        >
           اشتراک‌گذاری
         </button>
       </div>
@@ -23,7 +25,9 @@
         class="prose prose-sm mb-4 max-w-none text-sm leading-6 text-desk-muted [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:p-2"
         v-html="renderKatexHtml(exam.description)"
       />
-      <div class="page-card mb-4 grid grid-cols-2 gap-3 p-4 text-sm text-desk-text">
+      <div
+        class="page-card mb-4 grid grid-cols-2 gap-3 p-4 text-sm text-desk-text"
+      >
         <div>
           مدت: <b>{{ exam.duration_minutes }} دقیقه</b>
         </div>

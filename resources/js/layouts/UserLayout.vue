@@ -18,21 +18,20 @@
     <aside
       class="fixed inset-y-0 right-0 z-50 flex w-64 flex-col border-l border-surface-line bg-surface transition-transform duration-300 dark:border-slate-700 dark:bg-slate-800"
       :class="
-        sidebarOpen
-          ? 'translate-x-0'
-          : 'translate-x-full lg:translate-x-0'
+        sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
       "
     >
       <div
         class="flex h-16 items-center gap-2 border-b border-surface-line px-5 dark:border-slate-700"
       >
-        <SiteBrandLogo
-          variant="desktop"
-          size="sm"
-        />
+        <SiteBrandLogo variant="desktop" size="sm" />
         <div class="min-w-0">
-          <p class="truncate text-sm font-black text-ink dark:text-white">{{ siteName }}</p>
-          <p class="text-[10px] text-ink-muted dark:text-slate-400">پنل کاربری</p>
+          <p class="truncate text-sm font-black text-ink dark:text-white">
+            {{ siteName }}
+          </p>
+          <p class="text-[10px] text-ink-muted dark:text-slate-400">
+            پنل کاربری
+          </p>
         </div>
       </div>
 
@@ -47,9 +46,7 @@
         />
       </nav>
 
-      <div
-        class="border-t border-surface-line p-4 dark:border-slate-700"
-      >
+      <div class="border-t border-surface-line p-4 dark:border-slate-700">
         <div class="flex items-center gap-3">
           <div
             class="flex h-10 w-10 items-center justify-center rounded-full bg-desk-dark text-sm font-bold text-white"
@@ -60,7 +57,10 @@
             <p class="truncate text-sm font-medium text-ink dark:text-white">
               {{ user?.name || 'کاربر' }}
             </p>
-            <p class="truncate text-xs text-ink-muted dark:text-slate-400" dir="ltr">
+            <p
+              class="truncate text-xs text-ink-muted dark:text-slate-400"
+              dir="ltr"
+            >
               {{ user?.mobile || '' }}
             </p>
           </div>

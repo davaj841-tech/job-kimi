@@ -27,9 +27,13 @@ describe('PaymentGateway.vue', () => {
       },
     })
 
-    expect(wrapper.get('[data-testid="gateway-name"]').text()).toContain('زرین‌پال')
-    expect(wrapper.get('[data-testid="gateway-amount"]').text()).toContain('ریال')
-    expect(wrapper.get('[data-testid="pay-button"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="gateway-name"]').text()).toContain(
+      'زرین‌پال'
+    )
+    expect(wrapper.get('[data-testid="gateway-amount"]').text()).toContain(
+      'ریال'
+    )
+    expect(wrapper.find('[data-testid="pay-button"]').exists()).toBe(true)
   })
 
   it('callback موفق را هندل می‌کند', async () => {
@@ -56,7 +60,9 @@ describe('PaymentGateway.vue', () => {
       })
     )
     expect(wrapper.find('[data-testid="payment-success"]').exists()).toBe(true)
-    expect(wrapper.get('[data-testid="payment-message"]').text()).toContain('موفق')
+    expect(wrapper.get('[data-testid="payment-message"]').text()).toContain(
+      'موفق'
+    )
     expect(wrapper.emitted('success')).toBeTruthy()
   })
 
@@ -76,7 +82,9 @@ describe('PaymentGateway.vue', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="payment-failure"]').exists()).toBe(true)
-    expect(wrapper.get('[data-testid="payment-message"]').text()).toContain('لغو')
+    expect(wrapper.get('[data-testid="payment-message"]').text()).toContain(
+      'لغو'
+    )
     expect(wrapper.emitted('failure')).toBeTruthy()
   })
 

@@ -1,6 +1,12 @@
 <template>
-  <ExamModal :model-value="modelValue" title="پاسخنامه" @update:model-value="emit('update:modelValue', $event)">
-    <div class="grid max-h-96 grid-cols-5 gap-2 overflow-y-auto p-1 sm:grid-cols-8">
+  <ExamModal
+    :model-value="modelValue"
+    title="پاسخنامه"
+    @update:model-value="emit('update:modelValue', $event)"
+  >
+    <div
+      class="grid max-h-96 grid-cols-5 gap-2 overflow-y-auto p-1 sm:grid-cols-8"
+    >
       <button
         v-for="(q, idx) in questions"
         :key="q.id"
@@ -58,7 +64,8 @@ function sheetClass(idx: number) {
   const current = session.currentIndex === idx
   if (current) return 'ring-2 ring-brand bg-brand-soft text-brand'
   if (answered) return 'bg-brand text-white'
-  if (session.isFlagged(q?.id)) return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40'
+  if (session.isFlagged(q?.id))
+    return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40'
   return 'bg-slate-100 text-ink dark:bg-slate-800 dark:text-slate-200'
 }
 

@@ -1,6 +1,8 @@
 <template>
   <Card class="p-4">
-    <h3 class="mb-4 text-lg font-bold text-ink dark:text-white">نقاط قوت و ضعف</h3>
+    <h3 class="mb-4 text-lg font-bold text-ink dark:text-white">
+      نقاط قوت و ضعف
+    </h3>
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
       <div>
         <p class="mb-3 text-sm font-bold text-emerald-600">✅ قوی‌ترین‌ها</p>
@@ -8,11 +10,15 @@
           <div v-for="item in strengths" :key="item.name">
             <div class="mb-1 flex justify-between text-sm">
               <span>{{ item.name }}</span>
-              <span class="font-medium">{{ toFaDigits(Math.round(item.score)) }}٪</span>
+              <span class="font-medium"
+                >{{ toFaDigits(Math.round(item.score)) }}٪</span
+              >
             </div>
             <ProgressBar :percent="item.score" color="green" />
           </div>
-          <p v-if="!strengths.length" class="text-sm text-ink-muted">داده‌ای موجود نیست</p>
+          <p v-if="!strengths.length" class="text-sm text-ink-muted">
+            داده‌ای موجود نیست
+          </p>
         </div>
       </div>
       <div>
@@ -21,11 +27,15 @@
           <div v-for="item in weaknesses" :key="item.name">
             <div class="mb-1 flex justify-between text-sm">
               <span>{{ item.name }}</span>
-              <span class="font-medium">{{ toFaDigits(Math.round(item.score)) }}٪</span>
+              <span class="font-medium"
+                >{{ toFaDigits(Math.round(item.score)) }}٪</span
+              >
             </div>
             <ProgressBar :percent="item.score" color="brand" />
           </div>
-          <p v-if="!weaknesses.length" class="text-sm text-ink-muted">داده‌ای موجود نیست</p>
+          <p v-if="!weaknesses.length" class="text-sm text-ink-muted">
+            داده‌ای موجود نیست
+          </p>
         </div>
       </div>
     </div>

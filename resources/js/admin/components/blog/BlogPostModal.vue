@@ -45,7 +45,9 @@
           placeholder="طبقه‌بندی متنی *"
         />
         <div>
-          <label class="mb-1 block text-xs text-slate-500">رسته شغلی (برای آزمون و PDF)</label>
+          <label class="mb-1 block text-xs text-slate-500"
+            >رسته شغلی (برای آزمون و PDF)</label
+          >
           <select v-model="form.job_classification_id" class="field">
             <option value="">بدون رسته</option>
             <option v-for="c in classifications" :key="c.id" :value="c.id">

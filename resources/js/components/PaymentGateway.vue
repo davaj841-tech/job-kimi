@@ -1,12 +1,18 @@
 <template>
   <div class="payment-gateway" data-testid="payment-gateway">
-    <div v-if="loading" data-testid="payment-loading">در حال اتصال به درگاه…</div>
+    <div v-if="loading" data-testid="payment-loading">
+      در حال اتصال به درگاه…
+    </div>
 
     <div v-else-if="status === 'idle'" class="payment-gateway__idle">
       <p class="payment-gateway__name" data-testid="gateway-name">
         درگاه: {{ gatewayLabel }}
       </p>
-      <p v-if="amount != null" class="payment-gateway__amount" data-testid="gateway-amount">
+      <p
+        v-if="amount != null"
+        class="payment-gateway__amount"
+        data-testid="gateway-amount"
+      >
         مبلغ: {{ formattedAmount }} ریال
       </p>
       <button
@@ -23,7 +29,9 @@
     <div
       v-else
       class="payment-gateway__result"
-      :data-testid="status === 'success' ? 'payment-success' : 'payment-failure'"
+      :data-testid="
+        status === 'success' ? 'payment-success' : 'payment-failure'
+      "
     >
       <p data-testid="payment-message">{{ message }}</p>
     </div>
@@ -111,7 +119,10 @@ async function handleCallback(
     }
   } catch (e: unknown) {
     status.value = 'failure'
-    const err = e as { response?: { data?: { message?: string } }; message?: string }
+    const err = e as {
+      response?: { data?: { message?: string } }
+      message?: string
+    }
     message.value =
       err.response?.data?.message || err.message || 'تایید پرداخت ناموفق بود.'
     emit('failure', e)

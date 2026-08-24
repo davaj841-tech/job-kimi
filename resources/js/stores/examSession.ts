@@ -26,10 +26,15 @@ export const useExamSessionStore = defineStore('examSession', () => {
   )
 
   const subjectTabs = computed(() => {
-    const map = new Map<string, { slug: string; label: string; count: number }>()
+    const map = new Map<
+      string,
+      { slug: string; label: string; count: number }
+    >()
     for (const q of questions.value) {
       const slug = String(q.subject || 'general')
-      const label = String(q.subject_name || q.subject_label || q.subject || 'عمومی')
+      const label = String(
+        q.subject_name || q.subject_label || q.subject || 'عمومی'
+      )
       const cur = map.get(slug)
       if (cur) cur.count += 1
       else map.set(slug, { slug, label, count: 1 })
@@ -88,9 +93,7 @@ export const useExamSessionStore = defineStore('examSession', () => {
   const totalPages = computed(() =>
     Math.max(
       1,
-      Math.ceil(
-        (filteredQuestions.value.length || 1) / questionsPerPage.value
-      )
+      Math.ceil((filteredQuestions.value.length || 1) / questionsPerPage.value)
     )
   )
 
@@ -123,8 +126,7 @@ export const useExamSessionStore = defineStore('examSession', () => {
   const isFirstQuestion = computed(() => currentIndex.value <= 0)
   const isLastInFilter = computed(
     () =>
-      pageStart.value + questionsPerPage.value >=
-      filteredQuestions.value.length
+      pageStart.value + questionsPerPage.value >= filteredQuestions.value.length
   )
   const isFirstInFilter = computed(() => pageStart.value <= 0)
 
@@ -152,9 +154,7 @@ export const useExamSessionStore = defineStore('examSession', () => {
     remainingOnly.value = false
     const list = !slug
       ? questions.value
-      : questions.value.filter(
-          (q) => String(q.subject || 'general') === slug
-        )
+      : questions.value.filter((q) => String(q.subject || 'general') === slug)
     if (list.length) {
       navigateToQuestionId(list[0].id)
     }
@@ -195,7 +195,8 @@ export const useExamSessionStore = defineStore('examSession', () => {
   function bumpFont(delta: number): void {
     const steps = [0.9, 1, 1.15, 1.3]
     const i = steps.findIndex((s) => Math.abs(s - fontScale.value) < 0.01)
-    const next = steps[Math.min(steps.length - 1, Math.max(0, (i < 0 ? 1 : i) + delta))]
+    const next =
+      steps[Math.min(steps.length - 1, Math.max(0, (i < 0 ? 1 : i) + delta))]
     fontScale.value = next
   }
 

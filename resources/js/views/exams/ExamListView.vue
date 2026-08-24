@@ -1,6 +1,5 @@
 <template>
   <PageShell title="📝 آزمون‌ها" subtitle="تمرین و سنجش آمادگی استخدام">
-
     <!-- Search + sort -->
     <div class="mb-3 flex gap-2">
       <input
@@ -77,7 +76,10 @@
           تلاش مجدد
         </button>
       </EmptyState>
-      <div v-else-if="exams.length" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        v-else-if="exams.length"
+        class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+      >
         <article
           v-for="exam in exams"
           :key="exam.id"
@@ -159,8 +161,8 @@ const error = ref(null)
 const accessOptions = [
   { value: '', label: 'همه' },
   { value: 'free', label: 'رایگان' },
-      { value: 'subscription', label: 'اشتراک' },
-      { value: 'paid', label: 'فروشی' },
+  { value: 'subscription', label: 'اشتراک' },
+  { value: 'paid', label: 'فروشی' },
 ]
 
 const filters = reactive({
@@ -248,4 +250,3 @@ onMounted(() => {
   loadClassifications()
 })
 </script>
-

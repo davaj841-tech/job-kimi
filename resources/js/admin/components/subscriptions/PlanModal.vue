@@ -72,11 +72,7 @@
             <label class="label mb-1 block">رنگ برچسب</label>
             <select v-model="form.badge_color" class="field">
               <option value="">بدون رنگ</option>
-              <option
-                v-for="c in badgeColors"
-                :key="c.value"
-                :value="c.value"
-              >
+              <option v-for="c in badgeColors" :key="c.value" :value="c.value">
                 {{ c.label }}
               </option>
             </select>

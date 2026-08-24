@@ -83,7 +83,12 @@
         </div>
 
         <div>
-          <label class="label">سطح سختی <span class="font-normal text-slate-400">(اختیاری — پیش‌فرض متوسط)</span></label>
+          <label class="label"
+            >سطح سختی
+            <span class="font-normal text-slate-400"
+              >(اختیاری — پیش‌فرض متوسط)</span
+            ></label
+          >
           <div class="flex gap-3 text-sm">
             <label
               v-for="d in difficulties"

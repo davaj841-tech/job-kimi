@@ -116,14 +116,45 @@ function mockDashboard(): DashboardData {
     ],
     suggestion: 'با ۲ ساعت تمرین در اطلاعات، نمره کلی +۲٪ می‌شود',
     recent_activity: [
-      { icon: '📝', title: 'آزمون استخدام بانک', meta: '۷۵٪ · ۲ ساعت پیش', color: 'emerald' },
+      {
+        icon: '📝',
+        title: 'آزمون استخدام بانک',
+        meta: '۷۵٪ · ۲ ساعت پیش',
+        color: 'emerald',
+      },
       { icon: '📚', title: 'مطالعه جزوه', meta: 'دیروز', color: 'blue' },
-      { icon: '🏆', title: 'صعود ۲ پله در لیدربورد', meta: '۳ روز پیش', color: 'purple' },
+      {
+        icon: '🏆',
+        title: 'صعود ۲ پله در لیدربورد',
+        meta: '۳ روز پیش',
+        color: 'purple',
+      },
     ],
     daily_plan: [
-      { num: 1, title: 'آزمون شبیه‌سازی', meta: 'یک آزمون کامل', color: 'blue', action: 'شروع', link: '/exams' },
-      { num: 2, title: 'تمرین اطلاعات', meta: 'تمرکز روی بخش ضعیف', color: 'emerald', action: 'تمرین', link: '/exams' },
-      { num: 3, title: 'مطالعه جزوه', meta: 'مرور مفاهیم', color: 'amber', action: 'مشاهده', link: '/my-purchases' },
+      {
+        num: 1,
+        title: 'آزمون شبیه‌سازی',
+        meta: 'یک آزمون کامل',
+        color: 'blue',
+        action: 'شروع',
+        link: '/exams',
+      },
+      {
+        num: 2,
+        title: 'تمرین اطلاعات',
+        meta: 'تمرکز روی بخش ضعیف',
+        color: 'emerald',
+        action: 'تمرین',
+        link: '/exams',
+      },
+      {
+        num: 3,
+        title: 'مطالعه جزوه',
+        meta: 'مرور مفاهیم',
+        color: 'amber',
+        action: 'مشاهده',
+        link: '/my-purchases',
+      },
     ],
     streak: {
       current: 4,
@@ -161,11 +192,19 @@ function mapApiPayload(raw: Record<string, unknown>): DashboardData {
 
   const scoreHistory = (raw.score_history as ScoreHistoryItem[])?.length
     ? (raw.score_history as ScoreHistoryItem[])
-    : ((raw.exam_chart as Array<{ label: string; percentage: number; date?: string }>) || []).slice(-10).map((row) => ({
-        exam: row.label,
-        score: row.percentage,
-        date: row.date ?? null,
-      }))
+    : (
+        (raw.exam_chart as Array<{
+          label: string
+          percentage: number
+          date?: string
+        }>) || []
+      )
+        .slice(-10)
+        .map((row) => ({
+          exam: row.label,
+          score: row.percentage,
+          date: row.date ?? null,
+        }))
 
   const skillLabels = (raw.skill_labels as string[])?.length
     ? (raw.skill_labels as string[])
@@ -196,7 +235,9 @@ function mapApiPayload(raw: Record<string, unknown>): DashboardData {
     skill_labels: skillLabels,
     skill_scores: skillScores,
     avg_skill_scores: avgSkillScores,
-    time_distribution: (raw.time_distribution as TimeDistributionItem[]) || mockDashboard().time_distribution,
+    time_distribution:
+      (raw.time_distribution as TimeDistributionItem[]) ||
+      mockDashboard().time_distribution,
     strengths: strengths.length ? strengths : mockDashboard().strengths,
     weaknesses: weaknesses.length ? weaknesses : mockDashboard().weaknesses,
     suggestion: String(raw.suggestion || mockDashboard().suggestion),

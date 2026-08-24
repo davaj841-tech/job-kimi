@@ -41,9 +41,9 @@
       </div>
 
       <p class="mb-3 text-sm leading-6 text-slate-500">
-        ۱) آزمون را انتخاب کنید ۲) نمونه را دانلود و پر کنید ۳) فایل را آپلود کنید.
-        ستون‌های فارسی مجاز: نام‌آزمون، درس، متن‌سوال، گزینه‌ها، پاسخ‌صحیح، توضیحات، سطح، سال، منبع.
-        پاسخ: الف/ب/ج/د — سطح خالی = متوسط.
+        ۱) آزمون را انتخاب کنید ۲) نمونه را دانلود و پر کنید ۳) فایل را آپلود
+        کنید. ستون‌های فارسی مجاز: نام‌آزمون، درس، متن‌سوال، گزینه‌ها،
+        پاسخ‌صحیح، توضیحات، سطح، سال، منبع. پاسخ: الف/ب/ج/د — سطح خالی = متوسط.
       </p>
 
       <input
@@ -80,7 +80,9 @@
       </div>
 
       <div v-if="result" class="mb-4 rounded-xl bg-slate-50 p-3 text-sm">
-        <p>موفق: {{ result.created ?? result.success ?? result.imported ?? '—' }}</p>
+        <p>
+          موفق: {{ result.created ?? result.success ?? result.imported ?? '—' }}
+        </p>
         <p>رد شده: {{ result.skipped ?? result.failed ?? 0 }}</p>
         <ul
           v-if="result.errors?.length"
@@ -162,7 +164,9 @@ function onFile(e) {
         .filter(Boolean)
         .slice(0, 6)
       if (!lines.length) return
-      const headers = lines[0].split(',').map((h) => h.trim().replace(/^"|"$/g, ''))
+      const headers = lines[0]
+        .split(',')
+        .map((h) => h.trim().replace(/^"|"$/g, ''))
       previewHeaders.value = headers
       previewRows.value = lines.slice(1, 6).map((line) => {
         const cols = line.split(',').map((c) => c.trim().replace(/^"|"$/g, ''))

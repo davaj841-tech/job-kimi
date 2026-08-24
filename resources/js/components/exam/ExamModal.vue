@@ -30,7 +30,10 @@
             </button>
           </div>
           <slot />
-          <div v-if="$slots.footer" class="mt-4 border-t border-surface-line pt-4 dark:border-slate-700">
+          <div
+            v-if="$slots.footer"
+            class="mt-4 border-t border-surface-line pt-4 dark:border-slate-700"
+          >
             <slot name="footer" />
           </div>
         </div>

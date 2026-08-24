@@ -36,9 +36,12 @@
         <div class="p-3 text-center">
           <p class="text-[11px] text-ink-muted dark:text-slate-400">اشتراک</p>
           <p class="mt-1 text-xs font-black dark:text-white">
-            {{ auth.user?.subscription_plan && (auth.user.subscription_plan as any).name
-              ? (auth.user.subscription_plan as any).name
-              : 'رایگان' }}
+            {{
+              auth.user?.subscription_plan &&
+              (auth.user.subscription_plan as any).name
+                ? (auth.user.subscription_plan as any).name
+                : 'رایگان'
+            }}
           </p>
         </div>
         <div class="p-3 text-center">
@@ -96,7 +99,9 @@
         <form class="space-y-3 text-sm" @submit.prevent="saveProfile">
           <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
-              <label class="mb-1 block text-xs text-ink-muted">نام و نام خانوادگی</label>
+              <label class="mb-1 block text-xs text-ink-muted"
+                >نام و نام خانوادگی</label
+              >
               <input
                 v-model="form.name"
                 class="input-field"
@@ -113,9 +118,13 @@
                 placeholder="you@example.com"
               />
             </div>
-            <div class="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800">
+            <div
+              class="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800"
+            >
               <span class="text-ink-muted">موبایل</span>
-              <span class="font-medium" dir="ltr">{{ auth.user?.mobile || '—' }}</span>
+              <span class="font-medium" dir="ltr">{{
+                auth.user?.mobile || '—'
+              }}</span>
             </div>
             <div>
               <label class="mb-1 block text-xs text-ink-muted">تلفن منزل</label>
@@ -128,14 +137,20 @@
               />
             </div>
             <div>
-              <label class="mb-1 block text-xs text-ink-muted">وضعیت سربازی</label>
+              <label class="mb-1 block text-xs text-ink-muted"
+                >وضعیت سربازی</label
+              >
               <select v-model="form.military_status" class="input-field">
                 <option value="">انتخاب کنید</option>
-                <option v-for="m in militaryOptions" :key="m" :value="m">{{ m }}</option>
+                <option v-for="m in militaryOptions" :key="m" :value="m">
+                  {{ m }}
+                </option>
               </select>
             </div>
             <div>
-              <label class="mb-1 block text-xs text-ink-muted">سابقه بیمه</label>
+              <label class="mb-1 block text-xs text-ink-muted"
+                >سابقه بیمه</label
+              >
               <input
                 v-model="form.insurance_history"
                 class="input-field"
@@ -156,21 +171,39 @@
             </div>
             <JalaliBirthInput v-model="form.birth_date" />
             <div>
-              <label class="mb-1 block text-xs text-ink-muted">استان محل تولد</label>
-              <select v-model="form.birth_province" class="input-field" @change="form.birth_city = ''">
+              <label class="mb-1 block text-xs text-ink-muted"
+                >استان محل تولد</label
+              >
+              <select
+                v-model="form.birth_province"
+                class="input-field"
+                @change="form.birth_city = ''"
+              >
                 <option value="">انتخاب استان</option>
-                <option v-for="p in IRAN_PROVINCES" :key="p" :value="p">{{ p }}</option>
+                <option v-for="p in IRAN_PROVINCES" :key="p" :value="p">
+                  {{ p }}
+                </option>
               </select>
             </div>
             <div>
-              <label class="mb-1 block text-xs text-ink-muted">شهرستان محل تولد</label>
-              <select v-model="form.birth_city" class="input-field" :disabled="!form.birth_province">
+              <label class="mb-1 block text-xs text-ink-muted"
+                >شهرستان محل تولد</label
+              >
+              <select
+                v-model="form.birth_city"
+                class="input-field"
+                :disabled="!form.birth_province"
+              >
                 <option value="">انتخاب شهرستان</option>
-                <option v-for="c in cityOptions" :key="c" :value="c">{{ c }}</option>
+                <option v-for="c in cityOptions" :key="c" :value="c">
+                  {{ c }}
+                </option>
               </select>
             </div>
             <div>
-              <label class="mb-1 block text-xs text-ink-muted">وضعیت تاهل</label>
+              <label class="mb-1 block text-xs text-ink-muted"
+                >وضعیت تاهل</label
+              >
               <select v-model="form.marital_status" class="input-field">
                 <option value="">انتخاب کنید</option>
                 <option value="single">مجرد</option>
@@ -185,7 +218,9 @@
               :options="ACADEMIC_FIELDS"
             />
             <div class="md:col-span-2">
-              <label class="mb-1 block text-xs text-ink-muted">آدرس محل سکونت</label>
+              <label class="mb-1 block text-xs text-ink-muted"
+                >آدرس محل سکونت</label
+              >
               <input v-model="form.address" class="input-field" />
             </div>
             <div>
@@ -210,7 +245,11 @@
         </form>
       </Card>
 
-      <Card v-else-if="activeTab === 'password'" key="password" class="space-y-3 p-5">
+      <Card
+        v-else-if="activeTab === 'password'"
+        key="password"
+        class="space-y-3 p-5"
+      >
         <form class="space-y-3 text-sm" @submit.prevent="changePassword">
           <div>
             <label class="mb-1 block text-xs text-ink-muted">رمز فعلی</label>
@@ -230,7 +269,9 @@
             <PasswordRulesHint :password="passwordForm.password" />
           </div>
           <div>
-            <label class="mb-1 block text-xs text-ink-muted">تکرار رمز جدید</label>
+            <label class="mb-1 block text-xs text-ink-muted"
+              >تکرار رمز جدید</label
+            >
             <PasswordInput
               v-model="passwordForm.password_confirmation"
               input-class="input-field"
@@ -261,7 +302,9 @@
         </div>
         <template v-else>
           <section>
-            <h3 class="mb-3 text-sm font-bold dark:text-white">تاریخچه ورود و خروج</h3>
+            <h3 class="mb-3 text-sm font-bold dark:text-white">
+              تاریخچه ورود و خروج
+            </h3>
             <EmptyState
               v-if="!loginSessions.length"
               title="ورود ثبت نشده"
@@ -275,13 +318,16 @@
               >
                 <div class="flex flex-wrap items-center justify-between gap-2">
                   <span class="font-medium text-ink dark:text-slate-100">
-                    ورود: {{ row.logged_in_label || formatDate(row.logged_in_at) }}
+                    ورود:
+                    {{ row.logged_in_label || formatDate(row.logged_in_at) }}
                   </span>
                   <Badge :variant="row.is_active ? 'success' : 'info'">
                     {{ row.is_active ? 'نشست فعال' : 'خروج' }}
                   </Badge>
                 </div>
-                <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted dark:text-slate-400">
+                <div
+                  class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted dark:text-slate-400"
+                >
                   <span>
                     خروج:
                     {{
@@ -297,9 +343,12 @@
           </section>
 
           <section v-if="monthlySummary.length">
-            <h3 class="mb-2 text-sm font-bold dark:text-white">خلاصه ماه‌های گذشته</h3>
+            <h3 class="mb-2 text-sm font-bold dark:text-white">
+              خلاصه ماه‌های گذشته
+            </h3>
             <p class="mb-3 text-xs text-ink-muted">
-              پس از اتمام هر ماه، مجموع ورودها و مدت حضور در آن ماه اینجا می‌آید.
+              پس از اتمام هر ماه، مجموع ورودها و مدت حضور در آن ماه اینجا
+              می‌آید.
             </p>
             <ul class="space-y-2 text-sm">
               <li
@@ -346,7 +395,13 @@ import Skeleton from '../../components/ui/Skeleton.vue'
 import { ACADEMIC_FIELDS } from '../../data/academicFields'
 import { useToast } from '../../composables/useToast'
 import { useAuthStore, type User } from '../../stores/auth'
-import { apiErrorMessage, formatDate, formatPrice, unwrapItem, unwrapList } from '../../utils/format'
+import {
+  apiErrorMessage,
+  formatDate,
+  formatPrice,
+  unwrapItem,
+  unwrapList,
+} from '../../utils/format'
 import { IRAN_PROVINCES, citiesForProvince } from '../../utils/iranCities'
 
 const auth = useAuthStore()
@@ -437,7 +492,9 @@ function syncForm() {
   const u: User = auth.user || ({ id: 0, name: null, mobile: '' } as User)
   form.name = u.name || ''
   form.email = u.email || ''
-  form.national_code = String(u.national_code || '').replace(/\D/g, '').slice(0, 10)
+  form.national_code = String(u.national_code || '')
+    .replace(/\D/g, '')
+    .slice(0, 10)
   form.home_phone = u.home_phone || ''
   form.military_status = u.military_status || ''
   form.insurance_history = u.insurance_history || ''
@@ -447,7 +504,9 @@ function syncForm() {
   form.marital_status = u.marital_status || ''
   form.field_of_study = u.field_of_study || ''
   form.address = u.address || ''
-  form.postal_code = String(u.postal_code || '').replace(/\D/g, '').slice(0, 10)
+  form.postal_code = String(u.postal_code || '')
+    .replace(/\D/g, '')
+    .slice(0, 10)
   form.photo = u.avatar || ''
 }
 
@@ -488,7 +547,9 @@ async function saveProfile() {
     toast.success('پروفایل ذخیره شد')
     syncForm()
   } catch (e) {
-    toast.error(apiErrorMessage(e as AxiosError<ProfileApiError>) || 'ذخیره ناموفق بود')
+    toast.error(
+      apiErrorMessage(e as AxiosError<ProfileApiError>) || 'ذخیره ناموفق بود'
+    )
   } finally {
     saving.value = false
   }
@@ -503,7 +564,10 @@ async function changePassword() {
     passwordForm.password = ''
     passwordForm.password_confirmation = ''
   } catch (e) {
-    toast.error(apiErrorMessage(e as AxiosError<ProfileApiError>) || 'تغییر رمز ناموفق بود')
+    toast.error(
+      apiErrorMessage(e as AxiosError<ProfileApiError>) ||
+        'تغییر رمز ناموفق بود'
+    )
   } finally {
     pwdSaving.value = false
   }
@@ -535,8 +599,11 @@ async function fillFromResume() {
     if (p.email) form.email = String(p.email)
     if (p.home_phone) form.home_phone = String(p.home_phone)
     if (p.military_status) form.military_status = String(p.military_status)
-    if (p.insurance_history) form.insurance_history = String(p.insurance_history)
-    const nc = String(p.national_code || '').replace(/\D/g, '').slice(0, 10)
+    if (p.insurance_history)
+      form.insurance_history = String(p.insurance_history)
+    const nc = String(p.national_code || '')
+      .replace(/\D/g, '')
+      .slice(0, 10)
     if (nc) form.national_code = nc
     if (p.birth_date) form.birth_date = String(p.birth_date)
     if (p.birth_province) form.birth_province = String(p.birth_province)
@@ -544,13 +611,18 @@ async function fillFromResume() {
     if (p.marital_status) form.marital_status = String(p.marital_status)
     if (p.field_of_study) form.field_of_study = String(p.field_of_study)
     if (p.address) form.address = String(p.address)
-    const pc = String(p.postal_code || '').replace(/\D/g, '').slice(0, 10)
+    const pc = String(p.postal_code || '')
+      .replace(/\D/g, '')
+      .slice(0, 10)
     if (pc) form.postal_code = pc
     if (p.photo) form.photo = String(p.photo)
 
     toast.success('اطلاعات از رزومه پر شد. برای ذخیره دکمه ذخیره را بزنید.')
   } catch (e) {
-    toast.error(apiErrorMessage(e as AxiosError<ProfileApiError>) || 'خواندن رزومه ناموفق بود')
+    toast.error(
+      apiErrorMessage(e as AxiosError<ProfileApiError>) ||
+        'خواندن رزومه ناموفق بود'
+    )
   } finally {
     fillingResume.value = false
   }

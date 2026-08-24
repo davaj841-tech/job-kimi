@@ -30,7 +30,7 @@
     <div
       v-else
       ref="editor"
-      class="prose prose-sm max-w-none px-3 py-2 text-sm leading-7 outline-none [&_a]:text-orange-600 [&_h2]:text-lg [&_h2]:font-black [&_h3]:text-base [&_h3]:font-bold [&_img]:max-w-full [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:p-2 [&_.math]:font-mono [&_.math]:text-orange-700"
+      class="prose prose-sm max-w-none px-3 py-2 text-sm leading-7 outline-none [&_.math]:font-mono [&_.math]:text-orange-700 [&_a]:text-orange-600 [&_h2]:text-lg [&_h2]:font-black [&_h3]:text-base [&_h3]:font-bold [&_img]:max-w-full [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:p-2"
       :class="sizeClass"
       contenteditable="true"
       @input="onInput"
@@ -70,7 +70,12 @@ const buttons = [
   { label: 'H2', cmd: 'formatBlock', value: 'h2', title: 'عنوان' },
   { label: 'H3', cmd: 'formatBlock', value: 'h3', title: 'زیرعنوان' },
   { label: 'پاراگراف', cmd: 'formatBlock', value: 'p', title: 'پاراگراف' },
-  { label: 'نقل‌قول', cmd: 'formatBlock', value: 'blockquote', title: 'نقل‌قول' },
+  {
+    label: 'نقل‌قول',
+    cmd: 'formatBlock',
+    value: 'blockquote',
+    title: 'نقل‌قول',
+  },
   { label: 'کد', cmd: 'formatBlock', value: 'pre', title: 'بلوک کد' },
   { label: '• لیست', cmd: 'insertUnorderedList', title: 'لیست نقطه‌ای' },
   { label: '۱. لیست', cmd: 'insertOrderedList', title: 'لیست شماره‌دار' },
@@ -216,7 +221,9 @@ function insertTableCol() {
   const index = Array.from(cell.parentElement.children).indexOf(cell)
   table.querySelectorAll('tr').forEach((tr, rowIdx) => {
     const ref = tr.children[index]
-    const el = document.createElement(rowIdx === 0 && tr.querySelector('th') ? 'th' : 'td')
+    const el = document.createElement(
+      rowIdx === 0 && tr.querySelector('th') ? 'th' : 'td'
+    )
     el.innerHTML = rowIdx === 0 ? 'عنوان' : '&nbsp;'
     if (ref) ref.after(el)
     else tr.appendChild(el)

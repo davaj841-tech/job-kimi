@@ -63,7 +63,9 @@ const props = defineProps({
 const enamadUrl = ref('')
 const samandehiUrl = ref('')
 
-const sizeClass = computed(() => (props.compact ? 'h-8 w-[4.5rem]' : 'h-16 w-28'))
+const sizeClass = computed(() =>
+  props.compact ? 'h-8 w-[4.5rem]' : 'h-16 w-28'
+)
 
 const badgeClass = computed(() => [
   sizeClass.value,

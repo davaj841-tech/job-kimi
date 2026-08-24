@@ -2,7 +2,9 @@
   <div class="min-h-screen bg-surface-page dark:bg-slate-950">
     <div class="page-banner py-6 sm:py-8">
       <div class="mx-auto max-w-7xl px-4 text-right sm:text-center">
-        <h1 class="page-title text-white sm:text-2xl">📄 فروشگاه منابع آموزشی</h1>
+        <h1 class="page-title text-white sm:text-2xl">
+          📄 فروشگاه منابع آموزشی
+        </h1>
         <p class="mx-auto mt-1.5 max-w-2xl text-xs text-white/70 sm:text-sm">
           هر PDF جداگانه خریداری می‌شود — بدون اشتراک.
         </p>
@@ -14,7 +16,7 @@
             v-model="filters.search"
             type="search"
             placeholder="جستجو در PDFها…"
-            class="w-full rounded-xl border border-white/20 bg-white/10 py-2.5 pl-4 pr-12 text-sm text-white placeholder-slate-400 backdrop-blur-sm outline-none ring-brand focus:ring-2"
+            class="w-full rounded-xl border border-white/20 bg-white/10 py-2.5 pl-4 pr-12 text-sm text-white placeholder-slate-400 outline-none ring-brand backdrop-blur-sm focus:ring-2"
             @input="debouncedSearch"
           />
         </div>
@@ -22,7 +24,7 @@
     </div>
 
     <div
-      class="sticky z-20 border-b border-surface-line bg-surface/95 top-[calc(3.65rem+env(safe-area-inset-top))] lg:top-[4.5rem]"
+      class="sticky top-[calc(3.65rem+env(safe-area-inset-top))] z-20 border-b border-surface-line bg-surface/95 lg:top-[4.5rem]"
     >
       <div class="mx-auto max-w-7xl px-4 py-3">
         <div class="scrollbar-hide flex items-center gap-2 overflow-x-auto">
@@ -68,10 +70,7 @@
         v-if="loading"
         class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
       >
-        <PdfCardSkeleton
-          v-for="i in 8"
-          :key="i"
-        />
+        <PdfCardSkeleton v-for="i in 8" :key="i" />
       </div>
 
       <div
@@ -86,18 +85,12 @@
         />
       </div>
 
-      <div
-        v-if="!loading && !pdfs.length"
-        class="py-16 text-center"
-      >
+      <div v-if="!loading && !pdfs.length" class="py-16 text-center">
         <DocumentIcon class="mx-auto mb-4 h-12 w-12 text-slate-300" />
         <p class="text-desk-muted">موردی یافت نشد</p>
       </div>
 
-      <div
-        v-if="hasMore && !loading"
-        class="mt-6 text-center"
-      >
+      <div v-if="hasMore && !loading" class="mt-6 text-center">
         <button
           type="button"
           class="rounded-xl border border-surface-line bg-surface px-6 py-2.5 text-sm font-medium"
@@ -160,7 +153,8 @@ async function fetchPdfs(reset = false) {
 
     pagination.total = Number(meta.total ?? list.length)
     pdfs.value = reset ? list : [...pdfs.value, ...list]
-    hasMore.value = Number(meta.current_page || page.value) < Number(meta.last_page || 1)
+    hasMore.value =
+      Number(meta.current_page || page.value) < Number(meta.last_page || 1)
   } catch {
     if (reset) pdfs.value = []
     hasMore.value = false
@@ -180,7 +174,7 @@ const debouncedSearch = useDebounceFn(() => fetchPdfs(true), 300)
 
 watch(
   () => [filters.category, filters.sort],
-  () => fetchPdfs(true),
+  () => fetchPdfs(true)
 )
 
 onMounted(() => fetchPdfs(true))

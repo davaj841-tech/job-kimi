@@ -1,154 +1,154 @@
 <template>
   <div class="min-h-screen bg-surface-page dark:bg-slate-950">
     <LoadingSpinner v-if="loading" />
-    <div
-      v-else-if="pdf"
-      class="mx-auto max-w-7xl px-4 py-6 sm:py-8"
-    >
+    <div v-else-if="pdf" class="mx-auto max-w-7xl px-4 py-6 sm:py-8">
       <div class="grid gap-5 lg:grid-cols-[11rem_1fr] lg:items-start">
         <div class="space-y-4">
           <div
-            class="mx-auto aspect-[3/4] w-36 overflow-hidden rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 shadow-md sm:w-44 dark:from-slate-800 dark:to-slate-700 lg:mx-0 lg:w-full"
+            class="mx-auto aspect-[3/4] w-36 overflow-hidden rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 shadow-md dark:from-slate-800 dark:to-slate-700 sm:w-44 lg:mx-0 lg:w-full"
           >
-              <img
-                v-if="cover"
-                :src="cover"
-                :alt="pdf.title"
-                class="h-full w-full object-cover"
-              />
-              <div
-                v-else
-                class="flex h-full items-center justify-center text-3xl text-desk-muted"
-              >
-                📄
-              </div>
-            </div>
-
-            <div class="space-y-2.5">
-              <template v-if="pdf.is_purchased || pdf.is_free">
-                <button
-                  type="button"
-                  class="btn-primary flex w-full items-center justify-center gap-2"
-                  @click="openViewer"
-                >
-                  <EyeIcon class="h-5 w-5" />
-                  مشاهده PDF
-                </button>
-                <button
-                  v-if="pdf.is_purchased || Number(pdf.price) === 0"
-                  type="button"
-                  class="flex w-full items-center justify-center gap-2 rounded-xl border border-surface-line bg-surface py-2.5 text-sm font-medium"
-                  @click="downloadPdf"
-                >
-                  <ArrowDownTrayIcon class="h-5 w-5" />
-                  دانلود فایل
-                </button>
-                <p
-                  v-if="pdf.is_free && !pdf.is_purchased"
-                  class="text-center text-xs text-desk-muted"
-                >
-                  برای فعال‌سازی رایگان روی مشاهده بزنید
-                </p>
-              </template>
-
-              <template v-else>
-                <div
-                  class="rounded-xl border border-surface-line bg-surface p-4 text-center"
-                >
-                  <p class="mb-1 text-xs text-desk-muted">قیمت (خرید تکی)</p>
-                  <p class="text-2xl font-black text-brand">{{ formatPrice(displayPrice) }}</p>
-                  <p
-                    v-if="coupon"
-                    class="mt-1 text-xs text-desk-muted line-through"
-                  >
-                    {{ formatPrice(pdf.price) }}
-                  </p>
-                </div>
-
-                <CouponBox
-                  :amount="Number(pdf.price)"
-                  type="pdf"
-                  @update:coupon="coupon = $event"
-                />
-
-                <div
-                  class="flex items-center justify-between rounded-xl bg-surface-page px-3 py-2.5 text-sm"
-                >
-                  <span class="text-desk-muted">موجودی کیف پول</span>
-                  <span
-                    class="font-bold"
-                    :class="hasEnoughBalance ? 'text-emerald-600' : 'text-red-500'"
-                    >{{ formatPrice(walletBalance) }}</span
-                  >
-                </div>
-
-                <button
-                  v-if="hasEnoughBalance"
-                  type="button"
-                  class="btn-primary flex w-full items-center justify-center gap-2"
-                  :disabled="purchasing"
-                  @click="buy('wallet')"
-                >
-                  <WalletIcon class="h-5 w-5" />
-                  {{ purchasing ? 'در حال پردازش…' : 'خرید با کیف پول' }}
-                </button>
-
-                <div v-if="gateways.length">
-                  <label class="mb-1.5 block text-xs text-desk-muted">درگاه آنلاین</label>
-                  <select
-                    v-model="gateway"
-                    class="input-field mb-2"
-                  >
-                    <option
-                      v-for="g in gateways"
-                      :key="g.name"
-                      :value="g.name"
-                    >
-                      {{ g.display_name }}
-                    </option>
-                  </select>
-                </div>
-
-                <button
-                  type="button"
-                  class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-brand py-2.5 text-sm font-bold text-brand hover:bg-brand-soft disabled:opacity-50"
-                  :disabled="purchasing"
-                  @click="buy(gateway)"
-                >
-                  <CreditCardIcon class="h-5 w-5" />
-                  پرداخت آنلاین
-                </button>
-
-                <p
-                  v-if="!hasEnoughBalance"
-                  class="text-center text-xs text-red-500"
-                >
-                  موجودی کافی نیست — شارژ کیف پول یا پرداخت آنلاین
-                </p>
-              </template>
-            </div>
-
+            <img
+              v-if="cover"
+              :src="cover"
+              :alt="pdf.title"
+              class="h-full w-full object-cover"
+            />
             <div
-              class="space-y-2 rounded-xl border border-surface-line bg-surface p-3 text-sm"
+              v-else
+              class="flex h-full items-center justify-center text-3xl text-desk-muted"
             >
-              <div class="flex justify-between">
-                <span class="text-desk-muted">فرمت</span>
-                <span class="font-medium">PDF</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-desk-muted">دسته</span>
-                <span class="font-medium">{{ pdf.category || '—' }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-desk-muted">فروش</span>
-                <span class="font-medium">{{ toFaDigits(pdf.purchases_count ?? 0) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-desk-muted">دانلود</span>
-                <span class="font-medium">{{ toFaDigits(pdf.download_count ?? 0) }}</span>
-              </div>
+              📄
             </div>
           </div>
+
+          <div class="space-y-2.5">
+            <template v-if="pdf.is_purchased || pdf.is_free">
+              <button
+                type="button"
+                class="btn-primary flex w-full items-center justify-center gap-2"
+                @click="openViewer"
+              >
+                <EyeIcon class="h-5 w-5" />
+                مشاهده PDF
+              </button>
+              <button
+                v-if="pdf.is_purchased || Number(pdf.price) === 0"
+                type="button"
+                class="flex w-full items-center justify-center gap-2 rounded-xl border border-surface-line bg-surface py-2.5 text-sm font-medium"
+                @click="downloadPdf"
+              >
+                <ArrowDownTrayIcon class="h-5 w-5" />
+                دانلود فایل
+              </button>
+              <p
+                v-if="pdf.is_free && !pdf.is_purchased"
+                class="text-center text-xs text-desk-muted"
+              >
+                برای فعال‌سازی رایگان روی مشاهده بزنید
+              </p>
+            </template>
+
+            <template v-else>
+              <div
+                class="rounded-xl border border-surface-line bg-surface p-4 text-center"
+              >
+                <p class="mb-1 text-xs text-desk-muted">قیمت (خرید تکی)</p>
+                <p class="text-2xl font-black text-brand">
+                  {{ formatPrice(displayPrice) }}
+                </p>
+                <p
+                  v-if="coupon"
+                  class="mt-1 text-xs text-desk-muted line-through"
+                >
+                  {{ formatPrice(pdf.price) }}
+                </p>
+              </div>
+
+              <CouponBox
+                :amount="Number(pdf.price)"
+                type="pdf"
+                @update:coupon="coupon = $event"
+              />
+
+              <div
+                class="flex items-center justify-between rounded-xl bg-surface-page px-3 py-2.5 text-sm"
+              >
+                <span class="text-desk-muted">موجودی کیف پول</span>
+                <span
+                  class="font-bold"
+                  :class="
+                    hasEnoughBalance ? 'text-emerald-600' : 'text-red-500'
+                  "
+                  >{{ formatPrice(walletBalance) }}</span
+                >
+              </div>
+
+              <button
+                v-if="hasEnoughBalance"
+                type="button"
+                class="btn-primary flex w-full items-center justify-center gap-2"
+                :disabled="purchasing"
+                @click="buy('wallet')"
+              >
+                <WalletIcon class="h-5 w-5" />
+                {{ purchasing ? 'در حال پردازش…' : 'خرید با کیف پول' }}
+              </button>
+
+              <div v-if="gateways.length">
+                <label class="mb-1.5 block text-xs text-desk-muted"
+                  >درگاه آنلاین</label
+                >
+                <select v-model="gateway" class="input-field mb-2">
+                  <option v-for="g in gateways" :key="g.name" :value="g.name">
+                    {{ g.display_name }}
+                  </option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                class="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-brand py-2.5 text-sm font-bold text-brand hover:bg-brand-soft disabled:opacity-50"
+                :disabled="purchasing"
+                @click="buy(gateway)"
+              >
+                <CreditCardIcon class="h-5 w-5" />
+                پرداخت آنلاین
+              </button>
+
+              <p
+                v-if="!hasEnoughBalance"
+                class="text-center text-xs text-red-500"
+              >
+                موجودی کافی نیست — شارژ کیف پول یا پرداخت آنلاین
+              </p>
+            </template>
+          </div>
+
+          <div
+            class="space-y-2 rounded-xl border border-surface-line bg-surface p-3 text-sm"
+          >
+            <div class="flex justify-between">
+              <span class="text-desk-muted">فرمت</span>
+              <span class="font-medium">PDF</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-desk-muted">دسته</span>
+              <span class="font-medium">{{ pdf.category || '—' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-desk-muted">فروش</span>
+              <span class="font-medium">{{
+                toFaDigits(pdf.purchases_count ?? 0)
+              }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-desk-muted">دانلود</span>
+              <span class="font-medium">{{
+                toFaDigits(pdf.download_count ?? 0)
+              }}</span>
+            </div>
+          </div>
+        </div>
 
         <div class="space-y-4">
           <div>
@@ -178,15 +178,12 @@
           >
             <h2 class="mb-3 text-lg font-bold">توضیحات</h2>
             <div
-              class="prose prose-sm max-w-none leading-relaxed text-desk-muted dark:prose-invert"
+              class="prose prose-sm dark:prose-invert max-w-none leading-relaxed text-desk-muted"
               v-html="descriptionHtml"
             />
           </div>
 
-          <p
-            v-if="message"
-            class="text-center text-sm text-brand"
-          >
+          <p v-if="message" class="text-center text-sm text-brand">
             {{ message }}
           </p>
         </div>
@@ -242,10 +239,12 @@ let blobUrl = null
 
 const cover = computed(() => pdf.value?.cover || pdf.value?.thumbnail_url)
 const displayPrice = computed(() =>
-  coupon.value?.final_amount != null ? coupon.value.final_amount : pdf.value?.price,
+  coupon.value?.final_amount != null
+    ? coupon.value.final_amount
+    : pdf.value?.price
 )
 const hasEnoughBalance = computed(
-  () => walletBalance.value >= Number(displayPrice.value || 0),
+  () => walletBalance.value >= Number(displayPrice.value || 0)
 )
 const descriptionHtml = computed(() => {
   const d = pdf.value?.description || ''
@@ -258,7 +257,9 @@ async function loadWallet() {
   try {
     const { data } = await api.get('/wallet')
     const payload = unwrapItem(data)
-    walletBalance.value = Number(payload.balance ?? auth.user?.wallet_balance ?? 0)
+    walletBalance.value = Number(
+      payload.balance ?? auth.user?.wallet_balance ?? 0
+    )
   } catch {
     walletBalance.value = Number(auth.user?.wallet_balance ?? 0)
   }
@@ -320,7 +321,10 @@ async function buy(method, silent = false) {
       payload.gateway = method
     }
     if (coupon.value?.code) payload.coupon_code = coupon.value.code
-    const { data } = await api.post(`/pdf-products/${route.params.id}/purchase`, payload)
+    const { data } = await api.post(
+      `/pdf-products/${route.params.id}/purchase`,
+      payload
+    )
     const body = unwrapItem(data)
     if (body?.payment_url || data.data?.payment_url) {
       window.location.href = body.payment_url || data.data.payment_url

@@ -2,8 +2,12 @@
   <section class="relative overflow-hidden bg-surface-page py-12 sm:py-16">
     <div class="relative mx-auto max-w-7xl px-4">
       <div class="animate-on-scroll mb-8 text-center sm:mb-10">
-        <h2 class="text-xl font-black text-desk-dark sm:text-2xl">کاربران چه می‌گویند؟</h2>
-        <p class="mt-1 text-sm text-desk-muted">تجربه واقعی داوطلبان استخدامی</p>
+        <h2 class="text-xl font-black text-desk-dark sm:text-2xl">
+          کاربران چه می‌گویند؟
+        </h2>
+        <p class="mt-1 text-sm text-desk-muted">
+          تجربه واقعی داوطلبان استخدامی
+        </p>
       </div>
 
       <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-5">
@@ -13,11 +17,7 @@
           class="animate-on-scroll rounded-2xl border border-surface-line bg-white p-5 shadow-sm"
         >
           <div class="mb-3 flex gap-0.5 text-amber-400">
-            <span
-              v-for="n in 5"
-              :key="n"
-              >★</span
-            >
+            <span v-for="n in 5" :key="n">★</span>
           </div>
           <p class="mb-5 text-sm leading-7 text-desk-muted">{{ item.text }}</p>
           <div class="flex items-center gap-3">

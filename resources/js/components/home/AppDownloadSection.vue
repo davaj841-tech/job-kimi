@@ -5,7 +5,9 @@
         class="flex flex-col overflow-hidden rounded-2xl border border-surface-line bg-white p-4 dark:border-slate-800 dark:bg-slate-900 md:h-full"
       >
         <div class="mb-3">
-          <h2 class="text-base font-black text-desk-text dark:text-white sm:text-lg">
+          <h2
+            class="text-base font-black text-desk-text dark:text-white sm:text-lg"
+          >
             دانلود اپلیکیشن اندروید
           </h2>
           <p class="mt-0.5 text-[11px] text-desk-muted">
@@ -19,7 +21,9 @@
             :key="item.key"
             :href="item.href || undefined"
             :target="item.href && item.external ? '_blank' : undefined"
-            :rel="item.href && item.external ? 'noopener noreferrer' : undefined"
+            :rel="
+              item.href && item.external ? 'noopener noreferrer' : undefined
+            "
             class="flex items-center gap-3 rounded-xl border border-surface-line bg-surface-page px-3 py-2.5 transition hover:border-brand/40 hover:bg-brand-soft/40 dark:border-slate-700 dark:bg-slate-800"
             :class="item.href ? '' : 'pointer-events-none opacity-50'"
           >
@@ -36,8 +40,12 @@
               <span v-else v-html="item.icon" />
             </span>
             <span class="min-w-0 text-right">
-              <span class="block text-[11px] text-desk-muted">{{ item.kicker }}</span>
-              <span class="block text-xs font-black text-desk-text dark:text-white">
+              <span class="block text-[11px] text-desk-muted">{{
+                item.kicker
+              }}</span>
+              <span
+                class="block text-xs font-black text-desk-text dark:text-white"
+              >
                 {{ item.title }}
               </span>
             </span>

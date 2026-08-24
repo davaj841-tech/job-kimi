@@ -11,10 +11,7 @@
     }"
     dir="rtl"
   >
-    <div
-      v-if="layout === 'sidebar' || layout === 'split'"
-      class="cv-split"
-    >
+    <div v-if="layout === 'sidebar' || layout === 'split'" class="cv-split">
       <aside class="cv-side">
         <img
           v-if="data.personal?.photo"
@@ -22,11 +19,10 @@
           class="cv-photo"
           alt=""
         />
-        <h1 class="cv-side-name">{{ data.personal?.full_name || 'نام و نام خانوادگی' }}</h1>
-        <p
-          v-if="data.target_job"
-          class="cv-role"
-        >
+        <h1 class="cv-side-name">
+          {{ data.personal?.full_name || 'نام و نام خانوادگی' }}
+        </h1>
+        <p v-if="data.target_job" class="cv-role">
           {{ data.target_job }}
         </p>
         <h2>اطلاعات شخصی</h2>
@@ -70,75 +66,57 @@
         </template>
       </aside>
       <div class="cv-main">
-        <section
-          v-if="data.summary"
-          class="cv-sec"
-        >
+        <section v-if="data.summary" class="cv-sec">
           <h2>معرفی</h2>
           <p class="cv-text">{{ data.summary }}</p>
         </section>
         <div class="cv-two">
-        <section
-          v-if="(data.education || []).length"
-          class="cv-sec"
-        >
-          <h2>تحصیلات</h2>
-          <div
-            v-for="(edu, i) in data.education"
-            :key="'edu-s-' + i"
-            class="cv-item"
-          >
-            <div class="cv-item-top">
-              <div>
-                <p class="cv-item-title">
-                  {{ [edu.degree, edu.field].filter(Boolean).join(' — ') }}
-                </p>
-                <p class="cv-item-sub">{{ edu.university }}</p>
-                <p
-                  v-if="edu.gpa"
-                  class="cv-item-sub"
-                >
-                  معدل {{ toFa(edu.gpa) }}
-                </p>
-              </div>
-              <span class="cv-date">{{ eduRange(edu) }}</span>
-            </div>
-          </div>
-        </section>
-        <section
-          v-if="(data.experience || []).length"
-          class="cv-sec"
-        >
-          <h2>سوابق شغلی</h2>
-          <div
-            v-for="(exp, i) in data.experience"
-            :key="'exp-s-' + i"
-            class="cv-item"
-          >
-            <div class="cv-item-top">
-              <div>
-                <p class="cv-item-title">{{ exp.title }}</p>
-                <p class="cv-item-sub">{{ exp.company }}</p>
-              </div>
-              <span class="cv-date">{{ expRange(exp) }}</span>
-            </div>
-            <p
-              v-if="exp.description"
-              class="cv-text"
+          <section v-if="(data.education || []).length" class="cv-sec">
+            <h2>تحصیلات</h2>
+            <div
+              v-for="(edu, i) in data.education"
+              :key="'edu-s-' + i"
+              class="cv-item"
             >
-              {{ exp.description }}
-            </p>
-          </div>
-        </section>
+              <div class="cv-item-top">
+                <div>
+                  <p class="cv-item-title">
+                    {{ [edu.degree, edu.field].filter(Boolean).join(' — ') }}
+                  </p>
+                  <p class="cv-item-sub">{{ edu.university }}</p>
+                  <p v-if="edu.gpa" class="cv-item-sub">
+                    معدل {{ toFa(edu.gpa) }}
+                  </p>
+                </div>
+                <span class="cv-date">{{ eduRange(edu) }}</span>
+              </div>
+            </div>
+          </section>
+          <section v-if="(data.experience || []).length" class="cv-sec">
+            <h2>سوابق شغلی</h2>
+            <div
+              v-for="(exp, i) in data.experience"
+              :key="'exp-s-' + i"
+              class="cv-item"
+            >
+              <div class="cv-item-top">
+                <div>
+                  <p class="cv-item-title">{{ exp.title }}</p>
+                  <p class="cv-item-sub">{{ exp.company }}</p>
+                </div>
+                <span class="cv-date">{{ expRange(exp) }}</span>
+              </div>
+              <p v-if="exp.description" class="cv-text">
+                {{ exp.description }}
+              </p>
+            </div>
+          </section>
         </div>
       </div>
     </div>
 
     <template v-else>
-      <div
-        v-if="isBanner"
-        class="cv-banner"
-      >
+      <div v-if="isBanner" class="cv-banner">
         <img
           v-if="data.personal?.photo"
           :src="data.personal.photo"
@@ -147,10 +125,7 @@
         />
         <div>
           <h1>{{ data.personal?.full_name || 'نام و نام خانوادگی' }}</h1>
-          <p
-            v-if="data.target_job"
-            class="cv-role"
-          >
+          <p v-if="data.target_job" class="cv-role">
             {{ data.target_job }}
           </p>
         </div>
@@ -166,10 +141,7 @@
           />
           <div class="cv-head-text">
             <h1>{{ data.personal?.full_name || 'نام و نام خانوادگی' }}</h1>
-            <p
-              v-if="data.target_job"
-              class="cv-role"
-            >
+            <p v-if="data.target_job" class="cv-role">
               {{ data.target_job }}
             </p>
           </div>
@@ -179,97 +151,76 @@
       <section class="cv-sec">
         <h2>اطلاعات شخصی</h2>
         <div class="cv-facts">
-          <div
-            v-for="(row, i) in personalRows"
-            :key="i"
-            class="cv-fact"
-          >
+          <div v-for="(row, i) in personalRows" :key="i" class="cv-fact">
             <span class="cv-fact-k">{{ row.label }}</span>
             <span class="cv-fact-v">{{ row.value }}</span>
           </div>
         </div>
       </section>
 
-      <section
-        v-if="data.summary"
-        class="cv-sec"
-      >
+      <section v-if="data.summary" class="cv-sec">
         <h2>معرفی</h2>
         <p class="cv-text">{{ data.summary }}</p>
       </section>
 
       <div class="cv-two">
-      <section
-        v-if="(data.education || []).length"
-        class="cv-sec"
-      >
-        <h2>تحصیلات</h2>
-        <table class="cv-grid">
-          <thead>
-            <tr>
-              <th>مقطع / رشته</th>
-              <th>دانشگاه</th>
-              <th>از تاریخ تا تاریخ</th>
-              <th>معدل</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(edu, i) in data.education" :key="'edu-' + i">
-              <td>{{ [edu.degree, edu.field].filter(Boolean).join(' — ') }}</td>
-              <td>{{ edu.university }}</td>
-              <td class="cv-period" dir="ltr">{{ eduRange(edu) }}</td>
-              <td dir="ltr">{{ edu.gpa ? toFa(edu.gpa) : '' }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-      <section
-        v-if="(data.experience || []).length"
-        class="cv-sec"
-      >
-        <h2>سوابق شغلی</h2>
-        <table class="cv-grid">
-          <thead>
-            <tr>
-              <th>عنوان</th>
-              <th>محل کار</th>
-              <th>از تاریخ تا تاریخ</th>
-              <th>توضیحات</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(exp, i) in data.experience" :key="'exp-' + i">
-              <td>{{ exp.title }}</td>
-              <td>{{ exp.company }}</td>
-              <td class="cv-period" dir="ltr">{{ expRange(exp) }}</td>
-              <td>{{ exp.description }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+        <section v-if="(data.education || []).length" class="cv-sec">
+          <h2>تحصیلات</h2>
+          <table class="cv-grid">
+            <thead>
+              <tr>
+                <th>مقطع / رشته</th>
+                <th>دانشگاه</th>
+                <th>از تاریخ تا تاریخ</th>
+                <th>معدل</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(edu, i) in data.education" :key="'edu-' + i">
+                <td>
+                  {{ [edu.degree, edu.field].filter(Boolean).join(' — ') }}
+                </td>
+                <td>{{ edu.university }}</td>
+                <td class="cv-period" dir="ltr">{{ eduRange(edu) }}</td>
+                <td dir="ltr">{{ edu.gpa ? toFa(edu.gpa) : '' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section v-if="(data.experience || []).length" class="cv-sec">
+          <h2>سوابق شغلی</h2>
+          <table class="cv-grid">
+            <thead>
+              <tr>
+                <th>عنوان</th>
+                <th>محل کار</th>
+                <th>از تاریخ تا تاریخ</th>
+                <th>توضیحات</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(exp, i) in data.experience" :key="'exp-' + i">
+                <td>{{ exp.title }}</td>
+                <td>{{ exp.company }}</td>
+                <td class="cv-period" dir="ltr">{{ expRange(exp) }}</td>
+                <td>{{ exp.description }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
       </div>
 
-      <section
-        v-if="(data.skills || []).length"
-        class="cv-sec"
-      >
+      <section v-if="(data.skills || []).length" class="cv-sec">
         <h2>مهارت‌ها</h2>
         <div class="cv-chips">
-          <span
-            v-for="(s, i) in data.skills"
-            :key="'sk-' + i"
-            class="cv-chip"
-          >
+          <span v-for="(s, i) in data.skills" :key="'sk-' + i" class="cv-chip">
             {{ s.name }}
             <em v-if="s.level">{{ s.level }}</em>
           </span>
         </div>
       </section>
 
-      <section
-        v-if="(data.languages || []).length"
-        class="cv-sec"
-      >
+      <section v-if="(data.languages || []).length" class="cv-sec">
         <h2>زبان‌ها</h2>
         <div class="cv-langs">
           <div
@@ -309,7 +260,10 @@ const isBanner = computed(() =>
 )
 const headerBg = computed(() => {
   const h = theme.value.header
-  if (layout.value === 'classic' && (h === '#ffffff' || String(h).startsWith('#f'))) {
+  if (
+    layout.value === 'classic' &&
+    (h === '#ffffff' || String(h).startsWith('#f'))
+  ) {
     return '#0f172a'
   }
   return h
@@ -323,7 +277,9 @@ const maritalLabel = computed(() => {
 
 const personalRows = computed(() => {
   const p = props.data?.personal || {}
-  const birthPlace = [p.birth_province, p.birth_city].filter(Boolean).join(' / ')
+  const birthPlace = [p.birth_province, p.birth_city]
+    .filter(Boolean)
+    .join(' / ')
   return [
     { label: 'موبایل', value: p.mobile },
     { label: 'تلفن منزل', value: p.home_phone },
@@ -376,7 +332,10 @@ function yearRange(start, end) {
 }
 
 function eduRange(edu) {
-  return yearRange(edu.start_date || edu.start_year, edu.end_date || edu.end_year)
+  return yearRange(
+    edu.start_date || edu.start_year,
+    edu.end_date || edu.end_year
+  )
 }
 
 function expRange(exp) {

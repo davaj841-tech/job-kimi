@@ -31,7 +31,8 @@ describe('useAuth', () => {
       },
     })
 
-    const { login, token, user, isAuthenticated, hasToken, checkToken } = useAuth()
+    const { login, token, user, isAuthenticated, hasToken, checkToken } =
+      useAuth()
     await login('09121234567', 'secret')
 
     expect(post).toHaveBeenCalledWith(

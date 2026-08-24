@@ -27,7 +27,11 @@
             {{ t.status === 'open' ? 'باز' : 'بسته' }}
           </span>
         </div>
-        <p v-if="t.tracking_code" class="mt-1 text-[11px] font-bold text-brand" dir="ltr">
+        <p
+          v-if="t.tracking_code"
+          class="mt-1 text-[11px] font-bold text-brand"
+          dir="ltr"
+        >
           شماره پیگیری: {{ t.tracking_code }}
         </p>
         <p class="mt-1 line-clamp-1 text-xs text-ink-muted">{{ t.message }}</p>

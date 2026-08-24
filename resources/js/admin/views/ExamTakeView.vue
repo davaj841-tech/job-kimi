@@ -1,122 +1,122 @@
 <template>
-      <div class="mx-auto max-w-3xl">
-      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <RouterLink
-            to="/admin/exams"
-            class="text-xs font-bold text-orange-600 hover:underline"
-            >← بازگشت به آزمون‌ها</RouterLink
-          >
-          <h1 class="mt-1 text-xl font-black text-slate-800">
-            {{ exam?.title || 'آزمون‌گیری' }}
-          </h1>
-          <p class="mt-1 text-xs text-slate-500">
-            صفحه {{ fa(pageIndex + 1) }} از {{ fa(totalPages) }} · پاسخ‌داده‌شده
-            {{ fa(answeredCount) }} / {{ fa(questions.length) }}
-          </p>
-        </div>
-        <div
-          class="rounded-xl bg-orange-50 px-3 py-2 text-sm font-bold text-orange-700"
+  <div class="mx-auto max-w-3xl">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <RouterLink
+          to="/admin/exams"
+          class="text-xs font-bold text-orange-600 hover:underline"
+          >← بازگشت به آزمون‌ها</RouterLink
         >
-          ⏱ {{ timerText }}
-        </div>
+        <h1 class="mt-1 text-xl font-black text-slate-800">
+          {{ exam?.title || 'آزمون‌گیری' }}
+        </h1>
+        <p class="mt-1 text-xs text-slate-500">
+          صفحه {{ fa(pageIndex + 1) }} از {{ fa(totalPages) }} · پاسخ‌داده‌شده
+          {{ fa(answeredCount) }} / {{ fa(questions.length) }}
+        </p>
+      </div>
+      <div
+        class="rounded-xl bg-orange-50 px-3 py-2 text-sm font-bold text-orange-700"
+      >
+        ⏱ {{ timerText }}
+      </div>
+    </div>
+
+    <div
+      v-if="loading"
+      class="rounded-2xl bg-white p-10 text-center text-sm text-slate-500 shadow-sm"
+    >
+      در حال شروع آزمون...
+    </div>
+    <div
+      v-else-if="error"
+      class="rounded-2xl bg-white p-8 text-center text-sm text-red-500 shadow-sm"
+    >
+      {{ error }}
+    </div>
+    <template v-else>
+      <div class="mb-4 h-1.5 overflow-hidden rounded-full bg-slate-200">
+        <div
+          class="h-full rounded-full bg-orange-500 transition-all"
+          :style="{ width: `${((pageIndex + 1) / totalPages) * 100}%` }"
+        />
       </div>
 
-      <div
-        v-if="loading"
-        class="rounded-2xl bg-white p-10 text-center text-sm text-slate-500 shadow-sm"
-      >
-        در حال شروع آزمون...
-      </div>
-      <div
-        v-else-if="error"
-        class="rounded-2xl bg-white p-8 text-center text-sm text-red-500 shadow-sm"
-      >
-        {{ error }}
-      </div>
-      <template v-else>
-        <div class="mb-4 h-1.5 overflow-hidden rounded-full bg-slate-200">
+      <div class="space-y-4">
+        <div
+          v-for="(q, localIdx) in pageQuestions"
+          :key="q.id"
+          class="rounded-2xl bg-white p-5 shadow-sm"
+        >
+          <div class="mb-3 flex items-center gap-2">
+            <span
+              class="flex h-7 w-7 items-center justify-center rounded-full bg-orange-50 text-xs font-bold text-orange-600"
+            >
+              {{ fa(pageIndex * PER_PAGE + localIdx + 1) }}
+            </span>
+            <span
+              v-if="q.subject"
+              class="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500"
+              >{{ q.subject }}</span
+            >
+          </div>
           <div
-            class="h-full rounded-full bg-orange-500 transition-all"
-            :style="{ width: `${((pageIndex + 1) / totalPages) * 100}%` }"
+            class="mb-4 text-sm leading-8 text-slate-800"
+            v-html="q.question_text"
           />
-        </div>
-
-        <div class="space-y-4">
-          <div
-            v-for="(q, localIdx) in pageQuestions"
-            :key="q.id"
-            class="rounded-2xl bg-white p-5 shadow-sm"
-          >
-            <div class="mb-3 flex items-center gap-2">
+          <div class="space-y-2">
+            <button
+              v-for="(opt, optIdx) in optionsFor(q)"
+              :key="opt.key"
+              type="button"
+              class="flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-right text-sm transition"
+              :class="
+                answers[q.id] === opt.key
+                  ? 'border-orange-400 bg-orange-50'
+                  : 'border-slate-200 bg-white hover:border-slate-300'
+              "
+              @click="answers[q.id] = opt.key"
+            >
               <span
-                class="flex h-7 w-7 items-center justify-center rounded-full bg-orange-50 text-xs font-bold text-orange-600"
+                class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold"
               >
-                {{ fa(pageIndex * PER_PAGE + localIdx + 1) }}
+                {{ PERSIAN_LETTERS[optIdx] }}
               </span>
-              <span
-                v-if="q.subject"
-                class="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500"
-                >{{ q.subject }}</span
-              >
-            </div>
-            <div
-              class="mb-4 text-sm leading-8 text-slate-800"
-              v-html="q.question_text"
-            />
-            <div class="space-y-2">
-              <button
-                v-for="(opt, optIdx) in optionsFor(q)"
-                :key="opt.key"
-                type="button"
-                class="flex w-full items-start gap-3 rounded-xl border px-3 py-3 text-right text-sm transition"
-                :class="
-                  answers[q.id] === opt.key
-                    ? 'border-orange-400 bg-orange-50'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                "
-                @click="answers[q.id] = opt.key"
-              >
-                <span
-                  class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold"
-                >
-                  {{ PERSIAN_LETTERS[optIdx] }}
-                </span>
-                <span class="flex-1 leading-7" v-html="opt.label" />
-              </button>
-            </div>
+              <span class="flex-1 leading-7" v-html="opt.label" />
+            </button>
           </div>
         </div>
+      </div>
 
-        <div class="mt-5 flex gap-2">
-          <button
-            type="button"
-            class="flex-1 rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold disabled:opacity-40"
-            :disabled="pageIndex === 0"
-            @click="pageIndex--"
-          >
-            ← قبلی
-          </button>
-          <button
-            v-if="pageIndex < totalPages - 1"
-            type="button"
-            class="flex-1 rounded-xl bg-orange-500 px-4 py-3 text-sm font-bold text-white"
-            @click="pageIndex++"
-          >
-            بعدی →
-          </button>
-          <button
-            v-else
-            type="button"
-            class="flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
-            :disabled="submitting"
-            @click="submit"
-          >
-            {{ submitting ? 'در حال ثبت...' : '✅ ثبت و مشاهده نتیجه' }}
-          </button>
-        </div>
-      </template>
-    </div>
+      <div class="mt-5 flex gap-2">
+        <button
+          type="button"
+          class="flex-1 rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold disabled:opacity-40"
+          :disabled="pageIndex === 0"
+          @click="pageIndex--"
+        >
+          ← قبلی
+        </button>
+        <button
+          v-if="pageIndex < totalPages - 1"
+          type="button"
+          class="flex-1 rounded-xl bg-orange-500 px-4 py-3 text-sm font-bold text-white"
+          @click="pageIndex++"
+        >
+          بعدی →
+        </button>
+        <button
+          v-else
+          type="button"
+          class="flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+          :disabled="submitting"
+          @click="submit"
+        >
+          {{ submitting ? 'در حال ثبت...' : '✅ ثبت و مشاهده نتیجه' }}
+        </button>
+      </div>
+    </template>
+  </div>
 </template>
 
 <script setup>

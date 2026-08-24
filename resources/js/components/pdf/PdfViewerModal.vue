@@ -12,10 +12,7 @@
         >
           <div class="min-w-0">
             <p class="truncate text-sm font-bold">{{ title }}</p>
-            <p
-              v-if="maxPages"
-              class="text-xs text-slate-400"
-            >
+            <p v-if="maxPages" class="text-xs text-slate-400">
               پیش‌نمایش · حداکثر {{ maxPages }} صفحه
             </p>
           </div>
@@ -28,7 +25,9 @@
             >
               قبلی
             </button>
-            <span class="text-xs tabular-nums">{{ page }} / {{ numPages || '—' }}</span>
+            <span class="text-xs tabular-nums"
+              >{{ page }} / {{ numPages || '—' }}</span
+            >
             <button
               type="button"
               class="rounded-lg px-3 py-1.5 text-xs hover:bg-white/10 disabled:opacity-40"
@@ -48,10 +47,7 @@
         </div>
 
         <div class="flex flex-1 items-center justify-center overflow-auto p-4">
-          <div
-            v-if="loading"
-            class="text-sm text-slate-300"
-          >
+          <div v-if="loading" class="text-sm text-slate-300">
             در حال بارگذاری PDF…
           </div>
           <div
@@ -148,7 +144,7 @@ watch(
       pdfDoc.value = null
       numPages.value = 0
     }
-  },
+  }
 )
 
 watch(page, async () => {

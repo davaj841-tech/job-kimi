@@ -1,10 +1,7 @@
 <template>
   <PageShell title="✍️ بلاگ استخدامی" subtitle="نکات و راهنماهای آمادگی آزمون">
     <LoadingSpinner v-if="loading" />
-    <ul
-      v-else
-      class="page-card divide-y divide-surface-line overflow-hidden"
-    >
+    <ul v-else class="page-card divide-y divide-surface-line overflow-hidden">
       <li v-for="post in posts" :key="post.id">
         <RouterLink
           :to="`/blog/${post.slug}`"
@@ -12,7 +9,9 @@
         >
           <span class="mt-0.5 text-xl" aria-hidden="true">✍️</span>
           <div class="min-w-0 flex-1">
-            <p class="text-sm font-bold text-desk-text sm:text-base">{{ post.title }}</p>
+            <p class="text-sm font-bold text-desk-text sm:text-base">
+              {{ post.title }}
+            </p>
             <p class="mt-1 line-clamp-2 text-sm leading-6 text-desk-muted">
               {{ post.excerpt }}
             </p>
@@ -22,7 +21,10 @@
           </div>
         </RouterLink>
       </li>
-      <li v-if="!posts.length" class="px-4 py-12 text-center text-sm text-desk-muted">
+      <li
+        v-if="!posts.length"
+        class="px-4 py-12 text-center text-sm text-desk-muted"
+      >
         مطلبی منتشر نشده است.
       </li>
     </ul>

@@ -1,7 +1,9 @@
 <template>
   <div class="space-y-5">
     <div class="flex flex-wrap items-center justify-between gap-2">
-      <h2 class="text-lg font-bold text-desk-text dark:text-white">معرفی حرفه‌ای</h2>
+      <h2 class="text-lg font-bold text-desk-text dark:text-white">
+        معرفی حرفه‌ای
+      </h2>
       <div class="flex flex-wrap gap-2">
         <button
           type="button"
@@ -31,7 +33,8 @@
     </div>
 
     <p class="text-sm text-desk-muted">
-      بر اساس عنوان / شغل هدف، هوش مصنوعی می‌تواند معرفی شغل و متن «درباره من» را بنویسد.
+      بر اساس عنوان / شغل هدف، هوش مصنوعی می‌تواند معرفی شغل و متن «درباره من»
+      را بنویسد.
     </p>
 
     <div class="relative">
@@ -47,11 +50,10 @@
       </span>
     </div>
 
-    <div
-      v-if="aiSuggestions.length"
-      class="space-y-2"
-    >
-      <p class="text-sm font-medium text-desk-text dark:text-slate-200">پیشنهادات AI — برای استفاده کلیک کنید:</p>
+    <div v-if="aiSuggestions.length" class="space-y-2">
+      <p class="text-sm font-medium text-desk-text dark:text-slate-200">
+        پیشنهادات AI — برای استفاده کلیک کنید:
+      </p>
       <button
         v-for="(suggestion, i) in aiSuggestions"
         :key="i"
@@ -89,7 +91,11 @@ async function generateAiSummary(mode) {
     const suggestion = await new Promise((resolve, reject) => {
       emit('ai-summary', { mode, resolve, reject })
     })
-    if (suggestion) aiSuggestions.value = [suggestion, ...aiSuggestions.value.filter((s) => s !== suggestion)].slice(0, 3)
+    if (suggestion)
+      aiSuggestions.value = [
+        suggestion,
+        ...aiSuggestions.value.filter((s) => s !== suggestion),
+      ].slice(0, 3)
   } catch (_) {
     /* parent shows toast */
   } finally {

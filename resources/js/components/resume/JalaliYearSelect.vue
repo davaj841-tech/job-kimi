@@ -1,9 +1,6 @@
 <template>
   <label class="block">
-    <span
-      v-if="label"
-      class="mb-1.5 block text-xs font-medium text-desk-muted"
-    >
+    <span v-if="label" class="mb-1.5 block text-xs font-medium text-desk-muted">
       {{ label }}
       <span v-if="required" class="text-brand">*</span>
     </span>
@@ -14,11 +11,7 @@
       @change="onChange"
     >
       <option value="">{{ placeholder }}</option>
-      <option
-        v-for="y in years"
-        :key="y"
-        :value="y"
-      >
+      <option v-for="y in years" :key="y" :value="y">
         {{ y }}
       </option>
     </select>

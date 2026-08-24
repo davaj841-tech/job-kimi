@@ -33,45 +33,54 @@
 
       <!-- Password login -->
       <div v-if="tab === 'password' && !showForgot" class="space-y-4">
-        <form class="space-y-4" autocomplete="off" @submit.prevent="onPasswordLogin">
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700"
-            >نام کاربری</label
-          >
-          <input
-            :value="username"
-            name="admin_username"
-            class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
-            dir="ltr"
-            lang="en"
-            inputmode="text"
-            autocomplete="off"
-            autocapitalize="characters"
-            spellcheck="false"
-            maxlength="20"
-            placeholder="نام کاربری"
-            @input="username = String($event.target.value || '').replace(/[^a-zA-Z0-9_]/g, '')"
-          />
-        </div>
-        <div>
-          <label class="mb-1 block text-sm font-medium text-slate-700"
-            >رمز عبور</label
-          >
-          <PasswordInput
-            v-model="password"
-            input-class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
-            autocomplete="new-password"
-            placeholder="رمز عبور"
-            @enter="onPasswordLogin"
-          />
-        </div>
-        <button
-          type="submit"
-          class="h-11 w-full rounded-xl bg-orange-500 text-sm font-bold text-white hover:bg-orange-600 disabled:opacity-50"
-          :disabled="auth.loading || !canSubmitPassword"
+        <form
+          class="space-y-4"
+          autocomplete="off"
+          @submit.prevent="onPasswordLogin"
         >
-          ورود
-        </button>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700"
+              >نام کاربری</label
+            >
+            <input
+              :value="username"
+              name="admin_username"
+              class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
+              dir="ltr"
+              lang="en"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              maxlength="20"
+              placeholder="نام کاربری"
+              @input="
+                username = String($event.target.value || '').replace(
+                  /[^a-zA-Z0-9_]/g,
+                  ''
+                )
+              "
+            />
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700"
+              >رمز عبور</label
+            >
+            <PasswordInput
+              v-model="password"
+              input-class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
+              autocomplete="new-password"
+              placeholder="رمز عبور"
+              @enter="onPasswordLogin"
+            />
+          </div>
+          <button
+            type="submit"
+            class="h-11 w-full rounded-xl bg-orange-500 text-sm font-bold text-white hover:bg-orange-600 disabled:opacity-50"
+            :disabled="auth.loading || !canSubmitPassword"
+          >
+            ورود
+          </button>
         </form>
         <button
           type="button"

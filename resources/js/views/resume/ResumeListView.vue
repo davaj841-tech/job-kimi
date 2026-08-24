@@ -10,10 +10,7 @@
       </button>
     </template>
     <LoadingSpinner v-if="loading" />
-    <div
-      v-else
-      class="space-y-2"
-    >
+    <div v-else class="space-y-2">
       <div
         v-for="item in items"
         :key="item.id"
@@ -23,7 +20,9 @@
           <p class="truncate text-sm font-bold">{{ item.title }}</p>
           <p class="mt-1 text-xs text-ink-muted">
             قالب {{ item.template_id }}
-            <span v-if="item.updated_at"> · آخرین ویرایش {{ formatDate(item.updated_at) }}</span>
+            <span v-if="item.updated_at">
+              · آخرین ویرایش {{ formatDate(item.updated_at) }}</span
+            >
           </p>
         </div>
         <div class="flex shrink-0 items-center gap-1.5">
@@ -44,17 +43,11 @@
           </button>
         </div>
       </div>
-      <p
-        v-if="!items.length"
-        class="py-10 text-center text-sm text-ink-muted"
-      >
+      <p v-if="!items.length" class="py-10 text-center text-sm text-ink-muted">
         هنوز رزومه‌ای ندارید. با «رزومه جدید» شروع کنید.
       </p>
     </div>
-    <p
-      v-if="message"
-      class="mt-3 text-center text-sm text-brand"
-    >
+    <p v-if="message" class="mt-3 text-center text-sm text-brand">
       {{ message }}
     </p>
   </PageShell>

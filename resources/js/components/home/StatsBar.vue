@@ -16,11 +16,7 @@
           class="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl"
           :class="stat.tint"
         >
-          <component
-            :is="stat.icon"
-            class="h-5 w-5"
-            :class="stat.iconClass"
-          />
+          <component :is="stat.icon" class="h-5 w-5" :class="stat.iconClass" />
         </div>
         <div class="text-xl font-black tabular-nums text-desk-dark sm:text-2xl">
           <span
@@ -60,7 +56,7 @@ const props = withDefaults(
     jobs: 0,
     files: 0,
     examsCount: 0,
-  },
+  }
 )
 
 const root = ref<HTMLElement | null>(null)
@@ -103,7 +99,7 @@ const displayStats = computed(() =>
       tint: 'bg-emerald-50',
       iconClass: 'text-desk-green',
     },
-  ].filter((stat) => Number(stat.value) > 0),
+  ].filter((stat) => Number(stat.value) > 0)
 )
 
 onMounted(() => {

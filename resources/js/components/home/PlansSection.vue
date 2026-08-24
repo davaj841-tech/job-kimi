@@ -1,7 +1,13 @@
 <template>
   <section
     class="py-6 sm:py-8"
-    :class="variant === 'dark' ? 'bg-[#0f172a]' : variant === 'compact' ? 'bg-surface-page' : 'bg-surface'"
+    :class="
+      variant === 'dark'
+        ? 'bg-[#0f172a]'
+        : variant === 'compact'
+          ? 'bg-surface-page'
+          : 'bg-surface'
+    "
   >
     <div class="mx-auto max-w-7xl px-4">
       <div class="mb-4 flex items-end justify-between gap-3">
@@ -55,10 +61,14 @@
                 >محبوب</span
               >
             </div>
-            <p class="text-[11px] text-desk-muted">{{ plan.duration_days }} روز</p>
+            <p class="text-[11px] text-desk-muted">
+              {{ plan.duration_days }} روز
+            </p>
           </div>
           <div class="flex items-center gap-3">
-            <p class="text-sm font-black text-desk-orange">{{ formatPrice(plan.price) }}</p>
+            <p class="text-sm font-black text-desk-orange">
+              {{ formatPrice(plan.price) }}
+            </p>
             <RouterLink
               to="/subscription"
               class="rounded-lg bg-desk-dark px-3 py-1.5 text-xs font-bold text-white hover:bg-desk-blue"
@@ -69,10 +79,7 @@
         </article>
       </div>
 
-      <div
-        v-else
-        class="grid grid-cols-1 gap-3 sm:grid-cols-3"
-      >
+      <div v-else class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <article
           v-for="(plan, index) in displayPlans"
           :key="plan.id || plan.name"
@@ -91,7 +98,9 @@
           >
             {{ plan.name }}
           </h3>
-          <p class="text-lg font-black text-desk-orange">{{ formatPrice(plan.price) }}</p>
+          <p class="text-lg font-black text-desk-orange">
+            {{ formatPrice(plan.price) }}
+          </p>
           <p
             class="mb-2 text-[11px]"
             :class="variant === 'dark' ? 'text-white/50' : 'text-desk-muted'"
@@ -112,7 +121,11 @@
           <RouterLink
             to="/subscription"
             class="inline-flex w-full items-center justify-center rounded-lg px-3 py-2 text-xs font-bold text-white transition"
-            :class="index === 1 ? 'bg-desk-orange hover:bg-orange-500' : 'bg-desk-dark hover:bg-desk-blue'"
+            :class="
+              index === 1
+                ? 'bg-desk-orange hover:bg-orange-500'
+                : 'bg-desk-dark hover:bg-desk-blue'
+            "
           >
             خرید اشتراک
           </RouterLink>
@@ -135,9 +148,27 @@ const props = defineProps({
 const defaultFeatures = ['دسترسی به آزمون‌ها', 'دانلود فایل‌ها', 'پشتیبانی']
 
 const fallbackPlans = [
-  { id: 'f1', name: 'یک‌ماهه', price: 0, duration_days: 30, features: ['آزمون‌های رایگان', 'مشاهده آگهی‌ها'] },
-  { id: 'f2', name: 'سه‌ماهه', price: 490000, duration_days: 90, features: ['تمام آزمون‌ها', 'دانلود فایل', 'رزومه‌ساز'] },
-  { id: 'f3', name: 'شش‌ماهه', price: 890000, duration_days: 180, features: ['همه امکانات', 'پشتیبانی ویژه'] },
+  {
+    id: 'f1',
+    name: 'یک‌ماهه',
+    price: 0,
+    duration_days: 30,
+    features: ['آزمون‌های رایگان', 'مشاهده آگهی‌ها'],
+  },
+  {
+    id: 'f2',
+    name: 'سه‌ماهه',
+    price: 490000,
+    duration_days: 90,
+    features: ['تمام آزمون‌ها', 'دانلود فایل', 'رزومه‌ساز'],
+  },
+  {
+    id: 'f3',
+    name: 'شش‌ماهه',
+    price: 890000,
+    duration_days: 180,
+    features: ['همه امکانات', 'پشتیبانی ویژه'],
+  },
 ]
 
 const displayPlans = computed(() => {

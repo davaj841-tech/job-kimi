@@ -25,7 +25,8 @@ export function notifyGlobalApiError(error: ApiErrorWithFlags): void {
     message = message || 'دسترسی مجاز نیست.'
   } else if (status === 429) {
     message =
-      message || 'تعداد درخواست‌ها بیش از حد مجاز است. کمی بعد دوباره تلاش کنید.'
+      message ||
+      'تعداد درخواست‌ها بیش از حد مجاز است. کمی بعد دوباره تلاش کنید.'
     const retryAfter = error.response?.headers?.['retry-after']
     if (retryAfter && !String(message).includes(String(retryAfter))) {
       message = `${message} (${retryAfter} ثانیه)`

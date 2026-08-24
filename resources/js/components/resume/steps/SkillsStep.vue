@@ -8,14 +8,13 @@
       :disabled="aiLoading"
       @click="suggestSkills"
     >
-      <SparklesIcon
-        class="h-4 w-4"
-        :class="{ 'animate-spin': aiLoading }"
-      />
+      <SparklesIcon class="h-4 w-4" :class="{ 'animate-spin': aiLoading }" />
       پیشنهاد مهارت بر اساس شغل و سوابق
     </button>
 
-    <div class="rounded-xl border border-surface-line bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+    <div
+      class="rounded-xl border border-surface-line bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50"
+    >
       <div class="mb-3 flex flex-wrap gap-2">
         <span
           v-for="(skill, index) in local.skills"
@@ -23,9 +22,7 @@
           class="inline-flex items-center gap-1 rounded-lg bg-brand/10 px-3 py-1.5 text-sm text-brand"
         >
           {{ skill.name }}
-          <span
-            v-if="skill.level"
-            class="text-[10px] opacity-70"
+          <span v-if="skill.level" class="text-[10px] opacity-70"
             >({{ skill.level }})</span
           >
           <button
@@ -45,10 +42,7 @@
           placeholder="مهارت جدید را بنویسید…"
           @keydown.enter.prevent="addSkill"
         />
-        <select
-          v-model="newLevel"
-          class="input-field sm:w-36"
-        >
+        <select v-model="newLevel" class="input-field sm:w-36">
           <option value="متوسط">متوسط</option>
           <option value="مبتدی">مبتدی</option>
           <option value="حرفه‌ای">حرفه‌ای</option>
