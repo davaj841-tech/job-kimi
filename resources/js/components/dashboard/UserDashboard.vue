@@ -29,7 +29,9 @@
 
     <template v-else-if="dash">
       <!-- هدر -->
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div
+        class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      >
         <div>
           <h2 class="text-2xl font-bold text-ink dark:text-white">
             سلام، {{ dash.userName }}
@@ -69,7 +71,9 @@
           icon-bg="bg-emerald-100 dark:bg-emerald-900/40"
           icon-color="text-emerald-600 dark:text-emerald-300"
           :trend="scoreChangeTrend"
-          :trend-color="dash.kpis.avg_score_change >= 0 ? 'text-emerald-600' : 'text-brand'"
+          :trend-color="
+            dash.kpis.avg_score_change >= 0 ? 'text-emerald-600' : 'text-brand'
+          "
           :delay="100"
         />
         <KpiCard
@@ -100,8 +104,12 @@
         v-if="!dash.hasExams"
         class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
       >
-        هنوز آزمونی نداده‌اید — نمودارها پس از اولین آزمون با داده واقعی پر می‌شوند.
-        <RouterLink to="/exams" class="mr-2 font-bold text-brand hover:underline">
+        هنوز آزمونی نداده‌اید — نمودارها پس از اولین آزمون با داده واقعی پر
+        می‌شوند.
+        <RouterLink
+          to="/exams"
+          class="mr-2 font-bold text-brand hover:underline"
+        >
           شروع اولین آزمون
         </RouterLink>
       </div>
@@ -148,7 +156,10 @@
       </div>
     </template>
 
-    <div v-else class="rounded-xl border border-slate-200 p-6 text-center dark:border-slate-700">
+    <div
+      v-else
+      class="rounded-xl border border-slate-200 p-6 text-center dark:border-slate-700"
+    >
       <p class="mb-3 text-sm text-ink-muted">داده‌ای برای نمایش نیست.</p>
       <button
         type="button"
@@ -189,7 +200,7 @@ import StreakBanner from './StreakBanner.vue'
 import { toFaDigits } from '@/utils/format'
 
 const store = useDashboardStore()
-const { data: dash, loading } = storeToRefs(store)
+const { data: dash } = storeToRefs(store)
 
 const todayLabel = computed(() =>
   new Intl.DateTimeFormat('fa-IR', {
@@ -272,12 +283,42 @@ const displayWeaknesses = computed(() => {
 })
 
 const quickActions = [
-  { to: '/exams', label: 'آزمون‌ها', description: 'شروع تمرین', icon: AcademicCapIcon },
-  { to: '/wallet', label: 'کیف پول', description: 'شارژ موجودی', icon: WalletIcon },
-  { to: '/subscription', label: 'اشتراک', description: 'ارتقا پلن', icon: StarIcon },
-  { to: '/resumes', label: 'رزومه', description: 'ساخت و ویرایش', icon: DocumentTextIcon },
-  { to: '/leaderboard', label: 'لیدربورد', description: 'رتبه‌بندی', icon: TrophyIcon },
-  { to: '/my-purchases', label: 'خریدها', description: 'PDFهای من', icon: ShoppingBagIcon },
+  {
+    to: '/exams',
+    label: 'آزمون‌ها',
+    description: 'شروع تمرین',
+    icon: AcademicCapIcon,
+  },
+  {
+    to: '/wallet',
+    label: 'کیف پول',
+    description: 'شارژ موجودی',
+    icon: WalletIcon,
+  },
+  {
+    to: '/subscription',
+    label: 'اشتراک',
+    description: 'ارتقا پلن',
+    icon: StarIcon,
+  },
+  {
+    to: '/resumes',
+    label: 'رزومه',
+    description: 'ساخت و ویرایش',
+    icon: DocumentTextIcon,
+  },
+  {
+    to: '/leaderboard',
+    label: 'لیدربورد',
+    description: 'رتبه‌بندی',
+    icon: TrophyIcon,
+  },
+  {
+    to: '/my-purchases',
+    label: 'خریدها',
+    description: 'PDFهای من',
+    icon: ShoppingBagIcon,
+  },
 ]
 
 async function reload(): Promise<void> {
