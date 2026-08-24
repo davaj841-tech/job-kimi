@@ -119,12 +119,17 @@ database/migrations/...   (در صورت وجود)
 ```text
 develop → PR → tests → merge main
      → git tag v1.0.1
-     → php artisan update:build 1.0.1
-     → GitHub Release + attach ZIP
-     → Admin uploads ZIP on production
+     → GitHub Release attaches jobazmoon-core.zip (full install package)
+     → php artisan update:build 1.0.1   # delta Update Pack for existing installs
+     → Admin uploads Update Pack on production
 ```
 
+- **نصب اولیه cPanel:** `jobazmoon-core.zip` از Release + `install.php` (یک‌بار).
+- **آپدیت:** فقط Update Pack — نه `install.php` و نه جایگزینی کامل `~/job` بدون بکاپ.
+
 Update Pack نباید شامل `.git` / `.env` / `node_modules` باشد. `vendor` فقط با `composer_required` (که نصب cPanel را متوقف می‌کند مگر SSH).
+
+هم‌ترازی با مسیر نصب: `docs/CPANEL_DEPLOYMENT.md`.
 
 ---
 

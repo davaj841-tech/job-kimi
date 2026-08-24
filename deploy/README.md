@@ -15,7 +15,8 @@ php artisan config:cache && php artisan route:cache && php artisan view:cache &&
 
 Or: `composer run prod-optimize` after migrate + storage:link.
 
-Persian checklist: [`docs/HOSTING.md`](../docs/HOSTING.md)
+Persian checklist: [`docs/HOSTING.md`](../docs/HOSTING.md)  
+cPanel (no SSH / no Composer): [`docs/CPANEL_DEPLOYMENT.md`](../docs/CPANEL_DEPLOYMENT.md)
 
 ## Cron (required)
 
@@ -32,7 +33,11 @@ Or crontab for `www-data`:
 * * * * * cd /var/www/jobazmoon && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-## Horizon (required when QUEUE_CONNECTION=redis)
+### Shared cPanel (no systemd)
+
+See `deploy/cpanel-scheduler.cron` and `deploy/cpanel-queue.cron`, or the commands printed by the installer after first install.
+
+## Horizon (VPS only — when QUEUE_CONNECTION=redis)
 
 ```bash
 sudo cp deploy/horizon.service /etc/systemd/system/horizon.service
@@ -43,9 +48,18 @@ sudo systemctl enable --now horizon
 
 Admins and operators can open `/horizon`. Extra emails: `HORIZON_ALLOWED_EMAILS`.
 
-### Shared hosting (no Redis)
+### Shared hosting (no Redis / no Horizon)
 
-Use `QUEUE_CONNECTION=database`, `CACHE_STORE=database`, `SESSION_DRIVER=database` and a cron `queue:work --stop-when-empty` if long workers are not allowed.
+Use `QUEUE_CONNECTION=database`, `CACHE_STORE=database`, `SESSION_DRIVER=database` (installer default) and cron `queue:work --stop-when-empty`. Horizon is **not** an install requirement.
+
+## Build install ZIP (developer machine / CI)
+
+```bash
+php scripts/build-cpanel-package.php
+# → dist/jobazmoon-core.zip
+```
+
+Do not commit the ZIP; attach it to GitHub Releases.
 
 ## Trusted proxies / HTTPS
 

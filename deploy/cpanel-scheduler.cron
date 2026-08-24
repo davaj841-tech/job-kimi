@@ -1,0 +1,6 @@
+# Shared cPanel — Laravel scheduler
+
+# In cPanel → Cron Jobs → every minute.
+# Prefer the PHP + artisan paths shown by the installer success page.
+
+* * * * * /usr/local/bin/php /home/USER/job/artisan schedule:run >> /dev/null 2>&1

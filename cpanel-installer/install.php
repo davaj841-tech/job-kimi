@@ -5,7 +5,6 @@ declare(strict_types=1);
 /**
  * JobAzmoon cPanel installer — WordPress-style wizard (no SSH / no Composer).
  */
-
 @set_time_limit(0);
 @ini_set('memory_limit', '512M');
 @ini_set('display_errors', '0');
@@ -170,54 +169,54 @@ $dbState = $_SESSION['db_state'] ?? $dbState;
     <h1 class="mb-2 text-center text-2xl font-bold text-slate-900">نصب <?= h(INSTALLER_NAME) ?></h1>
     <p class="mb-6 text-center text-sm text-slate-500">۵ مرحله — مشابه نصب وردپرس روی cPanel</p>
 
-    <?php if ($locked && $step !== 5): ?>
+    <?php if ($locked && $step !== 5) { ?>
         <div class="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm leading-7">
             <p class="font-bold text-amber-900">این سایت قبلاً نصب شده است.</p>
             <p class="mt-2">نصب‌کننده قفل شده و دوباره قابل اجرا نیست. اگر فایل <code>install.php</code> هنوز روی هاست است، فوراً حذفش کنید.</p>
             <a href="/" class="mt-4 inline-block rounded-xl bg-rose-500 px-5 py-2 text-sm font-bold text-white">ورود به سایت</a>
         </div>
-    <?php elseif ($blockedStatus): ?>
+    <?php } elseif ($blockedStatus) { ?>
         <div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm leading-7">
-            <?php if ($installStatus === 'incomplete'): ?>
+            <?php if ($installStatus === 'incomplete') { ?>
                 <p class="font-bold text-red-900">نصب ناقص تشخیص داده شد.</p>
                 <p class="mt-2">پوشه <code>job</code> (یا فایل artisan) وجود دارد ولی نشانگر <code>storage/installed</code> نیست. برای جلوگیری از بازنویسی داده‌ها، نصب متوقف شده است. پوشه job را در File Manager بررسی یا پس از پشتیبان‌گیری پاک کنید و دوباره تلاش کنید.</p>
-            <?php else: ?>
+            <?php } else { ?>
                 <p class="font-bold text-red-900">وضعیت نصب خراب به‌نظر می‌رسد.</p>
                 <p class="mt-2">ترکیب فایل‌های .env / vendor / bootstrap / نشانگر نصب ناسازگار است. نصب‌کننده از ادامه خودداری می‌کند — فایل‌های job را دستی بررسی کنید.</p>
-            <?php endif; ?>
+            <?php } ?>
         </div>
-    <?php else: ?>
+    <?php } else { ?>
         <?php
         $labels = [1 => 'پیش‌نیاز', 2 => 'پایگاه‌داده', 3 => 'سایت و مدیر', 4 => 'تأیید', 5 => 'پایان'];
         ?>
         <ol class="mb-4 grid grid-cols-5 gap-1 text-center text-[10px] sm:text-xs">
-            <?php foreach ($labels as $n => $label): ?>
+            <?php foreach ($labels as $n => $label) { ?>
                 <li class="<?= $step >= $n ? 'font-bold text-rose-600' : 'text-slate-400' ?>"><?= $n ?>. <?= h($label) ?></li>
-            <?php endforeach; ?>
+            <?php } ?>
         </ol>
         <div class="mb-6 h-2 overflow-hidden rounded-full bg-slate-200">
             <div class="h-full bg-rose-500 transition-all" style="width:<?= (int) (($step / 5) * 100) ?>%"></div>
         </div>
 
-        <?php foreach ($errors as $err): ?>
+        <?php foreach ($errors as $err) { ?>
             <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"><?= h($err) ?></div>
-        <?php endforeach; ?>
+        <?php } ?>
 
-        <?php if ($step === 1): ?>
+        <?php if ($step === 1) { ?>
             <div class="rounded-2xl bg-white p-6 shadow-sm">
                 <h2 class="mb-4 font-bold">۱. بررسی محیط سرور</h2>
                 <ul class="divide-y text-sm">
-                    <?php foreach ($reqs as $item): ?>
+                    <?php foreach ($reqs as $item) { ?>
                         <li class="flex justify-between gap-3 py-2">
                             <span><?= h($item['label']) ?></span>
                             <span class="<?= $item['ok'] ? 'text-emerald-600' : ($item['warn'] ? 'text-amber-600' : 'text-red-600') ?>">
                                 <?= $item['ok'] ? '✓' : ($item['warn'] ? '!' : '✗') ?>
                             </span>
                         </li>
-                        <?php if (! $item['ok']): ?>
+                        <?php if (! $item['ok']) { ?>
                             <li class="pb-2 text-xs text-slate-500"><?= h($item['fix']) ?></li>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
+                        <?php } ?>
+                    <?php } ?>
                 </ul>
                 <form method="post" class="mt-6">
                     <input type="hidden" name="_token" value="<?= h($token) ?>">
@@ -226,7 +225,7 @@ $dbState = $_SESSION['db_state'] ?? $dbState;
                 </form>
             </div>
 
-        <?php elseif ($step === 2): ?>
+        <?php } elseif ($step === 2) { ?>
             <form id="db-form" method="post" class="space-y-3 rounded-2xl bg-white p-6 shadow-sm">
                 <h2 class="mb-2 font-bold">۲. پایگاه‌داده MySQL</h2>
                 <p class="mb-4 text-sm text-slate-600">اطلاعات را از cPanel → MySQL Databases بگیرید. رمز در گزارش نصب نمایش داده نمی‌شود.</p>
@@ -243,19 +242,19 @@ $dbState = $_SESSION['db_state'] ?? $dbState;
                 <label class="block text-sm font-bold">رمز عبور</label>
                 <input type="password" name="db_pass" dir="ltr" class="field" autocomplete="new-password">
                 <p id="db-status" class="hidden rounded-xl px-3 py-2 text-sm"></p>
-                <?php if (($dbState['state'] ?? '') === 'has_tables'): ?>
+                <?php if (($dbState['state'] ?? '') === 'has_tables') { ?>
                     <label class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm">
                         <input type="checkbox" name="confirm_existing_db" value="1" class="mt-1">
                         <span>می‌دانم این پایگاه <?= (int) ($dbState['table_count'] ?? 0) ?> جدول دارد. migration روی جداول موجود اجرا می‌شود و هیچ جدولی DROP نمی‌شود.</span>
                     </label>
-                <?php endif; ?>
+                <?php } ?>
                 <div class="flex flex-col gap-2 sm:flex-row">
                     <button type="button" id="test-db" class="flex-1 rounded-xl border border-slate-200 bg-white py-3 text-sm font-bold">تست اتصال</button>
                     <button type="submit" class="flex-1 rounded-xl bg-rose-500 py-3 text-sm font-bold text-white">ذخیره و ادامه</button>
                 </div>
             </form>
 
-        <?php elseif ($step === 3): ?>
+        <?php } elseif ($step === 3) { ?>
             <form method="post" class="space-y-3 rounded-2xl bg-white p-6 shadow-sm">
                 <h2 class="mb-4 font-bold">۳. اطلاعات سایت و مدیر</h2>
                 <input type="hidden" name="_token" value="<?= h($token) ?>">
@@ -277,7 +276,7 @@ $dbState = $_SESSION['db_state'] ?? $dbState;
                 <button class="w-full rounded-xl bg-rose-500 py-3 text-sm font-bold text-white">ادامه</button>
             </form>
 
-        <?php elseif ($step === 4): ?>
+        <?php } elseif ($step === 4) { ?>
             <form method="post" class="rounded-2xl bg-white p-6 shadow-sm">
                 <h2 class="mb-4 font-bold">۴. تأیید و شروع نصب</h2>
                 <dl class="mb-4 space-y-2 text-sm">
@@ -296,25 +295,25 @@ $dbState = $_SESSION['db_state'] ?? $dbState;
                 </label>
                 <input type="hidden" name="_token" value="<?= h($token) ?>">
                 <input type="hidden" name="action" value="install">
-                <?php if (($_SESSION['db_state']['state'] ?? '') === 'has_tables'): ?>
+                <?php if (($_SESSION['db_state']['state'] ?? '') === 'has_tables') { ?>
                     <input type="hidden" name="confirm_existing_db" value="1">
-                <?php endif; ?>
+                <?php } ?>
                 <button class="w-full rounded-xl bg-rose-500 py-3 text-sm font-bold text-white">شروع نصب</button>
             </form>
 
-        <?php elseif ($step === 5 && $result): ?>
+        <?php } elseif ($step === 5 && $result) { ?>
             <div class="rounded-2xl bg-white p-6 shadow-sm">
                 <h2 class="mb-2 text-xl font-bold text-emerald-700">نصب با موفقیت انجام شد</h2>
                 <p class="mb-4 text-sm text-slate-600">رمز مدیر و اطلاعات حساس در این صفحه نمایش داده نمی‌شوند — آن‌ها را یادداشت کرده‌اید.</p>
                 <ul class="mb-4 list-disc pr-5 text-sm leading-7">
-                    <?php foreach ($result['log'] as $line): ?><li><?= h($line) ?></li><?php endforeach; ?>
+                    <?php foreach ($result['log'] as $line) { ?><li><?= h($line) ?></li><?php } ?>
                 </ul>
-                <?php foreach ($result['warnings'] as $w): ?>
+                <?php foreach ($result['warnings'] as $w) { ?>
                     <p class="mb-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800"><?= h($w) ?></p>
-                <?php endforeach; ?>
+                <?php } ?>
                 <h3 class="mb-2 font-bold">گزارش نهایی</h3>
                 <ul class="divide-y text-sm">
-                    <?php foreach ($result['verify'] as $c): ?>
+                    <?php foreach ($result['verify'] as $c) { ?>
                         <?php
                         $level = $c['level'] ?? ($c['ok'] ? 'pass' : 'fail');
                         $levelClass = match ($level) {
@@ -331,27 +330,38 @@ $dbState = $_SESSION['db_state'] ?? $dbState;
                         <li class="flex justify-between gap-3 py-2">
                             <span>
                                 <?= h($c['label']) ?>
-                                <?php if (! empty($c['detail'])): ?>
+                                <?php if (! empty($c['detail'])) { ?>
                                     <span class="block text-xs text-slate-500"><?= h($c['detail']) ?></span>
-                                <?php endif; ?>
+                                <?php } ?>
                             </span>
                             <span class="<?= $levelClass ?>"><?= $levelLabel ?></span>
                         </li>
-                    <?php endforeach; ?>
+                    <?php } ?>
                 </ul>
-                <?php if (empty($result['installer_removed'])): ?>
+                <?php if (empty($result['installer_removed'])) { ?>
                     <div class="mt-4 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800">
                         <p class="font-bold">هشدار امنیتی: فایل install.php هنوز روی سرور است.</p>
                         <p class="mt-2 leading-7">فوراً از File Manager آن را حذف کنید. در صورت امکان یک قانون Deny برای install.php در .htaccess اضافه شده است، ولی حذف فایل الزامی است.</p>
                     </div>
-                <?php else: ?>
+                <?php } else { ?>
                     <p class="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">install.php به‌صورت خودکار حذف شد.</p>
-                <?php endif; ?>
-                <p class="mt-4 text-xs text-slate-500">Cron پیشنهادی: <code dir="ltr">* * * * * php <?= h($jobDir) ?>/artisan schedule:run >> /dev/null 2>&amp;1</code></p>
+                <?php } ?>
+                <div class="mt-4 rounded-xl bg-slate-50 p-4 text-xs text-slate-700">
+                    <p class="mb-2 font-bold text-slate-800">Cronهای لازم در cPanel (بدون Horizon)</p>
+                    <p class="mb-3 text-slate-600">این دستورها را در cPanel → Cron Jobs → هر دقیقه کپی کنید. مسیرها واقعی هستند؛ placeholder نیست.</p>
+                    <?php
+                    $crons = $result['crons'] ?? $engine->recommendedCrons();
+            foreach ($crons as $cron) {
+                ?>
+                        <p class="mb-1 font-semibold"><?= h($cron['label']) ?></p>
+                        <p class="mb-3 break-all font-mono" dir="ltr"><?= h($cron['command']) ?></p>
+                    <?php } ?>
+                    <p class="text-slate-500">اگر مسیر PHP اشتباه بود، از «Select PHP Version → Path» مسیر CLI را جایگزین کنید. Queue از database استفاده می‌کند؛ Horizon لازم نیست.</p>
+                </div>
                 <a class="mt-4 inline-block rounded-xl bg-rose-500 px-5 py-3 text-sm font-bold text-white" href="/">ورود به سایت</a>
             </div>
-        <?php endif; ?>
-    <?php endif; ?>
+        <?php } ?>
+    <?php } ?>
 </div>
 <script>
 document.getElementById('test-db')?.addEventListener('click', async function () {

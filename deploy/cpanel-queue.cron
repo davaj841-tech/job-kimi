@@ -1,0 +1,7 @@
+# Shared cPanel — queue worker (no Horizon)
+
+# In cPanel → Cron Jobs → every minute.
+# Prefer the PHP + artisan paths shown by the installer success page.
+# Use flock when available to prevent overlapping workers.
+
+* * * * * flock -n /tmp/job-kimi-queue.lock /usr/local/bin/php /home/USER/job/artisan queue:work database --stop-when-empty --max-time=50 --tries=3 >> /dev/null 2>&1

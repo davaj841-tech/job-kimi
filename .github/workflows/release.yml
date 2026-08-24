@@ -76,7 +76,7 @@ jobs:
           npm run test:unit
 
   release:
-    name: Create GitHub Release
+    name: Create GitHub Release + cPanel package
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -107,6 +107,26 @@ jobs:
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, intl, pdo_mysql, gd, exif, bcmath, zip
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Build cPanel package
+        run: |
+          composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-posix
+          npm ci
+          npm run build
+          php scripts/build-cpanel-package.php --skip-deps --no-restore
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -114,5 +134,7 @@ jobs:
           body_path: RELEASE_NOTES.md
           draft: false
           prerelease: ${{ steps.meta.outputs.prerelease }}
+          files: |
+            dist/jobazmoon-core.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
