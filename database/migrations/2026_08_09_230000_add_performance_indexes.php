@@ -110,8 +110,11 @@ return new class extends Migration
         }
 
         $cols = implode(', ', array_map(fn (string $c) => '`'.$c.'`', $columns));
+
+        // Do not append ALGORITHM/LOCK. MariaDB 10.11 rejects LOCK=NONE for FULLTEXT (errno 1846:
+        // "Fulltext index creation requires a lock"). Plain ADD FULLTEXT is safe on MariaDB and MySQL.
         DB::statement(sprintf(
-            'ALTER TABLE `%s` ADD FULLTEXT INDEX `%s` (%s), ALGORITHM=INPLACE, LOCK=NONE',
+            'ALTER TABLE `%s` ADD FULLTEXT INDEX `%s` (%s)',
             $table,
             $name,
             $cols
