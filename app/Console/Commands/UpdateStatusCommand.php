@@ -7,7 +7,6 @@ namespace App\Console\Commands;
 use App\Models\SystemUpdate;
 use App\Services\Update\UpdateManager;
 use Illuminate\Console\Command;
-use Throwable;
 
 class UpdateStatusCommand extends Command
 {

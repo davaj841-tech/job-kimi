@@ -12,6 +12,7 @@ use App\Services\Exam\ExamCreationService;
 use App\Services\Exam\ExamSubjectAssembler;
 use App\Services\ExamService;
 use App\Services\Seo\SeoManager;
+use App\Support\StaffRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -157,7 +158,7 @@ class ExamController extends BaseController
         }
 
         $user = $request->user();
-        if (! \App\Support\StaffRoles::isStaff($user) && $exam->created_by !== $user->id) {
+        if (! StaffRoles::isStaff($user) && $exam->created_by !== $user->id) {
             return $this->errorResponse('دسترسی غیرمجاز.', 403);
         }
 

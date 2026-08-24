@@ -7,6 +7,7 @@ use App\Http\Requests\Api\AutosaveExamAnswersRequest;
 use App\Models\ExamAttempt;
 use App\Services\ExamService;
 use App\Services\ReportCardPDFService;
+use App\Support\OperatorPermissions;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -133,7 +134,7 @@ class AnswerSheetController extends BaseController
         }
 
         $isOwner = $attempt->user_id === $user->id;
-        $isStaff = \App\Support\OperatorPermissions::allows($user, 'exams');
+        $isStaff = OperatorPermissions::allows($user, 'exams');
 
         if (! $isOwner && ! $isStaff) {
             return null;

@@ -3,8 +3,11 @@
 namespace App\Services;
 
 use App\Models\ExamAttempt;
+use App\Models\Setting;
 use App\Services\Pdf\PersianPdfFont;
 use App\Services\Pdf\PersianPdfText;
+use App\Support\PublicAsset;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Morilog\Jalali\Jalalian;
 
@@ -29,7 +32,7 @@ class ReportCardPDFService
             'user' => $attempt->user,
             'sheet' => $payload['sheet'],
             'analysis' => $payload['analysis'],
-            'siteName' => (string) (\App\Models\Setting::getFilled('site_name') ?: 'جاب‌آزمون'),
+            'siteName' => (string) (Setting::getFilled('site_name') ?: 'جاب‌آزمون'),
             'logoDataUri' => self::logoDataUri(),
             'fontRegular' => $this->persianFont->cssUrl($fonts['regular']),
             'fontBold' => $this->persianFont->cssUrl($fonts['bold']),
@@ -43,7 +46,7 @@ class ReportCardPDFService
         return $this->persianText->reshapeHtml($html);
     }
 
-    public function download(ExamAttempt $attempt): \Illuminate\Http\Response
+    public function download(ExamAttempt $attempt): Response
     {
         $html = $this->renderHtml($attempt);
         $pdf = $this->persianFont->applyOptions(app('dompdf.wrapper'));
@@ -53,7 +56,7 @@ class ReportCardPDFService
         return $pdf->download($filename);
     }
 
-    public function stream(ExamAttempt $attempt): \Illuminate\Http\Response
+    public function stream(ExamAttempt $attempt): Response
     {
         $html = $this->renderHtml($attempt);
         $pdf = $this->persianFont->applyOptions(app('dompdf.wrapper'));
@@ -91,12 +94,12 @@ class ReportCardPDFService
 
     public static function logoDataUri(): ?string
     {
-        $raw = (string) (\App\Models\Setting::getFilled('site_logo') ?: '');
+        $raw = (string) (Setting::getFilled('site_logo') ?: '');
         if ($raw === '') {
             return null;
         }
 
-        $url = \App\Support\PublicAsset::url($raw);
+        $url = PublicAsset::url($raw);
         $full = null;
         if (str_starts_with($url, '/storage/')) {
             $full = storage_path('app/public/'.ltrim(substr($url, 9), '/'));

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Seo;
 
 use App\Filament\Concerns\InteractsWithStaffAccess;
+use App\Filament\Resources\Seo\SeoAnalysisResource\Pages\ListSeoAnalyses;
 use App\Models\Seo\SeoAnalysis;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -73,7 +74,7 @@ class SeoAnalysisResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Resources\Seo\SeoAnalysisResource\Pages\ListSeoAnalyses::route('/'),
+            'index' => ListSeoAnalyses::route('/'),
         ];
     }
 }

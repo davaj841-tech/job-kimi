@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\PdfProduct;
+use App\Support\HtmlSanitizer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -27,7 +28,7 @@ class PdfProductResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
-            'description' => \App\Support\HtmlSanitizer::clean($this->description),
+            'description' => HtmlSanitizer::clean($this->description),
             'thumbnail' => $this->thumbnail,
             'thumbnail_url' => $thumbUrl,
             'cover' => $thumbUrl,

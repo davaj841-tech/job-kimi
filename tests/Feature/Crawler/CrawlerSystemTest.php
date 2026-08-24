@@ -14,6 +14,7 @@ use App\Models\CrawlerRun;
 use App\Models\JobPost;
 use App\Models\JobSource;
 use App\Models\JobSourceEndpoint;
+use App\Services\Aggregation\CrawlerResolver;
 use App\Services\Aggregation\CrawlOrchestrator;
 use App\Services\Aggregation\DuplicateDetector;
 use App\Services\Aggregation\JobNormalizer;
@@ -64,7 +65,7 @@ final class CrawlerSystemTest extends TestCase
 
     public function test_each_crawler_type_resolves_independently(): void
     {
-        $resolver = app(\App\Services\Aggregation\CrawlerResolver::class);
+        $resolver = app(CrawlerResolver::class);
 
         foreach ([JobCrawlerType::Rss, JobCrawlerType::Json, JobCrawlerType::Html, JobCrawlerType::Api] as $type) {
             $source = new JobSource(['crawler_type' => $type, 'is_enabled' => true, 'is_approved' => true]);

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\ExamAttemptFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,7 +35,7 @@ use Illuminate\Support\Carbon;
  */
 class ExamAttempt extends Model
 {
-    /** @use HasFactory<\Database\Factories\ExamAttemptFactory> */
+    /** @use HasFactory<ExamAttemptFactory> */
     use HasFactory;
 
     protected $fillable = [

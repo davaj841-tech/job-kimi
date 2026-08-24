@@ -257,7 +257,7 @@ class SettingsAdminController extends BaseController
             }
         } else {
             $request->validate([
-            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,ico', 'max:2048'],
+                'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,ico', 'max:2048'],
             ]);
         }
 

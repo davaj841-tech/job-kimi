@@ -6,10 +6,13 @@ use App\Enums\Aggregation\JobCrawlerType;
 use App\Enums\Aggregation\JobSourceQualityStatus;
 use App\Enums\Aggregation\JobSourceReliability;
 use App\Enums\Aggregation\JobSourceType;
+use Database\Factories\JobSourceFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 /**
@@ -24,15 +27,15 @@ use Illuminate\Support\Str;
  * @property JobCrawlerType|null $crawler_type
  * @property bool $is_enabled
  * @property bool $is_approved
- * @property \Illuminate\Support\Carbon|null $last_crawled_at
- * @property \Illuminate\Support\Carbon|null $last_success_at
- * @property \Illuminate\Support\Carbon|null $last_failure_at
- * @property \Illuminate\Support\Carbon|null $health_backoff_until
+ * @property Carbon|null $last_crawled_at
+ * @property Carbon|null $last_success_at
+ * @property Carbon|null $last_failure_at
+ * @property Carbon|null $health_backoff_until
  * @property int|null $consecutive_failures
  * @property string|null $schedule_mode
  * @property string|null $crawl_frequency
  * @property array<int, array{time?: string, enabled?: bool, label?: string|null}>|null $custom_schedule_times
- * @property-read \Illuminate\Database\Eloquent\Collection<int, JobSourceEndpoint> $endpoints
+ * @property-read Collection<int, JobSourceEndpoint> $endpoints
  *
  * @method static Builder<static> enabled()
  * @method static Builder<static> approved()
@@ -43,7 +46,7 @@ use Illuminate\Support\Str;
  */
 class JobSource extends Model
 {
-    /** @use HasFactory<\Database\Factories\JobSourceFactory> */
+    /** @use HasFactory<JobSourceFactory> */
     use HasFactory;
 
     protected $fillable = [

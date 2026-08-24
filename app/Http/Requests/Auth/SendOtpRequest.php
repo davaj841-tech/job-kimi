@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Support\IranMobile;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendOtpRequest extends FormRequest
@@ -13,7 +14,7 @@ class SendOtpRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $mobile = \App\Support\IranMobile::normalize($this->input('mobile'));
+        $mobile = IranMobile::normalize($this->input('mobile'));
         if ($mobile !== null) {
             $this->merge(['mobile' => $mobile]);
         }

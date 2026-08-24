@@ -2,6 +2,7 @@
 
 namespace App\Services\Content;
 
+use App\Models\GeneratedContent;
 use App\Models\JobPost;
 use App\Services\Aggregation\SafeHttpFetcher;
 use Illuminate\Support\Str;
@@ -44,7 +45,7 @@ class InternalLinkService
             $links[] = '<li><a href="'.e(url('/jobs/'.(int) $rel->id)).'">'.$this->e(Str::limit((string) $rel->title, 70)).'</a></li>';
         }
 
-        $relatedArticles = \App\Models\GeneratedContent::query()
+        $relatedArticles = GeneratedContent::query()
             ->published()
             ->where('job_post_id', '!=', $job->id)
             ->when($job->company_name, fn ($q) => $q->whereHas('jobPost', fn ($j) => $j->where('company_name', $job->company_name)))

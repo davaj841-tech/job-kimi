@@ -2,6 +2,8 @@
 
 namespace App\Services\Seo;
 
+use App\Models\BlogPost;
+use App\Models\GeneratedContent;
 use App\Models\Seo\SeoAnalysis;
 use App\Models\Seo\SeoKeyword;
 use App\Models\Seo\SeoMeta;
@@ -44,11 +46,11 @@ class SeoManager
     {
         $model->loadMissing(['seoMeta', 'seoKeyword', 'seoAnalysis', 'seoFaqs']);
 
-        if ($model instanceof \App\Models\BlogPost) {
+        if ($model instanceof BlogPost) {
             $model->loadMissing('creator');
         }
 
-        if ($model instanceof \App\Models\GeneratedContent) {
+        if ($model instanceof GeneratedContent) {
             $model->loadMissing('jobPost');
         }
 

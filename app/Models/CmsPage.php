@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
  */
 class CmsPage extends Model
 {
-    use \App\Traits\HasSeo;
+    use HasSeo;
 
     protected $table = 'cms_pages';
 

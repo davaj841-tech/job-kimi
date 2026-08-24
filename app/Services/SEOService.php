@@ -8,6 +8,7 @@ use App\Models\JobPost;
 use App\Services\Seo\SchemaGenerator;
 use App\Services\Seo\SeoManager;
 use App\Services\Seo\SitemapService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 
 /**
@@ -70,7 +71,7 @@ class SEOService
      * @param  list<array{name: string, url: string}>|null  $breadcrumbs
      * @return array{meta: array<string, mixed>, schemas: list<array<string, mixed>>, schema: mixed, breadcrumb?: mixed, score: int}
      */
-    public function buildPublicPayload(\Illuminate\Database\Eloquent\Model $model, ?array $breadcrumbs = null): array
+    public function buildPublicPayload(Model $model, ?array $breadcrumbs = null): array
     {
         return $this->seoManager->buildPublicPayload($model, $breadcrumbs);
     }

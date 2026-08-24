@@ -18,6 +18,7 @@ use App\Services\Aggregation\CrawlOrchestrator;
 use App\Services\Aggregation\JobSourceDomainGuard;
 use App\Services\Aggregation\Parsers\SourceParserRegistry;
 use App\Services\Aggregation\SourceHealthService;
+use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -454,9 +455,9 @@ class JobSourceAdminController extends BaseController
             'crawl_frequency' => $source->crawl_frequency,
             'schedule_mode' => $source->schedule_mode ?: 'global',
             'custom_schedule_times' => $source->custom_schedule_times,
-            'last_crawled_at' => $lastCrawledAt instanceof \Carbon\CarbonInterface ? $lastCrawledAt->toIso8601String() : null,
-            'last_success_at' => $lastSuccessAt instanceof \Carbon\CarbonInterface ? $lastSuccessAt->toIso8601String() : null,
-            'last_failure_at' => $lastFailureAt instanceof \Carbon\CarbonInterface ? $lastFailureAt->toIso8601String() : null,
+            'last_crawled_at' => $lastCrawledAt instanceof CarbonInterface ? $lastCrawledAt->toIso8601String() : null,
+            'last_success_at' => $lastSuccessAt instanceof CarbonInterface ? $lastSuccessAt->toIso8601String() : null,
+            'last_failure_at' => $lastFailureAt instanceof CarbonInterface ? $lastFailureAt->toIso8601String() : null,
             'notes' => $source->notes,
             'quality_notes' => $source->quality_notes,
             'consecutive_failures' => (int) $source->consecutive_failures,
@@ -472,10 +473,10 @@ class JobSourceAdminController extends BaseController
             'lifetime_validation_errors' => (int) $source->lifetime_validation_errors,
             'last_http_status' => $source->last_http_status,
             'last_crawl_outcome' => $source->last_crawl_outcome,
-            'health_backoff_until' => $healthBackoffUntil instanceof \Carbon\CarbonInterface
+            'health_backoff_until' => $healthBackoffUntil instanceof CarbonInterface
                 ? $healthBackoffUntil->toIso8601String()
                 : null,
-            'in_backoff' => $healthBackoffUntil instanceof \Carbon\CarbonInterface
+            'in_backoff' => $healthBackoffUntil instanceof CarbonInterface
                 ? $healthBackoffUntil->isFuture()
                 : false,
             'endpoints_count' => $source->endpoints_count ?? $source->endpoints()->count(),
@@ -528,8 +529,8 @@ class JobSourceAdminController extends BaseController
             'id' => $run->id,
             'job_source_id' => $run->job_source_id,
             'status' => $this->enumValue($status),
-            'started_at' => $startedAt instanceof \Carbon\CarbonInterface ? $startedAt->toIso8601String() : null,
-            'finished_at' => $finishedAt instanceof \Carbon\CarbonInterface ? $finishedAt->toIso8601String() : null,
+            'started_at' => $startedAt instanceof CarbonInterface ? $startedAt->toIso8601String() : null,
+            'finished_at' => $finishedAt instanceof CarbonInterface ? $finishedAt->toIso8601String() : null,
             'execution_ms' => $run->execution_ms,
             'jobs_found' => $run->jobs_found,
             'jobs_created' => $run->jobs_created,
@@ -546,7 +547,7 @@ class JobSourceAdminController extends BaseController
                         'error_type' => $e->error_type,
                         'message' => $e->message,
                         'url' => $e->url,
-                        'occurred_at' => $occurredAt instanceof \Carbon\CarbonInterface
+                        'occurred_at' => $occurredAt instanceof CarbonInterface
                             ? $occurredAt->toIso8601String()
                             : null,
                         'context' => $this->domains->sanitizeContext(

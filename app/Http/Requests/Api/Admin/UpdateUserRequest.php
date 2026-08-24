@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\Admin;
 
+use App\Support\IranMobile;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,7 +15,7 @@ class UpdateUserRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $mobile = \App\Support\IranMobile::normalize($this->input('mobile'));
+        $mobile = IranMobile::normalize($this->input('mobile'));
         if ($mobile !== null) {
             $this->merge(['mobile' => $mobile]);
         }

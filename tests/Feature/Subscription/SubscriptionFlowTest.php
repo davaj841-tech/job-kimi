@@ -13,6 +13,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\FeatureFlagService;
+use App\Services\IdempotencyService;
 use App\Services\Payment\FakePaymentGateway;
 use App\Services\SubscriptionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -319,7 +320,7 @@ final class SubscriptionFlowTest extends TestCase
     {
         $user = User::factory()->create(['status' => 'active']);
 
-        $key = app(\App\Services\IdempotencyService::class)->generateKey();
+        $key = app(IdempotencyService::class)->generateKey();
         $tx = Transaction::query()->create([
             'user_id' => $user->id,
             'amount' => 99_000,

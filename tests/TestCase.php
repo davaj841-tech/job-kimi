@@ -2,7 +2,10 @@
 
 namespace Tests;
 
+use App\Services\Payment\FakePaymentGateway;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -15,7 +18,7 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        \App\Services\Payment\FakePaymentGateway::reset();
+        FakePaymentGateway::reset();
 
         if ($this->ensureInstalledMarker && ! is_file(storage_path('installed'))) {
             @file_put_contents(storage_path('installed'), 'test-bootstrap');
@@ -28,8 +31,8 @@ abstract class TestCase extends BaseTestCase
      */
     protected function withAuthCaptcha(array $payload = []): array
     {
-        $id = (string) \Illuminate\Support\Str::uuid();
-        \Illuminate\Support\Facades\Cache::put("math_captcha:{$id}", '7', now()->addMinutes(10));
+        $id = (string) Str::uuid();
+        Cache::put("math_captcha:{$id}", '7', now()->addMinutes(10));
 
         return array_merge($payload, [
             'captcha_id' => $id,

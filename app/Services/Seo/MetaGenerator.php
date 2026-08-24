@@ -2,6 +2,9 @@
 
 namespace App\Services\Seo;
 
+use App\Models\BlogPost;
+use App\Models\GeneratedContent;
+use App\Models\JobPost;
 use App\Models\Seo\SeoAnalysis;
 use App\Models\Seo\SeoKeyword;
 use App\Models\Seo\SeoMeta;
@@ -135,9 +138,9 @@ class MetaGenerator
     protected function resolveOgType(Model $model): string
     {
         return match (true) {
-            $model instanceof \App\Models\JobPost,
-            $model instanceof \App\Models\BlogPost,
-            $model instanceof \App\Models\GeneratedContent => 'article',
+            $model instanceof JobPost,
+            $model instanceof BlogPost,
+            $model instanceof GeneratedContent => 'article',
             default => 'website',
         };
     }

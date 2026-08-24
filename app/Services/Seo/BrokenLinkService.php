@@ -3,6 +3,7 @@
 namespace App\Services\Seo;
 
 use App\Models\Seo\SeoLink;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;
 
 class BrokenLinkService
@@ -47,9 +48,9 @@ class BrokenLinkService
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, SeoLink>
+     * @return Collection<int, SeoLink>
      */
-    public function getBrokenLinks(): \Illuminate\Database\Eloquent\Collection
+    public function getBrokenLinks(): Collection
     {
         return SeoLink::broken()->with('linkable')->orderByDesc('checked_at')->get();
     }

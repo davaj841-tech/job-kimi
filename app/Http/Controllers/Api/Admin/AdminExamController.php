@@ -13,6 +13,7 @@ use App\Models\JobPost;
 use App\Models\Question;
 use App\Services\AuditLogService;
 use App\Services\ExamService;
+use App\Support\OperatorPermissions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -417,7 +418,7 @@ class AdminExamController extends BaseController
             return $this->errorResponse('نتیجه یافت نشد.', 404);
         }
 
-        if ($attempt->user_id !== $user->id && ! \App\Support\OperatorPermissions::allows($user, 'exams')) {
+        if ($attempt->user_id !== $user->id && ! OperatorPermissions::allows($user, 'exams')) {
             return $this->errorResponse('نتیجه یافت نشد.', 404);
         }
 

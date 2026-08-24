@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\BaseController;
 use App\Models\GeneratedContent;
 use App\Services\CatalogAttachService;
 use App\Services\Seo\SeoManager;
+use App\Support\HtmlSanitizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -95,7 +95,7 @@ class GeneratedContentPublicController extends BaseController
             'source_name' => $c->jobPost?->source?->name,
         ];
         if ($full) {
-            $row['content'] = \App\Support\HtmlSanitizer::clean($c->content);
+            $row['content'] = HtmlSanitizer::clean($c->content);
             $row['job'] = $c->jobPost ? [
                 'id' => $c->jobPost->id,
                 'title' => $c->jobPost->title,

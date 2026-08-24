@@ -1,5 +1,7 @@
 <?php
 
+namespace App\OpenApi;
+
 /**
  * @OA\Info(
  *     title="JobAzmoon API",

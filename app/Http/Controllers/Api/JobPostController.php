@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Requests\Api\JobPostStoreRequest;
 use App\Http\Resources\JobPostCollection;
 use App\Http\Resources\JobPostResource;
+use App\Models\JobPost;
 use App\Repositories\JobPostRepository;
 use App\Services\JobPostService;
 use App\Services\Seo\SeoManager;
@@ -84,7 +85,7 @@ class JobPostController extends BaseController
     {
         $user = $request->user();
 
-        $recentCount = \App\Models\JobPost::query()
+        $recentCount = JobPost::query()
             ->where('created_by', $user->id)
             ->where('created_at', '>=', now()->subDay())
             ->count();
@@ -96,7 +97,7 @@ class JobPostController extends BaseController
         $data = $request->validated();
         unset($data['exam_ids'], $data['pdf_ids']);
 
-        $duplicate = \App\Models\JobPost::query()
+        $duplicate = JobPost::query()
             ->where('created_by', $user->id)
             ->where('title', $data['title'])
             ->whereIn('status', ['pending', 'approved'])

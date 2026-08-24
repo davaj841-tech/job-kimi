@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Services\WalletService;
+use App\Support\PublicAsset;
 use App\Support\StaffRoles;
+use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,10 +13,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -48,11 +54,11 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $otp_expires_at
  * @property-read SubscriptionPlan|null $subscriptionPlan
  * @property-read Carbon|string|null $last_transaction_at
- * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $unreadNotifications
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $unreadNotifications
  */
 class User extends Authenticatable implements FilamentUser
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     protected $fillable = [
@@ -151,20 +157,20 @@ class User extends Authenticatable implements FilamentUser
             if (! $user->exists) {
                 return;
             }
-            if ($user->isDirty('wallet_balance') && ! \App\Services\WalletService::isMutatingBalance()) {
+            if ($user->isDirty('wallet_balance') && ! WalletService::isMutatingBalance()) {
                 $user->wallet_balance = $user->getOriginal('wallet_balance');
             }
         });
 
         static::created(static function (User $user): void {
-            if (! \Illuminate\Support\Facades\Schema::hasTable('wallet_ledgers')) {
+            if (! Schema::hasTable('wallet_ledgers')) {
                 return;
             }
             $balance = (int) $user->wallet_balance;
             if ($balance === 0) {
                 return;
             }
-            app(\App\Services\WalletService::class)->recordOpeningBalance($user, $balance);
+            app(WalletService::class)->recordOpeningBalance($user, $balance);
         });
     }
 
@@ -201,6 +207,6 @@ class User extends Authenticatable implements FilamentUser
             return $avatar;
         }
 
-        return \App\Support\PublicAsset::url($avatar) ?: null;
+        return PublicAsset::url($avatar) ?: null;
     }
 }

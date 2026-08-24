@@ -115,6 +115,19 @@ final class InstallEngineAuditTest extends TestCase
         }
     }
 
+    public function test_validate_laravel_package_missing_routes(): void
+    {
+        $root = $this->minimalLaravelTree();
+        $this->rrmdir($root.DIRECTORY_SEPARATOR.'routes');
+
+        $method = new ReflectionMethod(InstallEngine::class, 'validateLaravelPackage');
+        $method->setAccessible(true);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/routes/u');
+        $method->invoke($this->engine(), $root);
+    }
+
     public function test_validate_laravel_package_missing_vendor_autoload_persian_composer_message(): void
     {
         $root = $this->minimalLaravelTree(withAutoload: false);
@@ -541,9 +554,9 @@ final class InstallEngineAuditTest extends TestCase
 
         // APP_KEY must not be echoed as a value (label text in UI is OK).
         $this->assertStringNotContainsString('<?= $appKey', $src);
-        $this->assertStringNotContainsString("<?= \$appKey", $src);
-        $this->assertStringNotContainsString("h(\$appKey)", $src);
-        $this->assertStringNotContainsString("echo \$appKey", $src);
+        $this->assertStringNotContainsString('<?= $appKey', $src);
+        $this->assertStringNotContainsString('h($appKey)', $src);
+        $this->assertStringNotContainsString('echo $appKey', $src);
         $this->assertStringNotContainsString("['APP_KEY']", $src);
 
         // Password fields must not bind value= from session.
@@ -634,7 +647,7 @@ final class InstallEngineAuditTest extends TestCase
     private function minimalLaravelTree(bool $withAutoload = true, bool $withManifest = true): string
     {
         $root = $this->tmpRoot.DIRECTORY_SEPARATOR.'pkg_'.bin2hex(random_bytes(3));
-        foreach (['app', 'bootstrap', 'config', 'public/build', 'storage', 'vendor'] as $dir) {
+        foreach (['app', 'bootstrap', 'config', 'routes', 'public/build', 'storage', 'vendor'] as $dir) {
             mkdir($root.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $dir), 0755, true);
         }
         file_put_contents($root.DIRECTORY_SEPARATOR.'artisan', "#!/usr/bin/env php\n");

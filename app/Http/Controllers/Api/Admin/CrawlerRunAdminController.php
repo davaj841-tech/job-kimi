@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BaseController;
 use App\Models\CrawlerError;
 use App\Models\CrawlerRun;
 use App\Services\Aggregation\JobSourceDomainGuard;
+use App\Services\SiteAutoHealService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -94,7 +95,7 @@ class CrawlerRunAdminController extends BaseController
     public function pruneFailed(Request $request): JsonResponse
     {
         $aggressive = $request->boolean('aggressive', true);
-        $stats = app(\App\Services\SiteAutoHealService::class)->run($aggressive);
+        $stats = app(SiteAutoHealService::class)->run($aggressive);
 
         return $this->successResponse($stats, 'وضعیت‌های ناموفق خزش پاک شدند.');
     }

@@ -8,6 +8,7 @@ use App\Services\Auth\LoginSessionService;
 use App\Services\Auth\OtpAuthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\PersonalAccessToken;
+use Morilog\Jalali\Jalalian;
 use Tests\TestCase;
 
 class UserLoginHistoryTest extends TestCase
@@ -76,7 +77,7 @@ class UserLoginHistoryTest extends TestCase
 
         $report = $service->reportForUser($user);
         $this->assertIsArray($report['monthly']);
-        $nowJ = \Morilog\Jalali\Jalalian::now();
+        $nowJ = Jalalian::now();
         foreach ($report['monthly'] as $row) {
             $this->assertFalse(
                 (int) $row['year'] === $nowJ->getYear() && (int) $row['month'] === $nowJ->getMonth()

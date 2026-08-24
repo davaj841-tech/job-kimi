@@ -7,6 +7,7 @@ use App\Http\Requests\Api\ResumeUpdateRequest;
 use App\Http\Resources\AiSuggestionResource;
 use App\Http\Resources\ResumeCollection;
 use App\Http\Resources\ResumeResource;
+use App\Models\Resume;
 use App\Repositories\ResumeRepository;
 use App\Services\AIService;
 use App\Services\ResumePDFService;
@@ -230,7 +231,7 @@ class ResumeController extends BaseController
     }
 
     /**
-     * @param  callable(\App\Models\Resume): array<string, mixed>  $callback
+     * @param  callable(Resume): array<string, mixed>  $callback
      */
     protected function runResumeAi(Request $request, int $id, callable $callback, string $message): JsonResponse
     {

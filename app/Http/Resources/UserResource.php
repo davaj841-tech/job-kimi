@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\User;
+use App\Support\OperatorPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -39,7 +40,7 @@ class UserResource extends JsonResource
             'postal_code' => $this->postal_code,
             'role' => $this->role,
             'operator_permissions' => $this->role === 'operator'
-                ? \App\Support\OperatorPermissions::normalize($this->operator_permissions)
+                ? OperatorPermissions::normalize($this->operator_permissions)
                 : null,
             'wallet_balance' => $this->wallet_balance,
             'is_verified' => $this->is_verified,

@@ -7,6 +7,7 @@ use App\Mail\PasswordResetMail;
 use App\Models\User;
 use App\Services\Auth\OtpAuthService;
 use App\Services\MailConfigService;
+use App\Support\IranMobile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -31,7 +32,7 @@ class PasswordResetController extends BaseController
         ]);
 
         $identifier = trim($data['identifier']);
-        $mobile = \App\Support\IranMobile::normalize($identifier);
+        $mobile = IranMobile::normalize($identifier);
 
         if ($mobile) {
             $user = User::query()->where('mobile', $mobile)->first();
@@ -72,7 +73,7 @@ class PasswordResetController extends BaseController
     public function verifyOtpReset(Request $request): JsonResponse
     {
         if ($request->filled('mobile')) {
-            $normalized = \App\Support\IranMobile::normalize((string) $request->input('mobile'));
+            $normalized = IranMobile::normalize((string) $request->input('mobile'));
             if ($normalized) {
                 $request->merge(['mobile' => $normalized]);
             }

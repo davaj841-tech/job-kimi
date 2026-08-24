@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\HasSeo;
+use Database\Factories\QuestionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,9 +32,10 @@ use Illuminate\Support\Carbon;
  */
 class Question extends Model
 {
-    /** @use HasFactory<\Database\Factories\QuestionFactory> */
+    /** @use HasFactory<QuestionFactory> */
     use HasFactory;
-    use \App\Traits\HasSeo;
+
+    use HasSeo;
 
     protected $fillable = [
         'exam_id',

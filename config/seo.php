@@ -1,5 +1,14 @@
 <?php
 
+use App\Models\BlogPost;
+use App\Models\CmsPage;
+use App\Models\Exam;
+use App\Models\ExamCategory;
+use App\Models\GeneratedContent;
+use App\Models\JobPost;
+use App\Models\PdfProduct;
+use App\Models\Question;
+
 return [
 
     'default_title' => env('SEO_DEFAULT_TITLE', 'جاب‌آزمون — آمادگی آزمون‌های استخدامی'),
@@ -29,21 +38,21 @@ return [
     'duplicate_compare_limit' => 100,
 
     'duplicate_audit_models' => [
-        \App\Models\Exam::class,
-        \App\Models\JobPost::class,
-        \App\Models\BlogPost::class,
-        \App\Models\CmsPage::class,
-        \App\Models\GeneratedContent::class,
-        \App\Models\PdfProduct::class,
+        Exam::class,
+        JobPost::class,
+        BlogPost::class,
+        CmsPage::class,
+        GeneratedContent::class,
+        PdfProduct::class,
     ],
 
     'analyze_on_change_models' => [
-        \App\Models\Exam::class,
-        \App\Models\JobPost::class,
-        \App\Models\BlogPost::class,
-        \App\Models\CmsPage::class,
-        \App\Models\GeneratedContent::class,
-        \App\Models\PdfProduct::class,
+        Exam::class,
+        JobPost::class,
+        BlogPost::class,
+        CmsPage::class,
+        GeneratedContent::class,
+        PdfProduct::class,
     ],
 
     'cannibalization_threshold' => 2, // max pages with same focus keyword
@@ -76,14 +85,14 @@ return [
     ],
 
     'seoable_models' => [
-        'exam' => \App\Models\Exam::class,
-        'job' => \App\Models\JobPost::class,
-        'article' => \App\Models\GeneratedContent::class,
-        'blog' => \App\Models\BlogPost::class,
-        'page' => \App\Models\CmsPage::class,
-        'pdf' => \App\Models\PdfProduct::class,
-        'category' => \App\Models\ExamCategory::class,
-        'question' => \App\Models\Question::class,
+        'exam' => Exam::class,
+        'job' => JobPost::class,
+        'article' => GeneratedContent::class,
+        'blog' => BlogPost::class,
+        'page' => CmsPage::class,
+        'pdf' => PdfProduct::class,
+        'category' => ExamCategory::class,
+        'question' => Question::class,
     ],
 
     'schema' => [

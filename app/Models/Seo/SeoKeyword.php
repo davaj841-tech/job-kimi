@@ -4,6 +4,7 @@ namespace App\Models\Seo;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -11,8 +12,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property int $keywordable_id
  * @property string|null $focus_keyword
  * @property array<int, string>|null $related_keywords
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read Model|null $keywordable
  * @property-read int|string|null $count Aggregate alias from selectRaw queries
  */

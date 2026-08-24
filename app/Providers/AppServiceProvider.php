@@ -37,7 +37,9 @@ use App\Services\Aggregation\Parsers\EmploymentKeywordRssParser;
 use App\Services\Aggregation\Parsers\OfficialAnnouncementHtmlParser;
 use App\Services\Aggregation\Parsers\SourceParserRegistry;
 use App\Services\Aggregation\SafeHttpFetcher;
+use App\Support\IranMobile;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -145,7 +147,7 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('login', function (Request $request) {
             $id = (string) ($request->input('mobile') ?: $request->input('login') ?: '');
-            $id = \App\Support\IranMobile::normalize($id) ?: $id;
+            $id = IranMobile::normalize($id) ?: $id;
 
             return Limit::perMinute(5)
                 ->by($id.'|'.$request->ip())
@@ -219,7 +221,7 @@ class AppServiceProvider extends ServiceProvider
     /**
      * @param  array<string, string>  $headers
      */
-    protected function throttleJsonResponse(array $headers): \Illuminate\Http\JsonResponse
+    protected function throttleJsonResponse(array $headers): JsonResponse
     {
         $retryAfter = (int) ($headers['Retry-After'] ?? 60);
         $minutes = max(1, (int) ceil($retryAfter / 60));

@@ -9,9 +9,12 @@ use App\Http\Resources\ExamAttemptResource;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\Question;
+use App\Models\Setting;
 use App\Notifications\GenericDatabaseNotification;
 use App\Repositories\ExamRepository;
 use App\Services\ExamService;
+use App\Services\ReportCardPDFService;
+use App\Support\OperatorPermissions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -71,7 +74,7 @@ class ExamAttemptController extends BaseController
             ->where('exam_id', $id)
             ->first();
 
-        if (! $attempt || ($attempt->user_id !== $user->id && ! \App\Support\OperatorPermissions::allows($user, 'exams'))) {
+        if (! $attempt || ($attempt->user_id !== $user->id && ! OperatorPermissions::allows($user, 'exams'))) {
             return $this->errorResponse('نتیجه یافت نشد.', 404);
         }
 
@@ -116,8 +119,8 @@ class ExamAttemptController extends BaseController
                 ],
                 'user_answer' => $userAnswer,
                 'correct_answer' => $question->correct_answer,
-                'user_answer_label' => \App\Services\ReportCardPDFService::optionLetter($userAnswer),
-                'correct_answer_label' => \App\Services\ReportCardPDFService::optionLetter($question->correct_answer),
+                'user_answer_label' => ReportCardPDFService::optionLetter($userAnswer),
+                'correct_answer_label' => ReportCardPDFService::optionLetter($question->correct_answer),
                 'user_answer_text' => ExamService::optionBody($question, $userAnswer),
                 'correct_answer_text' => ExamService::optionBody($question, $question->correct_answer),
                 'is_correct' => $userAnswer !== null && $userAnswer !== '' && strtolower((string) $userAnswer) === strtolower((string) $question->correct_answer),
@@ -255,7 +258,7 @@ class ExamAttemptController extends BaseController
 
         $attempt = $started['attempt'];
         $questions = $started['questions'];
-        $perPage = max(1, min(20, (int) \App\Models\Setting::get('exam_questions_per_page', 5)));
+        $perPage = max(1, min(20, (int) Setting::get('exam_questions_per_page', 5)));
 
         return $this->successResponse([
             'attempt_id' => $attempt->id,
@@ -269,7 +272,7 @@ class ExamAttemptController extends BaseController
         ], 'آزمون آغاز شد.', 201);
     }
 
-    protected function resumeAttempt(\App\Models\Exam $exam, \App\Models\ExamAttempt $attempt, bool $isRetryWrong = false): JsonResponse
+    protected function resumeAttempt(Exam $exam, ExamAttempt $attempt, bool $isRetryWrong = false): JsonResponse
     {
         $ids = $this->examService->cachedQuestionIds($attempt->id);
         $questions = Question::query()
@@ -282,7 +285,7 @@ class ExamAttemptController extends BaseController
         $ttl = max(60, (int) $exam->duration_minutes * 60);
         $this->examService->cacheAttempt($attempt, $questions, $ttl, $isRetryWrong);
         $ends = $attempt->started_at?->copy()->addMinutes((int) $exam->duration_minutes) ?? now()->addMinutes((int) $exam->duration_minutes);
-        $perPage = max(1, min(20, (int) \App\Models\Setting::get('exam_questions_per_page', 5)));
+        $perPage = max(1, min(20, (int) Setting::get('exam_questions_per_page', 5)));
 
         return $this->successResponse([
             'attempt_id' => $attempt->id,

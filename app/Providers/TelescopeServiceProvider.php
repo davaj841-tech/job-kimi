@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Support\StaffRoles;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Telescope\IncomingEntry;
 use Laravel\Telescope\Telescope;
 use Laravel\Telescope\TelescopeApplicationServiceProvider;
@@ -17,7 +19,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
         }
 
         try {
-            if (! \Illuminate\Support\Facades\Schema::hasTable('telescope_entries')) {
+            if (! Schema::hasTable('telescope_entries')) {
                 config(['telescope.enabled' => false]);
 
                 return;
@@ -50,7 +52,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
     protected function gate(): void
     {
         Gate::define('viewTelescope', function (?User $user = null) {
-            return $user && \App\Support\StaffRoles::isSuperAdmin($user);
+            return $user && StaffRoles::isSuperAdmin($user);
         });
     }
 }

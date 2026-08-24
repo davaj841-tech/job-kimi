@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\CmsPage;
 use App\Models\TeamMember;
-use App\Support\LegalPages;
+use App\Services\Seo\CanonicalService;
 use App\Services\Seo\SeoManager;
+use App\Support\HtmlSanitizer;
+use App\Support\LegalPages;
 use Illuminate\Http\JsonResponse;
 
 class PageController extends BaseController
@@ -24,11 +26,11 @@ class PageController extends BaseController
             ->firstOrFail();
 
         $payload = $page->toArray();
-        $payload['content'] = \App\Support\HtmlSanitizer::clean($page->content);
+        $payload['content'] = HtmlSanitizer::clean($page->content);
 
         $breadcrumbs = [
             ['name' => 'خانه', 'url' => url('/')],
-            ['name' => $page->title, 'url' => app(\App\Services\Seo\CanonicalService::class)->getCanonical($page) ?? url('/page/'.$page->slug)],
+            ['name' => $page->title, 'url' => app(CanonicalService::class)->getCanonical($page) ?? url('/page/'.$page->slug)],
         ];
         $seo = $this->seoManager->buildPublicPayload($page, $breadcrumbs);
         $payload['seo'] = $seo;

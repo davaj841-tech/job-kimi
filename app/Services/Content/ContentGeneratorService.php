@@ -74,6 +74,7 @@ class ContentGeneratorService
                 $types = $this->templates->opportunitiesForJob($job);
                 if ($types === []) {
                     $stats['skipped']++;
+
                     continue;
                 }
 

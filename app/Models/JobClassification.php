@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -19,10 +20,10 @@ use Illuminate\Support\Facades\Storage;
  * @property bool|null $show_on_home
  * @property-read string|null $logo_url
  * @property-read JobClassification|null $parent
- * @property-read \Illuminate\Database\Eloquent\Collection<int, JobClassification> $children
- * @property-read \Illuminate\Database\Eloquent\Collection<int, JobPost> $jobPosts
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Exam> $exams
- * @property-read \Illuminate\Database\Eloquent\Collection<int, PdfProduct> $pdfProducts
+ * @property-read Collection<int, JobClassification> $children
+ * @property-read Collection<int, JobPost> $jobPosts
+ * @property-read Collection<int, Exam> $exams
+ * @property-read Collection<int, PdfProduct> $pdfProducts
  */
 class JobClassification extends Model
 {

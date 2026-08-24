@@ -3,6 +3,9 @@
 namespace App\Filament\Resources\Seo;
 
 use App\Filament\Concerns\InteractsWithStaffAccess;
+use App\Filament\Resources\Seo\SeoRedirectResource\Pages\CreateSeoRedirect;
+use App\Filament\Resources\Seo\SeoRedirectResource\Pages\EditSeoRedirect;
+use App\Filament\Resources\Seo\SeoRedirectResource\Pages\ListSeoRedirects;
 use App\Models\Seo\SeoRedirect;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -77,9 +80,9 @@ class SeoRedirectResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Resources\Seo\SeoRedirectResource\Pages\ListSeoRedirects::route('/'),
-            'create' => \App\Filament\Resources\Seo\SeoRedirectResource\Pages\CreateSeoRedirect::route('/create'),
-            'edit' => \App\Filament\Resources\Seo\SeoRedirectResource\Pages\EditSeoRedirect::route('/{record}/edit'),
+            'index' => ListSeoRedirects::route('/'),
+            'create' => CreateSeoRedirect::route('/create'),
+            'edit' => EditSeoRedirect::route('/{record}/edit'),
         ];
     }
 }

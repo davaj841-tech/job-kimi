@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Aggregation\CrawlerRunStatus;
+use Database\Factories\CrawlerRunFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,7 +28,7 @@ use Illuminate\Support\Carbon;
  */
 class CrawlerRun extends Model
 {
-    /** @use HasFactory<\Database\Factories\CrawlerRunFactory> */
+    /** @use HasFactory<CrawlerRunFactory> */
     use HasFactory;
 
     protected $fillable = [

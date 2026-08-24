@@ -3,6 +3,8 @@
 namespace App\Services\Content;
 
 use App\Models\JobPost;
+use Carbon\CarbonInterface;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 /**
@@ -79,6 +81,7 @@ class ContentRenderer
             $trim = trim($line);
             if ($trim === '') {
                 $kept[] = '';
+
                 continue;
             }
             if (preg_match('/[:：]\s*$/u', $trim)) {
@@ -158,9 +161,9 @@ class ContentRenderer
             return '';
         }
         try {
-            $carbon = $date instanceof \Carbon\CarbonInterface
+            $carbon = $date instanceof CarbonInterface
                 ? $date
-                : \Illuminate\Support\Carbon::parse((string) $date);
+                : Carbon::parse((string) $date);
 
             return $carbon->timezone(config('content.timezone', 'Asia/Tehran'))
                 ->locale('fa')
