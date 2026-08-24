@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\Admin\GeneratedContentAdminController;
 use App\Http\Controllers\Api\Admin\AdminDashboardController;
 use App\Http\Controllers\Api\Admin\AdminExamController;
 use App\Http\Controllers\Api\Admin\AdminUserController;
@@ -10,23 +9,24 @@ use App\Http\Controllers\Api\Admin\AIContentController;
 use App\Http\Controllers\Api\Admin\AnalyticsAdminController;
 use App\Http\Controllers\Api\Admin\AuditLogAdminController;
 use App\Http\Controllers\Api\Admin\BackupAdminController;
-use App\Http\Controllers\Api\Admin\SystemUpdateAdminController;
 use App\Http\Controllers\Api\Admin\BannerAdminController;
 use App\Http\Controllers\Api\Admin\BlogPostAdminController;
 use App\Http\Controllers\Api\Admin\ContactMessageAdminController;
 use App\Http\Controllers\Api\Admin\CouponAdminController;
 use App\Http\Controllers\Api\Admin\CrawlerRunAdminController;
 use App\Http\Controllers\Api\Admin\ExamSubjectAdminController;
+use App\Http\Controllers\Api\Admin\GeneratedContentAdminController;
 use App\Http\Controllers\Api\Admin\JobClassificationAdminController;
 use App\Http\Controllers\Api\Admin\JobPostAdminController;
 use App\Http\Controllers\Api\Admin\JobSourceAdminController;
 use App\Http\Controllers\Api\Admin\PageAdminController;
-use App\Http\Controllers\Api\Admin\TeamMemberAdminController;
-use App\Http\Controllers\Api\Admin\PerformanceAdminController;
 use App\Http\Controllers\Api\Admin\PDFProductAdminController;
+use App\Http\Controllers\Api\Admin\PerformanceAdminController;
 use App\Http\Controllers\Api\Admin\SettingsAdminController;
 use App\Http\Controllers\Api\Admin\SiteErrorAdminController;
 use App\Http\Controllers\Api\Admin\SubscriptionAdminController;
+use App\Http\Controllers\Api\Admin\SystemUpdateAdminController;
+use App\Http\Controllers\Api\Admin\TeamMemberAdminController;
 use App\Http\Controllers\Api\Admin\TicketAdminController;
 use App\Http\Controllers\Api\Admin\TransactionAdminController;
 use App\Http\Controllers\Api\Admin\WalletAdminController;
@@ -123,6 +123,7 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'role:su
 
     Route::post('/job-classifications/reorder', [JobClassificationAdminController::class, 'reorder']);
     Route::apiResource('/job-classifications', JobClassificationAdminController::class)
+        ->except(['show'])
         ->parameters(['job-classifications' => 'id']);
 
     Route::post('/blog-posts/{id}/publish', [BlogPostAdminController::class, 'publish'])->whereNumber('id');
