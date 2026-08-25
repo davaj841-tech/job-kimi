@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>اخبار بانک مرکزی</title>
+    <link>https://www.cbi.ir</link>
+    <item>
+      <title>آزمون استخدامی بانک مرکزی ۱۴۰۵</title>
+      <link>https://www.cbi.ir/news/1234.aspx</link>
+      <description>فراخوان جذب نیرو در بانک مرکزی جمهوری اسلامی ایران</description>
+      <pubDate>Mon, 18 Aug 2026 10:00:00 +0330</pubDate>
+    </item>
+    <item>
+      <title>گزارش تورم ماهانه</title>
+      <link>https://www.cbi.ir/news/1235.aspx</link>
+      <description>گزارش نرخ تورم خرداد ماه</description>
+      <pubDate>Sun, 17 Aug 2026 09:00:00 +0330</pubDate>
+    </item>
+  </channel>
+</rss>

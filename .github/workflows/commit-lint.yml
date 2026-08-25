@@ -24,20 +24,75 @@ jobs:
           set -euo pipefail
           PATTERN='^(feat|fix|docs|style|refactor|test|chore|perf|security|ci|build|revert)(\([^)]+\))?: .{1,100}$'
 
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            RANGE="${PR_BASE}..${PR_HEAD}"
-          else
-            if [ -z "${BEFORE:-}" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-              RANGE="-1"
-            else
-              RANGE="${BEFORE}..HEAD"
+          resolve_default_remote_branch() {
+            local ref
+            ref="$(git symbolic-ref -q refs/remotes/origin/HEAD 2>/dev/null || true)"
+            if [ -n "$ref" ]; then
+              echo "${ref#refs/remotes/origin/}"
+              return 0
             fi
-          fi
+            if git rev-parse --verify -q origin/main >/dev/null; then
+              echo main
+              return 0
+            fi
+            if git rev-parse --verify -q origin/master >/dev/null; then
+              echo master
+              return 0
+            fi
+            return 1
+          }
+
+          # Returns a git log revision argument: either "A..B", "-1", or empty.
+          resolve_range() {
+            if [ "$EVENT_NAME" = "pull_request" ]; then
+              echo "${PR_BASE}..${PR_HEAD}"
+              return 0
+            fi
+
+            # New branch / first push
+            if [ -z "${BEFORE:-}" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              echo "-1"
+              return 0
+            fi
+
+            # Normal push: BEFORE is still a reachable commit object
+            if git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+              echo "${BEFORE}..HEAD"
+              return 0
+            fi
+
+            # Force-push / rewritten history: BEFORE tip was replaced and is gone.
+            # Lint commits unique to this branch relative to the default remote branch.
+            echo "⚠️  BEFORE=${BEFORE} is not in this repository (force-push/rewritten history)." >&2
+            echo "⚠️  Falling back to commits unique vs origin/<default-branch>." >&2
+
+            local default_branch
+            if default_branch="$(resolve_default_remote_branch)"; then
+              local unique
+              unique="$(git log --format=%s "origin/${default_branch}..HEAD" || true)"
+              if [ -n "$unique" ]; then
+                echo "origin/${default_branch}..HEAD"
+                return 0
+              fi
+            fi
+
+            # Last resort: validate the tip commit only (never invent an invalid range).
+            echo "-1"
+          }
+
+          RANGE="$(resolve_range)"
+          echo "Using range: ${RANGE}"
 
           if [ "$RANGE" = "-1" ]; then
             MSGS="$(git log -1 --format=%s)"
           else
             MSGS="$(git log --format=%s "$RANGE")"
+          fi
+
+          if [ -z "${MSGS//[[:space:]]/}" ]; then
+            echo "ℹ️  No commit messages to validate for range ${RANGE}."
+            echo "✅ All commit messages valid."
+            exit 0
           fi
 
           FAIL=0

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <title>CBI.ir | خبرها</title>
+    <link>https://cbi.ir/NewsRss.aspx?ln=fa</link>
+    <item>
+      <title>اظهارات رئیس‌کل درباره سیاست پولی</title>
+      <description>خبر عمومی بدون ارتباط با جذب نیرو</description>
+      <link>https://cbi.ir/showitem/1.aspx</link>
+      <guid>cbi-1</guid>
+      <pubDate>Sat, 08 Aug 2026 04:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>فراخوان جذب نیروی متخصص در بانک مرکزی</title>
+      <description>اطلاعیه رسمی دعوت به همکاری و آزمون استخدامی</description>
+      <link>https://cbi.ir/showitem/hire-1.aspx</link>
+      <guid>cbi-hire-1</guid>
+      <pubDate>Sat, 08 Aug 2026 05:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

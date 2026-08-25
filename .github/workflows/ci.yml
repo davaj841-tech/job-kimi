@@ -64,14 +64,32 @@ jobs:
       - name: Run migrations
         run: php artisan migrate --force --no-interaction
 
+      # Feature tests that hit Blade views with @vite() need a real Vite manifest.
+      # Build here so PHPUnit does not depend on the separate frontend job order.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
       - name: PHPUnit
         run: php artisan test
 
       - name: Generate API Docs
         run: php artisan scribe:generate
 
-      - name: Check Docs Are Up-to-Date
-        run: git diff --exit-code -- storage/app/private/scribe resources/views/scribe public/vendor/scribe || echo "Docs need regeneration"
+      - name: Verify API Docs Output
+        run: |
+          test -s storage/app/private/scribe/openapi.yaml
+          test -s resources/views/scribe/index.blade.php
+          test -d public/vendor/scribe
+
 
   frontend:
     name: Vite Build
