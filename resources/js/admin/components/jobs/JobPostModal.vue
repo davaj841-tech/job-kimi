@@ -100,7 +100,9 @@
             :error="jobDateError"
           />
         </div>
-        <p v-if="jobDateError" class="text-xs text-red-600">{{ jobDateError }}</p>
+        <p v-if="jobDateError" class="text-xs text-red-600">
+          {{ jobDateError }}
+        </p>
 
         <input
           v-model="form.registration_link"

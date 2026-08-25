@@ -17,11 +17,10 @@
             "
             @click="$emit('update:modelValue', t.id)"
           >
-            <span
-              class="block h-8"
-              :style="{ background: t.header }"
-            />
-            <span class="block truncate px-1 py-1 text-[9px] leading-tight">{{ t.name }}</span>
+            <span class="block h-8" :style="{ background: t.header }" />
+            <span class="block truncate px-1 py-1 text-[9px] leading-tight">{{
+              t.name
+            }}</span>
           </button>
         </div>
       </div>

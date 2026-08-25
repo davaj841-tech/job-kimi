@@ -3,7 +3,9 @@
     <header
       class="sticky top-0 z-40 border-b border-surface-line bg-white/80 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/80"
     >
-      <div class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:px-4">
+      <div
+        class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:px-4"
+      >
         <div class="flex min-w-0 items-center gap-2">
           <button
             type="button"
@@ -13,11 +15,10 @@
             <ArrowRightIcon class="h-5 w-5" />
           </button>
           <div class="min-w-0">
-            <h1 class="truncate text-sm font-bold sm:text-base">رزومه‌ساز هوشمند</h1>
-            <p
-              v-if="title"
-              class="truncate text-[11px] text-desk-muted"
-            >
+            <h1 class="truncate text-sm font-bold sm:text-base">
+              رزومه‌ساز هوشمند
+            </h1>
+            <p v-if="title" class="truncate text-[11px] text-desk-muted">
               {{ title }}
             </p>
           </div>
@@ -43,7 +44,7 @@
           </div>
           <button
             type="button"
-            class="rounded-xl border border-surface-line px-3 py-2 text-xs font-medium lg:hidden dark:border-slate-700"
+            class="rounded-xl border border-surface-line px-3 py-2 text-xs font-medium dark:border-slate-700 lg:hidden"
             @click="showPreview = true"
           >
             پیش‌نمایش
@@ -55,13 +56,13 @@
             @click="draftWithAi"
           >
             {{ drafting ? '…' : 'پیش‌نویس AI' }}
-      </button>
-      <button
+          </button>
+          <button
             type="button"
             class="rounded-xl border border-surface-line px-3 py-2 text-xs font-medium disabled:opacity-50 dark:border-slate-700"
-        :disabled="saving"
-        @click="save"
-      >
+            :disabled="saving"
+            @click="save"
+          >
             {{ saving ? '…' : 'ذخیره' }}
           </button>
           <button
@@ -72,8 +73,8 @@
           >
             <DocumentArrowDownIcon class="h-4 w-4" />
             <span class="hidden sm:inline">PDF</span>
-      </button>
-    </div>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -85,115 +86,113 @@
     >
       <div class="resume-pane min-w-0 flex-1 p-3 sm:p-5">
         <div class="space-y-4">
-        <div class="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-1">
-          <button
-            v-for="(step, idx) in steps"
-            :key="step.id"
-            type="button"
-            class="flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs whitespace-nowrap transition sm:text-sm"
-            :class="
-              currentStep === idx
-                ? 'bg-brand text-white'
-                : currentStep > idx
-                  ? 'bg-brand-soft text-brand'
-                  : 'bg-white text-desk-muted dark:bg-slate-800'
-            "
-            @click="currentStep = idx"
+          <div
+            class="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-1"
           >
-            <span
-              class="flex h-5 w-5 items-center justify-center rounded-full text-[10px]"
+            <button
+              v-for="(step, idx) in steps"
+              :key="step.id"
+              type="button"
+              class="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-xs transition sm:text-sm"
               :class="
-                currentStep > idx
+                currentStep === idx
                   ? 'bg-brand text-white'
-                  : currentStep === idx
-                    ? 'bg-white/20'
-                    : 'bg-slate-200 dark:bg-slate-700'
+                  : currentStep > idx
+                    ? 'bg-brand-soft text-brand'
+                    : 'bg-white text-desk-muted dark:bg-slate-800'
               "
+              @click="currentStep = idx"
             >
-              <CheckIcon
-                v-if="currentStep > idx"
-                class="h-3 w-3"
+              <span
+                class="flex h-5 w-5 items-center justify-center rounded-full text-[10px]"
+                :class="
+                  currentStep > idx
+                    ? 'bg-brand text-white'
+                    : currentStep === idx
+                      ? 'bg-white/20'
+                      : 'bg-slate-200 dark:bg-slate-700'
+                "
+              >
+                <CheckIcon v-if="currentStep > idx" class="h-3 w-3" />
+                <span v-else>{{ idx + 1 }}</span>
+              </span>
+              {{ step.label }}
+            </button>
+          </div>
+
+          <div class="md:hidden">
+            <ThemePicker v-model="templateId" />
+          </div>
+
+          <div class="flex justify-between gap-2">
+            <button
+              type="button"
+              class="rounded-xl border border-surface-line px-5 py-2.5 text-sm disabled:opacity-30 dark:border-slate-700"
+              :disabled="currentStep === 0"
+              @click="goPrev"
+            >
+              قبلی
+            </button>
+            <button
+              v-if="currentStep < steps.length - 1"
+              type="button"
+              class="rounded-xl bg-brand px-5 py-2.5 text-sm text-white"
+              @click="goNext"
+            >
+              بعدی
+            </button>
+            <button
+              v-else
+              type="button"
+              class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm text-white"
+              @click="finishAndPreview"
+            >
+              مشاهده نهایی
+            </button>
+          </div>
+
+          <div
+            class="rounded-2xl border border-surface-line bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:p-6"
+          >
+            <Transition name="fade" mode="out-in">
+              <component
+                :is="steps[currentStep].component"
+                :key="steps[currentStep].id"
+                v-model="resumeData"
+                @fill-profile="fillFromProfile"
+                @ai-summary="onAiSummary"
+                @ai-enhance="onAiEnhance"
+                @ai-skills="onAiSkills"
               />
-              <span v-else>{{ idx + 1 }}</span>
-            </span>
-            {{ step.label }}
-          </button>
-        </div>
+            </Transition>
+          </div>
 
-        <div class="md:hidden">
-          <ThemePicker v-model="templateId" />
-        </div>
-
-        <div class="flex justify-between gap-2">
-          <button
-            type="button"
-            class="rounded-xl border border-surface-line px-5 py-2.5 text-sm disabled:opacity-30 dark:border-slate-700"
-            :disabled="currentStep === 0"
-            @click="goPrev"
-          >
-            قبلی
-          </button>
-          <button
-            v-if="currentStep < steps.length - 1"
-            type="button"
-            class="rounded-xl bg-brand px-5 py-2.5 text-sm text-white"
-            @click="goNext"
-          >
-            بعدی
-          </button>
-          <button
-            v-else
-            type="button"
-            class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm text-white"
-            @click="finishAndPreview"
-          >
-            مشاهده نهایی
-          </button>
-        </div>
-
-        <div class="rounded-2xl border border-surface-line bg-white p-4 sm:p-6 dark:border-slate-800 dark:bg-slate-900">
-          <Transition
-            name="fade"
-            mode="out-in"
-          >
-            <component
-              :is="steps[currentStep].component"
-              :key="steps[currentStep].id"
-              v-model="resumeData"
-              @fill-profile="fillFromProfile"
-              @ai-summary="onAiSummary"
-              @ai-enhance="onAiEnhance"
-              @ai-skills="onAiSkills"
-            />
-          </Transition>
-        </div>
-
-        <div class="flex justify-between gap-2 pb-6">
-          <button
-            type="button"
-            class="rounded-xl border border-surface-line px-5 py-2.5 text-sm disabled:opacity-30 dark:border-slate-700"
-            :disabled="currentStep === 0"
-            @click="goPrev"
-          >
-            قبلی
-          </button>
-          <button
-            v-if="currentStep < steps.length - 1"
-            type="button"
-            class="rounded-xl bg-brand px-5 py-2.5 text-sm text-white"
-            @click="goNext"
-          >
-            بعدی
-          </button>
-          <button
-            v-else
-            type="button"
-            class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm text-white"
-            @click="finishAndPreview"
-          >
-            مشاهده نهایی
-          </button>
-        </div>
+          <div class="flex justify-between gap-2 pb-6">
+            <button
+              type="button"
+              class="rounded-xl border border-surface-line px-5 py-2.5 text-sm disabled:opacity-30 dark:border-slate-700"
+              :disabled="currentStep === 0"
+              @click="goPrev"
+            >
+              قبلی
+            </button>
+            <button
+              v-if="currentStep < steps.length - 1"
+              type="button"
+              class="rounded-xl bg-brand px-5 py-2.5 text-sm text-white"
+              @click="goNext"
+            >
+              بعدی
+            </button>
+            <button
+              v-else
+              type="button"
+              class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm text-white"
+              @click="finishAndPreview"
+            >
+              مشاهده نهایی
+            </button>
+          </div>
         </div>
       </div>
 
@@ -208,17 +207,11 @@
         :style="{ width: previewWidth + 'px' }"
       >
         <p class="mb-3 text-center text-xs text-desk-muted">پیش‌نمایش A4</p>
-        <div
-          class="preview-stage"
-          :style="{ '--preview-zoom': previewZoom }"
-        >
-          <ResumePreview
-            :data="resumeData"
-            :template-id="templateId"
-          />
+        <div class="preview-stage" :style="{ '--preview-zoom': previewZoom }">
+          <ResumePreview :data="resumeData" :template-id="templateId" />
         </div>
       </aside>
-      </div>
+    </div>
 
     <PreviewModal
       v-model="showPreview"
@@ -230,7 +223,15 @@
 </template>
 
 <script setup>
-import { computed, markRaw, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import {
+  computed,
+  markRaw,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from 'vue'
 import { useRoute } from 'vue-router'
 import {
   ArrowRightIcon,
@@ -267,7 +268,11 @@ const templates = [
 ]
 
 const steps = [
-  { id: 'personal', label: 'اطلاعات شخصی', component: markRaw(PersonalInfoStep) },
+  {
+    id: 'personal',
+    label: 'اطلاعات شخصی',
+    component: markRaw(PersonalInfoStep),
+  },
   { id: 'summary', label: 'معرفی', component: markRaw(SummaryStep) },
   { id: 'experience', label: 'سوابق', component: markRaw(ExperienceStep) },
   { id: 'education', label: 'تحصیلات', component: markRaw(EducationStep) },
@@ -313,7 +318,10 @@ const showPreview = ref(false)
 const title = ref('')
 const resumeData = ref(null)
 const previewWidth = ref(
-  Math.min(720, Math.max(280, Number(localStorage.getItem('ja_resume_preview_w')) || 440))
+  Math.min(
+    720,
+    Math.max(280, Number(localStorage.getItem('ja_resume_preview_w')) || 440)
+  )
 )
 const previewZoom = computed(() => {
   const inner = Math.max(220, previewWidth.value - 32)
@@ -399,7 +407,9 @@ onUnmounted(() => {
 })
 
 function formatProfileNational(raw) {
-  const d = String(raw || '').replace(/\D/g, '').slice(0, 10)
+  const d = String(raw || '')
+    .replace(/\D/g, '')
+    .slice(0, 10)
   return d.length === 10 ? d : ''
 }
 
@@ -416,7 +426,8 @@ function fillFromProfile() {
   if (u.military_status) p.military_status = u.military_status
   if (u.insurance_history) p.insurance_history = u.insurance_history
   if (u.birth_date) p.birth_date = u.birth_date
-  if (u.birth_province || u.province) p.birth_province = u.birth_province || u.province
+  if (u.birth_province || u.province)
+    p.birth_province = u.birth_province || u.province
   if (u.birth_city) p.birth_city = u.birth_city
   if (u.marital_status) p.marital_status = u.marital_status
   if (u.field_of_study) p.field_of_study = u.field_of_study
@@ -449,7 +460,9 @@ function sanitizeData(data) {
     delete e._key
     if (e.is_current) e.end_date = null
   })
-  d.experience = (d.experience || []).filter((e) => String(e.title || '').trim() && String(e.company || '').trim())
+  d.experience = (d.experience || []).filter(
+    (e) => String(e.title || '').trim() && String(e.company || '').trim()
+  )
   ;(d.education || []).forEach((e) => {
     delete e._key
     if (!e.start_date && e.start_year) e.start_date = `${e.start_year}-01`
@@ -461,12 +474,18 @@ function sanitizeData(data) {
     if (e.gpa === '' || e.gpa == null) e.gpa = null
     else {
       const digits = String(e.gpa).replace(/\D/g, '').slice(0, 3)
-      if (digits.length === 3) e.gpa = `${digits.slice(0, 2)}.${digits.slice(2)}`
+      if (digits.length === 3)
+        e.gpa = `${digits.slice(0, 2)}.${digits.slice(2)}`
       else if (digits.length > 0) {
         const n = Number(e.gpa)
         e.gpa = Number.isFinite(n) ? n.toFixed(1) : null
       } else e.gpa = null
-      if (e.gpa !== null && (Number(e.gpa) < 0 || Number(e.gpa) > 20 || !/^\d{1,2}\.\d$/.test(String(e.gpa)))) {
+      if (
+        e.gpa !== null &&
+        (Number(e.gpa) < 0 ||
+          Number(e.gpa) > 20 ||
+          !/^\d{1,2}\.\d$/.test(String(e.gpa)))
+      ) {
         e.gpa = null
       }
     }
@@ -479,14 +498,18 @@ function sanitizeData(data) {
     .map((s) => ({ name: s.name, level: s.level || 'متوسط' }))
   d.languages = (d.languages || []).filter((l) => String(l.name || '').trim())
   if (!d.personal.photo) d.personal.photo = null
-  d.personal.national_code = String(d.personal.national_code || '').replace(/\D/g, '').slice(0, 10)
+  d.personal.national_code = String(d.personal.national_code || '')
+    .replace(/\D/g, '')
+    .slice(0, 10)
   if (!/^\d{10}$/.test(d.personal.national_code)) {
     d.personal.national_code = ''
   }
   if (!/^\d{2}\/\d{2}\/\d{4}$/.test(String(d.personal.birth_date || ''))) {
     d.personal.birth_date = ''
   }
-  d.personal.postal_code = String(d.personal.postal_code || '').replace(/\D/g, '').slice(0, 10)
+  d.personal.postal_code = String(d.personal.postal_code || '')
+    .replace(/\D/g, '')
+    .slice(0, 10)
   if (d.personal.postal_code && !/^\d{10}$/.test(d.personal.postal_code)) {
     d.personal.postal_code = ''
   }
@@ -640,7 +663,11 @@ function applyDraft(payload) {
       existing.add(name)
     })
   }
-  if (Array.isArray(payload.experience) && payload.experience.length && !(resumeData.value.experience || []).length) {
+  if (
+    Array.isArray(payload.experience) &&
+    payload.experience.length &&
+    !(resumeData.value.experience || []).length
+  ) {
     resumeData.value.experience = payload.experience.map((e, i) => ({
       _key: `exp-ai-${Date.now()}-${i}`,
       title: e.title || resumeData.value.target_job,
@@ -651,7 +678,11 @@ function applyDraft(payload) {
       description: e.description || '',
     }))
   }
-  if (Array.isArray(payload.languages) && payload.languages.length && !(resumeData.value.languages || []).length) {
+  if (
+    Array.isArray(payload.languages) &&
+    payload.languages.length &&
+    !(resumeData.value.languages || []).length
+  ) {
     resumeData.value.languages = payload.languages
   }
 }
@@ -660,10 +691,13 @@ async function onAiEnhance({ exp, resolve, reject }) {
   if (!ensureAi()) return reject(new Error('disabled'))
   try {
     await save()
-    const { data } = await api.post(`/resumes/${resumeId.value}/ai/enhance-experience`, {
-      title: exp.title,
-      description: exp.description,
-    })
+    const { data } = await api.post(
+      `/resumes/${resumeId.value}/ai/enhance-experience`,
+      {
+        title: exp.title,
+        description: exp.description,
+      }
+    )
     const payload = unwrapItem(data)
     resolve(payload.enhanced || '')
   } catch (e) {
@@ -676,10 +710,13 @@ async function onAiSkills({ resolve, reject }) {
   if (!ensureAi()) return reject(new Error('disabled'))
   try {
     await save()
-    const { data } = await api.post(`/resumes/${resumeId.value}/ai/suggest-skills`, {
-      title: resumeData.value.target_job,
-      experiences: resumeData.value.experience,
-    })
+    const { data } = await api.post(
+      `/resumes/${resumeId.value}/ai/suggest-skills`,
+      {
+        title: resumeData.value.target_job,
+        experiences: resumeData.value.experience,
+      }
+    )
     const payload = unwrapItem(data)
     resolve(payload.skills || [])
   } catch (e) {
@@ -697,8 +734,9 @@ onMounted(async () => {
     title.value = item.title || 'رزومه'
     templateId.value = item.template_id || 1
     activeTemplate.value =
-      templates.find((t) => t.templateId === templateId.value && t.id !== 'creative')?.id ||
-      'modern'
+      templates.find(
+        (t) => t.templateId === templateId.value && t.id !== 'creative'
+      )?.id || 'modern'
     let d = item.data || clonePlain(emptyData)
     if (!Array.isArray(d.experience)) d.experience = []
     if (!Array.isArray(d.education)) d.education = []
@@ -718,7 +756,10 @@ onMounted(async () => {
       if (!e.end_date && e.end_year) e.end_date = `${e.end_year}-01`
     })
     // legacy birth date YYYY-MM-DD → keep empty if not Jalali slash form
-    if (d.personal.birth_date && !/^\d{2}\/\d{2}\/\d{4}$/.test(d.personal.birth_date)) {
+    if (
+      d.personal.birth_date &&
+      !/^\d{2}\/\d{2}\/\d{4}$/.test(d.personal.birth_date)
+    ) {
       const m = String(d.personal.birth_date).match(/^(\d{4})-(\d{2})-(\d{2})$/)
       if (m && Number(m[1]) > 1300 && Number(m[1]) < 1500) {
         d.personal.birth_date = `${m[3]}/${m[2]}/${m[1]}`
@@ -735,9 +776,11 @@ onMounted(async () => {
         personal: { ...d.personal, ...(draft.data.personal || {}) },
       }
       if (!d.personal.photo && serverPhoto) d.personal.photo = serverPhoto
-      if (draft.templateId) templateId.value = Number(draft.templateId) || templateId.value
+      if (draft.templateId)
+        templateId.value = Number(draft.templateId) || templateId.value
       if (draft.title) title.value = draft.title
-      if (typeof draft.currentStep === 'number') currentStep.value = draft.currentStep
+      if (typeof draft.currentStep === 'number')
+        currentStep.value = draft.currentStep
     }
     resumeData.value = d
     draftReady.value = true

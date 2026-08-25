@@ -90,7 +90,10 @@ export const useExamLifecycleStore = defineStore('examStore', () => {
       applyStartPayload(normalized)
       return normalized
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } }; message?: string }
+      const err = e as {
+        response?: { data?: { message?: string } }
+        message?: string
+      }
       lastError.value =
         err.response?.data?.message || err.message || 'شروع آزمون ممکن نشد.'
       throw e
@@ -121,7 +124,10 @@ export const useExamLifecycleStore = defineStore('examStore', () => {
       return data
     } catch (e: unknown) {
       examCache.saveCache()
-      const err = e as { response?: { data?: { message?: string } }; message?: string }
+      const err = e as {
+        response?: { data?: { message?: string } }
+        message?: string
+      }
       lastError.value =
         err.response?.data?.message || err.message || 'ثبت آزمون ناموفق بود.'
       throw e

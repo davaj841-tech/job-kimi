@@ -15,14 +15,11 @@
         />
       </div>
       <div class="space-y-2">
-        <label class="inline-flex cursor-pointer rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold dark:bg-slate-800">
+        <label
+          class="inline-flex cursor-pointer rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold dark:bg-slate-800"
+        >
           انتخاب عکس
-          <input
-            type="file"
-            accept="image/*"
-            class="hidden"
-            @change="onFile"
-          />
+          <input type="file" accept="image/*" class="hidden" @change="onFile" />
         </label>
         <button
           v-if="modelValue"
@@ -40,7 +37,9 @@
         >
           حذف عکس
         </button>
-        <p class="text-[11px] text-desk-muted">JPG یا PNG — نسبت ۳ به ۴ (عرض ۳، ارتفاع ۴)</p>
+        <p class="text-[11px] text-desk-muted">
+          JPG یا PNG — نسبت ۳ به ۴ (عرض ۳، ارتفاع ۴)
+        </p>
       </div>
     </div>
   </div>

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Seo;
 
 use App\Filament\Concerns\InteractsWithStaffAccess;
+use App\Filament\Resources\Seo\SeoKeywordResource\Pages\ListSeoKeywords;
 use App\Models\Seo\SeoKeyword;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -51,7 +52,7 @@ class SeoKeywordResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Resources\Seo\SeoKeywordResource\Pages\ListSeoKeywords::route('/'),
+            'index' => ListSeoKeywords::route('/'),
         ];
     }
 }

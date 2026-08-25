@@ -1,6 +1,13 @@
 <?php
 
 declare(strict_types=1);
+use App\Models\Setting;
+use App\Models\User;
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Models\Role;
 
 /**
  * JobAzmoon cPanel installer engine (standalone — no Composer autoload for this file).
@@ -13,7 +20,7 @@ final class InstallEngine
 
     public const PACKAGE_FILE = 'jobazmoon-core.zip';
 
-    public const INSTALLER_VERSION = '2.0.0';
+    public const INSTALLER_VERSION = '2.1.0';
 
     /** Absolute minimum free disk when package size is unknown. */
     public const MIN_DISK_BYTES = 400 * 1024 * 1024;
@@ -190,15 +197,15 @@ final class InstallEngine
             ],
         ], $writableItems, [
             [
-                'label' => 'Horizon (pcntl)',
+                'label' => 'pcntl (فقط برای Horizon روی VPS — الزامی نیست)',
                 'ok' => extension_loaded('pcntl'),
-                'fix' => 'Horizon روی این هاست قابل اجرا نیست؛ از queue:work با cron استفاده کنید.',
+                'fix' => 'Horizon روی shared cPanel لازم نیست. از QUEUE_CONNECTION=database و cron queue:work استفاده کنید.',
                 'warn' => true,
             ],
             [
-                'label' => 'Horizon (posix)',
+                'label' => 'posix (فقط برای Horizon روی VPS — الزامی نیست)',
                 'ok' => extension_loaded('posix'),
-                'fix' => 'Horizon روی این هاست قابل اجرا نیست؛ از queue:work با cron استفاده کنید.',
+                'fix' => 'Horizon روی shared cPanel لازم نیست. از QUEUE_CONNECTION=database و cron queue:work استفاده کنید.',
                 'warn' => true,
             ],
         ]);
@@ -532,6 +539,7 @@ final class InstallEngine
                 'CACHE_STORE' => 'database',
                 'SESSION_DRIVER' => 'database',
                 'QUEUE_CONNECTION' => 'database',
+                'SESSION_SECURE_COOKIE' => 'true',
                 'TELESCOPE_ENABLED' => 'false',
                 'SMS_ALLOW_LOG_FALLBACK' => 'false',
             ]);
@@ -548,6 +556,9 @@ final class InstallEngine
                 'APP_URL' => rtrim($site['url'], '/'),
                 'APP_ENV' => 'production',
                 'APP_DEBUG' => 'false',
+                'CACHE_STORE' => 'database',
+                'SESSION_DRIVER' => 'database',
+                'QUEUE_CONNECTION' => 'database',
             ] as $k => $v) {
                 putenv($k.'='.$v);
                 $_ENV[$k] = $v;
@@ -637,9 +648,9 @@ final class InstallEngine
                 $warnings[] = 'برخی دستورات cache روی این هاست اجرا نشدند.';
             }
 
-            if (class_exists(\App\Models\Setting::class)) {
+            if (class_exists(Setting::class)) {
                 try {
-                    \App\Models\Setting::set('site_name', $site['site_name'], 'general');
+                    Setting::set('site_name', $site['site_name'], 'general');
                 } catch (Throwable) {
                 }
             }
@@ -680,9 +691,28 @@ final class InstallEngine
             if ($this->installScriptPath !== '' && is_file($this->installScriptPath)) {
                 $removeFiles[] = $this->installScriptPath;
             }
+            $libEngine = $this->publicHtml.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'InstallEngine.php';
+            if (is_file($libEngine)) {
+                $removeFiles[] = $libEngine;
+            }
             foreach ($removeFiles as $f) {
                 if (is_file($f) && @unlink($f)) {
                     $deleted[] = basename($f);
+                }
+            }
+
+            $packageDir = $this->publicHtml.DIRECTORY_SEPARATOR.'package';
+            if (is_dir($packageDir)) {
+                $this->rrmdir($packageDir);
+                if (! is_dir($packageDir)) {
+                    $deleted[] = 'package/';
+                }
+            }
+            $libDir = $this->publicHtml.DIRECTORY_SEPARATOR.'lib';
+            if (is_dir($libDir) && count(array_diff((array) @scandir($libDir), ['.', '..'])) === 0) {
+                @rmdir($libDir);
+                if (! is_dir($libDir)) {
+                    $deleted[] = 'lib/';
                 }
             }
 
@@ -690,6 +720,15 @@ final class InstallEngine
             if (! $installerRemoved && $this->installScriptPath !== '' && is_file($this->installScriptPath)) {
                 $this->denyInstallPhpViaHtaccess();
                 $warnings[] = 'فایل install.php حذف نشد. فوراً از File Manager پاک کنید. یک قانون Deny در .htaccess اضافه شد.';
+            }
+            if (is_file($libEngine)) {
+                $this->denyInstallEngineViaHtaccess();
+                $warnings[] = 'فایل lib/InstallEngine.php حذف نشد — از File Manager پاک کنید. یک قانون Deny در .htaccess اضافه شد.';
+            }
+
+            $crons = $this->recommendedCrons();
+            foreach ($this->cronRecommendationWarnings() as $cronWarn) {
+                $warnings[] = $cronWarn;
             }
 
             return [
@@ -699,6 +738,7 @@ final class InstallEngine
                 'verify' => $this->verifyInstall(),
                 'installer_removed' => $installerRemoved,
                 'deleted' => $deleted,
+                'crons' => $crons,
             ];
         } catch (Throwable $e) {
             $this->installerLog('ERROR: '.$this->sanitizePublicError($e->getMessage()));
@@ -707,6 +747,169 @@ final class InstallEngine
 
             throw new RuntimeException($this->sanitizePublicError($e->getMessage()), 0, $e);
         }
+    }
+
+    /**
+     * Detect a usable PHP CLI binary for cPanel cron (no shell_exec).
+     *
+     * Prefer real CLI binaries over php-cgi / php-fpm. Falls back to "php".
+     */
+    public function detectPhpCliBinary(): string
+    {
+        $candidates = [];
+
+        $phpBinary = defined('PHP_BINARY') ? (string) PHP_BINARY : '';
+        if ($phpBinary !== '') {
+            $candidates[] = $phpBinary;
+            $dir = dirname($phpBinary);
+            foreach (['php', 'php82', 'php83', 'php84', 'php8.2', 'php8.3', 'php8.4'] as $name) {
+                $candidates[] = $dir.DIRECTORY_SEPARATOR.$name;
+                if (PHP_OS_FAMILY === 'Windows') {
+                    $candidates[] = $dir.DIRECTORY_SEPARATOR.$name.'.exe';
+                }
+            }
+        }
+
+        if (PHP_OS_FAMILY !== 'Windows') {
+            $candidates = array_merge($candidates, [
+                '/usr/local/bin/php',
+                '/usr/bin/php',
+                '/opt/cpanel/ea-php84/root/usr/bin/php',
+                '/opt/cpanel/ea-php83/root/usr/bin/php',
+                '/opt/cpanel/ea-php82/root/usr/bin/php',
+            ]);
+        }
+
+        foreach ($candidates as $path) {
+            if ($this->isUsablePhpCliBinary($path)) {
+                return $path;
+            }
+        }
+
+        return 'php';
+    }
+
+    /**
+     * Absolute path to artisan (realpath when available).
+     */
+    public function absoluteArtisanPath(): string
+    {
+        $artisan = $this->jobDir.DIRECTORY_SEPARATOR.'artisan';
+        $real = realpath($artisan);
+
+        return $real !== false ? $real : $artisan;
+    }
+
+    /**
+     * Unique flock path for this install (prevents overlapping queue workers).
+     */
+    public function queueLockPath(): string
+    {
+        $slug = preg_replace('/[^a-zA-Z0-9_-]+/', '-', basename($this->homeDir)) ?: 'user';
+        $hash = substr(hash('sha256', $this->jobDir), 0, 10);
+
+        return '/tmp/job-kimi-queue-'.$slug.'-'.$hash.'.lock';
+    }
+
+    /**
+     * Locate flock binary without shell_exec (file existence only).
+     */
+    public function detectFlockBinary(): ?string
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            return null;
+        }
+
+        foreach (['/usr/bin/flock', '/bin/flock', '/usr/local/bin/flock'] as $path) {
+            // Shared hosts may report is_executable=false for system bins; accept existing files.
+            if (is_file($path)) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Warnings about cron PHP/artisan/flock setup (never fail install).
+     *
+     * @return list<string>
+     */
+    public function cronRecommendationWarnings(): array
+    {
+        $warnings = [];
+        $php = $this->detectPhpCliBinary();
+        if ($php === 'php') {
+            $warnings[] = 'مسیر PHP CLI به‌صورت قطعی تشخیص داده نشد؛ در cPanel مسیر واقعی PHP را از «Select PHP Version» جایگزین کنید.';
+        } elseif (! $this->isUsablePhpCliBinary($php)) {
+            $warnings[] = 'مسیر PHP پیشنهادی برای Cron را در cPanel تأیید کنید: '.$php;
+        }
+
+        $artisan = $this->jobDir.DIRECTORY_SEPARATOR.'artisan';
+        if (! is_file($artisan)) {
+            $warnings[] = 'فایل artisan در مسیر مورد انتظار یافت نشد: '.$artisan.' — قبل از افزودن Cron مسیر را بررسی کنید.';
+        } elseif (! is_readable($artisan)) {
+            $warnings[] = 'فایل artisan خواندنی نیست: '.$artisan;
+        }
+
+        if ($this->detectFlockBinary() === null) {
+            $warnings[] = 'دستور flock روی این هاست یافت نشد؛ Cron صف بدون قفل تولید شد. اگر دو worker همزمان اجرا شد، flock را از پشتیبانی هاست بخواهید یا فاصله Cron را افزایش دهید.';
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * Cron lines for shared cPanel (no Horizon / no long-lived Redis worker).
+     *
+     * @return list<array{label: string, command: string}>
+     */
+    public function recommendedCrons(): array
+    {
+        $php = $this->detectPhpCliBinary();
+        $artisan = $this->absoluteArtisanPath();
+        $flock = $this->detectFlockBinary();
+        $lock = $this->queueLockPath();
+
+        $queueInner = $php.' '.$artisan.' queue:work database --stop-when-empty --max-time=50 --tries=3 >> /dev/null 2>&1';
+        $queueCommand = $flock !== null
+            ? '* * * * * '.$flock.' -n '.$lock.' '.$queueInner
+            : '* * * * * '.$queueInner;
+
+        return [
+            [
+                'label' => 'Laravel Scheduler (هر دقیقه)',
+                'command' => '* * * * * '.$php.' '.$artisan.' schedule:run >> /dev/null 2>&1',
+            ],
+            [
+                'label' => 'Queue worker دیتابیس (هر دقیقه — بدون Horizon'
+                    .($flock !== null ? '، با flock' : '')
+                    .')',
+                'command' => $queueCommand,
+            ],
+        ];
+    }
+
+    private function isUsablePhpCliBinary(string $path): bool
+    {
+        if ($path === '' || $path === 'php') {
+            return false;
+        }
+        if (! is_file($path)) {
+            return false;
+        }
+
+        $base = strtolower(basename($path));
+        $base = preg_replace('/\.exe$/', '', $base) ?? $base;
+        if (str_contains($base, 'cgi') || str_contains($base, 'fpm') || str_contains($base, 'lsphp')) {
+            return false;
+        }
+        if (! preg_match('/^php(\d+(\.\d+)*)?$/', $base)) {
+            return false;
+        }
+
+        // Prefer executable bit when the OS reports it; still accept readable CLI binaries on locked-down hosts.
+        return is_executable($path) || is_readable($path);
     }
 
     /**
@@ -744,6 +947,34 @@ final class InstallEngine
         $debugOff = in_array($debugVal, ['false', '0', 'off', 'no'], true);
         $add('APP_DEBUG=false', $debugOff, $debugOff ? '' : 'برای production باید false باشد.');
 
+        $queueConn = strtolower((string) ($vars['QUEUE_CONNECTION'] ?? ''));
+        $queueOk = $queueConn === 'database';
+        $add(
+            'QUEUE_CONNECTION=database',
+            $queueOk,
+            $queueOk ? '' : 'مقدار فعلی: '.($vars['QUEUE_CONNECTION'] ?? 'خالی').' — برای Shared cPanel باید database باشد.'
+        );
+
+        $laravelDirs = [
+            'app' => is_dir($this->jobDir.DIRECTORY_SEPARATOR.'app'),
+            'bootstrap' => is_dir($this->jobDir.DIRECTORY_SEPARATOR.'bootstrap'),
+            'config' => is_dir($this->jobDir.DIRECTORY_SEPARATOR.'config'),
+            'routes' => is_dir($this->jobDir.DIRECTORY_SEPARATOR.'routes'),
+            'storage' => is_dir($this->jobDir.DIRECTORY_SEPARATOR.'storage'),
+            'vendor' => is_dir($this->jobDir.DIRECTORY_SEPARATOR.'vendor'),
+        ];
+        $structureOk = ! in_array(false, $laravelDirs, true)
+            && is_file($this->jobDir.DIRECTORY_SEPARATOR.'artisan');
+        $missingParts = array_keys(array_filter($laravelDirs, static fn (bool $ok): bool => ! $ok));
+        if (! is_file($this->jobDir.DIRECTORY_SEPARATOR.'artisan')) {
+            $missingParts[] = 'artisan';
+        }
+        $add(
+            'ساختار Laravel (artisan/app/bootstrap/config/routes/storage/vendor)',
+            $structureOk,
+            $structureOk ? '' : 'موارد ناقص: '.implode(', ', $missingParts)
+        );
+
         $add('vendor/autoload.php', is_file($this->jobDir.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php'));
         $add('artisan', is_file($this->jobDir.DIRECTORY_SEPARATOR.'artisan'));
         $add('bootstrap/app.php', is_file($this->jobDir.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php'));
@@ -757,6 +988,19 @@ final class InstallEngine
         );
         $add('.htaccess', is_file($this->publicHtml.DIRECTORY_SEPARATOR.'.htaccess'));
 
+        $htaccess = is_file($this->publicHtml.DIRECTORY_SEPARATOR.'.htaccess')
+            ? (string) file_get_contents($this->publicHtml.DIRECTORY_SEPARATOR.'.htaccess')
+            : '';
+        $sensitiveBlocked = str_contains($htaccess, 'FilesMatch')
+            && str_contains($htaccess, '.env')
+            && str_contains($htaccess, 'artisan')
+            && str_contains($htaccess, 'composer');
+        $add(
+            'محافظت فایل‌های حساس در .htaccess',
+            $sensitiveBlocked,
+            $sensitiveBlocked ? '' : 'قانون Deny برای .env / artisan / composer در .htaccess یافت نشد.'
+        );
+
         $manifestOk = is_file($this->publicHtml.DIRECTORY_SEPARATOR.'build'.DIRECTORY_SEPARATOR.'manifest.json')
             || is_file($this->jobDir.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'build'.DIRECTORY_SEPARATOR.'manifest.json');
         $add('public/build/manifest.json', $manifestOk);
@@ -767,6 +1011,8 @@ final class InstallEngine
         $dbOk = false;
         $usersOk = false;
         $migrationsOk = false;
+        $jobsOk = false;
+        $failedJobsOk = false;
         try {
             if ($envOk && ($vars['DB_DATABASE'] ?? '') !== '') {
                 $pdo = new PDO(
@@ -784,12 +1030,24 @@ final class InstallEngine
                 $dbOk = true;
                 $usersOk = $this->tableExists($pdo, 'users');
                 $migrationsOk = $this->tableExists($pdo, 'migrations');
+                $jobsOk = $this->tableExists($pdo, 'jobs');
+                $failedJobsOk = $this->tableExists($pdo, 'failed_jobs');
             }
         } catch (Throwable) {
         }
         $add('اتصال پایگاه‌داده', $dbOk);
         $add('جدول users', $usersOk, $usersOk ? '' : 'جدول users یافت نشد.');
         $add('جدول migrations', $migrationsOk, $migrationsOk ? '' : 'جدول migrations یافت نشد.');
+        $add(
+            'جدول jobs (database queue)',
+            $jobsOk,
+            $jobsOk ? '' : 'جدول jobs یافت نشد — برای QUEUE_CONNECTION=database لازم است.'
+        );
+        $add(
+            'جدول failed_jobs',
+            $failedJobsOk,
+            $failedJobsOk ? '' : 'جدول failed_jobs یافت نشد.'
+        );
 
         $linkPath = $this->publicHtml.DIRECTORY_SEPARATOR.'storage';
         $linkTarget = $this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'public';
@@ -804,6 +1062,39 @@ final class InstallEngine
         $markerPath = $this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed';
         $markerOk = is_file($markerPath);
         $add('نشانگر نصب (storage/installed)', $markerOk);
+
+        $canBoot = is_file($this->jobDir.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php')
+            && is_file($this->jobDir.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php')
+            && is_file($this->jobDir.DIRECTORY_SEPARATOR.'artisan');
+        if ($canBoot) {
+            try {
+                $schedule = $this->artisan('schedule:list');
+                if ($schedule['code'] === 0) {
+                    $add('Laravel Scheduler (schedule:list)', true, 'schedule:list موفق', 'pass');
+                } else {
+                    $add(
+                        'Laravel Scheduler (schedule:list)',
+                        true,
+                        'schedule:list ناموفق بود؛ Cron schedule:run را در cPanel تنظیم کنید.',
+                        'warning'
+                    );
+                }
+            } catch (Throwable $e) {
+                $add(
+                    'Laravel Scheduler (schedule:list)',
+                    true,
+                    'بررسی schedule:list ممکن نشد: '.$this->sanitizePublicError($e->getMessage()),
+                    'warning'
+                );
+            }
+        } else {
+            $add(
+                'Laravel Scheduler (schedule:list)',
+                true,
+                'artisan/bootstrap برای بررسی schedule:list آماده نیست.',
+                'warning'
+            );
+        }
 
         $https = (! empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || ((string) ($_SERVER['SERVER_PORT'] ?? '') === '443')
@@ -967,6 +1258,7 @@ final class InstallEngine
                         throw new RuntimeException('ساخت پوشه هنگام استخراج ممکن نشد.');
                     }
                 }
+
                 continue;
             }
 
@@ -1024,6 +1316,7 @@ final class InstallEngine
             'bootstrap' => 'پوشه bootstrap/',
             'bootstrap'.DIRECTORY_SEPARATOR.'app.php' => 'فایل bootstrap/app.php',
             'config' => 'پوشه config/',
+            'routes' => 'پوشه routes/',
             'vendor'.DIRECTORY_SEPARATOR.'autoload.php' => 'فایل vendor/autoload.php',
             'public' => 'پوشه public/',
             'storage' => 'پوشه storage/',
@@ -1031,7 +1324,7 @@ final class InstallEngine
 
         foreach ($required as $rel => $label) {
             $full = $root.DIRECTORY_SEPARATOR.$rel;
-            if (in_array($rel, ['app', 'bootstrap', 'config', 'public', 'storage'], true)) {
+            if (in_array($rel, ['app', 'bootstrap', 'config', 'routes', 'public', 'storage'], true)) {
                 $ok = is_dir($full);
             } else {
                 $ok = is_file($full);
@@ -1215,6 +1508,7 @@ final class InstallEngine
         foreach ($lines as $line) {
             if ($line === '' || str_starts_with(trim($line), '#') || ! str_contains($line, '=')) {
                 $out[] = $line;
+
                 continue;
             }
             [$k] = explode('=', $line, 2);
@@ -1407,6 +1701,11 @@ PHP;
     </FilesMatch>
 </IfModule>
 
+# Deny sensitive files if ever placed under document root
+<FilesMatch "(^\.env|^\.env\.|composer\.(json|lock)|package(-lock)?\.json|artisan)$">
+    Require all denied
+</FilesMatch>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
@@ -1444,6 +1743,22 @@ HT;
 HT;
         $existing = is_file($path) ? (string) file_get_contents($path) : '';
         if (! str_contains($existing, 'Files "install.php"')) {
+            file_put_contents($path, rtrim($existing)."\n".$snippet."\n");
+        }
+    }
+
+    private function denyInstallEngineViaHtaccess(): void
+    {
+        $path = $this->publicHtml.DIRECTORY_SEPARATOR.'.htaccess';
+        $snippet = <<<'HT'
+
+# JobAzmoon installer lock — remove lib/InstallEngine.php from File Manager
+<Files "InstallEngine.php">
+    Require all denied
+</Files>
+HT;
+        $existing = is_file($path) ? (string) file_get_contents($path) : '';
+        if (! str_contains($existing, 'Files "InstallEngine.php"')) {
             file_put_contents($path, rtrim($existing)."\n".$snippet."\n");
         }
     }
@@ -1520,7 +1835,7 @@ HT;
         chdir($this->jobDir);
         require_once $this->jobDir.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php';
         $app = require $this->jobDir.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php';
-        $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        $app->make(Kernel::class)->bootstrap();
 
         return $app;
     }
@@ -1532,7 +1847,7 @@ HT;
     private function artisan(string $command, array $params = []): array
     {
         $app = $this->laravelApp();
-        $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+        $kernel = $app->make(Kernel::class);
         $code = $kernel->call($command, $params);
 
         return ['code' => $code, 'output' => $kernel->output()];
@@ -1547,15 +1862,15 @@ HT;
     {
         $this->laravelApp();
 
-        if (! Illuminate\Support\Facades\Schema::hasTable('users')) {
+        if (! Schema::hasTable('users')) {
             throw new RuntimeException('جدول users وجود ندارد؛ migration را بررسی کنید.');
         }
 
-        $user = app(App\Models\User::class);
+        $user = app(User::class);
         $table = $user->getTable();
-        $columns = Illuminate\Support\Facades\Schema::getColumnListing($table);
+        $columns = Schema::getColumnListing($table);
 
-        $existing = Illuminate\Support\Facades\DB::table($table)->where('email', $site['email'])->first();
+        $existing = DB::table($table)->where('email', $site['email'])->first();
 
         $payload = [];
         if (in_array('name', $columns, true)) {
@@ -1584,21 +1899,21 @@ HT;
         if ($existing) {
             // Do NOT overwrite existing user password.
             unset($payload['password']);
-            Illuminate\Support\Facades\DB::table($table)->where('id', $existing->id)->update($payload);
+            DB::table($table)->where('id', $existing->id)->update($payload);
         } else {
             if (in_array('password', $columns, true)) {
-                $payload['password'] = Illuminate\Support\Facades\Hash::make($site['password']);
+                $payload['password'] = Hash::make($site['password']);
             }
             $payload['created_at'] = date('Y-m-d H:i:s');
-            Illuminate\Support\Facades\DB::table($table)->insert($payload);
+            DB::table($table)->insert($payload);
         }
 
         // Spatie assignRole — soft-fail.
-        if (class_exists(Spatie\Permission\Models\Role::class)
-            && Illuminate\Support\Facades\Schema::hasTable('roles')) {
+        if (class_exists(Role::class)
+            && Schema::hasTable('roles')) {
             try {
-                $role = Spatie\Permission\Models\Role::query()->where('name', 'admin')->first();
-                $model = App\Models\User::query()->where('email', $site['email'])->first();
+                $role = Role::query()->where('name', 'admin')->first();
+                $model = User::query()->where('email', $site['email'])->first();
                 if ($role && $model && method_exists($model, 'assignRole')) {
                     $model->assignRole($role);
                 }

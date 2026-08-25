@@ -8,9 +8,14 @@
       />
       <section v-if="team.length" class="mt-12">
         <div class="mb-8 text-center">
-          <p class="text-xs font-bold tracking-wide text-brand">تیم جاب‌آزمون</p>
+          <p class="text-xs font-bold tracking-wide text-brand">
+            تیم جاب‌آزمون
+          </p>
           <h2 class="mt-1 text-xl font-black text-desk-text">مدیران سایت</h2>
-          <p class="mx-auto mt-2 max-w-md text-sm leading-7 text-desk-muted" dir="rtl">
+          <p
+            class="mx-auto mt-2 max-w-md text-sm leading-7 text-desk-muted"
+            dir="rtl"
+          >
             آشنایی با افرادی که این سامانه را اداره می‌کنند.
           </p>
         </div>
@@ -93,7 +98,10 @@ onMounted(async () => {
       applySeoPayload(page.value.seo, {
         breadcrumbs: [
           { name: 'خانه', url: `${window.location.origin}/` },
-          { name: page.value.title || 'درباره ما', url: `${window.location.origin}/about` },
+          {
+            name: page.value.title || 'درباره ما',
+            url: `${window.location.origin}/about`,
+          },
         ],
       })
     } else if (page.value) {

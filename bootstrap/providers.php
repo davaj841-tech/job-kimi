@@ -4,6 +4,7 @@ use App\Providers\AppServiceProvider;
 use App\Providers\Filament\AdminPanelProvider;
 use App\Providers\HorizonServiceProvider;
 use App\Providers\TelescopeServiceProvider;
+use Laravel\Telescope\TelescopeApplicationServiceProvider;
 
 $providers = [
     AppServiceProvider::class,
@@ -12,7 +13,7 @@ $providers = [
 ];
 
 // Telescope is require-dev — never boot it after `composer install --no-dev`.
-if (class_exists(\Laravel\Telescope\TelescopeApplicationServiceProvider::class)) {
+if (class_exists(TelescopeApplicationServiceProvider::class)) {
     $providers[] = TelescopeServiceProvider::class;
 }
 

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Exports\SiteErrorsExport;
 use App\Http\Controllers\Api\BaseController;
 use App\Models\SiteError;
+use App\Services\SiteAutoHealService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -100,9 +102,9 @@ class SiteErrorAdminController extends BaseController
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Builder<SiteError>
+     * @return Builder<SiteError>
      */
-    protected function filteredQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    protected function filteredQuery(Request $request): Builder
     {
         $data = $request->validate([
             'search' => ['nullable', 'string', 'max:200'],
@@ -135,9 +137,9 @@ class SiteErrorAdminController extends BaseController
         return $q;
     }
 
-    public function autoHeal(\Illuminate\Http\Request $request): JsonResponse
+    public function autoHeal(Request $request): JsonResponse
     {
-        $stats = app(\App\Services\SiteAutoHealService::class)->run($request->boolean('aggressive', false));
+        $stats = app(SiteAutoHealService::class)->run($request->boolean('aggressive', false));
 
         return $this->successResponse($stats, 'خودترمیمی اجرا شد.');
     }

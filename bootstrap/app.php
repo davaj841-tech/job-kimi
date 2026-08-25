@@ -4,22 +4,26 @@ use App\Http\Middleware\CacheResponse;
 use App\Http\Middleware\CheckInstalled;
 use App\Http\Middleware\CheckSubscription;
 use App\Http\Middleware\EnsureAuth;
-use App\Http\Middleware\EnsureUserActive;
 use App\Http\Middleware\EnsureOperatorPermission;
 use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\EnsureUserActive;
 use App\Http\Middleware\FeatureEnabled;
 use App\Http\Middleware\ForceHttps;
 use App\Http\Middleware\PreventInstallAccess;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SeoRedirect;
 use App\Http\Middleware\TrackPageView;
 use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\VerifyAuthCaptcha;
 use App\Http\Middleware\VerifyTurnstileToken;
 use App\Services\SiteErrorLogger;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -75,7 +79,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'install.prevent' => PreventInstallAccess::class,
         ]);
         $middleware->web(append: [
-            \App\Http\Middleware\SeoRedirect::class,
+            SeoRedirect::class,
             ForceHttps::class,
             SecurityHeaders::class,
             TrackPageView::class,
@@ -103,7 +107,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            if ($e instanceof \Illuminate\Validation\ValidationException) {
+            if ($e instanceof ValidationException) {
                 return response()->json([
                     'success' => false,
                     'message' => $e->validator->errors()->first() ?: 'اطلاعات واردشده معتبر نیست.',
@@ -111,7 +115,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 422);
             }
 
-            if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+            if ($e instanceof AuthenticationException) {
                 return response()->json([
                     'success' => false,
                     'message' => 'احراز هویت الزامی است.',
@@ -119,7 +123,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 401);
             }
 
-            if ($e instanceof \Illuminate\Http\Exceptions\ThrottleRequestsException) {
+            if ($e instanceof ThrottleRequestsException) {
                 $retryAfter = (int) ($e->getHeaders()['Retry-After'] ?? 60);
                 $minutes = max(1, (int) ceil($retryAfter / 60));
 

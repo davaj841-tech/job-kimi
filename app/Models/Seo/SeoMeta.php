@@ -4,6 +4,7 @@ namespace App\Models\Seo;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -18,8 +19,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property string|null $og_image
  * @property string|null $twitter_card
  * @property array<string, mixed>|null $extra
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class SeoMeta extends Model
 {

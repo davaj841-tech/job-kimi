@@ -9,6 +9,7 @@ use App\Repositories\ExamRepository;
 use App\Services\Auth\LoginSessionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -104,7 +105,7 @@ class UserPanelController extends BaseController
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Collection<int, ExamAttempt>|\Illuminate\Support\Collection<int, ExamAttempt>|iterable<ExamAttempt>  $attempts
+     * @param  \Illuminate\Database\Eloquent\Collection<int, ExamAttempt>|Collection<int, ExamAttempt>|iterable<ExamAttempt>  $attempts
      * @return list<array<string, mixed>>
      */
     protected function mapAttempts(iterable $attempts): array

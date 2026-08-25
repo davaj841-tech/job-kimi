@@ -43,7 +43,6 @@ final class OperatorPermissions
     }
 
     /**
-     * @param  mixed  $value
      * @return list<string>
      */
     public static function normalize(mixed $value): array

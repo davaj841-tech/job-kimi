@@ -1,11 +1,10 @@
 <template>
-  <section
-    v-if="items.length"
-    class="bg-surface-page py-6 sm:py-7"
-  >
+  <section v-if="items.length" class="bg-surface-page py-6 sm:py-7">
     <div class="mx-auto max-w-7xl px-4">
       <div class="mb-3 flex items-end justify-between">
-        <h2 class="text-lg font-black text-desk-text sm:text-xl">📰 آخرین مقالات</h2>
+        <h2 class="text-lg font-black text-desk-text sm:text-xl">
+          📰 آخرین مقالات
+        </h2>
         <RouterLink
           to="/articles"
           class="text-xs font-bold text-brand hover:underline"
@@ -17,7 +16,11 @@
         <RouterLink
           v-for="post in items"
           :key="`${post._kind}-${post.id}`"
-          :to="post._kind === 'article' ? `/articles/${post.slug}` : `/blog/${post.slug}`"
+          :to="
+            post._kind === 'article'
+              ? `/articles/${post.slug}`
+              : `/blog/${post.slug}`
+          "
           class="home-rail-card"
         >
           <div class="mb-1.5 flex flex-wrap items-center justify-between gap-2">
@@ -28,7 +31,11 @@
               {{ post._kind === 'article' ? 'مقاله' : 'وبلاگ' }}
             </span>
           </div>
-          <p class="mt-1.5 line-clamp-2 flex-1 text-sm font-bold text-desk-text">{{ post.title }}</p>
+          <p
+            class="mt-1.5 line-clamp-2 flex-1 text-sm font-bold text-desk-text"
+          >
+            {{ post.title }}
+          </p>
           <p
             v-if="post.excerpt"
             class="mt-1 line-clamp-2 text-[11px] leading-5 text-desk-muted"
@@ -51,7 +58,10 @@ const props = defineProps({
 })
 
 const items = computed(() => {
-  const fromArticles = (props.articles || []).map((a) => ({ ...a, _kind: 'article' }))
+  const fromArticles = (props.articles || []).map((a) => ({
+    ...a,
+    _kind: 'article',
+  }))
   const fromBlog = (props.posts || []).map((p) => ({ ...p, _kind: 'blog' }))
   return [...fromArticles, ...fromBlog].slice(0, 12)
 })

@@ -118,7 +118,6 @@ class JobPostStoreRequest extends FormRequest
     }
 
     /**
-     * @param  mixed  $value
      * @return array<int, int>
      */
     protected function decodeIdList(mixed $value): array

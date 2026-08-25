@@ -11,6 +11,7 @@ use App\Models\UserLoginSession;
 use App\Repositories\ExamRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -310,6 +311,7 @@ class DashboardController extends BaseController
             $match = $byLabel->get($label);
             if ($match) {
                 $scores[] = (float) $match['average_score'];
+
                 continue;
             }
             $fallback = $progressChart[$i]['average_score'] ?? null;
@@ -401,7 +403,7 @@ class DashboardController extends BaseController
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, ExamAttempt>  $attempts
+     * @param  Collection<int, ExamAttempt>  $attempts
      * @return list<array{icon: string, title: string, meta: string, color: string}>
      */
     protected function buildRecentActivity($attempts, int $userId): array

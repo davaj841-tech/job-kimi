@@ -2,8 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\Content\ContentType;
-use App\Models\JobPost;
 use App\Services\Content\ContentGeneratorService;
 use Database\Seeders\ContentTemplateSeeder;
 use Illuminate\Console\Command;

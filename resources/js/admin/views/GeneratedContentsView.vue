@@ -1,161 +1,152 @@
 <template>
-      <div class="space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-800">تولید محتوای خودکار</h1>
-          <p class="mt-1 text-sm text-slate-500">
-            مقالات فارسی از آگهی‌های تأییدشده — بدون هوش مصنوعی
-          </p>
-        </div>
-        <button
-          type="button"
-          class="btn-orange"
-          :disabled="generating"
-          @click="generateNow"
-        >
-          {{ generating ? '...' : 'تولید اکنون' }}
-        </button>
+  <div class="space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">تولید محتوای خودکار</h1>
+        <p class="mt-1 text-sm text-slate-500">
+          مقالات فارسی از آگهی‌های تأییدشده — بدون هوش مصنوعی
+        </p>
       </div>
-
-      <div
-        v-if="dash.enabled === false"
-        class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+      <button
+        type="button"
+        class="btn-orange"
+        :disabled="generating"
+        @click="generateNow"
       >
-        تولید زمان‌بندی‌شده خاموش است. دکمه «تولید اکنون» همچنان کار می‌کند.
-        برای نمایش در سایت، مقاله را «انتشار» کنید یا
-        <code>CONTENT_PUBLISH_MODE=publish</code> بگذارید.
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <div
-          v-for="c in cards"
-          :key="c.key"
-          class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
-        >
-          <p class="text-xs text-slate-500">{{ c.label }}</p>
-          <p class="mt-1 text-xl font-black">{{ fa(dash[c.key] || 0) }}</p>
-        </div>
-      </div>
-
-      <div class="rounded-xl bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
-          <input
-            v-model="filters.search"
-            class="field md:col-span-2"
-            placeholder="جستجو عنوان/اسلاگ"
-          />
-          <select v-model="filters.status" class="field">
-            <option value="">همه وضعیت‌ها</option>
-            <option value="draft">پیش‌نویس</option>
-            <option value="published">منتشرشده</option>
-            <option value="failed">ناموفق</option>
-            <option value="skipped">ردشده</option>
-            <option value="scheduled">زمان‌بندی</option>
-          </select>
-          <select v-model="filters.content_type" class="field">
-            <option value="">همه انواع</option>
-            <option
-              v-for="t in types"
-              :key="t.value"
-              :value="t.value"
-            >
-              {{ t.label }}
-            </option>
-          </select>
-        </div>
-        <div class="mt-3">
-          <button type="button" class="btn-orange" @click="load(1)">
-            اعمال فیلتر
-          </button>
-        </div>
-      </div>
-
-      <DataTable
-        :columns="columns"
-        :rows="rows"
-        :loading="loading"
-        actions
-      >
-        <template #cell-created_at="{ row }">{{
-          formatDate(row.created_at)
-        }}</template>
-        <template #cell-status="{ row }">
-          <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold">{{
-            row.status
-          }}</span>
-        </template>
-        <template #actions="{ row }">
-          <button class="act" @click="open(row)">مشاهده</button>
-          <button class="act" @click="regenerate(row)">بازتولید</button>
-          <button
-            v-if="row.status !== 'published'"
-            class="act text-emerald-700"
-            @click="publish(row)"
-          >
-            انتشار
-          </button>
-          <button
-            v-if="row.status === 'published'"
-            class="act text-amber-700"
-            @click="unpublish(row)"
-          >
-            پیش‌نویس
-          </button>
-          <button class="act text-red-600" @click="remove(row)">حذف</button>
-        </template>
-      </DataTable>
-      <PaginationBar :meta="meta" @page="load" />
+        {{ generating ? '...' : 'تولید اکنون' }}
+      </button>
     </div>
 
     <div
-      v-if="detail"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      v-if="dash.enabled === false"
+      class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
     >
+      تولید زمان‌بندی‌شده خاموش است. دکمه «تولید اکنون» همچنان کار می‌کند. برای
+      نمایش در سایت، مقاله را «انتشار» کنید یا
+      <code>CONTENT_PUBLISH_MODE=publish</code> بگذارید.
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       <div
-        class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5"
+        v-for="c in cards"
+        :key="c.key"
+        class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
       >
-        <div class="mb-3 flex items-center justify-between">
-          <h3 class="font-bold">{{ detail.title }}</h3>
-          <button class="btn-muted" @click="detail = null">بستن</button>
-        </div>
-        <p class="mb-2 text-xs text-slate-500">
-          {{ detail.content_type_label }} · {{ detail.status }} ·
-          {{ detail.company_name || '—' }}
-        </p>
-        <div
-          class="prose prose-sm max-w-none whitespace-pre-wrap text-right text-sm leading-7 text-slate-800"
-        >
-          {{ detailPreview }}
-        </div>
-        <p v-if="detail.last_error" class="mt-3 text-sm text-red-600">
-          {{ detail.last_error }}
-        </p>
-        <div class="mt-4 space-y-3">
-          <div>
-            <label class="mb-1 block text-xs text-slate-500">رسته شغلی</label>
-            <select v-model="catalog.job_classification_id" class="field">
-              <option value="">بدون رسته</option>
-              <option v-for="c in classifications" :key="c.id" :value="c.id">
-                {{ c.name }}
-              </option>
-            </select>
-          </div>
-          <CatalogAttachFields
-            v-model:auto-catalog="catalog.auto_catalog"
-            v-model:exam-ids="catalog.exam_ids"
-            v-model:pdf-ids="catalog.pdf_ids"
-          />
-          <button
-            type="button"
-            class="btn-orange"
-            :disabled="savingCatalog"
-            @click="saveCatalog"
-          >
-            {{ savingCatalog ? '...' : 'ذخیره آزمون و فایل‌ها' }}
-          </button>
-        </div>
+        <p class="text-xs text-slate-500">{{ c.label }}</p>
+        <p class="mt-1 text-xl font-black">{{ fa(dash[c.key] || 0) }}</p>
       </div>
     </div>
+
+    <div class="rounded-xl bg-white p-4 shadow-sm">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
+        <input
+          v-model="filters.search"
+          class="field md:col-span-2"
+          placeholder="جستجو عنوان/اسلاگ"
+        />
+        <select v-model="filters.status" class="field">
+          <option value="">همه وضعیت‌ها</option>
+          <option value="draft">پیش‌نویس</option>
+          <option value="published">منتشرشده</option>
+          <option value="failed">ناموفق</option>
+          <option value="skipped">ردشده</option>
+          <option value="scheduled">زمان‌بندی</option>
+        </select>
+        <select v-model="filters.content_type" class="field">
+          <option value="">همه انواع</option>
+          <option v-for="t in types" :key="t.value" :value="t.value">
+            {{ t.label }}
+          </option>
+        </select>
+      </div>
+      <div class="mt-3">
+        <button type="button" class="btn-orange" @click="load(1)">
+          اعمال فیلتر
+        </button>
+      </div>
+    </div>
+
+    <DataTable :columns="columns" :rows="rows" :loading="loading" actions>
+      <template #cell-created_at="{ row }">{{
+        formatDate(row.created_at)
+      }}</template>
+      <template #cell-status="{ row }">
+        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold">{{
+          row.status
+        }}</span>
+      </template>
+      <template #actions="{ row }">
+        <button class="act" @click="open(row)">مشاهده</button>
+        <button class="act" @click="regenerate(row)">بازتولید</button>
+        <button
+          v-if="row.status !== 'published'"
+          class="act text-emerald-700"
+          @click="publish(row)"
+        >
+          انتشار
+        </button>
+        <button
+          v-if="row.status === 'published'"
+          class="act text-amber-700"
+          @click="unpublish(row)"
+        >
+          پیش‌نویس
+        </button>
+        <button class="act text-red-600" @click="remove(row)">حذف</button>
+      </template>
+    </DataTable>
+    <PaginationBar :meta="meta" @page="load" />
+  </div>
+
+  <div
+    v-if="detail"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+  >
+    <div
+      class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5"
+    >
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="font-bold">{{ detail.title }}</h3>
+        <button class="btn-muted" @click="detail = null">بستن</button>
+      </div>
+      <p class="mb-2 text-xs text-slate-500">
+        {{ detail.content_type_label }} · {{ detail.status }} ·
+        {{ detail.company_name || '—' }}
+      </p>
+      <div
+        class="prose prose-sm max-w-none whitespace-pre-wrap text-right text-sm leading-7 text-slate-800"
+      >
+        {{ detailPreview }}
+      </div>
+      <p v-if="detail.last_error" class="mt-3 text-sm text-red-600">
+        {{ detail.last_error }}
+      </p>
+      <div class="mt-4 space-y-3">
+        <div>
+          <label class="mb-1 block text-xs text-slate-500">رسته شغلی</label>
+          <select v-model="catalog.job_classification_id" class="field">
+            <option value="">بدون رسته</option>
+            <option v-for="c in classifications" :key="c.id" :value="c.id">
+              {{ c.name }}
+            </option>
+          </select>
+        </div>
+        <CatalogAttachFields
+          v-model:auto-catalog="catalog.auto_catalog"
+          v-model:exam-ids="catalog.exam_ids"
+          v-model:pdf-ids="catalog.pdf_ids"
+        />
+        <button
+          type="button"
+          class="btn-orange"
+          :disabled="savingCatalog"
+          @click="saveCatalog"
+        >
+          {{ savingCatalog ? '...' : 'ذخیره آزمون و فایل‌ها' }}
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -259,9 +250,12 @@ async function load(page = 1) {
 async function generateNow() {
   generating.value = true
   try {
-    const { data } = await adminApi.post('/admin/generated-contents/generate-now', {
-      seed_templates: true,
-    })
+    const { data } = await adminApi.post(
+      '/admin/generated-contents/generate-now',
+      {
+        seed_templates: true,
+      }
+    )
     const created = data.data?.created ?? 0
     const updated = data.data?.updated ?? 0
     const err = data.data?.errors?.[0]

@@ -12,10 +12,11 @@ use App\Models\User;
 use App\Services\Content\ContentGeneratorService;
 use App\Services\Content\ContentQualityService;
 use App\Services\Content\ContentRenderer;
+use App\Services\Content\WordPressPublishService;
 use Carbon\Carbon;
 use Database\Seeders\ContentTemplateSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -228,9 +229,9 @@ class ContentProductionAuditTest extends TestCase
 
     public function test_no_wordpress_runtime_dependency(): void
     {
-        $this->assertFalse(class_exists(\App\Services\Content\WordPressPublishService::class));
+        $this->assertFalse(class_exists(WordPressPublishService::class));
         $this->assertArrayNotHasKey('wordpress', config('content'));
-        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasColumn('generated_contents', 'wordpress_post_id'));
+        $this->assertFalse(Schema::hasColumn('generated_contents', 'wordpress_post_id'));
     }
 
     public function test_disabled_config_blocks_daily_generation(): void

@@ -5,7 +5,9 @@
         class="flex flex-col items-stretch justify-between gap-6 rounded-2xl border border-surface-line bg-gradient-to-l from-slate-50 to-brand-soft/40 p-6 sm:flex-row sm:items-center sm:p-8"
       >
         <div class="text-right">
-          <h2 class="mb-1 text-xl font-black text-desk-dark sm:text-2xl">خبرنامه جاب‌آزمون</h2>
+          <h2 class="mb-1 text-xl font-black text-desk-dark sm:text-2xl">
+            خبرنامه جاب‌آزمون
+          </h2>
           <p class="text-sm leading-7 text-desk-muted">
             از آخرین استخدام‌ها و آزمون‌ها زودتر باخبر شوید.
           </p>
@@ -40,7 +42,9 @@
               @input="fieldError = ''"
             />
           </div>
-          <p v-if="fieldError" class="text-right text-xs text-brand">{{ fieldError }}</p>
+          <p v-if="fieldError" class="text-right text-xs text-brand">
+            {{ fieldError }}
+          </p>
         </form>
       </div>
     </div>

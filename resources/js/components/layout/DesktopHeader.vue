@@ -2,15 +2,20 @@
   <header
     class="sticky top-0 z-40 hidden border-b lg:block"
     :class="navy ? 'border-white/10' : 'border-surface-line bg-surface'"
-    :style="navy ? { backgroundColor: 'color-mix(in srgb, var(--theme-ink) 96%, transparent)' } : undefined"
+    :style="
+      navy
+        ? {
+            backgroundColor:
+              'color-mix(in srgb, var(--theme-ink) 96%, transparent)',
+          }
+        : undefined
+    "
   >
-    <div class="desk-container flex h-[4.5rem] items-center justify-between gap-6">
+    <div
+      class="desk-container flex h-[4.5rem] items-center justify-between gap-6"
+    >
       <div class="flex min-w-0 items-center gap-8">
-        <RouterLink
-          to="/"
-          class="shrink-0"
-          aria-label="صفحه اصلی"
-        >
+        <RouterLink to="/" class="shrink-0" aria-label="صفحه اصلی">
           <SiteBrandLogo
             variant="desktop"
             size="lg"

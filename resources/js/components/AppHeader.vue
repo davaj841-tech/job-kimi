@@ -2,7 +2,14 @@
   <header
     class="sticky top-0 z-30 border-b"
     :class="navy ? 'border-white/10' : 'border-surface-line bg-surface'"
-    :style="navy ? { backgroundColor: 'color-mix(in srgb, var(--theme-ink) 96%, transparent)' } : undefined"
+    :style="
+      navy
+        ? {
+            backgroundColor:
+              'color-mix(in srgb, var(--theme-ink) 96%, transparent)',
+          }
+        : undefined
+    "
   >
     <div
       class="mx-auto flex max-w-app items-center gap-2.5 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]"
@@ -15,7 +22,9 @@
         <SiteBrandLogo
           variant="mobile"
           size="md"
-          :text-class="navy ? 'text-[15px] text-white' : 'text-[15px] text-desk-text'"
+          :text-class="
+            navy ? 'text-[15px] text-white' : 'text-[15px] text-desk-text'
+          "
         />
       </RouterLink>
 

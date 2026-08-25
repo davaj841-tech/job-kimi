@@ -4,6 +4,8 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Routing\Middleware\ThrottleRequestsWithRedis;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -97,8 +99,8 @@ class OtpAuthFeatureTest extends TestCase
     public function test_rejects_invalid_iranian_mobile_formats(): void
     {
         $this->withoutMiddleware([
-            \Illuminate\Routing\Middleware\ThrottleRequests::class,
-            \Illuminate\Routing\Middleware\ThrottleRequestsWithRedis::class,
+            ThrottleRequests::class,
+            ThrottleRequestsWithRedis::class,
         ]);
 
         $invalidMobiles = [

@@ -12,10 +12,7 @@
       "
       @click="$emit('update:modelValue', item.id)"
     >
-      <div
-        class="mb-2 h-12 overflow-hidden rounded-xl"
-        :class="item.preview"
-      >
+      <div class="mb-2 h-12 overflow-hidden rounded-xl" :class="item.preview">
         <div class="flex h-full items-end justify-between px-2 pb-2">
           <span class="h-2 w-8 rounded bg-white/40" />
           <span

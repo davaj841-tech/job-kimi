@@ -41,7 +41,10 @@ const options = {
   plugins: {
     legend: {
       position: 'bottom',
-      labels: { boxWidth: 12, font: { size: 11, family: 'Estedad Variable, Estedad, Vazirmatn' } },
+      labels: {
+        boxWidth: 12,
+        font: { size: 11, family: 'Estedad Variable, Estedad, Vazirmatn' },
+      },
     },
   },
 }

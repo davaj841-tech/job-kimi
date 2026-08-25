@@ -17,7 +17,9 @@
         @update:coupon="onCoupon"
       />
       <div v-if="gateways.length" class="card-soft p-3">
-        <label class="mb-1.5 block text-xs font-medium">درگاه پرداخت آنلاین</label>
+        <label class="mb-1.5 block text-xs font-medium"
+          >درگاه پرداخت آنلاین</label
+        >
         <select v-model="gateway" class="input-field h-9 text-sm">
           <option v-for="g in gateways" :key="g.name" :value="g.name">
             {{ g.display_name }}
@@ -36,12 +38,16 @@
             <h2 class="truncate text-sm font-bold">{{ plan.name }}</h2>
             <span class="price shrink-0 text-xs">{{ displayPrice(plan) }}</span>
           </div>
-          <p class="mb-2 text-[11px] text-ink-muted">{{ plan.duration_days }} روز</p>
+          <p class="mb-2 text-[11px] text-ink-muted">
+            {{ plan.duration_days }} روز
+          </p>
           <ul
             v-if="(plan.features || []).length"
             class="mb-2 max-h-16 space-y-0.5 overflow-hidden text-[11px] text-ink-soft"
           >
-            <li v-for="(f, i) in (plan.features || []).slice(0, 4)" :key="i">• {{ f }}</li>
+            <li v-for="(f, i) in (plan.features || []).slice(0, 4)" :key="i">
+              • {{ f }}
+            </li>
           </ul>
           <div class="flex gap-1.5">
             <button

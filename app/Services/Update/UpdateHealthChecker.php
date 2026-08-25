@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Update;
 
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
@@ -17,7 +18,7 @@ final class UpdateHealthChecker
     {
         $checks = [
             'php' => version_compare(PHP_VERSION, '8.2.0', '>=') ? 'ok' : 'fail',
-            'laravel' => class_exists(\Illuminate\Foundation\Application::class) ? 'ok' : 'fail',
+            'laravel' => class_exists(Application::class) ? 'ok' : 'fail',
             'database' => $this->database(),
             'storage' => $this->storage(),
             'cache' => $this->cache(),

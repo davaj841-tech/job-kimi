@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\HasSeo;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -29,7 +30,7 @@ use Illuminate\Support\Str;
  * @property-read string|null $thumbnail_url
  * @property-read JobPost|null $jobPost
  * @property-read JobClassification|null $classification
- * @property-read \Illuminate\Database\Eloquent\Collection<int, PdfPurchase> $purchases
+ * @property-read Collection<int, PdfPurchase> $purchases
  * @property bool|null $is_purchased
  * @property string|null $purchase_date
  * @property string|null $download_url
@@ -37,8 +38,8 @@ use Illuminate\Support\Str;
  */
 class PdfProduct extends Model
 {
+    use HasSeo;
     use SoftDeletes;
-    use \App\Traits\HasSeo;
 
     protected $fillable = [
         'job_post_id',

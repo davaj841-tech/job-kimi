@@ -13,15 +13,19 @@ function canUseStorage(): boolean {
   }
 }
 
-function storageKey(examId?: number | string, attemptId?: number | string): string | null {
+function storageKey(
+  examId?: number | string,
+  attemptId?: number | string
+): string | null {
   if (examId == null || attemptId == null) return null
   return `${KEY_PREFIX}${examId}_${attemptId}`
 }
 
 function resolveStorageKey(examIdHint?: number | string): string | null {
-  const currentMeta = currentRef()?.examId != null && currentRef()?.attemptId != null
-    ? storageKey(currentRef()!.examId, currentRef()!.attemptId)
-    : null
+  const currentMeta =
+    currentRef()?.examId != null && currentRef()?.attemptId != null
+      ? storageKey(currentRef()!.examId, currentRef()!.attemptId)
+      : null
   if (currentMeta) return currentMeta
 
   if (!canUseStorage()) return null
@@ -93,7 +97,11 @@ export const useExamStore = defineStore('exam', () => {
       if (!raw) return null
       const parsed = parseCache(raw)
 
-      if (key === LEGACY_KEY && current.value?.examId != null && current.value?.attemptId != null) {
+      if (
+        key === LEGACY_KEY &&
+        current.value?.examId != null &&
+        current.value?.attemptId != null
+      ) {
         saveCache()
         localStorage.removeItem(LEGACY_KEY)
       }
@@ -108,8 +116,7 @@ export const useExamStore = defineStore('exam', () => {
     if (!canUseStorage()) return
 
     const key =
-      storageKey(current.value?.examId, current.value?.attemptId) ||
-      LEGACY_KEY
+      storageKey(current.value?.examId, current.value?.attemptId) || LEGACY_KEY
 
     try {
       localStorage.setItem(

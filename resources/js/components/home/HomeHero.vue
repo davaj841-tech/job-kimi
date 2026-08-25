@@ -6,20 +6,25 @@
   >
     <!-- navy / ocean / royal -->
     <template v-if="hero === 'navy'">
+      <div class="absolute inset-0" aria-hidden="true" :style="navyBg" />
       <div
-        class="absolute inset-0"
-        aria-hidden="true"
-        :style="navyBg"
-      />
-      <div class="relative z-10 mx-auto grid max-w-7xl items-center gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-10 lg:py-11">
+        class="relative z-10 mx-auto grid max-w-7xl items-center gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-2 lg:gap-10 lg:py-11"
+      >
         <div class="space-y-3 text-right">
-          <p class="text-[11px] font-bold text-desk-orange sm:text-xs">جاب‌آزمون</p>
-          <h1 class="text-2xl font-black leading-snug text-white sm:text-3xl lg:text-[2.15rem]">
+          <p class="text-[11px] font-bold text-desk-orange sm:text-xs">
+            جاب‌آزمون
+          </p>
+          <h1
+            class="text-2xl font-black leading-snug text-white sm:text-3xl lg:text-[2.15rem]"
+          >
             آمادگی امروز،
             <span class="text-amber-200">استخدام فردا</span>
           </h1>
-          <p class="max-w-md text-xs leading-6 text-white/70 sm:text-sm sm:leading-7">
-            آزمون شبیه‌سازی، آگهی استخدام، منابع PDF و رزومه‌ساز — در یک مسیر ساده.
+          <p
+            class="max-w-md text-xs leading-6 text-white/70 sm:text-sm sm:leading-7"
+          >
+            آزمون شبیه‌سازی، آگهی استخدام، منابع PDF و رزومه‌ساز — در یک مسیر
+            ساده.
           </p>
           <div class="flex flex-col gap-2 pt-1 sm:flex-row sm:items-center">
             <RouterLink
@@ -74,10 +79,7 @@
             />
           </div>
         </div>
-        <div
-          v-if="heroBanners.length"
-          class="mt-4 lg:hidden"
-        >
+        <div v-if="heroBanners.length" class="mt-4 lg:hidden">
           <BannerSlider
             position="home_hero"
             :banners="heroBanners"
@@ -92,19 +94,22 @@
       <div class="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-9">
         <div class="grid items-end gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <div class="text-right">
-            <p class="mb-2 text-[11px] font-bold tracking-wide text-desk-orange">
+            <p
+              class="mb-2 text-[11px] font-bold tracking-wide text-desk-orange"
+            >
               مسیر استخدام
             </p>
-            <h1 class="max-w-xl text-2xl font-black leading-snug text-desk-dark sm:text-4xl">
+            <h1
+              class="max-w-xl text-2xl font-black leading-snug text-desk-dark sm:text-4xl"
+            >
               آمادگی هدفمند برای آزمون‌های استخدامی
             </h1>
-            <p class="mt-2 max-w-lg text-xs leading-6 text-desk-muted sm:text-sm sm:leading-7">
+            <p
+              class="mt-2 max-w-lg text-xs leading-6 text-desk-muted sm:text-sm sm:leading-7"
+            >
               آزمون، آگهی، جزوه و رزومه — بدون شلوغی، با تمرکز روی نتیجه.
             </p>
-            <form
-              class="mt-4 flex max-w-xl gap-2"
-              @submit.prevent="goSearch"
-            >
+            <form class="mt-4 flex max-w-xl gap-2" @submit.prevent="goSearch">
               <input
                 v-model="q"
                 type="search"
@@ -139,11 +144,7 @@
 
     <!-- dark / studio / midnight -->
     <template v-else-if="hero === 'dark'">
-      <div
-        class="absolute inset-0"
-        aria-hidden="true"
-        :style="darkBg"
-      />
+      <div class="absolute inset-0" aria-hidden="true" :style="darkBg" />
       <div class="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         <div class="max-w-2xl text-right">
           <p class="mb-2 text-[11px] font-bold text-white/50">استودیو آمادگی</p>
@@ -202,10 +203,7 @@
           class="flex flex-col justify-center px-4 py-8 sm:px-6"
           :style="{ background: 'var(--theme-page)' }"
         >
-          <form
-            class="flex gap-2"
-            @submit.prevent="goSearch"
-          >
+          <form class="flex gap-2" @submit.prevent="goSearch">
             <input
               v-model="q"
               type="search"
@@ -223,11 +221,13 @@
             <RouterLink
               to="/jobs"
               class="rounded-full bg-white px-3 py-1.5 text-desk-dark ring-1 ring-surface-line"
-            >استخدام‌ها</RouterLink>
+              >استخدام‌ها</RouterLink
+            >
             <RouterLink
               to="/pdfs"
               class="rounded-full bg-white px-3 py-1.5 text-desk-dark ring-1 ring-surface-line"
-            >فروشگاه</RouterLink>
+              >فروشگاه</RouterLink
+            >
           </div>
         </div>
       </div>
@@ -237,11 +237,10 @@
     <template v-else>
       <div class="mx-auto max-w-3xl px-4 py-6 text-right sm:py-8">
         <h1 class="text-xl font-black text-desk-dark sm:text-2xl">جاب‌آزمون</h1>
-        <p class="mt-1 text-sm text-desk-muted">آزمون، استخدام، فایل و رزومه — بدون حاشیه</p>
-        <form
-          class="mt-4 flex gap-2"
-          @submit.prevent="goSearch"
-        >
+        <p class="mt-1 text-sm text-desk-muted">
+          آزمون، استخدام، فایل و رزومه — بدون حاشیه
+        </p>
+        <form class="mt-4 flex gap-2" @submit.prevent="goSearch">
           <input
             v-model="q"
             type="search"
@@ -259,15 +258,18 @@
           <RouterLink
             to="/exams"
             class="rounded-full bg-desk-dark px-3 py-1.5 text-white"
-          >آزمون‌ها</RouterLink>
+            >آزمون‌ها</RouterLink
+          >
           <RouterLink
             to="/jobs"
             class="rounded-full bg-white px-3 py-1.5 text-desk-dark ring-1 ring-surface-line"
-          >استخدام‌ها</RouterLink>
+            >استخدام‌ها</RouterLink
+          >
           <RouterLink
             to="/pdfs"
             class="rounded-full bg-white px-3 py-1.5 text-desk-dark ring-1 ring-surface-line"
-          >فروشگاه</RouterLink>
+            >فروشگاه</RouterLink
+          >
         </div>
       </div>
     </template>
@@ -283,10 +285,9 @@ import api from '../../api/client'
 import { themePreset, type SiteThemeId } from '../../theme/presets'
 import { unwrapList } from '../../utils/format'
 
-const props = withDefaults(
-  defineProps<{ variant?: SiteThemeId }>(),
-  { variant: 'atlas' },
-)
+const props = withDefaults(defineProps<{ variant?: SiteThemeId }>(), {
+  variant: 'atlas',
+})
 
 const router = useRouter()
 const q = ref('')
@@ -296,7 +297,9 @@ const hero = computed(() => preset.value.hero)
 
 onMounted(async () => {
   try {
-    const { data } = await api.get('/banners', { params: { position: 'home_hero' } })
+    const { data } = await api.get('/banners', {
+      params: { position: 'home_hero' },
+    })
     heroBanners.value = unwrapList(data) || data?.data || []
   } catch {
     heroBanners.value = []
@@ -305,7 +308,8 @@ onMounted(async () => {
 
 const sectionClass = computed(() => {
   if (hero.value === 'navy' || hero.value === 'dark') return ''
-  if (hero.value === 'paper') return 'border-b border-surface-line bg-surface-page'
+  if (hero.value === 'paper')
+    return 'border-b border-surface-line bg-surface-page'
   if (hero.value === 'split') return 'bg-surface-page'
   return 'border-b border-surface-line bg-surface-page'
 })

@@ -1,7 +1,10 @@
 <template>
   <nav
     class="fixed inset-x-0 bottom-0 z-40 border-t border-surface-line bg-surface"
-    style="padding-bottom: env(safe-area-inset-bottom); touch-action: manipulation"
+    style="
+      padding-bottom: env(safe-area-inset-bottom);
+      touch-action: manipulation;
+    "
     aria-label="ناوبری اصلی"
   >
     <div class="mx-auto grid h-14 max-w-app grid-cols-5 px-1">
@@ -22,10 +25,7 @@
           class="absolute inset-x-3 top-0 h-0.5 rounded-b bg-brand"
           aria-hidden="true"
         />
-        <NavIcon
-          :name="item.icon"
-          :size="20"
-        />
+        <NavIcon :name="item.icon" :size="20" />
         <span>{{ item.label }}</span>
       </RouterLink>
     </div>

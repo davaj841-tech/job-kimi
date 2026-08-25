@@ -14,6 +14,7 @@ use App\Models\JobSource;
 use App\Repositories\JobPostRepository;
 use App\Services\Aggregation\SourceHealthService;
 use App\Services\JobPostService;
+use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -49,7 +50,7 @@ class AggregationQualityController extends BaseController
                         ? $source->quality_status->value
                         : $source?->quality_status,
                     'consecutive_failures' => (int) ($source !== null ? $source->consecutive_failures : 0),
-                    'last_success_at' => $lastSuccessAt instanceof \Carbon\CarbonInterface
+                    'last_success_at' => $lastSuccessAt instanceof CarbonInterface
                         ? $lastSuccessAt->toIso8601String()
                         : null,
                     'total' => (int) $row->getAttribute('total'),
@@ -83,10 +84,10 @@ class AggregationQualityController extends BaseController
 
                 return [
                     'id' => $run->id,
-                    'source_name' => $source instanceof \App\Models\JobSource ? $source->name : null,
+                    'source_name' => $source instanceof JobSource ? $source->name : null,
                     'status' => $status instanceof \BackedEnum ? $status->value : $status,
                     'errors_count' => $run->errors_count,
-                    'finished_at' => $finishedAt instanceof \Carbon\CarbonInterface
+                    'finished_at' => $finishedAt instanceof CarbonInterface
                         ? $finishedAt->toIso8601String()
                         : null,
                 ];
@@ -135,14 +136,14 @@ class AggregationQualityController extends BaseController
                     'quality_status' => $qualityStatus instanceof \BackedEnum ? $qualityStatus->value : $qualityStatus,
                     'consecutive_failures' => (int) $s->consecutive_failures,
                     'consecutive_empty_crawls' => (int) $s->consecutive_empty_crawls,
-                    'last_success_at' => $lastSuccessAt instanceof \Carbon\CarbonInterface
+                    'last_success_at' => $lastSuccessAt instanceof CarbonInterface
                         ? $lastSuccessAt->toIso8601String()
                         : null,
-                    'last_failure_at' => $lastFailureAt instanceof \Carbon\CarbonInterface
+                    'last_failure_at' => $lastFailureAt instanceof CarbonInterface
                         ? $lastFailureAt->toIso8601String()
                         : null,
                     'last_http_status' => $s->last_http_status,
-                    'health_backoff_until' => $healthBackoffUntil instanceof \Carbon\CarbonInterface
+                    'health_backoff_until' => $healthBackoffUntil instanceof CarbonInterface
                         ? $healthBackoffUntil->toIso8601String()
                         : null,
                 ];

@@ -2,11 +2,17 @@
   <section :class="embedded ? 'h-full' : 'bg-surface-page py-6 sm:py-8'">
     <div :class="embedded ? 'h-full' : 'mx-auto max-w-3xl px-4'">
       <div :class="embedded ? 'mb-2' : 'mb-4 text-center'">
-        <h2 class="text-base font-black text-desk-dark sm:text-lg">سوالات متداول</h2>
-        <p class="mt-0.5 text-[11px] text-desk-muted">پاسخ کوتاه به پرسش‌های پرتکرار</p>
+        <h2 class="text-base font-black text-desk-dark sm:text-lg">
+          سوالات متداول
+        </h2>
+        <p class="mt-0.5 text-[11px] text-desk-muted">
+          پاسخ کوتاه به پرسش‌های پرتکرار
+        </p>
       </div>
 
-      <div class="divide-y divide-surface-line overflow-hidden rounded-2xl border border-surface-line bg-white">
+      <div
+        class="divide-y divide-surface-line overflow-hidden rounded-2xl border border-surface-line bg-white"
+      >
         <button
           v-for="(item, index) in faqs"
           :key="item.q"

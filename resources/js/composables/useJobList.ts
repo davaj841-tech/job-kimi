@@ -63,7 +63,8 @@ export function useJobList() {
     try {
       const { data } = await api.get('/job-posts/filters')
       const payload = data?.data ?? data ?? {}
-      classifications.value = payload.classifications || payload.home_classifications || []
+      classifications.value =
+        payload.classifications || payload.home_classifications || []
       provinces.value = payload.provinces || []
     } catch {
       classifications.value = []
@@ -99,7 +100,8 @@ export function useJobList() {
         params.job_classification_id = filters.job_classification_id
       }
       if (filters.province) params.province = filters.province
-      if (filters.employment_type) params.employment_type = filters.employment_type
+      if (filters.employment_type)
+        params.employment_type = filters.employment_type
 
       const { data } = await api.get('/job-posts', { params })
       const list = unwrapList(data) as JobRow[]
@@ -110,7 +112,10 @@ export function useJobList() {
       pagination.last_page = Number(meta.last_page ?? 1)
       // Keep client page size; don't shrink to backend default after first load
       if (meta.per_page) {
-        pagination.per_page = Math.max(pagination.per_page, Number(meta.per_page))
+        pagination.per_page = Math.max(
+          pagination.per_page,
+          Number(meta.per_page)
+        )
       }
 
       const flagged = withBookmarkFlag(list)
@@ -174,7 +179,7 @@ export function useJobList() {
       filters.employment_type,
       filters.sort,
     ],
-    () => fetchJobs(true),
+    () => fetchJobs(true)
   )
 
   onMounted(() => {
@@ -182,14 +187,11 @@ export function useJobList() {
     void Promise.all([loadFilterOptions(), fetchJobs(true)])
 
     if (typeof window !== 'undefined') {
-      useInfiniteScroll(
-        window,
-        () => loadMore(),
-        {
-          distance: 480,
-          canLoadMore: () => hasMore.value && !loadingMore.value && !loading.value,
-        },
-      )
+      useInfiniteScroll(window, () => loadMore(), {
+        distance: 480,
+        canLoadMore: () =>
+          hasMore.value && !loadingMore.value && !loading.value,
+      })
     }
   })
 

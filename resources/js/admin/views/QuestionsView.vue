@@ -1,219 +1,213 @@
 <template>
-      <div class="space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <h1 class="text-2xl font-bold text-gray-800">بانک سوالات</h1>
-          <span
-            class="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700"
-          >
-            {{ fa(totalQuestions) }}
-          </span>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <button class="btn-dark" @click="openCreate">سوال جدید</button>
-          <button class="btn-muted" @click="subjectManagerOpen = true">
-            📚 مدیریت دروس
-          </button>
-          <button class="btn-muted" @click="importOpen = true">
-            ورود Excel
-          </button>
-          <button class="btn-muted" @click="onExport">خروجی Excel</button>
-          <button class="btn-orange" @click="aiOpen = true">تولید با AI</button>
-        </div>
-      </div>
-
-      <div class="rounded-xl bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
-          <input
-            v-model="store.filters.search"
-            class="field lg:col-span-2"
-            placeholder="جستجو متن سوال"
-            @keyup.enter="apply"
-          />
-          <select v-model="store.filters.exam_id" class="field">
-            <option value="">همه آزمون‌ها</option>
-            <option v-for="e in examsStore.exams" :key="e.id" :value="e.id">
-              {{ e.title }}
-            </option>
-          </select>
-          <select v-model="store.filters.subject" class="field">
-            <option value="">همه دروس</option>
-            <option
-              v-for="s in subjectsStore.subjects"
-              :key="s.slug"
-              :value="s.slug"
-            >
-              {{ s.icon || '📘' }} {{ s.name }}
-            </option>
-          </select>
-          <select v-model="store.filters.difficulty" class="field">
-            <option value="">همه سطوح</option>
-            <option value="easy">آسان</option>
-            <option value="medium">متوسط</option>
-            <option value="hard">سخت</option>
-          </select>
-        </div>
-        <div class="mt-3 flex flex-wrap gap-2">
-          <select v-model="store.filters.question_type" class="field max-w-xs">
-            <option value="">همه انواع</option>
-            <option value="multiple_choice">چهارگزینه‌ای</option>
-            <option value="formula">فرمول</option>
-          </select>
-          <button class="btn-orange" @click="apply">اعمال فیلتر</button>
-          <button class="btn-muted" @click="clear">پاک کردن</button>
-        </div>
-      </div>
-
-      <div
-        v-if="loadingExams"
-        class="rounded-xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm"
-      >
-        در حال بارگذاری آزمون‌ها...
-      </div>
-
-      <div v-else class="space-y-3">
-        <div
-          v-for="exam in visibleExams"
-          :key="exam.id"
-          class="overflow-hidden rounded-xl bg-white shadow-sm"
+  <div class="space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-bold text-gray-800">بانک سوالات</h1>
+        <span
+          class="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700"
         >
-          <button
-            type="button"
-            class="flex w-full items-center justify-between gap-3 px-4 py-3 text-right hover:bg-slate-50"
-            @click="toggleExam(exam.id)"
-          >
-            <div class="min-w-0 flex-1">
-              <p class="truncate font-bold text-slate-800">{{ exam.title }}</p>
-              <p class="mt-0.5 text-xs text-slate-500">
-                {{ fa(exam.question_count ?? exam.total_questions ?? 0) }} سوال
-              </p>
-            </div>
-            <span
-              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg font-bold text-slate-600"
-            >
-              {{ isExpanded(exam.id) ? '−' : '+' }}
-            </span>
-          </button>
-
-          <div v-if="isExpanded(exam.id)" class="border-t border-slate-100">
-            <div
-              v-if="bucket(exam.id).loading"
-              class="p-6 text-center text-sm text-slate-500"
-            >
-              در حال بارگذاری سوالات...
-            </div>
-            <div
-              v-else-if="!bucket(exam.id).questions.length"
-              class="p-6 text-center text-sm text-slate-500"
-            >
-              سوالی یافت نشد
-            </div>
-            <div v-else class="overflow-x-auto">
-              <table class="min-w-full text-sm">
-                <thead class="bg-slate-50 text-xs text-slate-500">
-                  <tr>
-                    <th class="px-3 py-2 text-right font-medium">#</th>
-                    <th class="px-3 py-2 text-right font-medium">متن سوال</th>
-                    <th class="px-3 py-2 text-right font-medium">درس</th>
-                    <th class="px-3 py-2 text-right font-medium">سطح</th>
-                    <th class="px-3 py-2 text-right font-medium">پاسخ صحیح</th>
-                    <th class="px-3 py-2 text-right font-medium">عملیات</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(row, index) in bucket(exam.id).questions"
-                    :key="row.id"
-                    class="border-t border-slate-100"
-                  >
-                    <td class="px-3 py-2 text-slate-500">
-                      {{ fa(index + 1) }}
-                    </td>
-                    <td class="px-3 py-2">
-                      <button
-                        type="button"
-                        class="max-w-md text-right hover:text-orange-600"
-                        :title="stripHtml(row.question_text)"
-                        @click="openEdit(row)"
-                      >
-                        {{ truncate(stripHtml(row.question_text)) }}
-                      </button>
-                    </td>
-                    <td class="px-3 py-2">{{ subjectLabel(row.subject) }}</td>
-                    <td class="px-3 py-2">{{ diffLabel(row.difficulty) }}</td>
-                    <td class="px-3 py-2">
-                      <span
-                        class="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700"
-                      >
-                        {{ answerLabel(row.correct_answer) }}
-                      </span>
-                    </td>
-                    <td class="px-3 py-2">
-                      <div class="flex justify-end gap-1">
-                        <button
-                          type="button"
-                          class="act"
-                          @click="openEdit(row)"
-                        >
-                          ویرایش
-                        </button>
-                        <button
-                          type="button"
-                          class="act text-red-600"
-                          @click="askDelete(row)"
-                        >
-                          حذف
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <p
-          v-if="!visibleExams.length"
-          class="rounded-xl bg-white py-8 text-center text-slate-500 shadow-sm"
-        >
-          آزمونی یافت نشد
-        </p>
+          {{ fa(totalQuestions) }}
+        </span>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button class="btn-dark" @click="openCreate">سوال جدید</button>
+        <button class="btn-muted" @click="subjectManagerOpen = true">
+          📚 مدیریت دروس
+        </button>
+        <button class="btn-muted" @click="importOpen = true">ورود Excel</button>
+        <button class="btn-muted" @click="onExport">خروجی Excel</button>
+        <button class="btn-orange" @click="aiOpen = true">تولید با AI</button>
       </div>
     </div>
 
-    <QuestionModal
-      :open="modalOpen"
-      :question="editing"
-      :exams="examsStore.exams"
-      @close="modalOpen = false"
-      @saved="onSaved"
-    />
-    <BulkImportModal
-      ref="importRef"
-      :open="importOpen"
-      :exams="examsStore.exams"
-      @close="importOpen = false"
-      @imported="onImport"
-    />
-    <AIGenerateModal
-      ref="aiRef"
-      :open="aiOpen"
-      :exams="examsStore.exams"
-      @close="aiOpen = false"
-      @generate="onGenerate"
-    />
-    <SubjectManagerModal
-      :open="subjectManagerOpen"
-      @close="subjectManagerOpen = false"
-    />
-    <ConfirmDialog
-      :open="confirm.open"
-      :title="confirm.title"
-      :message="confirm.message"
-      @cancel="confirm.open = false"
-      @confirm="runConfirm"
-    />
+    <div class="rounded-xl bg-white p-4 shadow-sm">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
+        <input
+          v-model="store.filters.search"
+          class="field lg:col-span-2"
+          placeholder="جستجو متن سوال"
+          @keyup.enter="apply"
+        />
+        <select v-model="store.filters.exam_id" class="field">
+          <option value="">همه آزمون‌ها</option>
+          <option v-for="e in examsStore.exams" :key="e.id" :value="e.id">
+            {{ e.title }}
+          </option>
+        </select>
+        <select v-model="store.filters.subject" class="field">
+          <option value="">همه دروس</option>
+          <option
+            v-for="s in subjectsStore.subjects"
+            :key="s.slug"
+            :value="s.slug"
+          >
+            {{ s.icon || '📘' }} {{ s.name }}
+          </option>
+        </select>
+        <select v-model="store.filters.difficulty" class="field">
+          <option value="">همه سطوح</option>
+          <option value="easy">آسان</option>
+          <option value="medium">متوسط</option>
+          <option value="hard">سخت</option>
+        </select>
+      </div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <select v-model="store.filters.question_type" class="field max-w-xs">
+          <option value="">همه انواع</option>
+          <option value="multiple_choice">چهارگزینه‌ای</option>
+          <option value="formula">فرمول</option>
+        </select>
+        <button class="btn-orange" @click="apply">اعمال فیلتر</button>
+        <button class="btn-muted" @click="clear">پاک کردن</button>
+      </div>
+    </div>
+
+    <div
+      v-if="loadingExams"
+      class="rounded-xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm"
+    >
+      در حال بارگذاری آزمون‌ها...
+    </div>
+
+    <div v-else class="space-y-3">
+      <div
+        v-for="exam in visibleExams"
+        :key="exam.id"
+        class="overflow-hidden rounded-xl bg-white shadow-sm"
+      >
+        <button
+          type="button"
+          class="flex w-full items-center justify-between gap-3 px-4 py-3 text-right hover:bg-slate-50"
+          @click="toggleExam(exam.id)"
+        >
+          <div class="min-w-0 flex-1">
+            <p class="truncate font-bold text-slate-800">{{ exam.title }}</p>
+            <p class="mt-0.5 text-xs text-slate-500">
+              {{ fa(exam.question_count ?? exam.total_questions ?? 0) }} سوال
+            </p>
+          </div>
+          <span
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg font-bold text-slate-600"
+          >
+            {{ isExpanded(exam.id) ? '−' : '+' }}
+          </span>
+        </button>
+
+        <div v-if="isExpanded(exam.id)" class="border-t border-slate-100">
+          <div
+            v-if="bucket(exam.id).loading"
+            class="p-6 text-center text-sm text-slate-500"
+          >
+            در حال بارگذاری سوالات...
+          </div>
+          <div
+            v-else-if="!bucket(exam.id).questions.length"
+            class="p-6 text-center text-sm text-slate-500"
+          >
+            سوالی یافت نشد
+          </div>
+          <div v-else class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 text-xs text-slate-500">
+                <tr>
+                  <th class="px-3 py-2 text-right font-medium">#</th>
+                  <th class="px-3 py-2 text-right font-medium">متن سوال</th>
+                  <th class="px-3 py-2 text-right font-medium">درس</th>
+                  <th class="px-3 py-2 text-right font-medium">سطح</th>
+                  <th class="px-3 py-2 text-right font-medium">پاسخ صحیح</th>
+                  <th class="px-3 py-2 text-right font-medium">عملیات</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(row, index) in bucket(exam.id).questions"
+                  :key="row.id"
+                  class="border-t border-slate-100"
+                >
+                  <td class="px-3 py-2 text-slate-500">
+                    {{ fa(index + 1) }}
+                  </td>
+                  <td class="px-3 py-2">
+                    <button
+                      type="button"
+                      class="max-w-md text-right hover:text-orange-600"
+                      :title="stripHtml(row.question_text)"
+                      @click="openEdit(row)"
+                    >
+                      {{ truncate(stripHtml(row.question_text)) }}
+                    </button>
+                  </td>
+                  <td class="px-3 py-2">{{ subjectLabel(row.subject) }}</td>
+                  <td class="px-3 py-2">{{ diffLabel(row.difficulty) }}</td>
+                  <td class="px-3 py-2">
+                    <span
+                      class="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700"
+                    >
+                      {{ answerLabel(row.correct_answer) }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-2">
+                    <div class="flex justify-end gap-1">
+                      <button type="button" class="act" @click="openEdit(row)">
+                        ویرایش
+                      </button>
+                      <button
+                        type="button"
+                        class="act text-red-600"
+                        @click="askDelete(row)"
+                      >
+                        حذف
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <p
+        v-if="!visibleExams.length"
+        class="rounded-xl bg-white py-8 text-center text-slate-500 shadow-sm"
+      >
+        آزمونی یافت نشد
+      </p>
+    </div>
+  </div>
+
+  <QuestionModal
+    :open="modalOpen"
+    :question="editing"
+    :exams="examsStore.exams"
+    @close="modalOpen = false"
+    @saved="onSaved"
+  />
+  <BulkImportModal
+    ref="importRef"
+    :open="importOpen"
+    :exams="examsStore.exams"
+    @close="importOpen = false"
+    @imported="onImport"
+  />
+  <AIGenerateModal
+    ref="aiRef"
+    :open="aiOpen"
+    :exams="examsStore.exams"
+    @close="aiOpen = false"
+    @generate="onGenerate"
+  />
+  <SubjectManagerModal
+    :open="subjectManagerOpen"
+    @close="subjectManagerOpen = false"
+  />
+  <ConfirmDialog
+    :open="confirm.open"
+    :title="confirm.title"
+    :message="confirm.message"
+    @cancel="confirm.open = false"
+    @confirm="runConfirm"
+  />
 </template>
 
 <script setup>
@@ -398,10 +392,15 @@ async function onImport({ file, exam_id }) {
     const created = result?.created ?? 0
     const skipped = result?.skipped ?? 0
     if (created > 0) {
-      toast.success(`${created} سوال وارد شد${skipped ? ` (${skipped} رد شد)` : ''}.`)
+      toast.success(
+        `${created} سوال وارد شد${skipped ? ` (${skipped} رد شد)` : ''}.`
+      )
     } else {
       toast.error(result?.errors?.[0] || 'هیچ سوالی وارد نشد.')
-      importRef.value?.setError(result?.errors?.[0] || 'هیچ سوالی وارد نشد. ستون‌های فارسی نمونه را بررسی کنید.')
+      importRef.value?.setError(
+        result?.errors?.[0] ||
+          'هیچ سوالی وارد نشد. ستون‌های فارسی نمونه را بررسی کنید.'
+      )
     }
     await examsStore.fetchExamOptions().catch(() => {})
     if (exam_id) {

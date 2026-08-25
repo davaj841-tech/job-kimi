@@ -21,6 +21,8 @@ yarn-error.log
 /auth.json
 /jobazmoon-deploy.zip
 *.zip
+/dist/
+/.tools/
 /.fleet
 /.idea
 /.nova
@@ -29,3 +31,6 @@ yarn-error.log
 /.vagrant
 /.scribe
 bootstrap/compiled.php
+/_tmp_*.php
+/dist-*.txt
+/_check_*.php

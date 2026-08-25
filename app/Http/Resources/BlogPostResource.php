@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\BlogPost;
+use App\Support\HtmlSanitizer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,7 +23,7 @@ class BlogPostResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'slug' => $this->slug,
-            'content' => \App\Support\HtmlSanitizer::clean($this->content),
+            'content' => HtmlSanitizer::clean($this->content),
             'excerpt' => $this->excerpt,
             'featured_image' => $this->featured_image,
             'featured_image_url' => $this->featured_image_url,

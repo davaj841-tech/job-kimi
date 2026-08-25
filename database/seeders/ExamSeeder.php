@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Exam;
 use App\Models\ExamCategory;
-use App\Models\Question;
 use App\Models\User;
 use Database\Factories\ExamCategoryFactory;
 use Illuminate\Database\Seeder;

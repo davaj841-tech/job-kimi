@@ -13,6 +13,7 @@ use App\Models\Ticket;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\AIService;
+use App\Services\FeatureFlagService;
 use App\Services\PDFProductService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -130,7 +131,7 @@ class SecurityAuditTest extends TestCase
     public function test_wallet_charge_rejects_excessive_amount(): void
     {
         $user = User::factory()->create(['status' => 'active']);
-        app(\App\Services\FeatureFlagService::class)->enable('wallet');
+        app(FeatureFlagService::class)->enable('wallet');
         Sanctum::actingAs($user);
 
         $this->postJson('/api/v1/wallet/charge', [

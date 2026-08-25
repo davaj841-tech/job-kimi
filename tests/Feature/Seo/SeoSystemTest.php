@@ -6,35 +6,25 @@ namespace Tests\Feature\Seo;
 
 use App\Jobs\Seo\AnalyzeSeoJob;
 use App\Jobs\Seo\RunSeoAuditJob;
-use App\Models\BlogPost;
 use App\Models\CmsPage;
 use App\Models\Exam;
-use App\Models\ExamCategory;
 use App\Models\GeneratedContent;
 use App\Models\JobPost;
-use App\Models\PdfProduct;
-use App\Models\Question;
 use App\Models\Seo\SeoAnalysis;
-use App\Models\Seo\SeoFaq;
-use App\Models\Seo\SeoKeyword;
-use App\Models\Seo\SeoLink;
+use App\Models\Seo\SeoAudit;
 use App\Models\Seo\SeoMeta;
 use App\Models\Seo\SeoRedirect;
 use App\Models\User;
-use App\Support\LegalPages;
-use App\Services\Seo\BrokenLinkService;
 use App\Services\Seo\CannibalizationService;
 use App\Services\Seo\CanonicalService;
 use App\Services\Seo\DuplicateContentService;
 use App\Services\Seo\MetaGenerator;
+use App\Services\Seo\RedirectService;
 use App\Services\Seo\SchemaGenerator;
 use App\Services\Seo\SeoAnalyzer;
-use App\Services\Seo\SeoManager;
-use App\Services\Seo\SeoScoreService;
-use App\Services\Seo\RedirectService;
-use App\Services\Seo\RobotsService;
 use App\Services\Seo\SitemapService;
 use App\Services\SEOService;
+use App\Support\LegalPages;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -409,7 +399,7 @@ final class SeoSystemTest extends TestCase
             app(DuplicateContentService::class),
         );
 
-        $audit = \App\Models\Seo\SeoAudit::query()->latest('id')->first();
+        $audit = SeoAudit::query()->latest('id')->first();
         $this->assertNotNull($audit);
         $this->assertArrayHasKey('duplicate_content', $audit->results ?? []);
     }

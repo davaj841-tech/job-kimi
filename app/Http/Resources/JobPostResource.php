@@ -6,6 +6,7 @@ use App\Models\Exam;
 use App\Models\JobPost;
 use App\Models\JobPostAttachment;
 use App\Models\PdfProduct;
+use App\Support\HtmlSanitizer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -28,15 +29,15 @@ class JobPostResource extends JsonResource
             'company_name' => $this->classification_name,
             'job_classification_id' => $this->job_classification_id,
             'classification_name' => $this->classification_name,
-            'description' => \App\Support\HtmlSanitizer::clean($this->description),
+            'description' => HtmlSanitizer::clean($this->description),
             'province' => $this->province,
             'provinces' => $this->provinces ?? ($this->province ? [$this->province] : []),
             'city' => $this->city,
             'job_category' => $this->job_category,
             'registration_deadline' => $this->registration_deadline?->toIso8601String(),
             'exam_date' => $this->exam_date?->toIso8601String(),
-            'registration_link' => \App\Support\HtmlSanitizer::safeUrl($this->registration_link),
-            'source_url' => \App\Support\HtmlSanitizer::safeUrl($this->source_url),
+            'registration_link' => HtmlSanitizer::safeUrl($this->registration_link),
+            'source_url' => HtmlSanitizer::safeUrl($this->source_url),
             'attachment_path' => $this->attachment_path,
             'attachment_url' => $this->attachment_url,
             'attachments' => $this->when($this->relationLoaded('attachments'), function (): array {
@@ -99,7 +100,7 @@ class JobPostResource extends JsonResource
             'field_of_study' => $this->field_of_study,
             'experience' => $this->experience,
             'employment_type' => $this->employment_type,
-            'requirements' => \App\Support\HtmlSanitizer::clean($this->requirements),
+            'requirements' => HtmlSanitizer::clean($this->requirements),
             'registration_starts_at' => $this->registration_starts_at?->toIso8601String(),
             'published_at' => $this->published_at?->toIso8601String(),
             'job_source' => $this->when($this->relationLoaded('source') && $this->source, function () {

@@ -3,7 +3,9 @@
     class="flex min-h-dvh items-center justify-center bg-surface-page px-4 py-6"
     dir="rtl"
   >
-    <div class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-xl dark:bg-slate-900">
+    <div
+      class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-xl dark:bg-slate-900"
+    >
       <div class="relative bg-desk-dark px-6 py-5 text-center text-white">
         <div
           class="pointer-events-none absolute -left-6 -top-6 h-24 w-24 rounded-full bg-white/10"
@@ -12,10 +14,7 @@
           class="pointer-events-none absolute -bottom-8 -right-4 h-20 w-20 rounded-full bg-white/10"
         />
         <div class="relative flex justify-center">
-          <SiteBrandLogo
-            variant="desktop"
-            text-class="text-2xl text-white"
-          />
+          <SiteBrandLogo variant="desktop" text-class="text-2xl text-white" />
         </div>
         <p class="relative mt-2 text-xs text-white/80">
           ورود یا عضویت در حساب کاربری
@@ -23,7 +22,9 @@
       </div>
 
       <div class="px-5 pt-4">
-        <div class="mb-4 flex rounded-2xl bg-surface-page p-1 dark:bg-slate-800">
+        <div
+          class="mb-4 flex rounded-2xl bg-surface-page p-1 dark:bg-slate-800"
+        >
           <button
             type="button"
             class="flex-1 rounded-xl py-2 text-xs font-bold transition"
@@ -108,7 +109,12 @@
           <button
             type="submit"
             class="btn-primary"
-            :disabled="auth.loading || !loginForm.login || !loginForm.password || !captchaReady"
+            :disabled="
+              auth.loading ||
+              !loginForm.login ||
+              !loginForm.password ||
+              !captchaReady
+            "
           >
             {{ auth.loading ? '...' : 'ورود' }}
           </button>
@@ -453,7 +459,10 @@ async function onRegister() {
     if (registerForm.email.trim()) payload.email = registerForm.email.trim()
     const data = await auth.register(payload, captchaPayload())
     if (data?.data?.needs_otp) {
-      mobile.value = data.data.mobile || normalizeIranMobile(registerForm.mobile) || registerForm.mobile
+      mobile.value =
+        data.data.mobile ||
+        normalizeIranMobile(registerForm.mobile) ||
+        registerForm.mobile
       tab.value = 'otp'
       otpStep.value = 2
       return

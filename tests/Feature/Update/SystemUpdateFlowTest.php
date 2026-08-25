@@ -12,6 +12,7 @@ use App\Services\Update\UpdatePackBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 use ZipArchive;
@@ -151,7 +152,7 @@ final class SystemUpdateFlowTest extends TestCase
     public function test_duplicate_completed_version_blocked(): void
     {
         SystemUpdate::query()->create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'version' => '1.0.9',
             'previous_version' => '1.0.0',
             'status' => SystemUpdate::COMPLETED,

@@ -8,6 +8,7 @@ use App\Models\ExamSubject;
 use App\Models\Question;
 use App\Models\User;
 use App\Repositories\ExamRepository;
+use App\Services\Exam\RandomExamAssembler;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -78,7 +79,7 @@ class ExamService
         }
 
         if ($exam->is_random) {
-            return app(\App\Services\Exam\RandomExamAssembler::class)->assemble($exam, $subject);
+            return app(RandomExamAssembler::class)->assemble($exam, $subject);
         }
 
         $query = $exam->questions();
@@ -276,8 +277,8 @@ class ExamService
                 ],
                 'user_answer' => $userAnswer,
                 'correct_answer' => $question->correct_answer,
-                'user_answer_label' => \App\Services\ReportCardPDFService::optionLetter($userAnswer),
-                'correct_answer_label' => \App\Services\ReportCardPDFService::optionLetter($question->correct_answer),
+                'user_answer_label' => ReportCardPDFService::optionLetter($userAnswer),
+                'correct_answer_label' => ReportCardPDFService::optionLetter($question->correct_answer),
                 'user_answer_text' => self::optionBody($question, $userAnswer),
                 'correct_answer_text' => self::optionBody($question, $question->correct_answer),
                 'is_correct' => $isCorrect,

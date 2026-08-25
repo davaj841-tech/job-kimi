@@ -197,16 +197,16 @@ return [
     // The format you pass to `date` will be passed to PHP's `date()` function.
     // The format you pass to `git` can be either "short" or "long".
     // Note: does not work for `external` docs types
-    'last_updated' => 'Last updated: {date:F j, Y}',
+    // Keep stable across CI regenerations (ApiDocumentationTest diffs after scribe:generate).
+    // Do not use {date:*} or {git:*} — both change between generate and committed docs.
+    'last_updated' => 'JobAzmoon API documentation',
 
     'examples' => [
         // Set this to any number to generate the same example values for parameters on each run,
         'faker_seed' => 1234,
 
-        // With API resources and transformers, Scribe tries to generate example models to use in your API responses.
-        // By default, Scribe will try the model's factory, and if that fails, try fetching the first from the database.
-        // You can reorder or remove strategies here.
-        'models_source' => ['factoryCreate', 'factoryMake', 'databaseFirst'],
+        // Prefer in-memory factories so example IDs do not depend on local DB auto-increment state.
+        'models_source' => ['factoryMake', 'factoryCreate'],
     ],
 
     // The strategies Scribe will use to extract information about your routes at each stage.

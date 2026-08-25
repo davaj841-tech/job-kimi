@@ -4,7 +4,17 @@ Target: `https://jobazmoon.ir` (or `APP_URL` on the VPS)
 
 Preferred: run **`./deploy.sh production`** on the Linux server — it already covers steps 1–7 below (maintenance → backup → pull/build → migrate → cache → Horizon → up).
 
-## Manual sequence (if not using deploy.sh)
+## Shared cPanel (no SSH)
+
+Do **not** use `./deploy.sh` on shared hosting.
+
+1. Build: `php scripts/build-cpanel-package.php` → `dist/jobazmoon-core.zip`
+2. First install: upload installer + ZIP → `install.php` (see `docs/CPANEL_DEPLOYMENT.md`)
+3. Later updates: Admin Update Pack (`docs/UPDATE_SYSTEM.md`) — never re-run `install.php`
+4. Cron: `schedule:run` + `queue:work database --stop-when-empty`
+5. Post-check: `/health` (Redis optional when drivers are `database`)
+
+## Manual sequence (VPS / if not using deploy.sh)
 
 ```bash
 cd /var/www/jobazmoon   # adjust path

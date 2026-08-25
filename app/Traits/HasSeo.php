@@ -7,6 +7,8 @@ use App\Models\Seo\SeoFaq;
 use App\Models\Seo\SeoKeyword;
 use App\Models\Seo\SeoLink;
 use App\Models\Seo\SeoMeta;
+use App\Services\Seo\RobotsService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 
@@ -95,12 +97,12 @@ trait HasSeo
 
     public function isSeoIndexable(): bool
     {
-        return app(\App\Services\Seo\RobotsService::class)->isIndexable($this);
+        return app(RobotsService::class)->isIndexable($this);
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<static>  $query
-     * @return \Illuminate\Database\Eloquent\Builder<static>
+     * @param  Builder<static>  $query
+     * @return Builder<static>
      */
     public function scopeSeoIndexable($query)
     {

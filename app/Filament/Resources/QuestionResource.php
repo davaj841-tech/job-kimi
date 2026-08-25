@@ -4,7 +4,9 @@ namespace App\Filament\Resources;
 
 use App\Filament\Concerns\InteractsWithStaffAccess;
 use App\Filament\Resources\QuestionResource\Pages;
+use App\Models\ExamSubject;
 use App\Models\Question;
+use App\Services\ReportCardPDFService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -53,7 +55,7 @@ class QuestionResource extends Resource
                 'easy' => 'آسان', 'medium' => 'متوسط', 'hard' => 'سخت',
             ])->default('medium')->helperText('اختیاری — پیش‌فرض متوسط'),
             Forms\Components\Select::make('subject')->label('درس')->options(
-                fn () => \App\Models\ExamSubject::query()
+                fn () => ExamSubject::query()
                     ->orderBy('sort_order')
                     ->pluck('name', 'slug')
                     ->all()
@@ -68,7 +70,7 @@ class QuestionResource extends Resource
                 Tables\Columns\TextColumn::make('exam.title')->label('آزمون')->limit(20),
                 Tables\Columns\TextColumn::make('question_text')->label('سوال')->html()->limit(40),
                 Tables\Columns\TextColumn::make('correct_answer')->label('پاسخ')->formatStateUsing(
-                    fn ($state) => \App\Services\ReportCardPDFService::optionLetter($state)
+                    fn ($state) => ReportCardPDFService::optionLetter($state)
                 ),
                 Tables\Columns\TextColumn::make('difficulty')->label('سختی')->badge(),
                 Tables\Columns\TextColumn::make('subject')->label('ماده'),

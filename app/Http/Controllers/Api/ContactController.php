@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\ContactMessage;
 use App\Services\MailConfigService;
+use App\Support\IranMobile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,7 +18,7 @@ class ContactController extends BaseController
     {
         if ($request->filled('mobile')) {
             $request->merge([
-                'mobile' => \App\Support\IranMobile::normalize((string) $request->input('mobile')) ?? $request->input('mobile'),
+                'mobile' => IranMobile::normalize((string) $request->input('mobile')) ?? $request->input('mobile'),
             ]);
         }
 

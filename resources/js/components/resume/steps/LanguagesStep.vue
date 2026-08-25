@@ -23,7 +23,7 @@
       <div
         v-for="(lang, index) in local.languages"
         :key="index"
-        class="flex flex-col gap-2 rounded-xl border border-surface-line bg-slate-50 p-3 sm:flex-row dark:border-slate-700 dark:bg-slate-800/50"
+        class="flex flex-col gap-2 rounded-xl border border-surface-line bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50 sm:flex-row"
       >
         <FormInput
           v-model="lang.name"
@@ -32,16 +32,11 @@
           class="flex-1"
         />
         <label class="block sm:w-40">
-          <span class="mb-1.5 block text-xs font-medium text-desk-muted">سطح</span>
-          <select
-            v-model="lang.level"
-            class="input-field"
+          <span class="mb-1.5 block text-xs font-medium text-desk-muted"
+            >سطح</span
           >
-            <option
-              v-for="lv in levels"
-              :key="lv"
-              :value="lv"
-            >
+          <select v-model="lang.level" class="input-field">
+            <option v-for="lv in levels" :key="lv" :value="lv">
               {{ lv }}
             </option>
           </select>

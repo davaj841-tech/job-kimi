@@ -24,10 +24,7 @@
             :key="item.label"
             class="rounded-2xl bg-slate-50 p-3 text-center dark:bg-slate-800/60"
           >
-            <component
-              :is="item.icon"
-              class="mx-auto h-5 w-5 text-brand"
-            />
+            <component :is="item.icon" class="mx-auto h-5 w-5 text-brand" />
             <p class="mt-1 text-[11px] text-ink-muted dark:text-slate-400">
               {{ item.label }}
             </p>
@@ -64,7 +61,9 @@
               <span>{{ subject.icon || '📘' }}</span>
               {{ subject.name || subject.label }}
               <span class="font-medium text-ink-muted"
-                >({{ toFaDigits(subject.question_count || subject.count || 0) }})</span
+                >({{
+                  toFaDigits(subject.question_count || subject.count || 0)
+                }})</span
               >
             </span>
           </div>
@@ -112,10 +111,13 @@
             @click="startExam()"
           >
             <PlayIcon v-if="!isStarting" class="h-6 w-6" />
-            <span>{{ isStarting ? 'در حال آماده‌سازی...' : 'شروع آزمون کامل' }}</span>
+            <span>{{
+              isStarting ? 'در حال آماده‌سازی...' : 'شروع آزمون کامل'
+            }}</span>
           </button>
           <p class="mt-3 text-center text-xs text-ink-muted">
-            با زدن دکمه شروع، تایمر آغاز می‌شود. در طول آزمون می‌توانید درس‌ها را فیلتر کنید و سوالات مانده را ببینید.
+            با زدن دکمه شروع، تایمر آغاز می‌شود. در طول آزمون می‌توانید درس‌ها
+            را فیلتر کنید و سوالات مانده را ببینید.
           </p>
           <RouterLink
             :to="`/exams/${exam.slug}`"
@@ -126,7 +128,9 @@
         </div>
       </div>
     </div>
-    <p v-else class="text-center text-brand">{{ error || 'آزمون یافت نشد.' }}</p>
+    <p v-else class="text-center text-brand">
+      {{ error || 'آزمون یافت نشد.' }}
+    </p>
   </div>
 </template>
 

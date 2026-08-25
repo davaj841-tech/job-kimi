@@ -9,7 +9,11 @@
       style="background: var(--theme-ink)"
     >
       <p class="min-w-0 flex-1 text-xs leading-5">
-        {{ ios ? 'برای میانبر، دکمه Share و سپس Add to Home Screen را بزنید.' : 'میانبر جاب‌آزمون را به صفحه اصلی دستگاه اضافه کنید.' }}
+        {{
+          ios
+            ? 'برای میانبر، دکمه Share و سپس Add to Home Screen را بزنید.'
+            : 'میانبر جاب‌آزمون را به صفحه اصلی دستگاه اضافه کنید.'
+        }}
       </p>
       <button
         v-if="!ios"

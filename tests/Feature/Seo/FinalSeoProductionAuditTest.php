@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Seo;
 
+use App\Jobs\Seo\AnalyzeSeoJob;
 use App\Models\BlogPost;
 use App\Models\CmsPage;
 use App\Models\Exam;
@@ -16,6 +17,7 @@ use App\Services\Seo\MetaGenerator;
 use App\Services\Seo\SchemaGenerator;
 use App\Services\Seo\SeoManager;
 use App\Services\Seo\SitemapService;
+use App\Services\SEOService;
 use App\Support\LegalPages;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -268,7 +270,7 @@ final class FinalSeoProductionAuditTest extends TestCase
     {
         $job = JobPost::factory()->create(['status' => 'approved', 'company_name' => 'Real Co']);
         $payload = app(SeoManager::class)->buildPublicPayload($job);
-        $legacy = app(\App\Services\SEOService::class)->generateJobPostSchema($job);
+        $legacy = app(SEOService::class)->generateJobPostSchema($job);
 
         $this->assertSame($legacy['@type'], 'JobPosting');
         $this->assertSame('Real Co', $legacy['hiringOrganization']['name']);
@@ -290,16 +292,16 @@ final class FinalSeoProductionAuditTest extends TestCase
         Queue::fake();
 
         $exam = Exam::factory()->create(['title' => 'Observer Test']);
-        Queue::assertPushed(\App\Jobs\Seo\AnalyzeSeoJob::class, 1);
+        Queue::assertPushed(AnalyzeSeoJob::class, 1);
 
         Queue::fake();
         $exam->seoMeta()->create(['title' => 'Only SEO meta change']);
         $exam->touch();
-        Queue::assertNotPushed(\App\Jobs\Seo\AnalyzeSeoJob::class);
+        Queue::assertNotPushed(AnalyzeSeoJob::class);
 
         Queue::fake();
         $exam->update(['title' => 'Updated title']);
-        Queue::assertPushed(\App\Jobs\Seo\AnalyzeSeoJob::class, 1);
+        Queue::assertPushed(AnalyzeSeoJob::class, 1);
     }
 
     public function test_schema_generator_produces_expected_types_with_real_data_only(): void

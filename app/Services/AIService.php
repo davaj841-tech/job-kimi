@@ -7,6 +7,8 @@ use App\Models\BlogPost;
 use App\Models\JobPost;
 use App\Models\Setting;
 use App\Services\Aggregation\SafeHttpFetcher;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -680,7 +682,7 @@ Return JSON array: [{question_text, option_a, option_b, option_c, option_d, corr
 
         $lastException = null;
         $maxRetries = 2;
-        /** @var \Illuminate\Http\Client\Response|null $response */
+        /** @var Response|null $response */
         $response = null;
 
         for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
@@ -702,7 +704,7 @@ Return JSON array: [{question_text, option_a, option_b, option_c, option_d, corr
                     ]);
 
                 break;
-            } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            } catch (ConnectionException $e) {
                 $lastException = $e;
                 if ($attempt === $maxRetries) {
                     throw new \RuntimeException('خطا در ارتباط با سرویس هوش مصنوعی: timeout');

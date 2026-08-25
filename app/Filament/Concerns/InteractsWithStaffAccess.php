@@ -3,7 +3,6 @@
 namespace App\Filament\Concerns;
 
 use App\Support\StaffRoles;
-use Filament\Tables;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Actions\DeleteBulkAction;
 

@@ -1,5 +1,7 @@
 <template>
-  <section class="hero-bleed relative isolate min-h-[min(88dvh,720px)] overflow-hidden">
+  <section
+    class="hero-bleed relative isolate min-h-[min(88dvh,720px)] overflow-hidden"
+  >
     <!-- Full-bleed visual plane -->
     <div class="absolute inset-0" aria-hidden="true">
       <div class="absolute inset-0 bg-desk-dark" />
@@ -7,8 +9,16 @@
         class="absolute inset-0 opacity-90"
         style="
           background:
-            radial-gradient(ellipse 80% 60% at 15% 20%, rgba(239, 57, 78, 0.28), transparent 55%),
-            radial-gradient(ellipse 70% 50% at 90% 80%, rgba(249, 115, 22, 0.18), transparent 50%),
+            radial-gradient(
+              ellipse 80% 60% at 15% 20%,
+              rgba(239, 57, 78, 0.28),
+              transparent 55%
+            ),
+            radial-gradient(
+              ellipse 70% 50% at 90% 80%,
+              rgba(249, 115, 22, 0.18),
+              transparent 50%
+            ),
             linear-gradient(165deg, #0f2744 0%, #163556 42%, #0c1d33 100%);
         "
       />
@@ -16,10 +26,19 @@
       <div
         class="absolute inset-0 opacity-[0.12]"
         style="
-          background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+          background-image:
+            linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+            linear-gradient(
+              90deg,
+              rgba(255, 255, 255, 0.06) 1px,
+              transparent 1px
+            );
           background-size: 56px 56px;
-          mask-image: radial-gradient(ellipse at 60% 40%, black 20%, transparent 75%);
+          mask-image: radial-gradient(
+            ellipse at 60% 40%,
+            black 20%,
+            transparent 75%
+          );
         "
       />
       <!-- Dominant brand watermark -->
@@ -42,13 +61,17 @@
           جاب‌آزمون
         </p>
 
-        <h1 class="text-xl font-bold leading-snug text-white/95 sm:text-2xl lg:text-3xl">
+        <h1
+          class="text-xl font-bold leading-snug text-white/95 sm:text-2xl lg:text-3xl"
+        >
           آمادگی امروز، استخدام فردا
         </h1>
 
-        <p class="max-w-md text-sm leading-7 text-white/70 sm:text-base sm:leading-8">
-          آزمون شبیه‌سازی، آگهی استخدام، منابع PDF و رزومه‌ساز — همه‌چیز در یک مسیر
-          ساده و قابل اعتماد.
+        <p
+          class="max-w-md text-sm leading-7 text-white/70 sm:text-base sm:leading-8"
+        >
+          آزمون شبیه‌سازی، آگهی استخدام، منابع PDF و رزومه‌ساز — همه‌چیز در یک
+          مسیر ساده و قابل اعتماد.
         </p>
 
         <div class="flex flex-col gap-2.5 pt-1 sm:flex-row sm:items-center">

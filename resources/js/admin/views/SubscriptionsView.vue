@@ -1,181 +1,181 @@
 <template>
-      <div class="space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-bold text-gray-800">مدیریت اشتراک‌ها</h1>
-        <div class="flex gap-2">
-          <button
-            class="btn-muted"
-            :class="tab === 'subscribers' ? 'ring-2 ring-orange-400' : ''"
-            @click="showSubscribers"
-          >
-            مشترکین
-          </button>
-          <button
-            class="btn-muted"
-            :class="tab === 'plans' ? 'ring-2 ring-orange-400' : ''"
-            @click="tab = 'plans'"
-          >
-            پلن‌ها
-          </button>
-          <button class="btn-dark" @click="openCreate">پلن جدید</button>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          title="اشتراک‌های فعال"
-          :value="fa(store.stats.active_subscriptions)"
-          icon="◎"
-          color="#0f2744"
-        />
-        <StatCard
-          title="درآمد ماهانه اشتراک"
-          :value="fa(store.stats.monthly_revenue)"
-          icon="₪"
-          color="#059669"
-        />
-        <StatCard
-          title="تمدیدهای امروز"
-          :value="fa(store.stats.renewals_today)"
-          icon="↻"
-          color="#2563eb"
-        />
-        <StatCard
-          title="انقضای نزدیک (۳ روز)"
-          :value="fa(store.stats.expiring_soon)"
-          icon="!"
-          color="#dc2626"
-        />
-      </div>
-
-      <template v-if="tab === 'plans'">
-        <DataTable
-          :columns="planCols"
-          :rows="store.plans"
-          :loading="store.loading"
-          actions
+  <div class="space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-bold text-gray-800">مدیریت اشتراک‌ها</h1>
+      <div class="flex gap-2">
+        <button
+          class="btn-muted"
+          :class="tab === 'subscribers' ? 'ring-2 ring-orange-400' : ''"
+          @click="showSubscribers"
         >
-          <template #cell-index="{ index }">{{ fa(index + 1) }}</template>
-          <template #cell-duration_days="{ row }"
-            >{{ fa(row.duration_days) }} روز</template
-          >
-          <template #cell-price="{ row }">{{ fa(row.price) }}</template>
-          <template #cell-features="{ row }">
-            <span class="line-clamp-2 text-xs text-slate-500">{{
-              (row.features || []).join('، ') || '—'
-            }}</span>
-          </template>
-          <template #cell-is_active="{ row }">
-            <span
-              class="rounded-full px-2 py-0.5 text-xs font-bold"
-              :class="
-                row.is_active
-                  ? 'bg-emerald-100 text-emerald-800'
-                  : 'bg-slate-100 text-slate-600'
-              "
-            >
-              {{ row.is_active ? 'فعال' : 'غیرفعال' }}
-            </span>
-          </template>
-          <template #actions="{ row }">
-            <div class="flex justify-end gap-1">
-              <button class="act" @click="openEdit(row)">ویرایش</button>
-              <button class="act text-red-600" @click="askDelete(row)">
-                حذف
-              </button>
-            </div>
-          </template>
-        </DataTable>
-      </template>
-
-      <template v-else>
-        <div class="rounded-xl bg-white p-4 shadow-sm">
-          <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <select v-model="store.filters.status" class="field">
-              <option value="">همه وضعیت‌ها</option>
-              <option value="active">فعال</option>
-              <option value="expired">منقضی</option>
-            </select>
-            <select v-model="store.filters.plan_id" class="field">
-              <option value="">همه پلن‌ها</option>
-              <option v-for="p in store.plans" :key="p.id" :value="p.id">
-                {{ p.name }}
-              </option>
-            </select>
-            <input
-              v-model="store.filters.search"
-              class="field"
-              placeholder="جستجو نام/موبایل"
-              @keyup.enter="loadSubs"
-            />
-          </div>
-          <div class="mt-3 flex gap-2">
-            <button class="btn-orange" @click="loadSubs">اعمال فیلتر</button>
-          </div>
-        </div>
-
-        <DataTable
-          :columns="subCols"
-          :rows="store.subscribers"
-          :loading="store.loading"
-          actions
+          مشترکین
+        </button>
+        <button
+          class="btn-muted"
+          :class="tab === 'plans' ? 'ring-2 ring-orange-400' : ''"
+          @click="tab = 'plans'"
         >
-          <template #cell-index="{ index }">{{ fa(rowNum(index)) }}</template>
-          <template #cell-user="{ row }">
-            <div>
-              <p class="font-medium">{{ row.name || '—' }}</p>
-              <p class="text-xs text-slate-400" dir="ltr">{{ row.mobile }}</p>
-            </div>
-          </template>
-          <template #cell-plan="{ row }">{{ row.plan?.name || '—' }}</template>
-          <template #cell-started_at="{ row }">{{
-            formatDate(row.started_at)
-          }}</template>
-          <template #cell-expires_at="{ row }">{{
-            formatDate(row.expires_at)
-          }}</template>
-          <template #cell-status="{ row }">
-            <span
-              class="rounded-full px-2 py-0.5 text-xs font-bold"
-              :class="
-                row.status === 'active'
-                  ? 'bg-emerald-100 text-emerald-800'
-                  : 'bg-red-100 text-red-700'
-              "
-            >
-              {{ row.status === 'active' ? 'فعال' : 'منقضی' }}
-            </span>
-          </template>
-          <template #actions="{ row }">
-            <div class="flex flex-wrap justify-end gap-1">
-              <button class="act" @click="renew(row)">تمدید</button>
-              <button class="act text-red-600" @click="askCancel(row)">
-                لغو
-              </button>
-              <RouterLink class="act" :to="`/admin/users`">کاربر</RouterLink>
-            </div>
-          </template>
-        </DataTable>
-        <PaginationBar
-          :meta="store.meta"
-          @page="(p) => store.fetchSubscribers(p)"
-        />
-      </template>
+          پلن‌ها
+        </button>
+        <button class="btn-dark" @click="openCreate">پلن جدید</button>
+      </div>
     </div>
 
-    <PlanModal
-      :open="modalOpen"
-      :plan="editing"
-      @close="modalOpen = false"
-      @saved="onSaved"
-    />
-    <ConfirmDialog
-      :open="confirm.open"
-      :title="confirm.title"
-      :message="confirm.message"
-      @cancel="confirm.open = false"
-      @confirm="runConfirm"
-    />
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <StatCard
+        title="اشتراک‌های فعال"
+        :value="fa(store.stats.active_subscriptions)"
+        icon="◎"
+        color="#0f2744"
+      />
+      <StatCard
+        title="درآمد ماهانه اشتراک"
+        :value="fa(store.stats.monthly_revenue)"
+        icon="₪"
+        color="#059669"
+      />
+      <StatCard
+        title="تمدیدهای امروز"
+        :value="fa(store.stats.renewals_today)"
+        icon="↻"
+        color="#2563eb"
+      />
+      <StatCard
+        title="انقضای نزدیک (۳ روز)"
+        :value="fa(store.stats.expiring_soon)"
+        icon="!"
+        color="#dc2626"
+      />
+    </div>
+
+    <template v-if="tab === 'plans'">
+      <DataTable
+        :columns="planCols"
+        :rows="store.plans"
+        :loading="store.loading"
+        actions
+      >
+        <template #cell-index="{ index }">{{ fa(index + 1) }}</template>
+        <template #cell-duration_days="{ row }"
+          >{{ fa(row.duration_days) }} روز</template
+        >
+        <template #cell-price="{ row }">{{ fa(row.price) }}</template>
+        <template #cell-features="{ row }">
+          <span class="line-clamp-2 text-xs text-slate-500">{{
+            (row.features || []).join('، ') || '—'
+          }}</span>
+        </template>
+        <template #cell-is_active="{ row }">
+          <span
+            class="rounded-full px-2 py-0.5 text-xs font-bold"
+            :class="
+              row.is_active
+                ? 'bg-emerald-100 text-emerald-800'
+                : 'bg-slate-100 text-slate-600'
+            "
+          >
+            {{ row.is_active ? 'فعال' : 'غیرفعال' }}
+          </span>
+        </template>
+        <template #actions="{ row }">
+          <div class="flex justify-end gap-1">
+            <button class="act" @click="openEdit(row)">ویرایش</button>
+            <button class="act text-red-600" @click="askDelete(row)">
+              حذف
+            </button>
+          </div>
+        </template>
+      </DataTable>
+    </template>
+
+    <template v-else>
+      <div class="rounded-xl bg-white p-4 shadow-sm">
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <select v-model="store.filters.status" class="field">
+            <option value="">همه وضعیت‌ها</option>
+            <option value="active">فعال</option>
+            <option value="expired">منقضی</option>
+          </select>
+          <select v-model="store.filters.plan_id" class="field">
+            <option value="">همه پلن‌ها</option>
+            <option v-for="p in store.plans" :key="p.id" :value="p.id">
+              {{ p.name }}
+            </option>
+          </select>
+          <input
+            v-model="store.filters.search"
+            class="field"
+            placeholder="جستجو نام/موبایل"
+            @keyup.enter="loadSubs"
+          />
+        </div>
+        <div class="mt-3 flex gap-2">
+          <button class="btn-orange" @click="loadSubs">اعمال فیلتر</button>
+        </div>
+      </div>
+
+      <DataTable
+        :columns="subCols"
+        :rows="store.subscribers"
+        :loading="store.loading"
+        actions
+      >
+        <template #cell-index="{ index }">{{ fa(rowNum(index)) }}</template>
+        <template #cell-user="{ row }">
+          <div>
+            <p class="font-medium">{{ row.name || '—' }}</p>
+            <p class="text-xs text-slate-400" dir="ltr">{{ row.mobile }}</p>
+          </div>
+        </template>
+        <template #cell-plan="{ row }">{{ row.plan?.name || '—' }}</template>
+        <template #cell-started_at="{ row }">{{
+          formatDate(row.started_at)
+        }}</template>
+        <template #cell-expires_at="{ row }">{{
+          formatDate(row.expires_at)
+        }}</template>
+        <template #cell-status="{ row }">
+          <span
+            class="rounded-full px-2 py-0.5 text-xs font-bold"
+            :class="
+              row.status === 'active'
+                ? 'bg-emerald-100 text-emerald-800'
+                : 'bg-red-100 text-red-700'
+            "
+          >
+            {{ row.status === 'active' ? 'فعال' : 'منقضی' }}
+          </span>
+        </template>
+        <template #actions="{ row }">
+          <div class="flex flex-wrap justify-end gap-1">
+            <button class="act" @click="renew(row)">تمدید</button>
+            <button class="act text-red-600" @click="askCancel(row)">
+              لغو
+            </button>
+            <RouterLink class="act" :to="`/admin/users`">کاربر</RouterLink>
+          </div>
+        </template>
+      </DataTable>
+      <PaginationBar
+        :meta="store.meta"
+        @page="(p) => store.fetchSubscribers(p)"
+      />
+    </template>
+  </div>
+
+  <PlanModal
+    :open="modalOpen"
+    :plan="editing"
+    @close="modalOpen = false"
+    @saved="onSaved"
+  />
+  <ConfirmDialog
+    :open="confirm.open"
+    :title="confirm.title"
+    :message="confirm.message"
+    @cancel="confirm.open = false"
+    @confirm="runConfirm"
+  />
 </template>
 
 <script setup>

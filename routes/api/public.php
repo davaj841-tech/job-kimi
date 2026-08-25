@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\ExamController;
 use App\Http\Controllers\Api\FeatureController;
+use App\Http\Controllers\Api\GeneratedContentPublicController;
+use App\Http\Controllers\Api\HomeFeedController;
 use App\Http\Controllers\Api\JobPostController;
 use App\Http\Controllers\Api\LeaderboardController;
 use App\Http\Controllers\Api\NewsletterController;
@@ -15,10 +17,10 @@ use App\Http\Controllers\Api\PageViewController;
 use App\Http\Controllers\Api\PaymentGatewayController;
 use App\Http\Controllers\Api\PDFProductController;
 use App\Http\Controllers\Api\PublicSettingsController;
-use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SearchSuggestionController;
 use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\HealthController;
 use App\Models\ExamSubject;
 use Illuminate\Support\Facades\Route;
 
@@ -58,8 +60,8 @@ Route::get('/job-posts/{id}', [JobPostController::class, 'show'])->whereNumber('
 Route::get('/blog-posts', [BlogPostController::class, 'index']);
 Route::get('/blog-posts/{slug}', [BlogPostController::class, 'show']);
 
-Route::get('/articles', [\App\Http\Controllers\Api\GeneratedContentPublicController::class, 'index']);
-Route::get('/articles/{slug}', [\App\Http\Controllers\Api\GeneratedContentPublicController::class, 'show']);
+Route::get('/articles', [GeneratedContentPublicController::class, 'index']);
+Route::get('/articles/{slug}', [GeneratedContentPublicController::class, 'show']);
 
 Route::get('/subscription-plans', [SubscriptionController::class, 'plans']);
 Route::get('/pdf-products', [PDFProductController::class, 'index']);
@@ -70,7 +72,7 @@ Route::get('/exams/{slug}', [ExamController::class, 'show'])->middleware('thrott
 
 Route::post('/contact', [ContactController::class, 'store'])->middleware(['auth.captcha', 'throttle:contact']);
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->middleware('throttle:newsletter');
-Route::get('/home-feed', \App\Http\Controllers\Api\HomeFeedController::class)
+Route::get('/home-feed', HomeFeedController::class)
     ->middleware('cache.response:120');
 Route::get('/settings/public', [PublicSettingsController::class, 'index'])->middleware('cache.response:300');
 Route::get('/banners', [BannerController::class, 'index'])->middleware('cache.response:300');

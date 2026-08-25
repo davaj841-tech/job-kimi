@@ -77,7 +77,6 @@ class CatalogAttachService
     }
 
     /**
-     * @param  mixed  $ids
      * @return array<int, int>
      */
     public function intIds(mixed $ids): array

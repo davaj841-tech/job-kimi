@@ -6,6 +6,7 @@ use App\Models\JobClassification;
 use App\Models\JobPost;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class JobPostRepository
@@ -295,7 +296,7 @@ class JobPostRepository
     }
 
     /**
-     * @param  \Illuminate\Database\Eloquent\Builder<JobPost>  $query
+     * @param  Builder<JobPost>  $query
      * @param  array<string, mixed>  $filters
      */
     protected function applyLocationFilters($query, array $filters): void

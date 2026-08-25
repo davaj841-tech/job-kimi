@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\PdfProductResource;
 use App\Models\PdfProduct;
+use App\Models\PdfPurchase;
 use App\Models\Transaction;
 use App\Repositories\PDFProductRepository;
 use App\Services\Payment\GatewayCallbackService;
@@ -31,7 +32,7 @@ class PDFProductController extends BaseController
         $purchasedIds = [];
         $user = $request->user('sanctum');
         if ($user) {
-            $purchasedIds = \App\Models\PdfPurchase::query()
+            $purchasedIds = PdfPurchase::query()
                 ->where('user_id', $user->id)
                 ->pluck('pdf_product_id')
                 ->map(fn ($id) => (int) $id)

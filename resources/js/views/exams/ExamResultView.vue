@@ -41,15 +41,36 @@
         />
         <p class="text-sm text-emerald-600">
           پاسخ صحیح:
-          <b>{{ item.correct_answer_label || optionFaLetter(item.correct_answer) }})</b>
-          <span v-html="renderKatexHtml(item.correct_answer_text || optionText(item, item.correct_answer))" />
+          <b
+            >{{
+              item.correct_answer_label || optionFaLetter(item.correct_answer)
+            }})</b
+          >
+          <span
+            v-html="
+              renderKatexHtml(
+                item.correct_answer_text ||
+                  optionText(item, item.correct_answer)
+              )
+            "
+          />
         </p>
         <p v-if="!item.is_correct" class="text-sm text-brand">
           پاسخ شما:
           <template v-if="item.is_blank || !item.user_answer">نزده</template>
           <template v-else>
-            <b>{{ item.user_answer_label || optionFaLetter(item.user_answer) }})</b>
-            <span v-html="renderKatexHtml(item.user_answer_text || optionText(item, item.user_answer))" />
+            <b
+              >{{
+                item.user_answer_label || optionFaLetter(item.user_answer)
+              }})</b
+            >
+            <span
+              v-html="
+                renderKatexHtml(
+                  item.user_answer_text || optionText(item, item.user_answer)
+                )
+              "
+            />
           </template>
         </p>
       </div>
@@ -60,7 +81,11 @@
         class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-900/40 dark:bg-amber-950/30"
       >
         <p class="font-bold text-amber-900 dark:text-amber-200">
-          {{ retryMode === 'blank' ? 'نتیجه آزمون سوالات بدون پاسخ' : 'نتیجه مرور سوالات غلط' }}
+          {{
+            retryMode === 'blank'
+              ? 'نتیجه آزمون سوالات بدون پاسخ'
+              : 'نتیجه مرور سوالات غلط'
+          }}
         </p>
         <p class="mt-1 text-xs text-amber-800 dark:text-amber-300/90">
           {{
@@ -115,7 +140,11 @@
             class="rounded-2xl p-3 text-center"
             :class="stat.bg"
           >
-            <component :is="stat.icon" class="mx-auto h-6 w-6" :class="stat.color" />
+            <component
+              :is="stat.icon"
+              class="mx-auto h-6 w-6"
+              :class="stat.color"
+            />
             <p class="mt-1 text-[11px] text-ink-muted dark:text-slate-400">
               {{ stat.label }}
             </p>
@@ -256,9 +285,19 @@
                 />
                 <p class="text-sm text-emerald-600 dark:text-emerald-400">
                   پاسخ صحیح:
-                  <b>{{ item.correct_answer_label || optionFaLetter(item.correct_answer) }})</b>
+                  <b
+                    >{{
+                      item.correct_answer_label ||
+                      optionFaLetter(item.correct_answer)
+                    }})</b
+                  >
                   <span
-                    v-html="renderKatexHtml(item.correct_answer_text || optionText(item, item.correct_answer))"
+                    v-html="
+                      renderKatexHtml(
+                        item.correct_answer_text ||
+                          optionText(item, item.correct_answer)
+                      )
+                    "
                   />
                 </p>
                 <p
@@ -266,11 +305,23 @@
                   class="text-sm text-brand dark:text-red-300"
                 >
                   پاسخ شما:
-                  <template v-if="item.is_blank || !item.user_answer">نزده</template>
+                  <template v-if="item.is_blank || !item.user_answer"
+                    >نزده</template
+                  >
                   <template v-else>
-                    <b>{{ item.user_answer_label || optionFaLetter(item.user_answer) }})</b>
+                    <b
+                      >{{
+                        item.user_answer_label ||
+                        optionFaLetter(item.user_answer)
+                      }})</b
+                    >
                     <span
-                      v-html="renderKatexHtml(item.user_answer_text || optionText(item, item.user_answer))"
+                      v-html="
+                        renderKatexHtml(
+                          item.user_answer_text ||
+                            optionText(item, item.user_answer)
+                        )
+                      "
                     />
                   </template>
                 </p>
@@ -337,7 +388,9 @@
 
       <p v-if="error" class="text-center text-sm text-brand">{{ error }}</p>
     </div>
-    <p v-else class="text-center text-brand">{{ error || 'نتیجه یافت نشد.' }}</p>
+    <p v-else class="text-center text-brand">
+      {{ error || 'نتیجه یافت نشد.' }}
+    </p>
   </div>
 </template>
 
@@ -376,7 +429,10 @@ type ExamRetryApiError = { message?: string }
 
 type ExamResultAttempt = {
   exam_title?: string | null
-  exam?: { title?: string | null; total_questions?: number | string | null } | null
+  exam?: {
+    title?: string | null
+    total_questions?: number | string | null
+  } | null
   total_correct?: number | string | null
   total_wrong?: number | string | null
   percentage?: number | string | null
@@ -442,12 +498,12 @@ const ratingSaving = ref(false)
 const ratingMsg = ref('')
 
 const passed = computed(() => Boolean(analysis.value?.passed))
-const isRetryResult = computed(
-  () =>
-    Boolean(result.value?.is_retry_wrong || analysis.value?.is_retry_wrong)
+const isRetryResult = computed(() =>
+  Boolean(result.value?.is_retry_wrong || analysis.value?.is_retry_wrong)
 )
 const parentAttemptId = computed(
-  () => result.value?.parent_attempt_id || analysis.value?.parent_attempt_id || null
+  () =>
+    result.value?.parent_attempt_id || analysis.value?.parent_attempt_id || null
 )
 const retryMode = computed(
   () => result.value?.retry_mode || analysis.value?.retry_mode || 'wrong'
@@ -462,15 +518,15 @@ const chartSubjects = computed(() =>
 const totalQuestions = computed(() => {
   if (sheet.value.length) return sheet.value.length
   return Number(
-    analysis.value?.total_questions ||
-      result.value?.exam?.total_questions ||
-      0
+    analysis.value?.total_questions || result.value?.exam?.total_questions || 0
   )
 })
 const correctCount = computed(() => {
   if (sheet.value.length)
     return sheet.value.filter((i) => i.is_correct && !i.is_blank).length
-  return Number(result.value?.total_correct || analysis.value?.total_correct || 0)
+  return Number(
+    result.value?.total_correct || analysis.value?.total_correct || 0
+  )
 })
 const wrongCount = computed(() => {
   if (sheet.value.length)
@@ -479,11 +535,15 @@ const wrongCount = computed(() => {
 })
 const blankCount = computed(() => {
   if (sheet.value.length) return sheet.value.filter((i) => i.is_blank).length
-  return Math.max(0, totalQuestions.value - correctCount.value - wrongCount.value)
+  return Math.max(
+    0,
+    totalQuestions.value - correctCount.value - wrongCount.value
+  )
 })
 const displayPercentage = computed(() => {
   const total = totalQuestions.value
-  if (!total) return Number(result.value?.percentage || analysis.value?.percentage || 0)
+  if (!total)
+    return Number(result.value?.percentage || analysis.value?.percentage || 0)
   return Math.round((correctCount.value / total) * 10000) / 100
 })
 const filteredSheet = computed(() => {
@@ -538,9 +598,7 @@ const stats = computed(() => [
   },
   {
     label: 'رتبه',
-    value: analysis.value?.rank
-      ? `#${toFaDigits(analysis.value.rank)}`
-      : '—',
+    value: analysis.value?.rank ? `#${toFaDigits(analysis.value.rank)}` : '—',
     icon: TrophyIcon,
     color: 'text-amber-600',
     bg: 'bg-amber-50 dark:bg-amber-900/20',
@@ -600,9 +658,12 @@ async function retry(mode: 'blank' | 'wrong') {
   try {
     const examId = route.params.id
     const attemptId = route.params.attemptId
-    const { data } = await api.post(`/exams/${examId}/retry-wrong/${attemptId}`, {
-      mode,
-    })
+    const { data } = await api.post(
+      `/exams/${examId}/retry-wrong/${attemptId}`,
+      {
+        mode,
+      }
+    )
     const payload = (data.data || {}) as RetryWrongPayload
     session.resetSessionUx()
     const perPage = Math.max(1, Math.min(20, Number(payload.per_page) || 5))
@@ -613,7 +674,9 @@ async function retry(mode: 'blank' | 'wrong') {
       questions: payload.questions || [],
       duration: payload.duration_minutes || 20,
       title:
-        (mode === 'blank' ? 'آزمون سوالات بدون پاسخ · ' : 'مرور سوالات غلط · ') +
+        (mode === 'blank'
+          ? 'آزمون سوالات بدون پاسخ · '
+          : 'مرور سوالات غلط · ') +
         (result.value?.exam?.title || result.value?.exam_title || 'آزمون'),
       perPage,
       isRetryWrong: true,

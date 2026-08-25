@@ -1,7 +1,7 @@
 <template>
   <div
-    class="relative mx-auto h-56 w-full max-w-sm"
     v-if="chartData.labels.length"
+    class="relative mx-auto h-56 w-full max-w-sm"
   >
     <Radar :data="chartData" :options="options" />
   </div>
@@ -23,7 +23,14 @@ import {
   Legend,
 } from 'chart.js'
 
-ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
+ChartJS.register(
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend
+)
 
 const props = defineProps<{
   data: Array<{ label: string; value: number }>
@@ -53,7 +60,9 @@ const options = {
       max: 100,
       ticks: { display: false },
       grid: { color: 'rgba(148, 163, 184, 0.35)' },
-      pointLabels: { font: { family: 'Estedad Variable, Estedad, Vazirmatn', size: 11 } },
+      pointLabels: {
+        font: { family: 'Estedad Variable, Estedad, Vazirmatn', size: 11 },
+      },
     },
   },
   plugins: {

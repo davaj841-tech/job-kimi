@@ -3,7 +3,10 @@
     <div v-if="mode === 'turnstile'" class="flex justify-center">
       <div ref="el" class="cf-turnstile"></div>
     </div>
-    <div v-else class="rounded-xl border border-surface-line bg-surface-page p-3">
+    <div
+      v-else
+      class="rounded-xl border border-surface-line bg-surface-page p-3"
+    >
       <div class="mb-2 flex items-center justify-between gap-2">
         <p class="text-xs font-bold text-ink-soft">کپچا امنیتی</p>
         <button
@@ -108,7 +111,8 @@ function loadScript() {
     }
     const s = document.createElement('script')
     s.id = 'cf-turnstile-script'
-    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+    s.src =
+      'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
     s.async = true
     s.onload = () => resolve()
     document.head.appendChild(s)

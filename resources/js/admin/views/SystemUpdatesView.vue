@@ -4,19 +4,26 @@
       <div>
         <h1 class="text-2xl font-bold">به‌روزرسانی سیستم</h1>
         <p class="mt-1 text-sm text-slate-500">
-          آپلود بسته ZIP رسمی JobAzmoon — اعتبارسنجی، بکاپ، نصب، مهاجرت و Health Check به‌صورت امن.
+          آپلود بسته ZIP رسمی JobAzmoon — اعتبارسنجی، بکاپ، نصب، مهاجرت و Health
+          Check به‌صورت امن.
         </p>
       </div>
       <div class="rounded-xl bg-slate-900 px-4 py-3 text-white">
         <p class="text-xs text-slate-300">نسخه فعلی</p>
-        <p class="text-xl font-black tracking-wide">v{{ status.current_version || '—' }}</p>
+        <p class="text-xl font-black tracking-wide">
+          v{{ status.current_version || '—' }}
+        </p>
       </div>
     </div>
 
     <div class="grid gap-4 lg:grid-cols-2">
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section
+        class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+      >
         <h2 class="text-lg font-bold">آپلود بسته به‌روزرسانی</h2>
-        <p class="mt-1 text-sm text-slate-500">فقط فایل‌های jobazmoon-update-vX.Y.Z.zip</p>
+        <p class="mt-1 text-sm text-slate-500">
+          فقط فایل‌های jobazmoon-update-vX.Y.Z.zip
+        </p>
         <input
           ref="fileInput"
           type="file"
@@ -25,47 +32,94 @@
           @change="onFile"
         />
         <div class="mt-4 flex flex-wrap gap-2">
-          <button class="btn-dark" :disabled="!file || busy" @click="validatePack">بررسی اولیه</button>
-          <button class="btn-orange" :disabled="!file || !preflightOk || busy" @click="installPack">
+          <button
+            class="btn-dark"
+            :disabled="!file || busy"
+            @click="validatePack"
+          >
+            بررسی اولیه
+          </button>
+          <button
+            class="btn-orange"
+            :disabled="!file || !preflightOk || busy"
+            @click="installPack"
+          >
             نصب به‌روزرسانی
           </button>
         </div>
         <p v-if="message" class="mt-3 text-sm text-slate-600">{{ message }}</p>
       </section>
 
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section
+        class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+      >
         <h2 class="text-lg font-bold">اطلاعات بسته / Preflight</h2>
         <div v-if="info" class="mt-3 space-y-2 text-sm">
-          <p><span class="text-slate-500">نسخه جدید:</span> <strong>v{{ info.target_version }}</strong></p>
-          <p><span class="text-slate-500">از نسخه:</span> v{{ info.current_version }}</p>
-          <p v-if="info.manifest?.description"><span class="text-slate-500">توضیح:</span> {{ info.manifest.description }}</p>
-          <p v-if="info.manifest?.release_date"><span class="text-slate-500">تاریخ:</span> {{ info.manifest.release_date }}</p>
-          <p><span class="text-slate-500">PHP:</span> {{ info.manifest?.php }}</p>
-          <p><span class="text-slate-500">Laravel:</span> {{ info.manifest?.laravel }}</p>
-          <p><span class="text-slate-500">فایل‌ها / حذف / مهاجرت:</span>
-            {{ info.files_count }} / {{ info.deleted_count }} / {{ info.migrations_count }}
+          <p>
+            <span class="text-slate-500">نسخه جدید:</span>
+            <strong>v{{ info.target_version }}</strong>
+          </p>
+          <p>
+            <span class="text-slate-500">از نسخه:</span> v{{
+              info.current_version
+            }}
+          </p>
+          <p v-if="info.manifest?.description">
+            <span class="text-slate-500">توضیح:</span>
+            {{ info.manifest.description }}
+          </p>
+          <p v-if="info.manifest?.release_date">
+            <span class="text-slate-500">تاریخ:</span>
+            {{ info.manifest.release_date }}
+          </p>
+          <p>
+            <span class="text-slate-500">PHP:</span> {{ info.manifest?.php }}
+          </p>
+          <p>
+            <span class="text-slate-500">Laravel:</span>
+            {{ info.manifest?.laravel }}
+          </p>
+          <p>
+            <span class="text-slate-500">فایل‌ها / حذف / مهاجرت:</span>
+            {{ info.files_count }} / {{ info.deleted_count }} /
+            {{ info.migrations_count }}
           </p>
         </div>
-        <ul v-if="preflightEntries.length" class="mt-4 grid grid-cols-2 gap-2 text-sm">
+        <ul
+          v-if="preflightEntries.length"
+          class="mt-4 grid grid-cols-2 gap-2 text-sm"
+        >
           <li
             v-for="row in preflightEntries"
             :key="row.key"
             class="rounded-lg px-3 py-2"
-            :class="row.ok ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-700'"
+            :class="
+              row.ok
+                ? 'bg-emerald-50 text-emerald-800'
+                : 'bg-red-50 text-red-700'
+            "
           >
             {{ row.ok ? '✓' : '✗' }} {{ row.label }}
           </li>
         </ul>
-        <p v-else class="mt-3 text-sm text-slate-400">پس از انتخاب ZIP، بررسی اولیه را اجرا کنید.</p>
+        <p v-else class="mt-3 text-sm text-slate-400">
+          پس از انتخاب ZIP، بررسی اولیه را اجرا کنید.
+        </p>
       </section>
     </div>
 
-    <section class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+    <section
+      class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"
+    >
       <p class="font-bold">نکته مهم دربارهٔ Database Rollback</p>
       <p class="mt-1 leading-6">
-        بازگردانی دیتابیس با <code class="rounded bg-white px-1">migrate:rollback</code> انجام نمی‌شود.
-        در صورت شکست نصب، سیستم از <strong>بکاپ کامل/SQL</strong> گرفته‌شده قبل از Update برای Restore استفاده می‌کند.
-        اگر بکاپ DB در دسترس نباشد، وضعیت Rollback به‌صورت <strong>ناقص (PARTIAL)</strong> ثبت می‌شود و نباید فرض کنید دیتابیس کامل برگشته است.
+        بازگردانی دیتابیس با
+        <code class="rounded bg-white px-1">migrate:rollback</code> انجام
+        نمی‌شود. در صورت شکست نصب، سیستم از
+        <strong>بکاپ کامل/SQL</strong> گرفته‌شده قبل از Update برای Restore
+        استفاده می‌کند. اگر بکاپ DB در دسترس نباشد، وضعیت Rollback به‌صورت
+        <strong>ناقص (PARTIAL)</strong> ثبت می‌شود و نباید فرض کنید دیتابیس کامل
+        برگشته است.
       </p>
     </section>
 
@@ -76,15 +130,22 @@
       </div>
       <DataTable :columns="columns" :rows="rows" :loading="loading" actions>
         <template #cell-version="{ row }">v{{ row.version }}</template>
-        <template #cell-previous_version="{ row }">v{{ row.previous_version || '—' }}</template>
+        <template #cell-previous_version="{ row }"
+          >v{{ row.previous_version || '—' }}</template
+        >
         <template #cell-status="{ row }">
           <span :class="statusClass(row.status)">{{ row.status }}</span>
           <span
-            v-if="row.status === 'ROLLED_BACK' && row.rollback_complete === false"
+            v-if="
+              row.status === 'ROLLED_BACK' && row.rollback_complete === false
+            "
             class="mr-1 text-xs text-amber-700"
-          >(DB/فایل ناقص)</span>
+            >(DB/فایل ناقص)</span
+          >
         </template>
-        <template #cell-started_at="{ row }">{{ formatDateTime(row.started_at) }}</template>
+        <template #cell-started_at="{ row }">{{
+          formatDateTime(row.started_at)
+        }}</template>
         <template #actions="{ row }">
           <button
             v-if="row.status === 'FAILED' || row.status === 'COMPLETED'"
@@ -97,13 +158,23 @@
       </DataTable>
     </section>
 
-    <section v-if="status.health" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section
+      v-if="status.health"
+      class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+    >
       <h2 class="text-lg font-bold">Health</h2>
-      <p class="mt-1 text-sm" :class="status.health.ok ? 'text-emerald-700' : 'text-red-600'">
+      <p
+        class="mt-1 text-sm"
+        :class="status.health.ok ? 'text-emerald-700' : 'text-red-600'"
+      >
         {{ status.health.ok ? 'سالم' : 'ناسالم' }}
       </p>
       <ul class="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-        <li v-for="(v, k) in status.health.checks || {}" :key="k" class="rounded-lg bg-slate-50 px-3 py-2">
+        <li
+          v-for="(v, k) in status.health.checks || {}"
+          :key="k"
+          class="rounded-lg bg-slate-50 px-3 py-2"
+        >
           {{ k }}: <strong>{{ v }}</strong>
         </li>
       </ul>
@@ -198,9 +269,13 @@ async function validatePack() {
   busy.value = true
   message.value = ''
   try {
-    const { data } = await adminApi.post('/admin/system-updates/validate', formData(), {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    const { data } = await adminApi.post(
+      '/admin/system-updates/validate',
+      formData(),
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    )
     info.value = data.data || data
     message.value = data.message || 'بسته معتبر است.'
     toast.success(message.value)
@@ -215,14 +290,19 @@ async function validatePack() {
 
 async function installPack() {
   if (!file.value || !preflightOk.value) return
-  if (!confirm('نصب به‌روزرسانی شروع شود؟ قبل از نصب بکاپ گرفته می‌شود.')) return
+  if (!confirm('نصب به‌روزرسانی شروع شود؟ قبل از نصب بکاپ گرفته می‌شود.'))
+    return
   busy.value = true
   message.value = ''
   try {
-    const { data } = await adminApi.post('/admin/system-updates/install', formData(), {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      timeout: 600000,
-    })
+    const { data } = await adminApi.post(
+      '/admin/system-updates/install',
+      formData(),
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 600000,
+      }
+    )
     message.value = data.message || 'نصب موفق'
     toast.success(message.value)
     file.value = null

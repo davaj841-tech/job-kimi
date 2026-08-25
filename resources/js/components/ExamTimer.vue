@@ -7,7 +7,10 @@
     :aria-label="`زمان باقی‌مانده ${display}`"
   >
     <span class="exam-timer__label">زمان باقی‌مانده</span>
-    <span class="exam-timer__value font-mono tabular-nums" data-testid="exam-timer-value">
+    <span
+      class="exam-timer__value font-mono tabular-nums"
+      data-testid="exam-timer-value"
+    >
       {{ display }}
     </span>
     <span
@@ -47,7 +50,9 @@ let timer: ReturnType<typeof setInterval> | undefined
 let warned = false
 let expiredEmitted = false
 
-const remainingMs = computed(() => Math.max(0, Number(props.endsAt) - now.value))
+const remainingMs = computed(() =>
+  Math.max(0, Number(props.endsAt) - now.value)
+)
 
 const display = computed(() => {
   const totalSec = Math.floor(remainingMs.value / 1000)

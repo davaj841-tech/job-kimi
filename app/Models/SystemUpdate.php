@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -28,8 +29,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool|null $rollback_complete
  * @property string|null $error
  * @property int|null $user_id
- * @property \Illuminate\Support\Carbon|null $started_at
- * @property \Illuminate\Support\Carbon|null $finished_at
+ * @property Carbon|null $started_at
+ * @property Carbon|null $finished_at
  * @property int|null $duration_ms
  */
 class SystemUpdate extends Model

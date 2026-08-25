@@ -40,8 +40,8 @@ use Illuminate\Support\Str;
  */
 class BlogPost extends Model
 {
-    use SoftDeletes;
     use HasSeo;
+    use SoftDeletes;
 
     protected $fillable = [
         'title',

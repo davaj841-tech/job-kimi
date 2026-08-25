@@ -8,7 +8,6 @@ declare(strict_types=1);
  *
  * Requires MySQL credentials in .env (DB_*). Creates an isolated temp public_html/job layout.
  */
-
 $projectRoot = dirname(__DIR__);
 require_once __DIR__.'/lib/InstallEngine.php';
 
@@ -173,7 +172,7 @@ $engine = new InstallEngine($publicHtml, $home, $jobDir, $zipPath, $publicHtml.'
 echo "==> Testing database connection\n";
 $test = $engine->testDatabase($db);
 if (! $test['ok']) {
-    fwrite(STDERR, "FAIL: ".$test['message']."\n");
+    fwrite(STDERR, 'FAIL: '.$test['message']."\n");
     rrmdir($tmp);
     exit(1);
 }
@@ -191,7 +190,7 @@ echo "==> Running full install into {$jobDir}\n";
 try {
     $result = $engine->runInstall($site, $db, true);
 } catch (Throwable $e) {
-    fwrite(STDERR, "FAIL: ".$e->getMessage()."\n");
+    fwrite(STDERR, 'FAIL: '.$e->getMessage()."\n");
     rrmdir($tmp);
     exit(1);
 }
@@ -210,7 +209,7 @@ if (! $engine->isLocked()) {
 
 $failedVerify = array_filter($result['verify'], static fn (array $c): bool => ! $c['ok'] && ! in_array($c['label'], ['HTTPS'], true));
 if ($failedVerify !== []) {
-    fwrite(STDERR, "WARN: verify checks failed: ".json_encode(array_column($failedVerify, 'label'), JSON_UNESCAPED_UNICODE)."\n");
+    fwrite(STDERR, 'WARN: verify checks failed: '.json_encode(array_column($failedVerify, 'label'), JSON_UNESCAPED_UNICODE)."\n");
 }
 
 echo "==> PASS — install completed\n";

@@ -21,7 +21,7 @@ class RedirectService
         return SeoRedirect::active()->where('source_path', $path)->first();
     }
 
-    public function handleRedirect(SeoRedirect $redirect): RedirectResponse|null
+    public function handleRedirect(SeoRedirect $redirect): ?RedirectResponse
     {
         $target = $this->resolveChain($redirect->target_url);
 

@@ -2,7 +2,10 @@
   <Card class="p-4">
     <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
       <h3 class="text-lg font-bold text-ink dark:text-white">روند نمرات</h3>
-      <p v-if="growthLabel" class="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+      <p
+        v-if="growthLabel"
+        class="text-xs font-medium text-emerald-600 dark:text-emerald-400"
+      >
         {{ growthLabel }}
       </p>
     </div>
@@ -28,11 +31,20 @@ import {
   Filler,
   Legend,
 } from 'chart.js'
+import type { ChartOptions, TooltipItem } from 'chart.js'
 import Card from '../ui/Card.vue'
 import { toFaDigits } from '@/utils/format'
 import type { ScoreHistoryItem } from '@/stores/dashboardStore'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler, Legend)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Filler,
+  Legend
+)
 
 const props = defineProps<{
   data: ScoreHistoryItem[]
@@ -56,7 +68,7 @@ const chartData = computed(() => ({
   ],
 }))
 
-const options = computed(() => ({
+const options = computed<ChartOptions<'line'>>(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -65,22 +77,30 @@ const options = computed(() => ({
       rtl: true,
       textDirection: 'rtl',
       callbacks: {
-        label: (ctx: { parsed: { y: number } }) =>
-          ` نمره: ${toFaDigits(Math.round(ctx.parsed.y))}٪`,
+        label: (ctx: TooltipItem<'line'>) => {
+          const y = ctx.parsed.y
+          if (y == null) {
+            return ''
+          }
+
+          return ` نمره: ${toFaDigits(Math.round(y))}٪`
+        },
       },
     },
   },
   scales: {
     x: {
       grid: { display: false },
-      ticks: { font: { family: 'Estedad Variable, Estedad, Vazirmatn', size: 10 } },
+      ticks: {
+        font: { family: 'Estedad Variable, Estedad, Vazirmatn', size: 10 },
+      },
     },
     y: {
       min: 0,
       max: 100,
       ticks: {
         font: { size: 10 },
-        callback: (v: number | string) => toFaDigits(v) + '٪',
+        callback: (v: string | number) => toFaDigits(v) + '٪',
       },
     },
   },

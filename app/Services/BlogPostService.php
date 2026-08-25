@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\BlogPost;
 use App\Repositories\BlogPostRepository;
-use App\Services\CatalogAttachService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 

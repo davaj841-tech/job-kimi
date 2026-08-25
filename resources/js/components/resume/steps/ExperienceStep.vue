@@ -1,7 +1,9 @@
 <template>
   <div class="space-y-5">
     <div class="flex items-center justify-between gap-2">
-      <h2 class="text-lg font-bold text-desk-text dark:text-white">سوابق شغلی</h2>
+      <h2 class="text-lg font-bold text-desk-text dark:text-white">
+        سوابق شغلی
+      </h2>
       <button
         type="button"
         class="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium dark:bg-slate-800"
@@ -12,10 +14,7 @@
       </button>
     </div>
 
-    <div
-      ref="sortableRef"
-      class="space-y-3"
-    >
+    <div ref="sortableRef" class="space-y-3">
       <div
         v-for="(exp, index) in local.experience"
         :key="exp._key || index"
@@ -50,7 +49,9 @@
                   :error="dateRangeError(exp)"
                   class="flex-1"
                 />
-                <label class="mb-2 flex items-center gap-1.5 whitespace-nowrap text-xs">
+                <label
+                  class="mb-2 flex items-center gap-1.5 whitespace-nowrap text-xs"
+                >
                   <input
                     v-model="exp.is_current"
                     type="checkbox"
@@ -61,7 +62,7 @@
               </div>
               <p
                 v-if="dateRangeError(exp)"
-                class="md:col-span-2 text-xs text-red-600"
+                class="text-xs text-red-600 md:col-span-2"
               >
                 {{ dateRangeError(exp) }}
               </p>
@@ -196,7 +197,8 @@ function initSortable() {
     handle: '.cursor-move',
     animation: 200,
     onEnd: (e) => {
-      if (e.oldIndex == null || e.newIndex == null || e.oldIndex === e.newIndex) return
+      if (e.oldIndex == null || e.newIndex == null || e.oldIndex === e.newIndex)
+        return
       const list = local.value.experience
       const [item] = list.splice(e.oldIndex, 1)
       list.splice(e.newIndex, 0, item)
@@ -216,6 +218,6 @@ watch(
     ensureKeys()
     await nextTick()
     initSortable()
-  },
+  }
 )
 </script>

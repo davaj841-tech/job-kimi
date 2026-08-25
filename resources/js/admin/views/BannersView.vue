@@ -1,61 +1,56 @@
 <template>
-      <div class="space-y-5">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold">بنرها</h1>
-        <button class="btn-dark" @click="openCreate">بنر جدید</button>
-      </div>
-      <DataTable :columns="columns" :rows="rows" :loading="loading" actions>
-        <template #cell-index="{ index }">{{ index + 1 }}</template>
-        <template #cell-is_active="{ row }">{{
-          row.is_active ? 'فعال' : 'غیرفعال'
-        }}</template>
-        <template #actions="{ row }">
-          <button class="act" @click="edit(row)">ویرایش</button>
-          <button class="act text-red-600" @click="remove(row)">حذف</button>
-        </template>
-      </DataTable>
+  <div class="space-y-5">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold">بنرها</h1>
+      <button class="btn-dark" @click="openCreate">بنر جدید</button>
     </div>
+    <DataTable :columns="columns" :rows="rows" :loading="loading" actions>
+      <template #cell-index="{ index }">{{ index + 1 }}</template>
+      <template #cell-is_active="{ row }">{{
+        row.is_active ? 'فعال' : 'غیرفعال'
+      }}</template>
+      <template #actions="{ row }">
+        <button class="act" @click="edit(row)">ویرایش</button>
+        <button class="act text-red-600" @click="remove(row)">حذف</button>
+      </template>
+    </DataTable>
+  </div>
 
-    <div
-      v-if="modal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+  <div
+    v-if="modal"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+  >
+    <form
+      class="w-full max-w-lg space-y-3 rounded-2xl bg-white p-5"
+      @submit.prevent="save"
     >
-      <form
-        class="w-full max-w-lg space-y-3 rounded-2xl bg-white p-5"
-        @submit.prevent="save"
+      <h3 class="font-bold">{{ form.id ? 'ویرایش بنر' : 'بنر جدید' }}</h3>
+      <input v-model="form.title" required class="field" placeholder="عنوان" />
+      <input v-model="form.link" class="field" dir="ltr" placeholder="لینک" />
+      <select v-model="form.position" class="field">
+        <option value="home_hero">هیرو صفحه اول</option>
+        <option value="home_top">بالای خانه</option>
+        <option value="home_middle">وسط خانه</option>
+        <option value="exam_sidebar">سایدبار آزمون</option>
+      </select>
+      <input
+        v-model.number="form.sort_order"
+        type="number"
+        class="field"
+        placeholder="ترتیب"
+      />
+      <label class="flex items-center gap-2 text-sm"
+        ><input v-model="form.is_active" type="checkbox" /> فعال</label
       >
-        <h3 class="font-bold">{{ form.id ? 'ویرایش بنر' : 'بنر جدید' }}</h3>
-        <input
-          v-model="form.title"
-          required
-          class="field"
-          placeholder="عنوان"
-        />
-        <input v-model="form.link" class="field" dir="ltr" placeholder="لینک" />
-        <select v-model="form.position" class="field">
-          <option value="home_hero">هیرو صفحه اول</option>
-          <option value="home_top">بالای خانه</option>
-          <option value="home_middle">وسط خانه</option>
-          <option value="exam_sidebar">سایدبار آزمون</option>
-        </select>
-        <input
-          v-model.number="form.sort_order"
-          type="number"
-          class="field"
-          placeholder="ترتیب"
-        />
-        <label class="flex items-center gap-2 text-sm"
-          ><input v-model="form.is_active" type="checkbox" /> فعال</label
-        >
-        <input type="file" accept="image/*" @change="onFile" />
-        <div class="flex justify-end gap-2">
-          <button type="button" class="btn-muted" @click="modal = false">
-            انصراف
-          </button>
-          <button class="btn-orange">ذخیره</button>
-        </div>
-      </form>
-    </div>
+      <input type="file" accept="image/*" @change="onFile" />
+      <div class="flex justify-end gap-2">
+        <button type="button" class="btn-muted" @click="modal = false">
+          انصراف
+        </button>
+        <button class="btn-orange">ذخیره</button>
+      </div>
+    </form>
+  </div>
 </template>
 
 <script setup>

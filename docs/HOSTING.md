@@ -45,9 +45,11 @@ TRUSTED_PROXIES=*
 
 ---
 
-## پروفایل ۲ — هاست اشتراکی (بدون Redis)
+## پروفایل ۲ — هاست اشتراکی cPanel (بدون Redis / بدون Composer روی سرور)
 
-در `.env`:
+مستند کامل: **[CPANEL_DEPLOYMENT.md](./CPANEL_DEPLOYMENT.md)**
+
+در `.env` (installer همین را می‌نویسد):
 
 ```
 APP_ENV=production
@@ -61,10 +63,19 @@ TELESCOPE_ENABLED=false
 ZARINPAL_SANDBOX=false
 ```
 
-- اگر symlink مجاز نیست: از پنل هاست `storage/app/public` را به `public/storage` مپ کنید یا فایل‌ها را کپی کنید.
-- اگر Node روی هاست نیست: روی سیستم خودتان `npm run build` بزنید و پوشه `public/build` را آپلود کنید.
-- برای صف: اگر cron دارید هر دقیقه یک‌بار:
-  `php artisan queue:work --stop-when-empty --max-time=50`
+- بسته را لوکال/CI بسازید: `php scripts/build-cpanel-package.php` → `dist/jobazmoon-core.zip`
+- نصب اولیه: `install.php` (یک‌بار) — بعد حذف می‌شود
+- آپدیت: Update Pack از پنل Admin — نه `install.php`
+- Cron: `schedule:run` + `queue:work database --stop-when-empty` (بدون Horizon)
+
+### GitHub → cPanel
+
+| روش | توضیح |
+|-----|--------|
+| **A (ترجیحی)** | cPanel Git Version Control برای sync سورس + ZIP آماده برای runtime |
+| **B** | آپلود دستی installer + `jobazmoon-core.zip` |
+
+جزئیات هر دو روش در `CPANEL_DEPLOYMENT.md`.
 
 ---
 

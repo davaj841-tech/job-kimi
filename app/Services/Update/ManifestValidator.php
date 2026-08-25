@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Update;
 
+use Illuminate\Foundation\Application;
 use RuntimeException;
 
 final class ManifestValidator
@@ -131,7 +132,7 @@ final class ManifestValidator
 
     private function laravelVersion(): string
     {
-        return \Illuminate\Foundation\Application::VERSION;
+        return Application::VERSION;
     }
 
     /**

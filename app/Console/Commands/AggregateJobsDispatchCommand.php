@@ -9,6 +9,7 @@ use App\Models\JobSource;
 use App\Services\Aggregation\AggregationScheduleService;
 use App\Services\Aggregation\JobSourceManager;
 use App\Services\FeatureFlagService;
+use Carbon\CarbonInterface;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -87,7 +88,7 @@ class AggregateJobsDispatchCommand extends Command
                     $source->schedule_mode ?: 'global',
                     $source->crawl_frequency,
                     $schedule->minimumIntervalMinutes($source).'m',
-                    ($source->last_crawled_at instanceof \Carbon\CarbonInterface ? $source->last_crawled_at->toDateTimeString() : null) ?? 'never',
+                    ($source->last_crawled_at instanceof CarbonInterface ? $source->last_crawled_at->toDateTimeString() : null) ?? 'never',
                 ];
             })->all()
         );

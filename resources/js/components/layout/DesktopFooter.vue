@@ -1,15 +1,15 @@
 <template>
-  <footer class="site-footer mt-auto hidden text-white lg:block" style="background: var(--theme-ink)">
+  <footer
+    class="site-footer mt-auto hidden text-white lg:block"
+    style="background: var(--theme-ink)"
+  >
     <div class="desk-container grid grid-cols-4 gap-6 py-6 text-sm">
       <div>
         <p class="mb-1.5 text-lg font-black">جاب‌آزمون</p>
         <p class="mb-3 leading-7 text-white/70">
           آزمون استخدامی، رزومه‌ساز و آگهی شغلی در یک مسیر.
         </p>
-        <TrustBadges
-          dark
-          compact
-        />
+        <TrustBadges dark compact />
         <SocialLinks wrap-class="mt-3" />
       </div>
 

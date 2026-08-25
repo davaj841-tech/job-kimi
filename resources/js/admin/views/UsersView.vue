@@ -1,265 +1,265 @@
 <template>
-      <div class="space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <h1 class="text-2xl font-bold text-gray-800">مدیریت کاربران</h1>
-          <span
-            class="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700"
-          >
-            {{ faNum(store.meta.total || 0) }} کاربر
-          </span>
-        </div>
-        <button
-          type="button"
-          class="rounded-xl bg-[#0f2744] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#1e3a5f]"
-          @click="createOpen = true"
+  <div class="space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-bold text-gray-800">مدیریت کاربران</h1>
+        <span
+          class="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700"
         >
-          ➕ افزودن کاربر
-        </button>
-      </div>
-
-      <div class="rounded-xl bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
-          <input
-            v-model="store.filters.search"
-            type="search"
-            placeholder="جستجو نام، موبایل، ایمیل..."
-            class="h-10 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-orange-400 lg:col-span-2"
-            @keyup.enter="applyFilters"
-          />
-          <select
-            v-model="store.filters.role"
-            class="h-10 rounded-xl border border-slate-200 px-3 text-sm"
-          >
-            <option value="">همه نقش‌ها</option>
-            <option value="jobseeker">کارجو</option>
-            <option value="employer">کارفرما</option>
-            <option value="operator">اپراتور</option>
-            <option value="admin">ادمین</option>
-          </select>
-          <select
-            v-model="store.filters.status"
-            class="h-10 rounded-xl border border-slate-200 px-3 text-sm"
-          >
-            <option value="">همه وضعیت‌ها</option>
-            <option value="active">فعال</option>
-            <option value="blocked">مسدود</option>
-          </select>
-          <select
-            v-model="store.filters.sort"
-            class="h-10 rounded-xl border border-slate-200 px-3 text-sm"
-          >
-            <option value="desc">جدیدترین</option>
-            <option value="asc">قدیمی‌ترین</option>
-            <option value="wallet_desc">بیشترین موجودی</option>
-          </select>
-        </div>
-        <div class="mt-3 flex gap-2">
-          <button
-            type="button"
-            class="rounded-xl bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600"
-            @click="applyFilters"
-          >
-            اعمال فیلتر
-          </button>
-          <button
-            type="button"
-            class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200"
-            @click="clearFilters"
-          >
-            پاک کردن
-          </button>
-        </div>
-      </div>
-
-      <DataTable
-        :columns="columns"
-        :rows="store.users"
-        :loading="store.loading"
-        actions
-      >
-        <template #cell-index="{ index }">
-          {{ faNum(rowNumber(index)) }}
-        </template>
-        <template #cell-role="{ row }">
-          <UserRoleBadge :role="row.role" />
-        </template>
-        <template #cell-subscription_plan="{ row }">
-          {{ row.subscription_plan || 'رایگان' }}
-        </template>
-        <template #cell-wallet_balance="{ row }">
-          {{ formatMoney(row.wallet_balance) }}
-        </template>
-        <template #cell-status="{ row }">
-          <StatusBadge :status="row.status" />
-        </template>
-        <template #cell-created_at="{ row }">
-          {{ formatDate(row.created_at) }}
-        </template>
-        <template #actions="{ row }">
-          <div class="flex flex-wrap justify-end gap-1">
-            <button
-              class="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-700"
-              @click="openDetail(row)"
-            >
-              مشاهده
-            </button>
-            <button
-              class="rounded-lg bg-orange-50 px-2 py-1 text-[11px] font-bold text-orange-700"
-              @click="openEdit(row)"
-            >
-              ویرایش
-            </button>
-            <button
-              class="rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700"
-              @click="askRole(row)"
-            >
-              ویرایش نقش
-            </button>
-            <button
-              class="rounded-lg px-2 py-1 text-[11px] font-bold"
-              :class="
-                row.status === 'blocked'
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'bg-amber-50 text-amber-700'
-              "
-              @click="askStatus(row)"
-            >
-              {{ row.status === 'blocked' ? 'فعال' : 'مسدود' }}
-            </button>
-            <button
-              class="rounded-lg bg-red-50 px-2 py-1 text-[11px] font-bold text-red-600"
-              @click="askDelete(row)"
-            >
-              حذف
-            </button>
-          </div>
-        </template>
-        <template #empty>
-          <div class="py-4">
-            <div
-              class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl"
-            >
-              👤
-            </div>
-            <p class="mb-3 font-medium text-slate-600">کاربری یافت نشد</p>
-            <button
-              class="text-sm font-bold text-orange-500"
-              @click="clearFilters"
-            >
-              پاک کردن فیلترها
-            </button>
-          </div>
-        </template>
-      </DataTable>
-
-      <div
-        v-if="store.meta.last_page > 0"
-        class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 text-sm shadow-sm"
-      >
-        <p class="text-slate-500">
-          نمایش {{ faNum(store.meta.from || 0) }} تا
-          {{ faNum(store.meta.to || 0) }} از
           {{ faNum(store.meta.total || 0) }} کاربر
-        </p>
-        <div class="flex items-center gap-1">
-          <button
-            class="rounded-lg px-3 py-1.5 disabled:opacity-40"
-            :disabled="(store.meta.current_page || 1) <= 1"
-            @click="goPage((store.meta.current_page || 1) - 1)"
-          >
-            قبلی
-          </button>
-          <button
-            v-for="page in visiblePages"
-            :key="page"
-            type="button"
-            class="min-w-8 rounded-lg px-2.5 py-1.5 text-xs font-bold"
-            :class="
-              page === store.meta.current_page
-                ? 'bg-orange-500 text-white'
-                : 'bg-slate-100 text-slate-700'
-            "
-            @click="goPage(page)"
-          >
-            {{ faNum(page) }}
-          </button>
-          <button
-            class="rounded-lg px-3 py-1.5 disabled:opacity-40"
-            :disabled="
-              (store.meta.current_page || 1) >= (store.meta.last_page || 1)
-            "
-            @click="goPage((store.meta.current_page || 1) + 1)"
-          >
-            بعدی
-          </button>
-        </div>
+        </span>
       </div>
+      <button
+        type="button"
+        class="rounded-xl bg-[#0f2744] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#1e3a5f]"
+        @click="createOpen = true"
+      >
+        ➕ افزودن کاربر
+      </button>
     </div>
 
-    <UserDetailModal
-      ref="detailModal"
-      :open="detailOpen"
-      :user="store.selectedUser"
-      :loading="store.detailLoading"
-      :start-editing="detailStartEdit"
-      :can-manage="auth.isStaffAdmin"
-      :can-manage-super="auth.isSuperAdmin"
-      @close="closeDetail"
-      @save="onSaveUser"
-    />
-
-    <UserCreateModal
-      ref="createModal"
-      :open="createOpen"
-      :can-manage="auth.isStaffAdmin"
-      :can-manage-super="auth.isSuperAdmin"
-      @close="createOpen = false"
-      @created="onCreateUser"
-    />
-
-    <ConfirmDialog
-      :open="confirm.open"
-      :title="confirm.title"
-      :message="confirm.message"
-      :danger="confirm.danger"
-      @cancel="confirm.open = false"
-      @confirm="runConfirm"
-    />
-
-    <!-- Role picker mini dialog -->
-    <div
-      v-if="rolePicker.open"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      @click.stop
-    >
-      <div class="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
-        <h3 class="mb-3 text-base font-bold">تغییر نقش</h3>
+    <div class="rounded-xl bg-white p-4 shadow-sm">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
+        <input
+          v-model="store.filters.search"
+          type="search"
+          placeholder="جستجو نام، موبایل، ایمیل..."
+          class="h-10 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-orange-400 lg:col-span-2"
+          @keyup.enter="applyFilters"
+        />
         <select
-          v-model="rolePicker.role"
-          class="mb-4 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm"
+          v-model="store.filters.role"
+          class="h-10 rounded-xl border border-slate-200 px-3 text-sm"
         >
+          <option value="">همه نقش‌ها</option>
           <option value="jobseeker">کارجو</option>
           <option value="employer">کارفرما</option>
           <option value="operator">اپراتور</option>
-          <option value="admin">مدیر</option>
+          <option value="admin">ادمین</option>
         </select>
-        <div class="flex justify-end gap-2">
-          <button
-            class="rounded-xl bg-slate-100 px-3 py-2 text-sm"
-            @click="rolePicker.open = false"
-          >
-            انصراف
-          </button>
-          <button
-            class="rounded-xl bg-orange-500 px-3 py-2 text-sm font-bold text-white"
-            @click="confirmRoleChange"
-          >
-            ذخیره
-          </button>
-        </div>
+        <select
+          v-model="store.filters.status"
+          class="h-10 rounded-xl border border-slate-200 px-3 text-sm"
+        >
+          <option value="">همه وضعیت‌ها</option>
+          <option value="active">فعال</option>
+          <option value="blocked">مسدود</option>
+        </select>
+        <select
+          v-model="store.filters.sort"
+          class="h-10 rounded-xl border border-slate-200 px-3 text-sm"
+        >
+          <option value="desc">جدیدترین</option>
+          <option value="asc">قدیمی‌ترین</option>
+          <option value="wallet_desc">بیشترین موجودی</option>
+        </select>
+      </div>
+      <div class="mt-3 flex gap-2">
+        <button
+          type="button"
+          class="rounded-xl bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600"
+          @click="applyFilters"
+        >
+          اعمال فیلتر
+        </button>
+        <button
+          type="button"
+          class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200"
+          @click="clearFilters"
+        >
+          پاک کردن
+        </button>
       </div>
     </div>
+
+    <DataTable
+      :columns="columns"
+      :rows="store.users"
+      :loading="store.loading"
+      actions
+    >
+      <template #cell-index="{ index }">
+        {{ faNum(rowNumber(index)) }}
+      </template>
+      <template #cell-role="{ row }">
+        <UserRoleBadge :role="row.role" />
+      </template>
+      <template #cell-subscription_plan="{ row }">
+        {{ row.subscription_plan || 'رایگان' }}
+      </template>
+      <template #cell-wallet_balance="{ row }">
+        {{ formatMoney(row.wallet_balance) }}
+      </template>
+      <template #cell-status="{ row }">
+        <StatusBadge :status="row.status" />
+      </template>
+      <template #cell-created_at="{ row }">
+        {{ formatDate(row.created_at) }}
+      </template>
+      <template #actions="{ row }">
+        <div class="flex flex-wrap justify-end gap-1">
+          <button
+            class="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-700"
+            @click="openDetail(row)"
+          >
+            مشاهده
+          </button>
+          <button
+            class="rounded-lg bg-orange-50 px-2 py-1 text-[11px] font-bold text-orange-700"
+            @click="openEdit(row)"
+          >
+            ویرایش
+          </button>
+          <button
+            class="rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700"
+            @click="askRole(row)"
+          >
+            ویرایش نقش
+          </button>
+          <button
+            class="rounded-lg px-2 py-1 text-[11px] font-bold"
+            :class="
+              row.status === 'blocked'
+                ? 'bg-emerald-50 text-emerald-700'
+                : 'bg-amber-50 text-amber-700'
+            "
+            @click="askStatus(row)"
+          >
+            {{ row.status === 'blocked' ? 'فعال' : 'مسدود' }}
+          </button>
+          <button
+            class="rounded-lg bg-red-50 px-2 py-1 text-[11px] font-bold text-red-600"
+            @click="askDelete(row)"
+          >
+            حذف
+          </button>
+        </div>
+      </template>
+      <template #empty>
+        <div class="py-4">
+          <div
+            class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl"
+          >
+            👤
+          </div>
+          <p class="mb-3 font-medium text-slate-600">کاربری یافت نشد</p>
+          <button
+            class="text-sm font-bold text-orange-500"
+            @click="clearFilters"
+          >
+            پاک کردن فیلترها
+          </button>
+        </div>
+      </template>
+    </DataTable>
+
+    <div
+      v-if="store.meta.last_page > 0"
+      class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 text-sm shadow-sm"
+    >
+      <p class="text-slate-500">
+        نمایش {{ faNum(store.meta.from || 0) }} تا
+        {{ faNum(store.meta.to || 0) }} از
+        {{ faNum(store.meta.total || 0) }} کاربر
+      </p>
+      <div class="flex items-center gap-1">
+        <button
+          class="rounded-lg px-3 py-1.5 disabled:opacity-40"
+          :disabled="(store.meta.current_page || 1) <= 1"
+          @click="goPage((store.meta.current_page || 1) - 1)"
+        >
+          قبلی
+        </button>
+        <button
+          v-for="page in visiblePages"
+          :key="page"
+          type="button"
+          class="min-w-8 rounded-lg px-2.5 py-1.5 text-xs font-bold"
+          :class="
+            page === store.meta.current_page
+              ? 'bg-orange-500 text-white'
+              : 'bg-slate-100 text-slate-700'
+          "
+          @click="goPage(page)"
+        >
+          {{ faNum(page) }}
+        </button>
+        <button
+          class="rounded-lg px-3 py-1.5 disabled:opacity-40"
+          :disabled="
+            (store.meta.current_page || 1) >= (store.meta.last_page || 1)
+          "
+          @click="goPage((store.meta.current_page || 1) + 1)"
+        >
+          بعدی
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <UserDetailModal
+    ref="detailModal"
+    :open="detailOpen"
+    :user="store.selectedUser"
+    :loading="store.detailLoading"
+    :start-editing="detailStartEdit"
+    :can-manage="auth.isStaffAdmin"
+    :can-manage-super="auth.isSuperAdmin"
+    @close="closeDetail"
+    @save="onSaveUser"
+  />
+
+  <UserCreateModal
+    ref="createModal"
+    :open="createOpen"
+    :can-manage="auth.isStaffAdmin"
+    :can-manage-super="auth.isSuperAdmin"
+    @close="createOpen = false"
+    @created="onCreateUser"
+  />
+
+  <ConfirmDialog
+    :open="confirm.open"
+    :title="confirm.title"
+    :message="confirm.message"
+    :danger="confirm.danger"
+    @cancel="confirm.open = false"
+    @confirm="runConfirm"
+  />
+
+  <!-- Role picker mini dialog -->
+  <div
+    v-if="rolePicker.open"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    @click.stop
+  >
+    <div class="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+      <h3 class="mb-3 text-base font-bold">تغییر نقش</h3>
+      <select
+        v-model="rolePicker.role"
+        class="mb-4 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm"
+      >
+        <option value="jobseeker">کارجو</option>
+        <option value="employer">کارفرما</option>
+        <option value="operator">اپراتور</option>
+        <option value="admin">مدیر</option>
+      </select>
+      <div class="flex justify-end gap-2">
+        <button
+          class="rounded-xl bg-slate-100 px-3 py-2 text-sm"
+          @click="rolePicker.open = false"
+        >
+          انصراف
+        </button>
+        <button
+          class="rounded-xl bg-orange-500 px-3 py-2 text-sm font-bold text-white"
+          @click="confirmRoleChange"
+        >
+          ذخیره
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>

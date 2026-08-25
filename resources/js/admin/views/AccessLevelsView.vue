@@ -1,95 +1,92 @@
 <template>
-      <div class="space-y-5">
-      <div>
-        <h1 class="text-2xl font-bold text-slate-900">سطح دسترسی اپراتور</h1>
-        <p class="mt-1 text-sm text-slate-500">
-          برای هر اپراتور مشخص کنید به کدام بخش‌های پنل دسترسی داشته باشد.
-        </p>
+  <div class="space-y-5">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">سطح دسترسی اپراتور</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        برای هر اپراتور مشخص کنید به کدام بخش‌های پنل دسترسی داشته باشد.
+      </p>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+      <div class="mb-3 flex flex-wrap items-center gap-2">
+        <input
+          v-model="search"
+          type="search"
+          class="field max-w-xs"
+          placeholder="جستجوی نام یا موبایل…"
+          @keyup.enter="load"
+        />
+        <button type="button" class="btn-dark" @click="load">جستجو</button>
       </div>
 
-      <div class="rounded-2xl border border-slate-200 bg-white p-4">
-        <div class="mb-3 flex flex-wrap items-center gap-2">
-          <input
-            v-model="search"
-            type="search"
-            class="field max-w-xs"
-            placeholder="جستجوی نام یا موبایل…"
-            @keyup.enter="load"
-          />
-          <button type="button" class="btn-dark" @click="load">جستجو</button>
-        </div>
-
-        <DataTable
-          :columns="columns"
-          :rows="rows"
-          :loading="loading"
-          actions
-        >
-          <template #cell-index="{ index }">{{ index + 1 }}</template>
-          <template #cell-role="{ row }">
-            <span
-              class="rounded-full px-2 py-0.5 text-[11px] font-bold"
-              :class="
-                row.role === 'super_admin'
-                  ? 'bg-purple-50 text-purple-700'
-                  : row.role === 'admin'
+      <DataTable :columns="columns" :rows="rows" :loading="loading" actions>
+        <template #cell-index="{ index }">{{ index + 1 }}</template>
+        <template #cell-role="{ row }">
+          <span
+            class="rounded-full px-2 py-0.5 text-[11px] font-bold"
+            :class="
+              row.role === 'super_admin'
+                ? 'bg-purple-50 text-purple-700'
+                : row.role === 'admin'
                   ? 'bg-emerald-50 text-emerald-700'
                   : 'bg-orange-50 text-orange-700'
-              "
-            >
-              {{
-                row.role === 'super_admin'
-                  ? 'سوپرادمین'
-                  : row.role === 'admin'
-                    ? 'مدیر'
-                    : 'اپراتور'
-              }}
-            </span>
-          </template>
-          <template #cell-perms="{ row }">
-            <span v-if="row.role === 'super_admin' || row.role === 'admin'" class="text-xs text-slate-500"
-              >همه دسترسی‌ها</span
-            >
-            <span v-else class="text-xs text-slate-600">
-              {{ (row.operator_permissions || []).length }} مورد
-            </span>
-          </template>
-          <template #actions="{ row }">
-            <button
-              v-if="row.role === 'operator'"
-              type="button"
-              class="act"
-              @click="openEdit(row)"
-            >
-              تنظیم دسترسی
-            </button>
-            <span v-else class="text-xs text-slate-400">—</span>
-          </template>
-        </DataTable>
-      </div>
+            "
+          >
+            {{
+              row.role === 'super_admin'
+                ? 'سوپرادمین'
+                : row.role === 'admin'
+                  ? 'مدیر'
+                  : 'اپراتور'
+            }}
+          </span>
+        </template>
+        <template #cell-perms="{ row }">
+          <span
+            v-if="row.role === 'super_admin' || row.role === 'admin'"
+            class="text-xs text-slate-500"
+            >همه دسترسی‌ها</span
+          >
+          <span v-else class="text-xs text-slate-600">
+            {{ (row.operator_permissions || []).length }} مورد
+          </span>
+        </template>
+        <template #actions="{ row }">
+          <button
+            v-if="row.role === 'operator'"
+            type="button"
+            class="act"
+            @click="openEdit(row)"
+          >
+            تنظیم دسترسی
+          </button>
+          <span v-else class="text-xs text-slate-400">—</span>
+        </template>
+      </DataTable>
     </div>
+  </div>
 
-    <div
-      v-if="modal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+  <div
+    v-if="modal"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+  >
+    <form
+      class="w-full max-w-lg space-y-4 rounded-2xl bg-white p-5 shadow-xl"
+      @submit.prevent="save"
     >
-      <form
-        class="w-full max-w-lg space-y-4 rounded-2xl bg-white p-5 shadow-xl"
-        @submit.prevent="save"
-      >
-        <h3 class="text-lg font-bold">دسترسی: {{ form.name || form.mobile }}</h3>
-        <OperatorPermissionsPicker v-model="form.operator_permissions" />
-        <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
-        <div class="flex justify-end gap-2">
-          <button type="button" class="btn-muted" @click="modal = false">
-            انصراف
-          </button>
-          <button class="btn-orange" :disabled="saving">
-            {{ saving ? '...' : 'ذخیره' }}
-          </button>
-        </div>
-      </form>
-    </div>
+      <h3 class="text-lg font-bold">دسترسی: {{ form.name || form.mobile }}</h3>
+      <OperatorPermissionsPicker v-model="form.operator_permissions" />
+      <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="btn-muted" @click="modal = false">
+          انصراف
+        </button>
+        <button class="btn-orange" :disabled="saving">
+          {{ saving ? '...' : 'ذخیره' }}
+        </button>
+      </div>
+    </form>
+  </div>
 </template>
 
 <script setup>
@@ -138,7 +135,8 @@ async function load() {
     const list = unwrapList(data)
     // also include operators that may come without role filter support
     rows.value = (list || []).filter(
-      (u) => u.role === 'operator' || u.role === 'admin' || u.role === 'super_admin'
+      (u) =>
+        u.role === 'operator' || u.role === 'admin' || u.role === 'super_admin'
     )
     if (!rows.value.length && list?.length) rows.value = list
   } catch (e) {

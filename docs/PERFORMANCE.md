@@ -6,7 +6,7 @@ Indexes, caching, queues, and frontend budgets for JobAzmoon.
 
 ## Database indexes
 
-Indexes added in `2026_08_09_230000_add_performance_indexes.php` (MySQL uses `ALGORITHM=INPLACE, LOCK=NONE`).
+Indexes added in `2026_08_09_230000_add_performance_indexes.php`. Secondary indexes on MySQL/MariaDB use `ALGORITHM=INPLACE, LOCK=NONE`. FULLTEXT indexes never use `LOCK=NONE` (MariaDB 10.11 rejects it); MariaDB uses a plain `ADD FULLTEXT INDEX`, MySQL 8 uses `LOCK=SHARED`.
 
 ### Schema mapping
 

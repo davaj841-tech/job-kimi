@@ -315,6 +315,216 @@ final class InstallEngineTest extends TestCase
         }
     }
 
+    public function test_pcntl_and_posix_are_warnings_not_required_failures(): void
+    {
+        $engine = $this->engine();
+        $reqs = $engine->requirements();
+
+        $pcntl = null;
+        $posix = null;
+        foreach ($reqs as $item) {
+            if (str_starts_with($item['label'], 'pcntl')) {
+                $pcntl = $item;
+            }
+            if (str_starts_with($item['label'], 'posix')) {
+                $posix = $item;
+            }
+        }
+
+        $this->assertNotNull($pcntl);
+        $this->assertNotNull($posix);
+        $this->assertTrue($pcntl['warn']);
+        $this->assertTrue($posix['warn']);
+        $this->assertStringContainsString('Horizon', $pcntl['label']);
+        $this->assertStringContainsString('Horizon', $posix['label']);
+        $this->assertStringContainsString('QUEUE_CONNECTION=database', $pcntl['fix']);
+        $this->assertStringContainsString('QUEUE_CONNECTION=database', $posix['fix']);
+
+        $failures = $engine->requiredFailures(array_map(static function (array $item): array {
+            if (str_starts_with($item['label'], 'pcntl') || str_starts_with($item['label'], 'posix')) {
+                $item['ok'] = false;
+            }
+
+            return $item;
+        }, $reqs));
+
+        foreach ($failures as $failure) {
+            $this->assertFalse(str_starts_with($failure['label'], 'pcntl'));
+            $this->assertFalse(str_starts_with($failure['label'], 'posix'));
+        }
+    }
+
+    public function test_recommended_crons_use_absolute_artisan_and_queue_flags(): void
+    {
+        $public = $this->tmpRoot.DIRECTORY_SEPARATOR.'public_html';
+        $job = $this->tmpRoot.DIRECTORY_SEPARATOR.'job';
+        mkdir($public, 0755, true);
+        mkdir($job, 0755, true);
+        file_put_contents($job.DIRECTORY_SEPARATOR.'artisan', "#!/usr/bin/env php\n");
+
+        $engine = new InstallEngine($public, $this->tmpRoot, $job, $public.'/package/x.zip');
+        $crons = $engine->recommendedCrons();
+
+        $this->assertCount(2, $crons);
+        $scheduler = $crons[0]['command'];
+        $queue = $crons[1]['command'];
+
+        $artisan = $engine->absoluteArtisanPath();
+        $this->assertStringNotContainsString('/path/to/artisan', $scheduler);
+        $this->assertStringNotContainsString('/path/to/artisan', $queue);
+        $this->assertStringContainsString($artisan, $scheduler);
+        $this->assertStringContainsString($artisan, $queue);
+        $this->assertTrue(str_starts_with($artisan, $job) || realpath($artisan) === realpath($job.DIRECTORY_SEPARATOR.'artisan'));
+
+        $this->assertStringContainsString('schedule:run', $scheduler);
+        $this->assertStringContainsString('queue:work database', $queue);
+        $this->assertStringContainsString('--stop-when-empty', $queue);
+        $this->assertStringContainsString('--max-time=50', $queue);
+        $this->assertStringContainsString('--tries=3', $queue);
+        $this->assertMatchesRegularExpression('/^\* \* \* \* \* /', $scheduler);
+        $this->assertMatchesRegularExpression('/^\* \* \* \* \* /', $queue);
+
+        $php = $engine->detectPhpCliBinary();
+        $this->assertNotSame('', $php);
+        $this->assertStringContainsString($php, $scheduler);
+        $this->assertStringContainsString($php, $queue);
+
+        $flock = $engine->detectFlockBinary();
+        if ($flock !== null) {
+            $this->assertStringContainsString($flock.' -n ', $queue);
+            $this->assertStringContainsString($engine->queueLockPath(), $queue);
+        } else {
+            $this->assertStringNotContainsString('flock ', $queue);
+            $warnings = $engine->cronRecommendationWarnings();
+            $this->assertTrue(
+                count(array_filter($warnings, static fn (string $w): bool => str_contains($w, 'flock'))) >= 1
+            );
+        }
+    }
+
+    public function test_cron_warnings_when_artisan_missing(): void
+    {
+        $engine = $this->engine();
+        $warnings = $engine->cronRecommendationWarnings();
+        $this->assertTrue(
+            count(array_filter($warnings, static fn (string $w): bool => str_contains($w, 'artisan'))) >= 1
+        );
+        $this->assertStringContainsString(
+            $engine->jobDir.DIRECTORY_SEPARATOR.'artisan',
+            implode("\n", $warnings)
+        );
+    }
+
+    public function test_queue_lock_path_is_unique_per_job_dir(): void
+    {
+        $a = $this->engine();
+        $public = $this->tmpRoot.DIRECTORY_SEPARATOR.'public_html2';
+        $job = $this->tmpRoot.DIRECTORY_SEPARATOR.'job-b';
+        mkdir($public, 0755, true);
+        mkdir($job, 0755, true);
+        $b = new InstallEngine($public, $this->tmpRoot, $job, $public.'/package/x.zip');
+
+        $this->assertNotSame($a->queueLockPath(), $b->queueLockPath());
+        $this->assertStringStartsWith('/tmp/job-kimi-queue-', $a->queueLockPath());
+    }
+
+    public function test_write_htaccess_blocks_sensitive_files(): void
+    {
+        $engine = $this->engine();
+        $method = new ReflectionMethod(InstallEngine::class, 'writeHtaccess');
+        $method->setAccessible(true);
+        $method->invoke($engine, $engine->publicHtml);
+
+        $ht = (string) file_get_contents($engine->publicHtml.DIRECTORY_SEPARATOR.'.htaccess');
+        $this->assertStringContainsString('Options -MultiViews -Indexes', $ht);
+        $this->assertMatchesRegularExpression('/FilesMatch.*\.env/s', $ht);
+        $this->assertStringContainsString('artisan', $ht);
+        $this->assertStringContainsString('composer\\.(json|lock)', $ht);
+        $this->assertStringContainsString('package(-lock)?\\.json', $ht);
+        $this->assertStringContainsString('Require all denied', $ht);
+    }
+
+    public function test_deny_install_files_via_htaccess_is_idempotent(): void
+    {
+        $engine = $this->engine();
+        $denyPhp = new ReflectionMethod(InstallEngine::class, 'denyInstallPhpViaHtaccess');
+        $denyEngine = new ReflectionMethod(InstallEngine::class, 'denyInstallEngineViaHtaccess');
+        $denyPhp->setAccessible(true);
+        $denyEngine->setAccessible(true);
+
+        $denyPhp->invoke($engine);
+        $denyPhp->invoke($engine);
+        $denyEngine->invoke($engine);
+        $denyEngine->invoke($engine);
+
+        $ht = (string) file_get_contents($engine->publicHtml.DIRECTORY_SEPARATOR.'.htaccess');
+        $this->assertSame(1, substr_count($ht, 'Files "install.php"'));
+        $this->assertSame(1, substr_count($ht, 'Files "InstallEngine.php"'));
+    }
+
+    public function test_cleanup_helpers_are_idempotent_for_missing_paths(): void
+    {
+        $engine = $this->engine();
+        $rrmdir = new ReflectionMethod(InstallEngine::class, 'rrmdir');
+        $rrmdir->setAccessible(true);
+        $rrmdir->invoke($engine, $this->tmpRoot.DIRECTORY_SEPARATOR.'does-not-exist');
+
+        $this->assertTrue(true);
+    }
+
+    public function test_env_defaults_include_queue_connection_database_in_source(): void
+    {
+        $src = (string) file_get_contents(__DIR__.'/../../../cpanel-installer/lib/InstallEngine.php');
+        $this->assertStringContainsString("'QUEUE_CONNECTION' => 'database'", $src);
+        $this->assertStringContainsString("'CACHE_STORE' => 'database'", $src);
+        $this->assertStringContainsString("'SESSION_DRIVER' => 'database'", $src);
+        $this->assertStringContainsString("'SESSION_SECURE_COOKIE' => 'true'", $src);
+        $this->assertStringContainsString("'TELESCOPE_ENABLED' => 'false'", $src);
+        $this->assertStringContainsString("'SMS_ALLOW_LOG_FALLBACK' => 'false'", $src);
+    }
+
+    public function test_verify_install_checks_queue_tables_and_connection(): void
+    {
+        $engine = $this->engine();
+        $checks = $engine->verifyInstall();
+        $labels = array_column($checks, 'label');
+
+        $this->assertContains('QUEUE_CONNECTION=database', $labels);
+        $this->assertContains('جدول jobs (database queue)', $labels);
+        $this->assertContains('جدول failed_jobs', $labels);
+        $this->assertContains('Laravel Scheduler (schedule:list)', $labels);
+        $this->assertContains('محافظت فایل‌های حساس در .htaccess', $labels);
+    }
+
+    public function test_cleanup_removes_package_and_empty_lib_only(): void
+    {
+        $engine = $this->engine();
+        $public = $engine->publicHtml;
+        $lib = $public.DIRECTORY_SEPARATOR.'lib';
+        $package = $public.DIRECTORY_SEPARATOR.'package';
+        mkdir($lib, 0755, true);
+        file_put_contents($lib.DIRECTORY_SEPARATOR.'InstallEngine.php', '<?php');
+        file_put_contents($package.DIRECTORY_SEPARATOR.'jobazmoon-core.zip', 'x');
+        file_put_contents($lib.DIRECTORY_SEPARATOR.'keep-me.php', '<?php');
+
+        $rrmdir = new ReflectionMethod(InstallEngine::class, 'rrmdir');
+        $rrmdir->setAccessible(true);
+        $rrmdir->invoke($engine, $package);
+
+        $this->assertDirectoryDoesNotExist($package);
+
+        @unlink($lib.DIRECTORY_SEPARATOR.'InstallEngine.php');
+        $this->assertFileDoesNotExist($lib.DIRECTORY_SEPARATOR.'InstallEngine.php');
+        $this->assertFileExists($lib.DIRECTORY_SEPARATOR.'keep-me.php');
+        $this->assertDirectoryExists($lib);
+
+        unlink($lib.DIRECTORY_SEPARATOR.'keep-me.php');
+        $empty = count(array_diff((array) scandir($lib), ['.', '..'])) === 0;
+        $this->assertTrue($empty);
+        rmdir($lib);
+        $this->assertDirectoryDoesNotExist($lib);
+    }
+
     private function engine(): InstallEngine
     {
         $public = $this->tmpRoot.DIRECTORY_SEPARATOR.'public_html';

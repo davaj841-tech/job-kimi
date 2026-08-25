@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Payment\PaymentGatewayInterface;
 use App\Services\Payment\PaymentGatewayManager;
 use App\Services\PaymentService;
+use App\Services\WalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Mockery;
@@ -229,7 +230,7 @@ final class PaymentServiceTest extends TestCase
             'description' => 'شارژ',
         ]);
 
-        app(\App\Services\WalletService::class)->deposit($user, 20000, $deposit);
+        app(WalletService::class)->deposit($user, 20000, $deposit);
         $this->assertSame(20000, (int) $user->fresh()->wallet_balance);
 
         ['service' => $service] = $this->mockPaymentService();

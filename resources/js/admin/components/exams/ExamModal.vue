@@ -134,14 +134,18 @@
           </select>
         </div>
 
-        <div class="rounded-xl border border-slate-200 p-3 space-y-3">
+        <div class="space-y-3 rounded-xl border border-slate-200 p-3">
           <label class="flex items-center justify-between text-sm">
             <span>آزمون تصادفی (از سوالات پرتکرار طبقه‌بندی)</span>
             <input v-model="form.is_random" type="checkbox" class="h-4 w-4" />
           </label>
           <template v-if="form.is_random">
             <label class="flex items-center gap-2 text-xs text-slate-600">
-              <input v-model="form.prefer_frequent" type="checkbox" class="h-4 w-4" />
+              <input
+                v-model="form.prefer_frequent"
+                type="checkbox"
+                class="h-4 w-4"
+              />
               اولویت با سوالات پرتکرار
             </label>
             <p class="text-[11px] text-slate-400">
@@ -153,7 +157,9 @@
               :key="s.slug"
               class="flex items-center gap-2"
             >
-              <span class="w-28 shrink-0 text-xs font-medium">{{ s.icon }} {{ s.name }}</span>
+              <span class="w-28 shrink-0 text-xs font-medium"
+                >{{ s.icon }} {{ s.name }}</span
+              >
               <input
                 v-model.number="form.subject_counts[s.slug]"
                 type="number"

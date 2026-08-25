@@ -69,10 +69,7 @@
         ثبت‌نام در سایت منبع
       </a>
 
-      <RelatedCatalog
-        :exams="catalogExams"
-        :pdfs="catalogPdfs"
-      />
+      <RelatedCatalog :exams="catalogExams" :pdfs="catalogPdfs" />
 
       <ShareModal
         :open="shareOpen"

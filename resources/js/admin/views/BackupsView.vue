@@ -1,46 +1,50 @@
 <template>
-      <div class="space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 class="text-2xl font-bold">بکاپ‌ها</h1>
-          <p class="mt-1 text-sm text-slate-500">
-            بکاپ روزانه ساعت ۳:۱۵ (scheduler) — شامل پایگاه داده، فایل‌های خصوصی و عمومی. بازگردانی production از اسکریپت انجام شود.
-          </p>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <button class="btn-dark" :disabled="creating" @click="create">
-            بکاپ دستی
-          </button>
-          <label class="btn-orange cursor-pointer" :class="restoring ? 'opacity-50' : ''">
-            {{ restoring ? 'در حال بازگردانی...' : 'بازگردانی ZIP' }}
-            <input
-              type="file"
-              accept=".zip,application/zip"
-              class="hidden"
-              :disabled="restoring"
-              @change="restore"
-            />
-          </label>
-        </div>
+  <div class="space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold">بکاپ‌ها</h1>
+        <p class="mt-1 text-sm text-slate-500">
+          بکاپ روزانه ساعت ۳:۱۵ (scheduler) — شامل پایگاه داده، فایل‌های خصوصی و
+          عمومی. بازگردانی production از اسکریپت انجام شود.
+        </p>
       </div>
-
-      <DataTable :columns="columns" :rows="rows" :loading="loading" actions>
-        <template #cell-index="{ index }">{{ index + 1 }}</template>
-        <template #cell-size="{ row }">{{ row.size_human }}</template>
-        <template #cell-verified="{ row }">
-          <span :class="row.verified ? 'text-emerald-700' : 'text-red-600'">
-            {{ row.verified ? 'معتبر' : 'نامعتبر / ناقص' }}
-          </span>
-        </template>
-        <template #cell-date="{ row }">{{ formatDateTime(row.date) }}</template>
-        <template #actions="{ row }">
-          <button class="act" @click="verify(row)">تأیید</button>
-          <button class="act" @click="download(row)">دانلود</button>
-          <button class="act text-red-600" @click="remove(row)">حذف</button>
-        </template>
-      </DataTable>
-      <p v-if="message" class="text-sm text-slate-600">{{ message }}</p>
+      <div class="flex flex-wrap items-center gap-2">
+        <button class="btn-dark" :disabled="creating" @click="create">
+          بکاپ دستی
+        </button>
+        <label
+          class="btn-orange cursor-pointer"
+          :class="restoring ? 'opacity-50' : ''"
+        >
+          {{ restoring ? 'در حال بازگردانی...' : 'بازگردانی ZIP' }}
+          <input
+            type="file"
+            accept=".zip,application/zip"
+            class="hidden"
+            :disabled="restoring"
+            @change="restore"
+          />
+        </label>
+      </div>
     </div>
+
+    <DataTable :columns="columns" :rows="rows" :loading="loading" actions>
+      <template #cell-index="{ index }">{{ index + 1 }}</template>
+      <template #cell-size="{ row }">{{ row.size_human }}</template>
+      <template #cell-verified="{ row }">
+        <span :class="row.verified ? 'text-emerald-700' : 'text-red-600'">
+          {{ row.verified ? 'معتبر' : 'نامعتبر / ناقص' }}
+        </span>
+      </template>
+      <template #cell-date="{ row }">{{ formatDateTime(row.date) }}</template>
+      <template #actions="{ row }">
+        <button class="act" @click="verify(row)">تأیید</button>
+        <button class="act" @click="download(row)">دانلود</button>
+        <button class="act text-red-600" @click="remove(row)">حذف</button>
+      </template>
+    </DataTable>
+    <p v-if="message" class="text-sm text-slate-600">{{ message }}</p>
+  </div>
 </template>
 
 <script setup>

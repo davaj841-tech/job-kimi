@@ -4,6 +4,7 @@ namespace App\Models\Seo;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -12,8 +13,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property string $question
  * @property string $answer
  * @property int|null $sort_order
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class SeoFaq extends Model
 {

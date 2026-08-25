@@ -1,93 +1,91 @@
 <template>
-      <div class="space-y-5">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-bold text-gray-800">فروشگاه فایل‌های PDF</h1>
-        <button class="btn-dark" @click="openCreate">فایل جدید</button>
-      </div>
-
-      <div class="rounded-xl bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <input
-            v-model="store.filters.search"
-            class="field"
-            placeholder="جستجو"
-            @keyup.enter="apply"
-          />
-          <input
-            v-model="store.filters.category"
-            class="field"
-            placeholder="طبقه‌بندی"
-          />
-          <select v-model="store.filters.is_active" class="field">
-            <option value="">همه وضعیت‌ها</option>
-            <option value="1">فعال</option>
-            <option value="0">غیرفعال</option>
-          </select>
-        </div>
-        <div class="mt-3 flex gap-2">
-          <button class="btn-orange" @click="apply">اعمال فیلتر</button>
-          <button class="btn-muted" @click="clear">پاک کردن</button>
-        </div>
-      </div>
-
-      <DataTable
-        :columns="columns"
-        :rows="store.products"
-        :loading="store.loading"
-        actions
-      >
-        <template #cell-index="{ index }">{{ fa(rowNum(index)) }}</template>
-        <template #cell-title="{ row }">
-          <button
-            class="text-right font-medium hover:text-orange-600"
-            @click="openEdit(row)"
-          >
-            {{ row.title }}
-          </button>
-        </template>
-        <template #cell-price="{ row }">{{ formatPrice(row.price) }}</template>
-        <template #cell-download_count="{ row }">{{
-          fa(row.download_count)
-        }}</template>
-        <template #cell-is_active="{ row }">
-          <StatusToggle
-            :model-value="Boolean(row.is_active)"
-            @update:model-value="(v) => onToggle(row, v)"
-          />
-        </template>
-        <template #actions="{ row }">
-          <div class="flex flex-wrap justify-end gap-1">
-            <button class="act" @click="openEdit(row)">ویرایش</button>
-            <button
-              class="act"
-              @click="toast.info(`دانلودها: ${fa(row.download_count)}`)"
-            >
-              آمار دانلود
-            </button>
-            <button class="act text-red-600" @click="askDelete(row)">
-              حذف
-            </button>
-          </div>
-        </template>
-      </DataTable>
-
-      <PaginationBar :meta="store.meta" @page="go" />
+  <div class="space-y-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-2xl font-bold text-gray-800">فروشگاه فایل‌های PDF</h1>
+      <button class="btn-dark" @click="openCreate">فایل جدید</button>
     </div>
 
-    <PDFProductModal
-      :open="modalOpen"
-      :product="editing"
-      :classifications="classifications"
-      @close="modalOpen = false"
-      @saved="onSaved"
-    />
-    <ConfirmDialog
-      :open="confirm.open"
-      :title="confirm.title"
-      :message="confirm.message"
-      @cancel="confirm.open = false"
-      @confirm="runConfirm"
-    />
+    <div class="rounded-xl bg-white p-4 shadow-sm">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <input
+          v-model="store.filters.search"
+          class="field"
+          placeholder="جستجو"
+          @keyup.enter="apply"
+        />
+        <input
+          v-model="store.filters.category"
+          class="field"
+          placeholder="طبقه‌بندی"
+        />
+        <select v-model="store.filters.is_active" class="field">
+          <option value="">همه وضعیت‌ها</option>
+          <option value="1">فعال</option>
+          <option value="0">غیرفعال</option>
+        </select>
+      </div>
+      <div class="mt-3 flex gap-2">
+        <button class="btn-orange" @click="apply">اعمال فیلتر</button>
+        <button class="btn-muted" @click="clear">پاک کردن</button>
+      </div>
+    </div>
+
+    <DataTable
+      :columns="columns"
+      :rows="store.products"
+      :loading="store.loading"
+      actions
+    >
+      <template #cell-index="{ index }">{{ fa(rowNum(index)) }}</template>
+      <template #cell-title="{ row }">
+        <button
+          class="text-right font-medium hover:text-orange-600"
+          @click="openEdit(row)"
+        >
+          {{ row.title }}
+        </button>
+      </template>
+      <template #cell-price="{ row }">{{ formatPrice(row.price) }}</template>
+      <template #cell-download_count="{ row }">{{
+        fa(row.download_count)
+      }}</template>
+      <template #cell-is_active="{ row }">
+        <StatusToggle
+          :model-value="Boolean(row.is_active)"
+          @update:model-value="(v) => onToggle(row, v)"
+        />
+      </template>
+      <template #actions="{ row }">
+        <div class="flex flex-wrap justify-end gap-1">
+          <button class="act" @click="openEdit(row)">ویرایش</button>
+          <button
+            class="act"
+            @click="toast.info(`دانلودها: ${fa(row.download_count)}`)"
+          >
+            آمار دانلود
+          </button>
+          <button class="act text-red-600" @click="askDelete(row)">حذف</button>
+        </div>
+      </template>
+    </DataTable>
+
+    <PaginationBar :meta="store.meta" @page="go" />
+  </div>
+
+  <PDFProductModal
+    :open="modalOpen"
+    :product="editing"
+    :classifications="classifications"
+    @close="modalOpen = false"
+    @saved="onSaved"
+  />
+  <ConfirmDialog
+    :open="confirm.open"
+    :title="confirm.title"
+    :message="confirm.message"
+    @cancel="confirm.open = false"
+    @confirm="runConfirm"
+  />
 </template>
 
 <script setup>

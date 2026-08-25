@@ -8,8 +8,12 @@ use App\Models\AuditLog;
 use App\Models\SubscriptionPlan;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\FeatureFlagService;
 use App\Services\Payment\FakePaymentGateway;
+use App\Services\Payment\GatewayCallbackService;
+use App\Services\Payment\ZarinPalGateway;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -20,8 +24,8 @@ final class PaymentFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        app(\App\Services\FeatureFlagService::class)->enable('wallet');
-        app(\App\Services\FeatureFlagService::class)->enable('subscription');
+        app(FeatureFlagService::class)->enable('wallet');
+        app(FeatureFlagService::class)->enable('subscription');
     }
 
     public function test_full_wallet_flow_create_redirect_callback_verify_success(): void
@@ -183,7 +187,7 @@ final class PaymentFlowTest extends TestCase
             'updated_at' => now()->subHours(3),
         ]);
 
-        $count = app(\App\Services\Payment\GatewayCallbackService::class)->expireStalePending();
+        $count = app(GatewayCallbackService::class)->expireStalePending();
         $this->assertSame(1, $count);
         $this->assertSame(Transaction::STATUS_EXPIRED, $tx->fresh()->status);
     }
@@ -195,13 +199,13 @@ final class PaymentFlowTest extends TestCase
             'services.zarinpal.merchant_id' => 'super-secret-merchant',
             'services.zarinpal.sandbox' => true,
         ]);
-        \Illuminate\Support\Facades\Http::fake([
-            'sandbox.zarinpal.com/*' => \Illuminate\Support\Facades\Http::response([
+        Http::fake([
+            'sandbox.zarinpal.com/*' => Http::response([
                 'errors' => ['message' => 'denied'],
             ], 400),
         ]);
 
-        $result = app(\App\Services\Payment\ZarinPalGateway::class)->request(10000, 'test', 'https://example.test/cb');
+        $result = app(ZarinPalGateway::class)->request(10000, 'test', 'https://example.test/cb');
 
         $this->assertNotNull($result['error']);
         $this->assertStringNotContainsString('super-secret-merchant', (string) $result['error']);

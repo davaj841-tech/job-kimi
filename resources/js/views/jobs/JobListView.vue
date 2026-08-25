@@ -1,16 +1,16 @@
 <template>
   <div class="min-h-screen bg-surface-page dark:bg-slate-950">
     <div
-      class="sticky z-20 border-b border-surface-line bg-white/92 backdrop-blur-md top-[calc(3.65rem+env(safe-area-inset-top))] lg:top-[4.5rem]"
+      class="bg-white/92 sticky top-[calc(3.65rem+env(safe-area-inset-top))] z-20 border-b border-surface-line backdrop-blur-md lg:top-[4.5rem]"
     >
       <div class="mx-auto max-w-7xl px-4 py-3">
         <div class="mb-2 flex items-center justify-between gap-2">
-          <h1 class="page-title">
-            آگهی‌های شغلی
-          </h1>
+          <h1 class="page-title">آگهی‌های شغلی</h1>
         </div>
 
-        <div class="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-1">
+        <div
+          class="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-1"
+        >
           <div class="relative w-56 flex-shrink-0 sm:w-64">
             <MagnifyingGlassIcon
               class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-desk-muted"
@@ -63,18 +63,14 @@
 
         <div
           v-show="showFilters"
-          class="mt-3 grid grid-cols-2 gap-2 border-t border-surface-line pt-3 md:grid-cols-3 dark:border-slate-800"
+          class="mt-3 grid grid-cols-2 gap-2 border-t border-surface-line pt-3 dark:border-slate-800 md:grid-cols-3"
         >
           <select
             v-model="filters.province"
             class="rounded-xl border-0 bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800 dark:text-white"
           >
             <option value="">همه استان‌ها</option>
-            <option
-              v-for="p in provinceOptions"
-              :key="p"
-              :value="p"
-            >
+            <option v-for="p in provinceOptions" :key="p" :value="p">
               {{ p }}
             </option>
           </select>
@@ -92,7 +88,7 @@
           </select>
           <select
             v-model="filters.sort"
-            class="col-span-2 rounded-xl border-0 bg-slate-100 px-3 py-2 text-sm md:col-span-1 dark:bg-slate-800 dark:text-white"
+            class="col-span-2 rounded-xl border-0 bg-slate-100 px-3 py-2 text-sm dark:bg-slate-800 dark:text-white md:col-span-1"
           >
             <option value="newest">جدیدترین</option>
             <option value="deadline">نزدیک به مهلت</option>
@@ -101,9 +97,7 @@
 
         <div class="mt-2 text-xs text-desk-muted">
           {{ toFaDigits(pagination.total) }} آگهی یافت شد
-          <span
-            v-if="filters.search"
-            class="mr-1"
+          <span v-if="filters.search" class="mr-1"
             >برای «{{ filters.search }}»</span
           >
         </div>
@@ -111,14 +105,8 @@
     </div>
 
     <div class="mx-auto max-w-7xl space-y-2.5 px-4 py-5">
-      <div
-        v-if="loading"
-        class="space-y-2.5"
-      >
-        <JobCardSkeleton
-          v-for="i in 5"
-          :key="i"
-        />
+      <div v-if="loading" class="space-y-2.5">
+        <JobCardSkeleton v-for="i in 5" :key="i" />
       </div>
 
       <EmptyState
@@ -136,10 +124,7 @@
         </button>
       </EmptyState>
 
-      <div
-        v-else
-        class="space-y-2.5"
-      >
+      <div v-else class="space-y-2.5">
         <JobCardCompact
           v-for="job in jobs"
           :key="job.id"
@@ -182,10 +167,7 @@
         </button>
       </div>
 
-      <div
-        v-if="hasMore && !loading && !error"
-        class="pt-3 text-center"
-      >
+      <div v-if="hasMore && !loading && !error" class="pt-3 text-center">
         <button
           type="button"
           class="rounded-xl border border-surface-line bg-surface px-6 py-2.5 text-sm font-medium transition hover:bg-surface-page disabled:opacity-60"
@@ -197,10 +179,7 @@
       </div>
     </div>
 
-    <JobDetailDrawer
-      v-model="selectedJob"
-      @bookmark="onDrawerBookmark"
-    />
+    <JobDetailDrawer v-model="selectedJob" @bookmark="onDrawerBookmark" />
   </div>
 </template>
 

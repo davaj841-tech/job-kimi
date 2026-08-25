@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use App\Traits\HasSeo;
 use App\Observers\ExamObserver;
+use App\Traits\HasSeo;
 use App\Traits\HasUniqueSlug;
+use Database\Factories\ExamFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,10 +41,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[ObservedBy([ExamObserver::class])]
 class Exam extends Model
 {
-    /** @use HasFactory<\Database\Factories\ExamFactory> */
+    /** @use HasFactory<ExamFactory> */
     use HasFactory;
+
+    use HasSeo;
     use HasUniqueSlug;
-    use \App\Traits\HasSeo;
 
     protected string $slugSourceField = 'title';
 

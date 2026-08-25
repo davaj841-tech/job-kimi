@@ -6,6 +6,7 @@ namespace Tests\Feature\Resume;
 
 use App\Models\Resume;
 use App\Models\User;
+use App\Services\ResumePDFService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -162,7 +163,7 @@ final class ResumeSystemTest extends TestCase
             'data' => $this->validData['data'],
         ]);
 
-        $service = app(\App\Services\ResumePDFService::class);
+        $service = app(ResumePDFService::class);
         $html = $service->renderHtml($resume);
 
         // DomPDF uses visual LTR with text-align:right for Persian (reshaper handles RTL)

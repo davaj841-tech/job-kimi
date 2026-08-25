@@ -4,6 +4,7 @@ namespace App\Models\Seo;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -12,9 +13,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $status_code
  * @property bool $is_active
  * @property int $hits
- * @property \Illuminate\Support\Carbon|null $last_hit_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $last_hit_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class SeoRedirect extends Model
 {

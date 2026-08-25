@@ -5,7 +5,7 @@ $raw = file_get_contents('phpstan-full.json');
 $raw = preg_replace('/^\xEF\xBB\xBF/', '', $raw) ?? $raw;
 $j = json_decode($raw, true);
 if (! is_array($j)) {
-    fwrite(STDERR, "JSON decode failed: ".json_last_error_msg()."\n");
+    fwrite(STDERR, 'JSON decode failed: '.json_last_error_msg()."\n");
     // try raw format fallback
     exit(1);
 }

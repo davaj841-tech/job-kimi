@@ -10,7 +10,10 @@
     </div>
     <div>
       <p class="text-sm font-bold text-ink dark:text-white">{{ label }}</p>
-      <p v-if="description" class="mt-0.5 text-xs text-ink-muted dark:text-slate-400">
+      <p
+        v-if="description"
+        class="mt-0.5 text-xs text-ink-muted dark:text-slate-400"
+      >
         {{ description }}
       </p>
     </div>

@@ -23,7 +23,9 @@ const props = withDefaults(
   }
 )
 
-const clamped = computed(() => Math.max(0, Math.min(100, Number(props.percent) || 0)))
+const clamped = computed(() =>
+  Math.max(0, Math.min(100, Number(props.percent) || 0))
+)
 
 const colorClass = computed(() => {
   const map: Record<string, string> = {

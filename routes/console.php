@@ -1,13 +1,18 @@
 <?php
 
 use App\Jobs\CrawlJobsJob;
+use App\Jobs\GenerateDailyContentJob;
 use App\Jobs\SendExamReminderJob;
 use App\Jobs\SendSubscriptionExpiryNotification;
+use App\Jobs\Seo\CheckBrokenLinksJob;
+use App\Jobs\Seo\RunSeoAuditJob;
+use App\Models\Setting;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('site:boost-performance')
     ->hourly()
-    ->when(fn () => \App\Models\Setting::getBool('performance_auto', false))
+    ->when(fn () => Setting::getBool('performance_auto', false))
     ->withoutOverlapping(30);
 
 Schedule::job(new CrawlJobsJob)->dailyAt('06:00')->when(
@@ -56,12 +61,12 @@ Schedule::call(function () {
         return;
     }
     $dayKey = now($tz)->toDateString();
-    $lock = \Illuminate\Support\Facades\Cache::lock('content-schedule-dispatch-'.$dayKey, 90);
+    $lock = Cache::lock('content-schedule-dispatch-'.$dayKey, 90);
     if (! $lock->get()) {
         return;
     }
     try {
-        \App\Jobs\GenerateDailyContentJob::dispatch();
+        GenerateDailyContentJob::dispatch();
     } finally {
         // Keep lock briefly so overlapping schedule ticks in the same minute do not re-dispatch.
         // Unique job covers longer windows; lock covers the tick burst.
@@ -69,8 +74,8 @@ Schedule::call(function () {
 })->everyMinute()->name('content-generate-daily')->withoutOverlapping(5);
 
 // SEO scheduled tasks
-Schedule::job(new \App\Jobs\Seo\CheckBrokenLinksJob)->dailyAt('03:00')->withoutOverlapping(30);
-Schedule::job(new \App\Jobs\Seo\RunSeoAuditJob('full'))->weeklyOn(1, '04:00')->withoutOverlapping(60);
+Schedule::job(new CheckBrokenLinksJob)->dailyAt('03:00')->withoutOverlapping(30);
+Schedule::job(new RunSeoAuditJob('full'))->weeklyOn(1, '04:00')->withoutOverlapping(60);
 
 // Application ZIP backup (DB + private + public). Requires schedule:run cron.
 Schedule::command('backup:run')

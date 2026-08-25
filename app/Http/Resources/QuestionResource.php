@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Question;
+use App\Services\ReportCardPDFService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -29,7 +30,7 @@ class QuestionResource extends JsonResource
             'option_c' => $this->option_c,
             'option_d' => $this->option_d,
             'correct_answer' => $this->correct_answer,
-            'correct_answer_label' => \App\Services\ReportCardPDFService::optionLetter($this->correct_answer),
+            'correct_answer_label' => ReportCardPDFService::optionLetter($this->correct_answer),
             'explanation' => $this->explanation,
             'difficulty' => $this->difficulty,
             'subject' => $this->subject,

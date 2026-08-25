@@ -12,7 +12,9 @@
           :to="`/exams/${exam.slug || exam.id}`"
           class="card-soft flex items-center justify-between border border-surface-line p-3 text-sm"
         >
-          <span class="truncate font-bold text-desk-text">{{ exam.title }}</span>
+          <span class="truncate font-bold text-desk-text">{{
+            exam.title
+          }}</span>
           <span class="mr-2 shrink-0 text-xs text-desk-muted">{{
             exam.is_free ? 'رایگان' : formatPrice(exam.price)
           }}</span>

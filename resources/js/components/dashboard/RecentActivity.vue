@@ -1,10 +1,15 @@
 <template>
   <Card class="p-4">
-    <h3 class="mb-4 text-lg font-bold text-ink dark:text-white">فعالیت‌های اخیر</h3>
+    <h3 class="mb-4 text-lg font-bold text-ink dark:text-white">
+      فعالیت‌های اخیر
+    </h3>
     <div v-if="!items.length" class="py-6 text-center text-sm text-ink-muted">
       فعالیتی ثبت نشده
     </div>
-    <ol v-else class="relative space-y-4 border-r-2 border-slate-200 pr-4 dark:border-slate-700">
+    <ol
+      v-else
+      class="relative space-y-4 border-r-2 border-slate-200 pr-4 dark:border-slate-700"
+    >
       <li
         v-for="(item, i) in items"
         :key="i"
@@ -18,7 +23,9 @@
           {{ item.icon }}
         </span>
         <p class="font-medium text-ink dark:text-white">{{ item.title }}</p>
-        <p class="text-xs text-ink-muted dark:text-slate-400">{{ item.meta }}</p>
+        <p class="text-xs text-ink-muted dark:text-slate-400">
+          {{ item.meta }}
+        </p>
       </li>
     </ol>
   </Card>

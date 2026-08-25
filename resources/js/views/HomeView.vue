@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="home-2026 bg-surface-page"
-    :class="`home-${layout}`"
-  >
+  <div class="home-2026 bg-surface-page" :class="`home-${layout}`">
     <HomeHero :variant="layout" />
     <LatestEmployments
       :jobs="jobs"
@@ -14,19 +11,9 @@
       :plans="plans"
       :loading="loadingPlans"
     />
-    <ExamsSection
-      :exams="exams"
-      :loading="loadingExams"
-      :error="examsError"
-    />
-    <FileStoreStrip
-      :files="files"
-      :loading="loadingFiles"
-    />
-    <HomeArticles
-      :articles="articles"
-      :posts="posts"
-    />
+    <ExamsSection :exams="exams" :loading="loadingExams" :error="examsError" />
+    <FileStoreStrip :files="files" :loading="loadingFiles" />
+    <HomeArticles :articles="articles" :posts="posts" />
     <ResumeFaqRow />
   </div>
 </template>
@@ -101,31 +88,38 @@ function persistCache(data: any) {
 }
 
 onMounted(() => {
-  void api.get('/settings/public').then(({ data }) => {
-    const seo = data?.data?.seo
-    if (seo?.meta) {
-      applySeoPayload(seo)
-    } else {
+  void api
+    .get('/settings/public')
+    .then(({ data }) => {
+      const seo = data?.data?.seo
+      if (seo?.meta) {
+        applySeoPayload(seo)
+      } else {
+        applySeoPayload({
+          meta: {
+            meta_title: 'جاب‌آزمون | آمادگی استخدام',
+            meta_description:
+              'آزمون‌های استخدامی، آگهی‌های شغلی، فروشگاه PDF و رزومه‌ساز جاب‌آزمون',
+            canonical_url:
+              typeof window !== 'undefined'
+                ? `${window.location.origin}/`
+                : '/',
+            og_type: 'website',
+          },
+        })
+      }
+    })
+    .catch(() => {
       applySeoPayload({
         meta: {
           meta_title: 'جاب‌آزمون | آمادگی استخدام',
           meta_description:
             'آزمون‌های استخدامی، آگهی‌های شغلی، فروشگاه PDF و رزومه‌ساز جاب‌آزمون',
-          canonical_url: typeof window !== 'undefined' ? `${window.location.origin}/` : '/',
-          og_type: 'website',
+          canonical_url:
+            typeof window !== 'undefined' ? `${window.location.origin}/` : '/',
         },
       })
-    }
-  }).catch(() => {
-    applySeoPayload({
-      meta: {
-        meta_title: 'جاب‌آزمون | آمادگی استخدام',
-        meta_description:
-          'آزمون‌های استخدامی، آگهی‌های شغلی، فروشگاه PDF و رزومه‌ساز جاب‌آزمون',
-        canonical_url: typeof window !== 'undefined' ? `${window.location.origin}/` : '/',
-      },
     })
-  })
 
   hydrateFromCache()
   void ensureLoaded()
@@ -144,36 +138,50 @@ onMounted(() => {
         api.get('/job-posts/filters').catch(() => null),
         api.get('/blog-posts', { params: { per_page: 8 } }).catch(() => null),
         api.get('/articles', { params: { per_page: 8 } }).catch(() => null),
-        api.get('/pdf-products', { params: { per_page: 12 } }).catch(() => null),
-        api.get('/exams', { params: { per_page: 12 } }).catch((e) => ({ __error: e })),
+        api
+          .get('/pdf-products', { params: { per_page: 12 } })
+          .catch(() => null),
+        api
+          .get('/exams', { params: { per_page: 12 } })
+          .catch((e) => ({ __error: e })),
         api.get('/subscription-plans').catch(() => null),
-      ]).then(([jobsRes, filtersRes, blogRes, articlesRes, filesRes, examsRes, plansRes]) => {
-        const unwrap = (payload: any) =>
-          payload?.data?.data ?? payload?.data ?? []
-        const list = (payload: any) => {
-          const v = unwrap(payload)
-          return Array.isArray(v) ? v : v?.data || []
+      ]).then(
+        ([
+          jobsRes,
+          filtersRes,
+          blogRes,
+          articlesRes,
+          filesRes,
+          examsRes,
+          plansRes,
+        ]) => {
+          const unwrap = (payload: any) =>
+            payload?.data?.data ?? payload?.data ?? []
+          const list = (payload: any) => {
+            const v = unwrap(payload)
+            return Array.isArray(v) ? v : v?.data || []
+          }
+          jobs.value = list(jobsRes)
+          classifications.value =
+            filtersRes?.data?.data?.home_classifications ||
+            filtersRes?.data?.data?.classifications ||
+            []
+          posts.value = list(blogRes)
+          articles.value = list(articlesRes)
+          files.value = list(filesRes)
+          plans.value = list(plansRes)
+          if ((examsRes as any)?.__error) {
+            examsError.value = 'بارگذاری آزمون‌ها ناموفق بود.'
+            exams.value = []
+          } else {
+            exams.value = list(examsRes)
+          }
+          loadingJobs.value = false
+          loadingExams.value = false
+          loadingFiles.value = false
+          loadingPlans.value = false
         }
-        jobs.value = list(jobsRes)
-        classifications.value =
-          filtersRes?.data?.data?.home_classifications ||
-          filtersRes?.data?.data?.classifications ||
-          []
-        posts.value = list(blogRes)
-        articles.value = list(articlesRes)
-        files.value = list(filesRes)
-        plans.value = list(plansRes)
-        if ((examsRes as any)?.__error) {
-          examsError.value = 'بارگذاری آزمون‌ها ناموفق بود.'
-          exams.value = []
-        } else {
-          exams.value = list(examsRes)
-        }
-        loadingJobs.value = false
-        loadingExams.value = false
-        loadingFiles.value = false
-        loadingPlans.value = false
-      })
+      )
     })
 })
 </script>

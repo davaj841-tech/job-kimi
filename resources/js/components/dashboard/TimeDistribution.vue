@@ -1,8 +1,14 @@
 <template>
   <Card class="p-4">
-    <h3 class="mb-4 text-lg font-bold text-ink dark:text-white">توزیع زمان مطالعه</h3>
+    <h3 class="mb-4 text-lg font-bold text-ink dark:text-white">
+      توزیع زمان مطالعه
+    </h3>
     <div class="relative mx-auto h-[180px] max-w-xs md:h-[200px]">
-      <Doughnut :data="chartData" :options="options" :plugins="[centerTextPlugin]" />
+      <Doughnut
+        :data="chartData"
+        :options="options"
+        :plugins="[centerTextPlugin]"
+      />
     </div>
   </Card>
 </template>
@@ -10,7 +16,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Doughnut } from 'vue-chartjs'
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, type Plugin } from 'chart.js'
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  type Plugin,
+} from 'chart.js'
 import Card from '../ui/Card.vue'
 import { toFaDigits } from '@/utils/format'
 import type { TimeDistributionItem } from '@/stores/dashboardStore'
@@ -35,7 +47,7 @@ const chartData = computed(() => ({
 const centerTextPlugin: Plugin<'doughnut'> = {
   id: 'centerText',
   beforeDraw(chart) {
-    const total = (chart.data.datasets[0]?.data as number[] || []).reduce(
+    const total = ((chart.data.datasets[0]?.data as number[]) || []).reduce(
       (s, v) => s + Number(v || 0),
       0
     )

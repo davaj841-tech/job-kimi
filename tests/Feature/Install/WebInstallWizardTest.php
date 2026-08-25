@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Install;
 
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -66,7 +67,7 @@ final class WebInstallWizardTest extends TestCase
     public function test_database_test_returns_sanitized_error_without_credentials(): void
     {
         $this->withSession(['install_step' => 2])
-            ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class)
+            ->withoutMiddleware(ValidateCsrfToken::class)
             ->postJson('/install/database/test', [
                 'db_host' => '127.0.0.1',
                 'db_port' => '3306',

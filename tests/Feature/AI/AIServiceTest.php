@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature\AI;
 
 use App\Models\AiContent;
+use App\Models\Feature;
 use App\Models\Resume;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\AIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -91,7 +93,7 @@ final class AIServiceTest extends TestCase
 
     public function test_resume_ai_rate_limited(): void
     {
-        \App\Models\Feature::query()->updateOrCreate(['name' => 'ai-resume'], ['enabled' => true]);
+        Feature::query()->updateOrCreate(['name' => 'ai-resume'], ['enabled' => true]);
 
         $resume = Resume::create([
             'user_id' => $this->user->id,
@@ -164,7 +166,7 @@ final class AIServiceTest extends TestCase
         Http::fake(function () use (&$attempts) {
             $attempts++;
             if ($attempts <= 2) {
-                throw new \Illuminate\Http\Client\ConnectionException('Connection timed out');
+                throw new ConnectionException('Connection timed out');
             }
 
             return Http::response([
@@ -191,7 +193,7 @@ final class AIServiceTest extends TestCase
 
     public function test_feature_middleware_blocks_when_disabled(): void
     {
-        \App\Models\Feature::query()->updateOrCreate(
+        Feature::query()->updateOrCreate(
             ['name' => 'ai-resume'],
             ['enabled' => false]
         );
@@ -211,7 +213,7 @@ final class AIServiceTest extends TestCase
 
     public function test_ai_content_stored_as_pending(): void
     {
-        \App\Models\Feature::query()->updateOrCreate(['name' => 'ai-resume'], ['enabled' => true]);
+        Feature::query()->updateOrCreate(['name' => 'ai-resume'], ['enabled' => true]);
 
         $this->fakeOpenAiResponse([
             ['section' => 'skills', 'suggestion' => 'Add Laravel', 'priority' => 'high'],

@@ -10,7 +10,12 @@
       >
         <div>
           <label class="mb-1 block text-sm font-bold text-ink">نام</label>
-          <input v-model="form.name" required class="field" placeholder="نام *" />
+          <input
+            v-model="form.name"
+            required
+            class="field"
+            placeholder="نام *"
+          />
         </div>
         <div>
           <label class="mb-1 block text-sm font-bold text-ink">موبایل</label>
@@ -138,7 +143,13 @@ import { applySeoPayload, setPageMeta } from '../../services/meta'
 import { apiErrorMessage, unwrapItem, toFaDigits } from '../../utils/format'
 import { useSiteTheme } from '../../composables/useSiteTheme'
 
-const form = reactive({ name: '', mobile: '', email: '', subject: '', message: '' })
+const form = reactive({
+  name: '',
+  mobile: '',
+  email: '',
+  subject: '',
+  message: '',
+})
 const sending = ref(false)
 const error = ref('')
 const success = ref('')
@@ -216,7 +227,10 @@ async function submit() {
       ...form,
       ...(captchaMode.value === 'turnstile'
         ? { turnstile_token: captcha.turnstile_token }
-        : { captcha_id: captcha.captcha_id, captcha_answer: captcha.captcha_answer }),
+        : {
+            captcha_id: captcha.captcha_id,
+            captcha_answer: captcha.captcha_answer,
+          }),
     })
     trackingCode.value = data?.data?.tracking_code || ''
     success.value = trackingCode.value

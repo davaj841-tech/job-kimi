@@ -3,14 +3,15 @@
 namespace App\Models\Seo;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 /**
  * @property int $id
  * @property string $key
  * @property string|null $value
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class SeoSetting extends Model
 {

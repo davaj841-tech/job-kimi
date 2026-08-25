@@ -35,7 +35,10 @@ async function load() {
         applySeoPayload(page.value.seo, {
           breadcrumbs: [
             { name: 'خانه', url: `${window.location.origin}/` },
-            { name: page.value.title, url: `${window.location.origin}/page/${route.params.slug}` },
+            {
+              name: page.value.title,
+              url: `${window.location.origin}/page/${route.params.slug}`,
+            },
           ],
         })
       } else {
@@ -46,7 +49,10 @@ async function load() {
           schema: page.value.schema || null,
           breadcrumbs: [
             { name: 'خانه', url: `${window.location.origin}/` },
-            { name: page.value.title, url: `${window.location.origin}/page/${route.params.slug}` },
+            {
+              name: page.value.title,
+              url: `${window.location.origin}/page/${route.params.slug}`,
+            },
           ],
         })
       }

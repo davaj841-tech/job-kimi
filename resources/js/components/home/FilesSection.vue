@@ -18,10 +18,7 @@
         </RouterLink>
       </div>
 
-      <div
-        v-if="loading"
-        class="py-10 text-center text-sm text-desk-muted"
-      >
+      <div v-if="loading" class="py-10 text-center text-sm text-desk-muted">
         در حال بارگذاری...
       </div>
       <div
@@ -48,19 +45,14 @@
                 class="h-full w-full object-cover"
                 loading="lazy"
               />
-              <div
-                v-else
-                class="flex h-full items-center justify-center"
-              >
-                <DesktopIcon
-                  name="file"
-                  :size="36"
-                  class="text-white/80"
-                />
+              <div v-else class="flex h-full items-center justify-center">
+                <DesktopIcon name="file" :size="36" class="text-white/80" />
               </div>
             </div>
             <div class="p-3 text-right">
-              <h3 class="line-clamp-2 text-xs font-semibold leading-5 text-desk-text sm:text-sm">
+              <h3
+                class="line-clamp-2 text-xs font-semibold leading-5 text-desk-text sm:text-sm"
+              >
                 {{ file.title }}
               </h3>
               <p class="mt-2 text-xs font-bold text-emerald-600 sm:text-sm">
@@ -97,7 +89,7 @@ const displayFiles = computed(() =>
   (props.files || []).slice(0, 4).map((file, i) => ({
     ...file,
     tint: tints[i % tints.length],
-  })),
+  }))
 )
 </script>
 

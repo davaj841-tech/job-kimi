@@ -31,13 +31,14 @@
     </div>
 
     <LoadingSpinner v-if="loading" />
-    <ul
-      v-else
-      class="page-card divide-y divide-surface-line overflow-hidden"
-    >
+    <ul v-else class="page-card divide-y divide-surface-line overflow-hidden">
       <li v-for="item in filtered" :key="`${item._kind}-${item.id}`">
         <RouterLink
-          :to="item._kind === 'article' ? `/articles/${item.slug}` : `/blog/${item.slug}`"
+          :to="
+            item._kind === 'article'
+              ? `/articles/${item.slug}`
+              : `/blog/${item.slug}`
+          "
           class="flex gap-3 px-4 py-4 transition hover:bg-surface-page sm:px-5"
         >
           <span class="mt-0.5 text-xl" aria-hidden="true">{{

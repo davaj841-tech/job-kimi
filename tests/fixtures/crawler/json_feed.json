@@ -1,0 +1,24 @@
+[
+  {
+    "title": "استخدام کارشناس فناوری اطلاعات",
+    "company_name": "سازمان تأمین اجتماعی",
+    "description": "جذب کارشناس IT برای شعب تهران",
+    "registration_link": "https://www.tamin.ir/apply/5678",
+    "source_url": "https://www.tamin.ir/jobs/5678",
+    "external_id": "tamin-5678",
+    "province": "تهران",
+    "city": "تهران",
+    "registration_deadline": "2026-09-15",
+    "employment_type": "full_time"
+  },
+  {
+    "title": "استخدام حسابدار",
+    "company_name": "سازمان تأمین اجتماعی",
+    "description": "نیاز به حسابدار با سابقه",
+    "registration_link": "https://www.tamin.ir/apply/5679",
+    "source_url": "https://www.tamin.ir/jobs/5679",
+    "external_id": "tamin-5679",
+    "province": "اصفهان",
+    "registration_deadline": "2026-09-20"
+  }
+]

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\HasSeo;
+use Database\Factories\ExamCategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,9 +17,10 @@ use Illuminate\Support\Str;
  */
 class ExamCategory extends Model
 {
-    /** @use HasFactory<\Database\Factories\ExamCategoryFactory> */
+    /** @use HasFactory<ExamCategoryFactory> */
     use HasFactory;
-    use \App\Traits\HasSeo;
+
+    use HasSeo;
 
     protected $fillable = [
         'name',

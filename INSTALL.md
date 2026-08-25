@@ -2,9 +2,19 @@
 
 ## روش A — cPanel (public_html + install.php)
 
-پس از آپلود `install.php`، پوشه `lib/` و `package/jobazmoon-core.zip` در `public_html`:
+پس از ساخت بسته روی سیستم توسعه:
 
-`https://your-domain.example/install.php`
+```bash
+php scripts/build-cpanel-package.php
+```
+
+آپلود در `public_html`:
+
+- `cpanel-installer/install.php`
+- پوشه `lib/` (از `cpanel-installer/lib/`)
+- `package/jobazmoon-core.zip` (از `dist/jobazmoon-core.zip`)
+
+سپس: `https://your-domain.example/install.php`
 
 مراحل نصب‌کننده:
 
@@ -12,7 +22,10 @@
 2. **پایگاه‌داده:** تست اتصال MySQL — اگر جدول دارد نیاز به تأیید صریح
 3. **سایت و مدیر:** نام سایت، URL، ایمیل، موبایل، رمز (در گزارش نمایش داده نمی‌شود)
 4. **تأیید:** خلاصه بدون secret + checkbox تأیید
-5. **پایان:** migrate، seed، storage:link، cache، قفل `storage/installed`، حذف install.php
+5. **پایان:** migrate، seed، storage:link، cache، قفل `storage/installed`، حذف install.php و بسته؛ نمایش Cronهای schedule + queue
+
+جزئیات مسیرها و GitHub: [`docs/CPANEL_DEPLOYMENT.md`](docs/CPANEL_DEPLOYMENT.md)  
+به‌روزرسانی بعدی: [`docs/UPDATE_SYSTEM.md`](docs/UPDATE_SYSTEM.md) — **نه** install.php دوباره.
 
 ## روش B — Laravel wizard (/install)
 

@@ -1,8 +1,12 @@
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div
+      class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+    >
       <div>
-        <h2 class="text-xl font-bold text-ink dark:text-white">تاریخچه آزمون</h2>
+        <h2 class="text-xl font-bold text-ink dark:text-white">
+          تاریخچه آزمون
+        </h2>
         <p class="text-sm text-ink-muted dark:text-slate-400">
           فیلتر، مرتب‌سازی و مقایسه نتایج
         </p>
@@ -210,7 +214,9 @@
             </p>
             <p class="text-sm">
               درصد:
-              <strong>{{ toFaDigits(Math.round(row.percentage || 0)) }}٪</strong>
+              <strong
+                >{{ toFaDigits(Math.round(row.percentage || 0)) }}٪</strong
+              >
             </p>
             <p class="text-sm">
               نتیجه:
@@ -270,9 +276,7 @@ const filtered = computed(() => {
   let list = [...rows.value]
   const q = filters.q.trim()
   if (q) {
-    list = list.filter((r) =>
-      String(r.exam_title || '').includes(q)
-    )
+    list = list.filter((r) => String(r.exam_title || '').includes(q))
   }
   if (filters.minScore > 0) {
     list = list.filter((r) => Number(r.percentage || 0) >= filters.minScore)

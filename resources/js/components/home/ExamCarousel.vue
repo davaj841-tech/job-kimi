@@ -3,7 +3,9 @@
     <div class="mx-auto max-w-7xl px-4">
       <div class="animate-on-scroll mb-5 flex items-end justify-between gap-3">
         <div>
-          <h2 class="text-lg font-black text-desk-dark sm:text-xl">آزمون‌های پرطرفدار</h2>
+          <h2 class="text-lg font-black text-desk-dark sm:text-xl">
+            آزمون‌های پرطرفدار
+          </h2>
           <p class="mt-1 text-xs text-desk-muted">تمرین هدفمند برای استخدام</p>
         </div>
         <RouterLink
@@ -14,16 +16,10 @@
         </RouterLink>
       </div>
 
-      <div
-        v-if="loading"
-        class="py-8 text-center text-sm text-desk-muted"
-      >
+      <div v-if="loading" class="py-8 text-center text-sm text-desk-muted">
         در حال بارگذاری...
       </div>
-      <p
-        v-else-if="error"
-        class="py-6 text-center text-sm text-brand"
-      >
+      <p v-else-if="error" class="py-6 text-center text-sm text-brand">
         {{ error }}
       </p>
       <div
@@ -36,14 +32,20 @@
           :key="exam.id"
           class="animate-on-scroll w-[16rem] shrink-0 snap-start sm:w-72"
         >
-          <div class="flex h-full flex-col border border-surface-line bg-surface-page p-4 transition hover:border-desk-dark/20">
+          <div
+            class="flex h-full flex-col border border-surface-line bg-surface-page p-4 transition hover:border-desk-dark/20"
+          >
             <p class="mb-3 text-[10px] font-bold text-desk-muted">
               {{ exam.is_free ? 'رایگان' : 'ویژه' }}
             </p>
-            <h3 class="line-clamp-2 min-h-[2.75rem] text-sm font-bold text-desk-text">
+            <h3
+              class="line-clamp-2 min-h-[2.75rem] text-sm font-bold text-desk-text"
+            >
               {{ exam.title }}
             </h3>
-            <div class="mt-3 flex items-center gap-3 text-[11px] text-desk-muted">
+            <div
+              class="mt-3 flex items-center gap-3 text-[11px] text-desk-muted"
+            >
               <span>{{ toFaDigits(exam.total_questions || '—') }} سوال</span>
               <span>{{ toFaDigits(exam.duration_minutes || '—') }} دقیقه</span>
             </div>
@@ -57,10 +59,7 @@
           </div>
         </article>
       </div>
-      <p
-        v-else
-        class="py-8 text-center text-sm text-desk-muted"
-      >
+      <p v-else class="py-8 text-center text-sm text-desk-muted">
         آزمونی یافت نشد.
       </p>
     </div>

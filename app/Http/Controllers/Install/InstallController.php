@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Install;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
@@ -581,10 +582,10 @@ class InstallController extends Controller
             if (! Schema::hasTable('settings')) {
                 return;
             }
-            if (! class_exists(\App\Models\Setting::class)) {
+            if (! class_exists(Setting::class)) {
                 return;
             }
-            $setting = app(\App\Models\Setting::class);
+            $setting = app(Setting::class);
             if (method_exists($setting, 'set')) {
                 $setting::set('site_name', $siteName, 'general');
             }
