@@ -121,7 +121,26 @@
           </div>
 
           <div class="md:hidden">
-            <ThemePicker v-model="templateId" />
+            <button
+              type="button"
+              class="flex w-full items-center justify-between rounded-xl border border-surface-line bg-white px-4 py-3 text-sm font-bold dark:border-slate-700 dark:bg-slate-900"
+              @click="themeOpen = !themeOpen"
+            >
+              <span>قالب رزومه A4</span>
+              <ChevronDownIcon
+                class="h-5 w-5 transition"
+                :class="themeOpen ? 'rotate-180' : ''"
+              />
+            </button>
+            <div
+              v-if="themeOpen"
+              class="mt-2 rounded-2xl border border-surface-line bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
+            >
+              <ThemePicker
+                :model-value="templateId"
+                @update:model-value="pickTheme"
+              />
+            </div>
           </div>
 
           <div class="flex justify-between gap-2">
@@ -236,6 +255,7 @@ import { useRoute } from 'vue-router'
 import {
   ArrowRightIcon,
   CheckIcon,
+  ChevronDownIcon,
   DocumentArrowDownIcon,
 } from '@heroicons/vue/24/outline'
 import api from '../../api/client'

@@ -112,13 +112,13 @@
           </button>
         </div>
 
-        <!-- لیست سال (مثل لیست ماه) -->
-        <div v-if="yearOpen" class="pdp-list">
+        <!-- لیست سال (جدولی) -->
+        <div v-if="yearOpen" class="pdp-grid-table">
           <button
             v-for="y in yearOptions"
             :key="y"
             type="button"
-            class="pdp-list-opt"
+            class="pdp-grid-opt"
             :class="{ 'is-active': y === view.jy }"
             @click="pickYear(y)"
           >
@@ -126,13 +126,16 @@
           </button>
         </div>
 
-        <!-- لیست ماه (همان استایل لیست سال) -->
-        <div v-else-if="monthOpen || mode === 'month'" class="pdp-list">
+        <!-- لیست ماه (جدولی) -->
+        <div
+          v-else-if="monthOpen || mode === 'month'"
+          class="pdp-grid-table pdp-grid-table--months"
+        >
           <button
             v-for="(m, i) in months"
             :key="m"
             type="button"
-            class="pdp-list-opt"
+            class="pdp-grid-opt"
             :class="{
               'is-active':
                 (selected &&
@@ -449,7 +452,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .pdp-trigger {
-  @apply flex h-10 w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-orange-300 focus:border-orange-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800;
+  @apply flex h-11 w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm text-ink outline-none transition hover:border-orange-300 focus:border-orange-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-500 dark:bg-slate-800 dark:text-slate-100;
 }
 .pdp-pop {
   position: absolute;
@@ -526,15 +529,32 @@ onBeforeUnmount(() => {
   box-shadow: inset 0 0 0 1.5px #f97316;
 }
 .pdp-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
   max-height: 240px;
   overflow: auto;
   padding: 8px;
 }
+.pdp-grid-table {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  max-height: 260px;
+  overflow: auto;
+  padding: 8px;
+}
+.pdp-grid-table--months {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.pdp-grid-opt {
+  @apply rounded-lg px-2 py-2 text-center text-xs font-semibold text-slate-700 hover:bg-orange-50 dark:text-slate-100 dark:hover:bg-slate-700 sm:text-sm;
+}
+.pdp-grid-opt.is-active {
+  @apply bg-orange-500 font-bold text-white hover:bg-orange-500;
+}
 .pdp-list-opt {
-  @apply w-full rounded-lg px-3 py-2 text-center text-sm font-medium text-slate-700 hover:bg-orange-50 dark:text-slate-200 dark:hover:bg-slate-700;
+  @apply w-full rounded-lg px-2 py-2 text-center text-xs font-medium text-slate-700 hover:bg-orange-50 dark:text-slate-200 dark:hover:bg-slate-700 sm:text-sm;
 }
 .pdp-list-opt.is-active {
   @apply bg-orange-500 font-bold text-white hover:bg-orange-500;

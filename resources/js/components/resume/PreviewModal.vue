@@ -17,8 +17,11 @@
             <XMarkIcon class="h-5 w-5" />
           </button>
         </div>
-        <div class="flex-1 overflow-auto bg-slate-300 p-4 dark:bg-slate-800">
-          <div class="preview-full mx-auto shadow-2xl">
+        <div
+          ref="scrollEl"
+          class="flex flex-1 items-start justify-center overflow-auto bg-slate-300 p-3 dark:bg-slate-800 sm:p-4"
+        >
+          <div class="preview-stage shadow-2xl" :style="stageStyle">
             <ResumePreview :data="data" :template-id="templateId" />
           </div>
         </div>
@@ -28,26 +31,72 @@
 </template>
 
 <script setup>
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import ResumePreview from './ResumePreview.vue'
 
-defineProps({
+const props = defineProps({
   modelValue: { type: Boolean, default: false },
   data: { type: Object, required: true },
   template: { type: String, default: 'modern' },
   templateId: { type: Number, default: 1 },
 })
 defineEmits(['update:modelValue'])
+
+const scrollEl = ref(null)
+const scale = ref(0.45)
+
+const A4_WIDTH_PX = 794
+
+function updateScale() {
+  const pad = 24
+  const maxW = Math.min(window.innerWidth - pad, 820)
+  scale.value = Math.min(1, Math.max(0.32, maxW / A4_WIDTH_PX))
+}
+
+const stageStyle = computed(() => ({
+  width: `${A4_WIDTH_PX}px`,
+  transform: `scale(${scale.value})`,
+  transformOrigin: 'top center',
+}))
+
+let ro = null
+
+onMounted(() => {
+  updateScale()
+  window.addEventListener('resize', updateScale)
+  if (typeof ResizeObserver !== 'undefined' && scrollEl.value) {
+    ro = new ResizeObserver(updateScale)
+    ro.observe(scrollEl.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateScale)
+  ro?.disconnect()
+})
+
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (open) {
+      requestAnimationFrame(updateScale)
+    }
+  }
+)
 </script>
 
 <style scoped>
-.preview-full {
-  width: 210mm;
-  max-width: 100%;
+.preview-stage {
+  flex-shrink: 0;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
 }
-.preview-full :deep(.resume-a4) {
+.preview-stage :deep(.resume-a4) {
   width: 210mm;
-  max-width: 100%;
+  min-height: 297mm;
 }
 .fade-enter-active,
 .fade-leave-active {

@@ -46,7 +46,8 @@
           <input
             v-model.number="amount"
             type="number"
-            class="input-field"
+            inputmode="numeric"
+            class="input-field touch-target"
             min="10000"
             step="1000"
           />

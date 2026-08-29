@@ -52,6 +52,10 @@ class JobPublisher implements JobPublisherInterface
         return [
             'title' => $normalized['title'],
             'company_name' => $normalized['company_name'] ?? $source->name,
+            'job_classification_id' => array_key_exists('job_classification_id', $normalized)
+                ? $normalized['job_classification_id']
+                : $existing?->job_classification_id,
+            'seo_tag' => array_key_exists('seo_tag', $normalized) ? $normalized['seo_tag'] : $existing?->seo_tag,
             'description' => $normalized['description'] ?? $existing?->description,
             'requirements' => array_key_exists('requirements', $normalized)
                 ? $normalized['requirements']

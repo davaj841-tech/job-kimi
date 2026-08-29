@@ -19,8 +19,10 @@ use App\Services\Aggregation\JobSourceDomainGuard;
 use App\Services\Aggregation\Parsers\SourceParserRegistry;
 use App\Services\Aggregation\SourceHealthService;
 use Carbon\CarbonInterface;
+use Database\Seeders\PilotJobSourceSeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Throwable;
@@ -76,6 +78,191 @@ class JobSourceAdminController extends BaseController
         ]);
     }
 
+    public function seedDefaults(): JsonResponse
+    {
+        $before = JobSource::query()->count();
+        Artisan::call('db:seed', [
+            '--class' => PilotJobSourceSeeder::class,
+            '--force' => true,
+        ]);
+
+        return $this->successResponse([
+            'before' => $before,
+            'after' => JobSource::query()->count(),
+            'dispatchable' => JobSource::query()->dispatchable()->count(),
+        ], 'منابع پیش‌فرض بارگذاری شدند.');
+    }
+
+    /**
+     * Active crawl targets + catalog summary for admin UI.
+     */
+    public function crawlOverview(): JsonResponse
+    {
+        $all = JobSource::query()
+            ->with(['endpoints' => fn ($q) => $q->orderBy('sort_order')->orderBy('id')])
+            ->withCount(['endpoints', 'jobPosts'])
+            ->orderBy('priority')
+            ->orderBy('id')
+            ->get();
+
+        $dispatchable = $all->filter(fn (JobSource $s) => $s->allowsAutomaticCrawl());
+
+        $mapSource = function (JobSource $source, bool $includeEndpoints = true): array {
+            $row = $this->serializeSource($source, $includeEndpoints);
+            $row['is_dispatchable'] = $source->allowsAutomaticCrawl();
+            $row['search_urls'] = $source->endpoints
+                ->filter(fn ($e) => $e instanceof JobSourceEndpoint && $e->is_enabled)
+                ->map(fn (JobSourceEndpoint $e) => $e->url)
+                ->values()
+                ->all();
+
+            return $row;
+        };
+
+        return $this->successResponse([
+            'totals' => [
+                'all' => $all->count(),
+                'enabled' => $all->where('is_enabled', true)->count(),
+                'approved' => $all->where('is_approved', true)->count(),
+                'whitelisted' => $all->where('is_enabled', true)->where('is_approved', true)->count(),
+                'dispatchable' => $dispatchable->count(),
+            ],
+            'dispatchable_sources' => $dispatchable
+                ->map(fn (JobSource $s) => $mapSource($s))
+                ->values(),
+            'catalog' => $all->map(fn (JobSource $s) => $mapSource($s, false))->values(),
+            'ai' => config('aggregation.ai'),
+            'default_catalog' => $this->buildDefaultCatalogPayload(),
+        ]);
+    }
+
+    /**
+     * Built-in catalog from config merged with DB load state (for admin toggle/delete).
+     */
+    public function defaultCatalog(): JsonResponse
+    {
+        return $this->successResponse($this->buildDefaultCatalogPayload());
+    }
+
+    /**
+     * @return array{
+     *   total: int,
+     *   loaded_count: int,
+     *   enabled_count: int,
+     *   dispatchable_count: int,
+     *   items: list<array<string, mixed>>
+     * }
+     */
+    protected function buildDefaultCatalogPayload(): array
+    {
+        $configSources = config('aggregation.official_sources', []);
+        if (! is_array($configSources)) {
+            $configSources = [];
+        }
+
+        $slugs = collect($configSources)
+            ->pluck('slug')
+            ->filter(fn ($s) => is_string($s) && $s !== '')
+            ->values()
+            ->all();
+
+        $dbBySlug = JobSource::query()
+            ->withCount(['endpoints', 'jobPosts'])
+            ->whereIn('slug', $slugs)
+            ->get()
+            ->keyBy('slug');
+
+        $items = [];
+        foreach ($configSources as $pilot) {
+            if (! is_array($pilot) || empty($pilot['slug'])) {
+                continue;
+            }
+
+            $slug = (string) $pilot['slug'];
+            /** @var JobSource|null $db */
+            $db = $dbBySlug->get($slug);
+
+            $sourceType = $pilot['source_type'] ?? null;
+            $typeEnum = is_string($sourceType)
+                ? JobSourceType::tryFrom($sourceType)
+                : null;
+
+            $reliability = $pilot['reliability_level'] ?? null;
+            $reliabilityEnum = is_string($reliability)
+                ? JobSourceReliability::tryFrom($reliability)
+                : null;
+
+            $quality = $pilot['quality_status'] ?? JobSourceQualityStatus::ManualOnly->value;
+            $qualityEnum = is_string($quality)
+                ? JobSourceQualityStatus::tryFrom($quality)
+                : null;
+
+            $endpointUrls = collect($pilot['endpoints'] ?? [])
+                ->pluck('url')
+                ->filter()
+                ->values()
+                ->all();
+
+            $items[] = [
+                'slug' => $slug,
+                'name' => (string) ($pilot['name'] ?? $slug),
+                'official_url' => (string) ($pilot['official_url'] ?? ''),
+                'domain' => (string) ($pilot['domain'] ?? JobSource::extractDomain($pilot['official_url'] ?? null) ?? ''),
+                'source_type' => $typeEnum?->value ?? $sourceType,
+                'source_type_label' => $typeEnum?->label(),
+                'reliability_level' => $reliabilityEnum?->value ?? $reliability,
+                'reliability_label' => $reliabilityEnum?->label(),
+                'quality_status' => $qualityEnum?->value ?? $quality,
+                'quality_status_label' => $qualityEnum?->label() ?? JobSourceQualityStatus::ManualOnly->label(),
+                'priority' => (int) ($pilot['priority'] ?? 50),
+                'config_endpoints' => $endpointUrls,
+                'is_loaded' => $db instanceof JobSource,
+                'id' => $db?->id,
+                'is_enabled' => $db instanceof JobSource ? (bool) $db->is_enabled : (bool) ($pilot['is_enabled'] ?? false),
+                'is_approved' => $db instanceof JobSource ? (bool) $db->is_approved : (bool) ($pilot['is_approved'] ?? false),
+                'is_dispatchable' => $db instanceof JobSource ? $db->allowsAutomaticCrawl() : false,
+                'endpoints_count' => $db instanceof JobSource
+                    ? (int) $db->endpoints_count
+                    : count($endpointUrls),
+                'job_posts_count' => $db instanceof JobSource ? (int) $db->job_posts_count : 0,
+                'can_delete' => $db instanceof JobSource && (int) $db->job_posts_count === 0,
+            ];
+        }
+
+        usort($items, fn (array $a, array $b) => ($a['priority'] <=> $b['priority']) ?: strcmp($a['name'], $b['name']));
+
+        $loaded = collect($items)->where('is_loaded', true);
+
+        return [
+            'total' => count($items),
+            'loaded_count' => $loaded->count(),
+            'enabled_count' => $loaded->where('is_enabled', true)->count(),
+            'dispatchable_count' => $loaded->where('is_dispatchable', true)->count(),
+            'items' => $items,
+        ];
+    }
+
+    /**
+     * Disable all loaded default sources (does not delete).
+     */
+    public function bulkDisableDefaults(): JsonResponse
+    {
+        $slugs = collect(config('aggregation.official_sources', []))
+            ->pluck('slug')
+            ->filter(fn ($s) => is_string($s) && $s !== '')
+            ->values()
+            ->all();
+
+        $updated = JobSource::query()
+            ->whereIn('slug', $slugs)
+            ->where('is_enabled', true)
+            ->update(['is_enabled' => false]);
+
+        return $this->successResponse([
+            'disabled' => $updated,
+        ], $updated > 0 ? "{$updated} منبع پیش‌فرض غیرفعال شد." : 'منبع فعالی برای غیرفعال‌سازی نبود.');
+    }
+
     public function options(): JsonResponse
     {
         return $this->successResponse([
@@ -104,6 +291,7 @@ class JobSourceAdminController extends BaseController
                 'label' => $k,
             ])->values(),
             'http_methods' => ['GET'],
+            'default_catalog' => $this->buildDefaultCatalogPayload(),
         ]);
     }
 

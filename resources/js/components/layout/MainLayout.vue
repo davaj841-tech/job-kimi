@@ -4,12 +4,12 @@
   </UserLayout>
   <div v-else class="flex min-h-dvh flex-col bg-surface-page dark:bg-slate-900">
     <div class="lg:hidden">
-      <AppHeader v-if="!hideChrome" />
+      <MobileHeader v-if="!hideChrome" />
     </div>
 
     <DesktopHeader v-if="!hideChrome" />
 
-    <main class="flex-1">
+    <main class="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0">
       <slot />
     </main>
 
@@ -29,9 +29,9 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import AppHeader from '../AppHeader.vue'
+import MobileHeader from './MobileHeader.vue'
 import AppToast from '../AppToast.vue'
-import BottomNav from '../BottomNav.vue'
+import BottomNav from './BottomNav.vue'
 import DesktopFooter from './DesktopFooter.vue'
 import DesktopHeader from './DesktopHeader.vue'
 import InstallPwaBanner from '../InstallPwaBanner.vue'

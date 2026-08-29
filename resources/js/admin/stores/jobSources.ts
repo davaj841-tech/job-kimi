@@ -19,6 +19,15 @@ interface JobSourceOptions {
   endpoint_types: unknown[]
   parser_types: unknown[]
   http_methods: string[]
+  default_catalog?: DefaultCatalogPayload | null
+}
+
+interface DefaultCatalogPayload {
+  total: number
+  loaded_count: number
+  enabled_count: number
+  dispatchable_count: number
+  items: Record<string, unknown>[]
 }
 
 interface JobSourcesState {
@@ -29,6 +38,7 @@ interface JobSourcesState {
   loading: boolean
   filters: JobSourcesFilters
   lastTestResult: Record<string, unknown> | null
+  defaultCatalog: DefaultCatalogPayload | null
 }
 
 export const useJobSourcesStore = defineStore('adminJobSources', {
@@ -56,11 +66,15 @@ export const useJobSourcesStore = defineStore('adminJobSources', {
       page: 1,
     },
     lastTestResult: null,
+    defaultCatalog: null as DefaultCatalogPayload | null,
   }),
   actions: {
     async fetchOptions() {
       const { data } = await adminApi.get('/admin/job-sources/options')
       this.options = data.data || this.options
+      if (data.data?.default_catalog?.items?.length) {
+        this.defaultCatalog = data.data.default_catalog
+      }
     },
     async fetchSources(page = 1) {
       this.loading = true
@@ -144,6 +158,45 @@ export const useJobSourcesStore = defineStore('adminJobSources', {
       await adminApi.delete(
         `/admin/job-sources/${sourceId}/endpoints/${endpointId}`
       )
+    },
+    async seedDefaults() {
+      const { data } = await adminApi.post('/admin/job-sources/seed-defaults')
+      return data.data
+    },
+    async fetchCrawlOverview() {
+      const { data } = await adminApi.get('/admin/job-sources/crawl-overview')
+      return data.data
+    },
+    async fetchDefaultCatalog() {
+      try {
+        const { data } = await adminApi.get(
+          '/admin/job-sources/default-catalog'
+        )
+        this.defaultCatalog = data.data
+        return data.data
+      } catch {
+        try {
+          const { data } = await adminApi.get(
+            '/admin/job-sources/crawl-overview'
+          )
+          if (data.data?.default_catalog?.items?.length) {
+            this.defaultCatalog = data.data.default_catalog
+            return data.data.default_catalog
+          }
+        } catch {
+          //
+        }
+        if (this.defaultCatalog?.items?.length) {
+          return this.defaultCatalog
+        }
+        throw new Error('بارگذاری فهرست منابع پیش‌فرض ناموفق بود.')
+      }
+    },
+    async bulkDisableDefaults() {
+      const { data } = await adminApi.post(
+        '/admin/job-sources/bulk-disable-defaults'
+      )
+      return data.data
     },
   },
 })

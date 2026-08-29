@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Update;
 
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
 use ZipArchive;
@@ -76,7 +77,7 @@ final class UpdatePackBuilder
             'release_type' => $releaseType,
             'description' => $description !== '' ? $description : "Update to {$targetVersion}",
             'php' => '8.2',
-            'laravel' => '11',
+            'laravel' => (string) (explode('.', Application::VERSION)[0] ?? '12'),
             'backup_required' => true,
             'migration_required' => $migrationRequired,
             'maintenance_mode' => $maintenanceMode,

@@ -840,6 +840,7 @@ async function submit() {
 .exam-option {
   display: flex;
   width: 100%;
+  min-height: 48px;
   align-items: flex-start;
   gap: 0.75rem;
   border-radius: 0.9rem;
@@ -949,5 +950,43 @@ async function submit() {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+</style>
+
+<style>
+html.dark .exam-room {
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  color: #f1f5f9;
+}
+
+html.dark .exam-header {
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom-color: #334155;
+}
+
+html.dark .exam-chip {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+html.dark .exam-tool {
+  border-color: #475569;
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+html.dark .exam-paper {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+html.dark .exam-option {
+  border-color: #475569;
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+html.dark .exam-option-selected {
+  background: #3f1d24;
 }
 </style>

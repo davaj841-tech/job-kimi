@@ -265,7 +265,10 @@ class BackupService
 
         $mysqldump = $this->findMysqldump();
         if (! $mysqldump) {
-            throw new RuntimeException('mysqldump یافت نشد. بکاپ پایگاه داده انجام نشد.');
+            Log::warning('mysqldump not found; falling back to PDO dump');
+            $this->dumpMysqlViaPdo($sqlFile);
+
+            return;
         }
 
         $args = [
@@ -286,18 +289,69 @@ class BackupService
 
         if (! $result->successful() || ! is_file($sqlFile) || filesize($sqlFile) < 32) {
             $stderr = trim($result->errorOutput());
-            // Never log passwords; only truncate stderr.
             Log::error('mysqldump failed', [
                 'exit' => $result->exitCode(),
                 'stderr' => Str::limit($stderr, 500),
             ]);
-            throw new RuntimeException('dump پایگاه داده ناموفق بود.'.($stderr !== '' ? ' جزئیات در لاگ سرور.' : ''));
+            Log::warning('mysqldump failed; falling back to PDO dump');
+            $this->dumpMysqlViaPdo($sqlFile);
+
+            return;
         }
+    }
+
+    protected function dumpMysqlViaPdo(string $sqlFile): void
+    {
+        $pdo = DB::connection()->getPdo();
+        $tables = $pdo->query('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
+
+        if ($tables === []) {
+            throw new RuntimeException('dump پایگاه داده خالی است.');
+        }
+
+        $out = "-- JobAzmoon MySQL PDO dump\n-- At: ".now()->toIso8601String()."\nSET FOREIGN_KEY_CHECKS=0;\nSET SQL_MODE='NO_AUTO_VALUE_ON_ZERO';\n";
+
+        foreach ($tables as $table) {
+            $table = (string) $table;
+            $createRow = $pdo->query('SHOW CREATE TABLE `'.str_replace('`', '``', $table).'`')
+                ->fetch(\PDO::FETCH_ASSOC);
+            $create = is_array($createRow) ? (string) ($createRow['Create Table'] ?? '') : '';
+            if ($create === '') {
+                continue;
+            }
+
+            $out .= "DROP TABLE IF EXISTS `{$table}`;\n{$create};\n\n";
+
+            $rows = $pdo->query('SELECT * FROM `'.str_replace('`', '``', $table).'`')->fetchAll(\PDO::FETCH_ASSOC);
+            foreach ($rows as $row) {
+                $cols = array_map(
+                    fn (string $c) => '`'.str_replace('`', '``', $c).'`',
+                    array_keys($row)
+                );
+                $vals = [];
+                foreach ($row as $value) {
+                    $vals[] = $value === null ? 'NULL' : $pdo->quote((string) $value);
+                }
+                $out .= 'INSERT INTO `'.$table.'` ('.implode(',', $cols).') VALUES ('.implode(',', $vals).");\n";
+            }
+            $out .= "\n";
+        }
+
+        $out .= "SET FOREIGN_KEY_CHECKS=1;\n";
+
+        if (strlen($out) < 32) {
+            throw new RuntimeException('dump پایگاه MySQL خالی است.');
+        }
+
+        file_put_contents($sqlFile, $out);
     }
 
     protected function findMysqldump(): ?string
     {
         $candidates = [
+            '/usr/bin/mysqldump',
+            '/usr/local/bin/mysqldump',
+            '/usr/local/mysql/bin/mysqldump',
             'C:\\laragon\\bin\\mysql\\mysql-8.4.3-winx64\\bin\\mysqldump.exe',
             'C:\\laragon\\bin\\mysql\\mysql-8.0.30-winx64\\bin\\mysqldump.exe',
         ];

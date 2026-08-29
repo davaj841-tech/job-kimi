@@ -8,6 +8,6 @@ declare(strict_types=1);
  */
 return [
     'name' => 'JobAzmoon',
-    'current' => '1.0.0',
+    'current' => '1.0.1',
     'channel' => 'stable',
 ];

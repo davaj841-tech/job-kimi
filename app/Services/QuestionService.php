@@ -34,6 +34,7 @@ class QuestionService
         return [
             'created' => $import->created,
             'skipped' => $import->skipped,
+            'duplicates' => $import->duplicates,
             'errors' => $import->errors,
         ];
     }

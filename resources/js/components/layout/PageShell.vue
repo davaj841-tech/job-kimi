@@ -1,5 +1,5 @@
 <template>
-  <div class="page-shell">
+  <div class="page-shell" v-bind="attrs">
     <header v-if="title || $slots.title || $slots.actions" class="page-head">
       <div class="min-w-0">
         <h1 class="page-title">
@@ -16,8 +16,14 @@
 </template>
 
 <script setup>
+import { useAttrs } from 'vue'
+
+defineOptions({ inheritAttrs: false })
+
 defineProps({
   title: { type: String, default: '' },
   subtitle: { type: String, default: '' },
 })
+
+const attrs = useAttrs()
 </script>

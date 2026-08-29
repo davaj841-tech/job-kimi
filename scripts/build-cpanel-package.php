@@ -32,6 +32,9 @@ foreach ($args as $arg) {
 function out(string $msg): void
 {
     fwrite(STDOUT, $msg.PHP_EOL);
+    if (function_exists('fflush')) {
+        fflush(STDOUT);
+    }
 }
 
 function fail(string $msg, int $code = 1): never
@@ -132,7 +135,9 @@ $denyNameExact = [
     'coverage',
     'dist',
     'cpanel-installer',
-    'install.php',
+    // Do NOT deny bare "install.php" here — routes/install.php is required by
+    // bootstrap/app.php whenever storage/installed is missing (cPanel migrate boot).
+    // Root cPanel installer lives under cpanel-installer/ (already denied).
     'phpunit.xml',
     'phpstan.neon',
     'phpstan-baseline.neon',
@@ -152,10 +157,14 @@ $denyPathContains = [
     DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'logs'.DIRECTORY_SEPARATOR,
     DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'pail'.DIRECTORY_SEPARATOR,
     DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'backups'.DIRECTORY_SEPARATOR,
-    DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'cache'.DIRECTORY_SEPARATOR.'data'.DIRECTORY_SEPARATOR,
+    // Entire file-cache tree (phpstan dumps, compiled views leftovers, etc.)
+    DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'cache'.DIRECTORY_SEPARATOR,
     DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'sessions'.DIRECTORY_SEPARATOR,
     DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'views'.DIRECTORY_SEPARATOR,
     DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'testing'.DIRECTORY_SEPARATOR,
+    // Never ship uploaded/private runtime artifacts
+    DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'private'.DIRECTORY_SEPARATOR,
+    DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR,
     DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'cache'.DIRECTORY_SEPARATOR,
     DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'hot',
     DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR,
@@ -178,12 +187,14 @@ function shouldExclude(string $absolute, string $relative, array $denyNameExact,
     $parts = array_values(array_filter(explode(DIRECTORY_SEPARATOR, $norm), static fn ($p) => $p !== '' && $p !== '.'));
     $base = $parts === [] ? basename($absolute) : $parts[array_key_last($parts)];
 
+    $envExampleAllow = ['.env.example', '.env.production.example'];
+
     foreach ($parts as $part) {
         if (in_array($part, $denyNameExact, true)) {
             return true;
         }
         foreach ($denyBasenamePrefix as $prefix) {
-            if (str_starts_with($part, $prefix)) {
+            if (str_starts_with($part, $prefix) && ! in_array($part, $envExampleAllow, true)) {
                 return true;
             }
         }
@@ -194,7 +205,7 @@ function shouldExclude(string $absolute, string $relative, array $denyNameExact,
     }
 
     foreach ($denyBasenamePrefix as $prefix) {
-        if (str_starts_with($base, $prefix)) {
+        if (str_starts_with($base, $prefix) && ! in_array($base, $envExampleAllow, true)) {
             return true;
         }
     }
@@ -250,7 +261,15 @@ $addFile = static function (string $absolute, string $relative) use ($zip, &$add
     }
     $zipPath = str_replace('\\', '/', $relative);
     if ($zip->addFile($absolute, $zipPath)) {
+        // Store vendor binaries uncompressed — much faster close() on Windows; size still acceptable.
+        $normRel = str_replace('\\', '/', $relative);
+        if (str_starts_with($normRel, 'vendor/') && method_exists($zip, 'setCompressionName')) {
+            $zip->setCompressionName($zipPath, ZipArchive::CM_STORE);
+        }
         $added++;
+        if ($added % 500 === 0) {
+            out('  … '.$added.' files queued');
+        }
     }
 };
 
@@ -293,10 +312,47 @@ foreach ($includeRoots as $dir) {
     }
 }
 
-$zip->close();
+// Force Laravel runtime directory placeholders (empty dirs are often omitted from ZIP).
+$storagePlaceholders = [
+    'storage/framework/cache/.gitignore' => "*\n!.gitignore\n",
+    'storage/framework/cache/data/.gitignore' => "*\n!.gitignore\n",
+    'storage/framework/sessions/.gitignore' => "*\n!.gitignore\n",
+    'storage/framework/views/.gitignore' => "*\n!.gitignore\n",
+    'storage/logs/.gitignore' => "*\n!.gitignore\n",
+    'storage/app/.gitignore' => "*\n!public/\n!.gitignore\n",
+    'storage/app/public/.gitignore' => "*\n!.gitignore\n",
+    'storage/app/private/.gitignore' => "*\n!.gitignore\n",
+    'bootstrap/cache/.gitignore' => "*\n!.gitignore\n",
+];
+foreach ($storagePlaceholders as $zipPath => $contents) {
+    $local = $root.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $zipPath);
+    if ($zip->locateName($zipPath) !== false) {
+        continue;
+    }
+    if (is_file($local)) {
+        if ($zip->addFile($local, $zipPath)) {
+            $added++;
+        } else {
+            $zip->addFromString($zipPath, (string) file_get_contents($local));
+            $added++;
+        }
+    } else {
+        $zip->addFromString($zipPath, $contents);
+        $added++;
+    }
+}
+
+out('Closing ZIP (finalizing '.$added.' entries)…');
+if (! $zip->close()) {
+    fail('ZipArchive::close failed while writing '.$output);
+}
 
 if ($added < 100) {
     fail('Package looks too small ('.$added.' files). Aborting.');
+}
+
+if (! is_file($output)) {
+    fail('ZIP missing after close: '.$output);
 }
 
 $size = filesize($output) ?: 0;
@@ -316,6 +372,16 @@ $mustHave = [
     'artisan',
     'bootstrap/app.php',
     'composer.lock',
+    'routes/web.php',
+    'routes/api.php',
+    'routes/console.php',
+    // Required by bootstrap/app.php when storage/installed is absent (every cPanel artisan boot).
+    'routes/install.php',
+    'storage/framework/cache/.gitignore',
+    'storage/framework/sessions/.gitignore',
+    'storage/framework/views/.gitignore',
+    'storage/logs/.gitignore',
+    'bootstrap/cache/.gitignore',
 ];
 foreach ($mustHave as $path) {
     if ($check->locateName($path) === false) {
@@ -323,17 +389,20 @@ foreach ($mustHave as $path) {
         fail('ZIP missing required entry: '.$path);
     }
 }
-$forbiddenSamples = ['.env', 'tests/', 'node_modules/', '.git/', 'install.php', 'cpanel-installer/'];
+// Forbid root-level install.php only — routes/install.php must remain in the package.
+$forbiddenExact = ['install.php', '.env'];
+$forbiddenPrefixes = ['tests/', 'node_modules/', '.git/', 'cpanel-installer/', 'storage/framework/cache/phpstan'];
 for ($i = 0; $i < $check->numFiles; $i++) {
     $name = $check->getNameIndex($i);
     if ($name === false) {
         continue;
     }
-    foreach ($forbiddenSamples as $bad) {
-        if ($name === $bad || str_starts_with($name, $bad) || str_contains('/'.$name, '/'.$bad)) {
-            if ($bad === '.env' && ($name === '.env.example' || $name === '.env.production.example')) {
-                continue;
-            }
+    if (in_array($name, $forbiddenExact, true)) {
+        $check->close();
+        fail('ZIP contains forbidden path: '.$name);
+    }
+    foreach ($forbiddenPrefixes as $bad) {
+        if ($name === $bad || str_starts_with($name, $bad)) {
             $check->close();
             fail('ZIP contains forbidden path: '.$name);
         }
@@ -341,6 +410,94 @@ for ($i = 0; $i < $check->numFiles; $i++) {
 }
 $check->close();
 out('ZIP inspection: OK');
+
+// Assemble drop-in JobAzmoon-Installer/ for public_html upload (WordPress-like).
+$bundleDir = $root.DIRECTORY_SEPARATOR.'dist'.DIRECTORY_SEPARATOR.'JobAzmoon-Installer';
+$bundlePkg = $bundleDir.DIRECTORY_SEPARATOR.'package';
+$bundleZip = $root.DIRECTORY_SEPARATOR.'dist'.DIRECTORY_SEPARATOR.'JobAzmoon-Installer.zip';
+
+out('');
+out('Assembling JobAzmoon-Installer bundle...');
+
+if (is_dir($bundleDir)) {
+    $it = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($bundleDir, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ($it as $file) {
+        $file->isDir() ? @rmdir($file->getPathname()) : @unlink($file->getPathname());
+    }
+    @rmdir($bundleDir);
+}
+
+if (! mkdir($bundlePkg, 0755, true) && ! is_dir($bundlePkg)) {
+    fail('Cannot create bundle directory: '.$bundlePkg);
+}
+
+$installerSrc = $root.DIRECTORY_SEPARATOR.'cpanel-installer';
+if (! copy($installerSrc.DIRECTORY_SEPARATOR.'install.php', $bundleDir.DIRECTORY_SEPARATOR.'install.php')) {
+    fail('Cannot copy install.php into bundle.');
+}
+if (! is_dir($bundleDir.DIRECTORY_SEPARATOR.'lib') && ! mkdir($bundleDir.DIRECTORY_SEPARATOR.'lib', 0755, true)) {
+    fail('Cannot create bundle lib/.');
+}
+if (! copy($installerSrc.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'InstallEngine.php', $bundleDir.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'InstallEngine.php')) {
+    fail('Cannot copy InstallEngine.php into bundle.');
+}
+if (! copy($output, $bundlePkg.DIRECTORY_SEPARATOR.'jobazmoon-core.zip')) {
+    fail('Cannot copy jobazmoon-core.zip into bundle package/.');
+}
+
+$installMdSrc = $root.DIRECTORY_SEPARATOR.'INSTALL.md';
+if (is_file($installMdSrc)) {
+    copy($installMdSrc, $bundleDir.DIRECTORY_SEPARATOR.'INSTALL.md');
+}
+
+$readme = <<<'TXT'
+JobAzmoon — نصب روی cPanel (بدون Composer / بدون npm / بدون SSH)
+
+1) در cPanel دیتابیس MySQL و کاربر بسازید و کاربر را به دیتابیس وصل کنید.
+2) PHP را روی 8.2 یا 8.3 بگذارید و افزونه‌های لازم را فعال کنید
+   (pdo, pdo_mysql, openssl, mbstring, tokenizer, xml, ctype, json, fileinfo, gd, zip, dom).
+3) محتویات این پوشه را داخل public_html آپلود کنید تا این ساختار ساخته شود:
+     public_html/install.php
+     public_html/lib/InstallEngine.php
+     public_html/package/jobazmoon-core.zip
+4) مرورگر: https://YOUR-DOMAIN/install.php
+5) Wizard را کامل کنید. هسته Laravel در ~/job و وب در public_html قرار می‌گیرد.
+6) بعد از نصب موفق، install.php باید حذف شود. اگر خودکار حذف نشد، از File Manager پاک کنید.
+7) Cronهای Scheduler و Queue را از صفحه پایان نصب در cPanel اضافه کنید.
+
+جزئیات کامل: INSTALL.md
+TXT;
+file_put_contents($bundleDir.DIRECTORY_SEPARATOR.'README-INSTALL.txt', $readme);
+
+if (is_file($bundleZip)) {
+    @unlink($bundleZip);
+}
+$bundleArchive = new ZipArchive;
+if ($bundleArchive->open($bundleZip, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+    fail('Cannot create JobAzmoon-Installer.zip');
+}
+$bundleIterator = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator($bundleDir, FilesystemIterator::SKIP_DOTS),
+    RecursiveIteratorIterator::SELF_FIRST
+);
+/** @var SplFileInfo $item */
+foreach ($bundleIterator as $item) {
+    $abs = $item->getPathname();
+    $rel = 'JobAzmoon-Installer/'.substr($abs, strlen($bundleDir) + 1);
+    $rel = str_replace('\\', '/', $rel);
+    if ($item->isDir()) {
+        $bundleArchive->addEmptyDir($rel);
+    } elseif ($item->isFile()) {
+        $bundleArchive->addFile($abs, $rel);
+    }
+}
+$bundleArchive->close();
+
+out('Installer folder: '.$bundleDir);
+out('Installer ZIP: '.$bundleZip.' ('.round(((int) filesize($bundleZip)) / (1024 * 1024), 2).' MB)');
 
 if (! $skipDeps && ! $noRestore) {
     out('');

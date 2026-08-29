@@ -44,6 +44,7 @@
         ۱) آزمون را انتخاب کنید ۲) نمونه را دانلود و پر کنید ۳) فایل را آپلود
         کنید. ستون‌های فارسی مجاز: نام‌آزمون، درس، متن‌سوال، گزینه‌ها،
         پاسخ‌صحیح، توضیحات، سطح، سال، منبع. پاسخ: الف/ب/ج/د — سطح خالی = متوسط.
+        سوالات تکراری (در فایل یا قبلاً در همین آزمون) وارد نمی‌شوند.
       </p>
 
       <input
@@ -84,6 +85,9 @@
           موفق: {{ result.created ?? result.success ?? result.imported ?? '—' }}
         </p>
         <p>رد شده: {{ result.skipped ?? result.failed ?? 0 }}</p>
+        <p v-if="(result.duplicates ?? 0) > 0" class="text-amber-600">
+          تکراری: {{ result.duplicates }}
+        </p>
         <ul
           v-if="result.errors?.length"
           class="mt-2 max-h-28 overflow-y-auto text-xs text-red-500"

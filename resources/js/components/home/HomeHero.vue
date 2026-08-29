@@ -79,7 +79,7 @@
             />
           </div>
         </div>
-        <div v-if="heroBanners.length" class="mt-4 lg:hidden">
+        <div v-if="heroBanners.length" class="mt-4 hidden lg:block">
           <BannerSlider
             position="home_hero"
             :banners="heroBanners"

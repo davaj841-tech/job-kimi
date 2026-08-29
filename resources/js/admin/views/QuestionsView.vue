@@ -391,10 +391,16 @@ async function onImport({ file, exam_id }) {
     importRef.value?.setResult(result)
     const created = result?.created ?? 0
     const skipped = result?.skipped ?? 0
+    const duplicates = result?.duplicates ?? 0
     if (created > 0) {
       toast.success(
-        `${created} سوال وارد شد${skipped ? ` (${skipped} رد شد)` : ''}.`
+        `${created} سوال وارد شد${skipped ? ` (${skipped} رد شد${duplicates ? `، ${duplicates} تکراری` : ''})` : ''}.`
       )
+    } else if (duplicates > 0) {
+      const msg =
+        result?.errors?.[0] || `${duplicates} سوال تکراری بود و وارد نشد.`
+      toast.error(msg)
+      importRef.value?.setError(msg)
     } else {
       toast.error(result?.errors?.[0] || 'هیچ سوالی وارد نشد.')
       importRef.value?.setError(

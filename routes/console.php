@@ -29,11 +29,23 @@ Schedule::command('jobs:expire')
     ->withoutOverlapping(10);
 
 // Aggregation: check admin-configured times every minute; only dispatches queue jobs.
-// Never crawls HTTP inline. Requires: * * * * * php artisan schedule:run
-// Worker: php artisan queue:work --queue=crawlers,default
+// Requires: * * * * * php artisan schedule:run
+// Worker: php artisan queue:work --queue=crawlers,default (or auto via schedule below)
 Schedule::command('jobs:aggregate-dispatch')
     ->everyMinute()
     ->withoutOverlapping(5);
+
+// Process database queue on shared hosting (cPanel) without a long-lived worker.
+Schedule::command('queue:work', [
+    'database',
+    '--queue' => 'crawlers,default',
+    '--stop-when-empty' => true,
+    '--max-time' => 55,
+    '--tries' => 3,
+])
+    ->everyMinute()
+    ->withoutOverlapping(55)
+    ->when(fn () => config('queue.default') === 'database');
 
 // Auto-heal: prune failed crawls, transient site errors, old failed jobs
 Schedule::command('site:auto-heal')

@@ -1,29 +1,35 @@
 <template>
   <div class="min-h-screen bg-surface-page dark:bg-slate-950">
     <div
-      class="bg-white/92 sticky top-[calc(3.65rem+env(safe-area-inset-top))] z-20 border-b border-surface-line backdrop-blur-md lg:top-[4.5rem]"
+      class="sticky top-[calc(3.65rem+env(safe-area-inset-top))] z-30 border-b border-surface-line bg-white/95 backdrop-blur-md dark:bg-slate-900/95 lg:top-[4.5rem]"
     >
       <div class="mx-auto max-w-7xl px-4 py-3">
         <div class="mb-2 flex items-center justify-between gap-2">
           <h1 class="page-title">آگهی‌های شغلی</h1>
         </div>
 
+        <div class="relative">
+          <MagnifyingGlassIcon
+            class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-desk-muted"
+          />
+          <input
+            v-model="filters.search"
+            type="search"
+            placeholder="عنوان شغل، سازمان..."
+            class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-3 pr-9 text-sm outline-none ring-brand focus:ring-2 dark:bg-slate-800 dark:text-white"
+            @input="debouncedSearch"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="sticky top-[calc(7.25rem+env(safe-area-inset-top))] z-20 border-b border-surface-line bg-surface/95 backdrop-blur-md dark:bg-slate-950/95 lg:top-[8.5rem]"
+    >
+      <div class="mx-auto max-w-7xl px-4 py-2">
         <div
           class="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-1"
         >
-          <div class="relative w-56 flex-shrink-0 sm:w-64">
-            <MagnifyingGlassIcon
-              class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-desk-muted"
-            />
-            <input
-              v-model="filters.search"
-              type="search"
-              placeholder="عنوان شغل، سازمان..."
-              class="w-full rounded-xl border-0 bg-slate-100 py-2 pl-3 pr-9 text-sm outline-none ring-brand focus:ring-2 dark:bg-slate-800 dark:text-white"
-              @input="debouncedSearch"
-            />
-          </div>
-
           <button
             type="button"
             class="page-chip"
@@ -63,7 +69,7 @@
 
         <div
           v-show="showFilters"
-          class="mt-3 grid grid-cols-2 gap-2 border-t border-surface-line pt-3 dark:border-slate-800 md:grid-cols-3"
+          class="mt-2 grid grid-cols-2 gap-2 border-t border-surface-line pt-2 dark:border-slate-800 md:grid-cols-3"
         >
           <select
             v-model="filters.province"

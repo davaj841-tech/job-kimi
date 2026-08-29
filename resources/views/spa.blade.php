@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
     <meta name="theme-color" content="{{ \App\Support\ThemeBootstrap::payload()['primary'] }}">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,9 +20,9 @@
     <script>
       (function () {
         try {
-          if (localStorage.getItem('ja_theme') === 'dark') {
-            document.documentElement.classList.add('dark');
-          }
+          var theme = localStorage.getItem('ja_theme');
+          var dark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
         } catch (e) {}
       })();
     </script>

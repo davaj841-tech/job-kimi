@@ -53,6 +53,13 @@
         />
       </div>
       <button class="btn-orange mt-3" @click="apply">اعمال</button>
+      <button
+        class="btn-muted mr-2 mt-3"
+        :disabled="store.loading"
+        @click="refresh"
+      >
+        بروزرسانی
+      </button>
     </div>
 
     <DataTable
@@ -69,6 +76,15 @@
       </template>
       <template #cell-organization_name="{ row }">{{
         row.organization_name || row.company_name
+      }}</template>
+      <template #cell-classification_name="{ row }">{{
+        row.classification_name || '—'
+      }}</template>
+      <template #cell-province="{ row }">{{
+        row.province || (row.provinces && row.provinces[0]) || '—'
+      }}</template>
+      <template #cell-registration_deadline="{ row }">{{
+        formatDate(row.registration_deadline)
       }}</template>
       <template #cell-status="{ row }">
         <span
@@ -148,8 +164,40 @@
           rows="3"
           placeholder="شرایط"
         />
+        <input
+          v-model="form.education"
+          class="field"
+          placeholder="مدرک تحصیلی"
+        />
+        <input
+          v-model="form.field_of_study"
+          class="field"
+          placeholder="رشته تحصیلی"
+        />
+        <input
+          v-model="form.experience"
+          class="field"
+          placeholder="سابقه کار"
+        />
+        <input
+          v-model="form.employment_type"
+          class="field"
+          placeholder="نوع استخدام"
+        />
         <input v-model="form.province" class="field" placeholder="استان" />
         <input v-model="form.city" class="field" placeholder="شهر" />
+        <input
+          v-model="form.registration_deadline"
+          class="field"
+          type="date"
+          placeholder="مهلت ثبت‌نام"
+        />
+        <input
+          v-model="form.exam_date"
+          class="field"
+          type="date"
+          placeholder="تاریخ آزمون"
+        />
         <input
           v-model="form.registration_link"
           class="field md:col-span-2"
@@ -207,8 +255,14 @@ const form = reactive({
   organization_name: '',
   description: '',
   requirements: '',
+  education: '',
+  field_of_study: '',
+  experience: '',
+  employment_type: '',
   province: '',
   city: '',
+  registration_deadline: '',
+  exam_date: '',
   registration_link: '',
   source_url: '',
 })
@@ -216,6 +270,9 @@ const form = reactive({
 const columns = [
   { key: 'title', label: 'عنوان' },
   { key: 'organization_name', label: 'سازمان' },
+  { key: 'classification_name', label: 'طبقه' },
+  { key: 'province', label: 'استان' },
+  { key: 'registration_deadline', label: 'مهلت' },
   { key: 'status', label: 'وضعیت' },
   { key: 'created_at', label: 'ثبت/خزش' },
 ]
@@ -233,6 +290,18 @@ function apply() {
   store.fetchPendingJobs(1)
 }
 
+async function refresh() {
+  stats.value = await store.fetchStats()
+  await store.fetchPendingJobs(store.filters.page || 1)
+}
+
+function toDateInput(value) {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toISOString().slice(0, 10)
+}
+
 async function openReview(row) {
   const full = await store.fetchJob(row.id)
   editing.value = full
@@ -241,8 +310,14 @@ async function openReview(row) {
     organization_name: full.organization_name || full.company_name || '',
     description: full.description || '',
     requirements: full.requirements || '',
+    education: full.education || '',
+    field_of_study: full.field_of_study || '',
+    experience: full.experience || '',
+    employment_type: full.employment_type || '',
     province: full.province || '',
     city: full.city || '',
+    registration_deadline: toDateInput(full.registration_deadline),
+    exam_date: toDateInput(full.exam_date),
     registration_link: full.registration_link || '',
     source_url: full.source_url || '',
   })
@@ -257,8 +332,14 @@ async function save() {
       title: form.title,
       description: form.description,
       requirements: form.requirements || null,
+      education: form.education || null,
+      field_of_study: form.field_of_study || null,
+      experience: form.experience || null,
+      employment_type: form.employment_type || null,
       province: form.province || null,
       city: form.city || null,
+      registration_deadline: form.registration_deadline || null,
+      exam_date: form.exam_date || null,
       registration_link: form.registration_link || null,
       source_url: form.source_url || null,
     }

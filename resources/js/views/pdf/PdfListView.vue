@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-surface-page dark:bg-slate-950">
-    <div class="page-banner py-6 sm:py-8">
+    <div class="page-banner py-5 sm:py-6">
       <div class="mx-auto max-w-7xl px-4 text-right sm:text-center">
         <h1 class="page-title text-white sm:text-2xl">
           📄 فروشگاه منابع آموزشی
@@ -8,26 +8,28 @@
         <p class="mx-auto mt-1.5 max-w-2xl text-xs text-white/70 sm:text-sm">
           هر PDF جداگانه خریداری می‌شود — بدون اشتراک.
         </p>
-        <div class="relative mx-auto mt-5 max-w-xl">
+      </div>
+    </div>
+
+    <div
+      class="sticky top-[calc(3.65rem+env(safe-area-inset-top))] z-30 border-b border-surface-line bg-surface/95 backdrop-blur-md dark:bg-slate-900/95 lg:top-[4.5rem]"
+    >
+      <div class="mx-auto max-w-7xl space-y-2 px-4 py-3">
+        <div class="relative">
           <MagnifyingGlassIcon
-            class="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+            class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-desk-muted"
           />
           <input
             v-model="filters.search"
             type="search"
             placeholder="جستجو در PDFها…"
-            class="w-full rounded-xl border border-white/20 bg-white/10 py-2.5 pl-4 pr-12 text-sm text-white placeholder-slate-400 outline-none ring-brand backdrop-blur-sm focus:ring-2"
+            class="w-full rounded-xl border border-surface-line bg-white py-2.5 pl-4 pr-11 text-sm outline-none ring-brand focus:ring-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             @input="debouncedSearch"
           />
         </div>
-      </div>
-    </div>
-
-    <div
-      class="sticky top-[calc(3.65rem+env(safe-area-inset-top))] z-20 border-b border-surface-line bg-surface/95 lg:top-[4.5rem]"
-    >
-      <div class="mx-auto max-w-7xl px-4 py-3">
-        <div class="scrollbar-hide flex items-center gap-2 overflow-x-auto">
+        <div
+          class="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-1"
+        >
           <button
             type="button"
             class="page-chip"

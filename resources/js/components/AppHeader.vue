@@ -12,7 +12,7 @@
     "
   >
     <div
-      class="mx-auto flex max-w-app items-center gap-2.5 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]"
+      class="mx-auto flex w-full max-w-full items-center gap-2.5 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] lg:max-w-app"
     >
       <RouterLink
         to="/"
@@ -93,7 +93,7 @@
         <div
           class="relative border-b border-surface-line bg-surface px-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-lg"
         >
-          <div class="mx-auto flex max-w-app items-center gap-2">
+          <div class="mx-auto flex w-full max-w-full items-center gap-2">
             <button
               type="button"
               class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-desk-muted hover:bg-surface-page"

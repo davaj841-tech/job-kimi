@@ -172,7 +172,7 @@ const groups = [
       },
       {
         to: '/admin/job-sources',
-        label: 'منابع تجمیع',
+        label: 'منابع جستجو',
         icon: '◎',
         permission: 'aggregation',
       },

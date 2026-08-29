@@ -16,6 +16,14 @@ class QuestionsImport implements ToCollection, WithHeadingRow
 
     public int $skipped = 0;
 
+    public int $duplicates = 0;
+
+    /** @var array<int, array<string, true>> */
+    protected array $existingByExam = [];
+
+    /** @var array<string, true> */
+    protected array $seenInImport = [];
+
     /** @var array<int, string> */
     public array $errors = [];
 
@@ -122,6 +130,10 @@ class QuestionsImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
+            if ($this->isDuplicateQuestion($exam->id, $questionText, $rowNumber)) {
+                continue;
+            }
+
             if ($source !== '' || $examYear !== '') {
                 $meta = collect([
                     $examYear !== '' ? "سال {$examYear}" : null,
@@ -150,7 +162,76 @@ class QuestionsImport implements ToCollection, WithHeadingRow
 
             $exam->increment('total_questions');
             $this->created++;
+            $this->rememberQuestion($exam->id, $questionText);
         }
+    }
+
+    protected function isDuplicateQuestion(int $examId, string $questionText, int $rowNumber): bool
+    {
+        $fingerprint = $this->questionFingerprint($examId, $questionText);
+
+        if (isset($this->seenInImport[$fingerprint])) {
+            $this->skipped++;
+            $this->duplicates++;
+            $this->errors[] = "ردیف {$rowNumber}: این سوال تکراری است (در همین فایل قبلاً آمده).";
+
+            return true;
+        }
+
+        if ($this->questionExistsInExam($examId, $questionText)) {
+            $this->skipped++;
+            $this->duplicates++;
+            $this->errors[] = "ردیف {$rowNumber}: این سوال قبلاً در این آزمون ثبت شده است.";
+
+            return true;
+        }
+
+        return false;
+    }
+
+    protected function rememberQuestion(int $examId, string $questionText): void
+    {
+        $normalized = $this->normalizeQuestionText($questionText);
+        $this->seenInImport[$this->questionFingerprint($examId, $questionText)] = true;
+
+        if (! isset($this->existingByExam[$examId])) {
+            $this->existingByExam[$examId] = [];
+        }
+
+        $this->existingByExam[$examId][$normalized] = true;
+    }
+
+    protected function questionExistsInExam(int $examId, string $questionText): bool
+    {
+        $this->loadExistingQuestionTexts($examId);
+
+        return isset($this->existingByExam[$examId][$this->normalizeQuestionText($questionText)]);
+    }
+
+    protected function loadExistingQuestionTexts(int $examId): void
+    {
+        if (isset($this->existingByExam[$examId])) {
+            return;
+        }
+
+        $this->existingByExam[$examId] = Question::query()
+            ->where('exam_id', $examId)
+            ->pluck('question_text')
+            ->mapWithKeys(fn ($text) => [$this->normalizeQuestionText((string) $text) => true])
+            ->all();
+    }
+
+    protected function questionFingerprint(int $examId, string $questionText): string
+    {
+        return $examId.'|'.hash('sha256', $this->normalizeQuestionText($questionText));
+    }
+
+    protected function normalizeQuestionText(string $text): string
+    {
+        $text = strip_tags($text);
+        $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+
+        return mb_strtolower($text);
     }
 
     /**

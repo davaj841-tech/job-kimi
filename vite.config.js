@@ -39,7 +39,7 @@ export default defineConfig({
                 'icons/maskable-icon-512.png',
             ],
             manifest: {
-                id: '/',
+                id: '/?ja=20260828',
                 name: 'جاب‌آزمون',
                 short_name: 'جاب‌آزمون',
                 description: 'آمادگی آزمون‌های استخدامی ایران',

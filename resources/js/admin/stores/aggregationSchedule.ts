@@ -86,6 +86,7 @@ export const useAggregationScheduleStore = defineStore(
           '/admin/aggregation-schedule/dispatch-now',
           {
             dry_run: dryRun,
+            sync: true,
           }
         )
         return data.data

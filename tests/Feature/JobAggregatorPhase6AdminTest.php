@@ -295,4 +295,87 @@ class JobAggregatorPhase6AdminTest extends TestCase
             'crawler_type' => JobCrawlerType::Html->value,
         ])->assertStatus(422);
     }
+
+    public function test_crawl_overview_lists_dispatchable_sources_and_ai_placeholder(): void
+    {
+        $this->actingAdmin();
+
+        $active = JobSource::factory()->whitelisted()->create([
+            'name' => 'منبع فعال تست',
+            'quality_status' => 'active',
+        ]);
+        JobSourceEndpoint::factory()->create([
+            'job_source_id' => $active->id,
+            'url' => 'https://'.$active->domain.'/jobs',
+            'is_enabled' => true,
+        ]);
+
+        JobSource::factory()->create([
+            'name' => 'منبع خاموش',
+            'is_enabled' => false,
+            'is_approved' => true,
+        ]);
+
+        $response = $this->getJson('/api/v1/admin/job-sources/crawl-overview')->assertOk();
+
+        $response->assertJsonPath('data.totals.all', 2)
+            ->assertJsonPath('data.totals.whitelisted', 1)
+            ->assertJsonPath('data.totals.dispatchable', 1)
+            ->assertJsonPath('data.ai.status', 'coming_soon');
+
+        $dispatchable = collect($response->json('data.dispatchable_sources'));
+        $this->assertSame(1, $dispatchable->count());
+        $this->assertSame($active->id, $dispatchable->first()['id']);
+        $this->assertContains('https://'.$active->domain.'/jobs', $dispatchable->first()['search_urls']);
+    }
+
+    public function test_seed_defaults_loads_official_catalog(): void
+    {
+        $this->actingAdmin();
+
+        $this->assertSame(0, JobSource::query()->count());
+
+        $response = $this->postJson('/api/v1/admin/job-sources/seed-defaults')->assertOk();
+
+        $after = (int) $response->json('data.after');
+        $this->assertGreaterThanOrEqual(25, $after);
+        $this->assertDatabaseHas('job_sources', ['slug' => 'sanjesh-org']);
+        $this->assertDatabaseHas('job_sources', ['slug' => 'ikco']);
+        $this->assertDatabaseHas('job_sources', ['slug' => 'iranestekhdam']);
+    }
+
+    public function test_default_catalog_lists_config_sources_with_db_state(): void
+    {
+        $this->actingAdmin();
+
+        $response = $this->getJson('/api/v1/admin/job-sources/default-catalog')->assertOk();
+
+        $response->assertJsonStructure([
+            'data' => ['total', 'loaded_count', 'enabled_count', 'dispatchable_count', 'items'],
+        ]);
+
+        $this->assertGreaterThanOrEqual(25, (int) $response->json('data.total'));
+
+        $items = collect($response->json('data.items'));
+        $sanjesh = $items->firstWhere('slug', 'sanjesh-org');
+        $this->assertNotNull($sanjesh);
+        $this->assertFalse($sanjesh['is_loaded']);
+
+        $source = JobSource::factory()->create([
+            'slug' => 'sanjesh-org',
+            'name' => 'سازمان سنجش',
+            'is_enabled' => true,
+            'is_approved' => true,
+            'quality_status' => 'active',
+        ]);
+
+        $response = $this->getJson('/api/v1/admin/job-sources/default-catalog')->assertOk();
+        $loaded = collect($response->json('data.items'))->firstWhere('slug', 'sanjesh-org');
+        $this->assertTrue($loaded['is_loaded']);
+        $this->assertSame($source->id, $loaded['id']);
+        $this->assertTrue($loaded['is_enabled']);
+
+        $this->postJson('/api/v1/admin/job-sources/bulk-disable-defaults')->assertOk();
+        $this->assertFalse($source->fresh()->is_enabled);
+    }
 }

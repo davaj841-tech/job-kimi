@@ -77,10 +77,14 @@
           <button
             type="button"
             class="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-700 lg:hidden"
-            aria-label="منو"
+            :aria-label="sidebarOpen ? 'بستن منو' : 'باز کردن منو'"
             @click="sidebarOpen = !sidebarOpen"
           >
-            <Bars3Icon class="h-6 w-6 text-ink dark:text-white" />
+            <XMarkIcon
+              v-if="sidebarOpen"
+              class="h-6 w-6 text-ink dark:text-white"
+            />
+            <Bars3Icon v-else class="h-6 w-6 text-ink dark:text-white" />
           </button>
           <h1 class="text-sm font-bold text-ink dark:text-white sm:text-base">
             {{ pageTitle }}
@@ -148,9 +152,10 @@ import {
   SunIcon,
   UserCircleIcon,
   WalletIcon,
+  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 import AppToast from '../components/AppToast.vue'
-import BottomNav from '../components/BottomNav.vue'
+import BottomNav from '../components/layout/BottomNav.vue'
 import SiteBrandLogo from '../components/SiteBrandLogo.vue'
 import NavItem from '../components/user/NavItem.vue'
 import PageScrollFab from '../components/ui/PageScrollFab.vue'

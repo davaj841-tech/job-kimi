@@ -89,6 +89,99 @@ class QuestionsExcelImportTest extends TestCase
         @unlink($path);
     }
 
+    public function test_duplicate_rows_in_file_are_skipped_with_warning(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
+        $category = ExamCategory::query()->create([
+            'name' => 'عمومی',
+            'slug' => 'general-'.uniqid(),
+        ]);
+        $exam = Exam::factory()->create([
+            'title' => 'آزمون تکرار در فایل',
+            'category_id' => $category->id,
+            'created_by' => $admin->id,
+            'total_questions' => 0,
+        ]);
+
+        $path = storage_path('app/testing-questions-import-dup-file.xlsx');
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->fromArray([
+            ['نام_آزمون', 'درس', 'متن_سوال', 'گزینه_الف', 'گزینه_ب', 'گزینه_ج', 'گزینه_د', 'پاسخ_صحیح'],
+            ['', 'ریاضی', 'حاصل ۲×۳ کدام است؟', '۵', '۶', '۷', '۸', 'ب'],
+            ['', 'ریاضی', 'حاصل ۲×۳ کدام است؟', '۵', '۶', '۷', '۸', 'ب'],
+        ]);
+        (new Xlsx($spreadsheet))->save($path);
+
+        $summary = app(QuestionService::class)->importFromExcel(
+            new UploadedFile(
+                $path,
+                'dup-file.xlsx',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                null,
+                true
+            ),
+            (int) $exam->id
+        );
+
+        $this->assertSame(1, $summary['created']);
+        $this->assertSame(1, $summary['skipped']);
+        $this->assertSame(1, $summary['duplicates']);
+        $this->assertStringContainsString('تکراری', $summary['errors'][0] ?? '');
+
+        @unlink($path);
+    }
+
+    public function test_existing_exam_questions_are_not_imported_again(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
+        $category = ExamCategory::query()->create([
+            'name' => 'عمومی',
+            'slug' => 'general-'.uniqid(),
+        ]);
+        $exam = Exam::factory()->create([
+            'title' => 'آزمون تکرار در دیتابیس',
+            'category_id' => $category->id,
+            'created_by' => $admin->id,
+            'total_questions' => 0,
+        ]);
+
+        $path = storage_path('app/testing-questions-import-dup-db.xlsx');
+        $this->writePersianSample($path);
+
+        $service = app(QuestionService::class);
+        $first = $service->importFromExcel(
+            new UploadedFile(
+                $path,
+                'sample.xlsx',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                null,
+                true
+            ),
+            (int) $exam->id
+        );
+        $this->assertSame(2, $first['created']);
+
+        $second = $service->importFromExcel(
+            new UploadedFile(
+                $path,
+                'sample.xlsx',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                null,
+                true
+            ),
+            (int) $exam->id
+        );
+
+        $this->assertSame(0, $second['created']);
+        $this->assertSame(2, $second['skipped']);
+        $this->assertSame(2, $second['duplicates']);
+        $this->assertStringContainsString('قبلاً در این آزمون ثبت شده', $second['errors'][0] ?? '');
+        $this->assertSame(2, $exam->fresh()->questions()->count());
+
+        @unlink($path);
+    }
+
     protected function writePersianSample(string $path): void
     {
         $spreadsheet = new Spreadsheet;

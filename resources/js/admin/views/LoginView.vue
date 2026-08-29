@@ -40,7 +40,7 @@
         >
           <div>
             <label class="mb-1 block text-sm font-medium text-slate-700"
-              >نام کاربری</label
+              >نام کاربری، موبایل یا ایمیل</label
             >
             <input
               :value="username"
@@ -49,17 +49,13 @@
               dir="ltr"
               lang="en"
               inputmode="text"
-              autocomplete="off"
-              autocapitalize="characters"
+              autocomplete="username"
+              autocapitalize="off"
+              autocorrect="off"
               spellcheck="false"
-              maxlength="20"
-              placeholder="نام کاربری"
-              @input="
-                username = String($event.target.value || '').replace(
-                  /[^a-zA-Z0-9_]/g,
-                  ''
-                )
-              "
+              maxlength="100"
+              placeholder="username / 09xxxxxxxxx / email@example.com"
+              @input="username = String($event.target.value || '')"
             />
           </div>
           <div>
@@ -206,8 +202,12 @@ const error = ref('')
 const info = ref('')
 
 const canSubmitPassword = computed(() => {
-  const u = username.value.trim()
-  return /^[a-zA-Z0-9_]{3,20}$/.test(u) && password.value.length >= 8
+  const id = username.value.trim()
+  if (id.length < 3 || password.value.length < 8) return false
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id)
+  const isMobile = /^09\d{9}$/.test(id.replace(/\s/g, ''))
+  const isUser = /^[a-zA-Z0-9_]{3,20}$/.test(id)
+  return isEmail || isMobile || isUser
 })
 
 function selectPasswordTab() {

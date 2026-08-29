@@ -86,6 +86,10 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'role:su
     Route::apiResource('/job-posts', JobPostAdminController::class)->parameters(['job-posts' => 'id']);
 
     Route::get('/job-sources/options', [JobSourceAdminController::class, 'options']);
+    Route::get('/job-sources/crawl-overview', [JobSourceAdminController::class, 'crawlOverview']);
+    Route::get('/job-sources/default-catalog', [JobSourceAdminController::class, 'defaultCatalog']);
+    Route::post('/job-sources/bulk-disable-defaults', [JobSourceAdminController::class, 'bulkDisableDefaults']);
+    Route::post('/job-sources/seed-defaults', [JobSourceAdminController::class, 'seedDefaults']);
     Route::post('/job-sources/{id}/approve', [JobSourceAdminController::class, 'approve'])->whereNumber('id');
     Route::post('/job-sources/{id}/unapprove', [JobSourceAdminController::class, 'unapprove'])->whereNumber('id');
     Route::post('/job-sources/{id}/enable', [JobSourceAdminController::class, 'enable'])->whereNumber('id');
