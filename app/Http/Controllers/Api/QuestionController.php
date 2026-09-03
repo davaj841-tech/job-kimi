@@ -9,13 +9,18 @@ use App\Models\Exam;
 use App\Models\Question;
 use App\Repositories\QuestionRepository;
 use App\Services\AuditLogService;
+use App\Services\Exam\ExamFullImportService;
+use App\Services\Question\QuestionAssignService;
+use App\Services\Question\QuestionDuplicateService;
 use App\Services\QuestionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class QuestionController extends BaseController
 {
@@ -210,6 +215,115 @@ class QuestionController extends BaseController
         }, 'questions-import-sample.xlsx', [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
+    }
+
+    /**
+     * Import a brand-new exam + its questions from a multi-sheet (or single-sheet) Excel file.
+     * Separate from /questions/import which attaches rows to an existing exam.
+     */
+    public function importExam(Request $request, ExamFullImportService $importer): JsonResponse
+    {
+        $request->validate([
+            'file' => [
+                'required',
+                'file',
+                'max:20480',
+                'extensions:xlsx,xls,csv',
+            ],
+        ], [
+            'file.required' => 'فایل اکسل الزامی است.',
+            'file.extensions' => 'پسوند فایل باید xlsx، xls یا csv باشد.',
+            'file.max' => 'حداکثر حجم فایل ۲۰ مگابایت است.',
+        ]);
+
+        try {
+            $summary = $importer->import($request->file('file'), $request->user());
+        } catch (RuntimeException $e) {
+            return $this->errorResponse($e->getMessage(), 422);
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('ورود آزمون کامل ناموفق بود.', 500);
+        }
+
+        app(AuditLogService::class)->log('exam.imported_with_questions', null, null, [
+            'exam_id' => $summary['exam']['id'] ?? null,
+            'created' => $summary['created'] ?? 0,
+            'skipped' => $summary['skipped'] ?? 0,
+        ]);
+
+        return $this->successResponse($summary, 'آزمون و سوالات با موفقیت وارد شدند.');
+    }
+
+    public function importExamSample(ExamFullImportService $importer): StreamedResponse
+    {
+        $spreadsheet = $importer->buildSampleSpreadsheet();
+        $writer = new Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, 'exam-full-import-sample.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function duplicates(Request $request, QuestionDuplicateService $duplicates): JsonResponse
+    {
+        $page = max(1, (int) $request->query('page', 1));
+        $perPage = max(5, min(100, (int) $request->query('per_page', 20)));
+        $classificationId = $request->query('job_classification_id');
+        $classificationId = $classificationId !== null && $classificationId !== ''
+            ? (int) $classificationId
+            : null;
+
+        $payload = $duplicates->findCrossExamDuplicates($page, $perPage, $classificationId);
+
+        return $this->successResponse($payload);
+    }
+
+    public function copyToExam(Request $request, QuestionAssignService $assigner): JsonResponse
+    {
+        $validated = $request->validate([
+            'exam_id' => ['required', 'integer', 'exists:exams,id'],
+            'fingerprints' => ['required', 'array', 'min:1'],
+            'fingerprints.*' => ['required', 'string', 'max:128'],
+            'source_question_ids' => ['sometimes', 'array'],
+            'source_question_ids.*' => ['integer', 'exists:questions,id'],
+        ], [
+            'exam_id.required' => 'انتخاب آزمون مقصد الزامی است.',
+            'fingerprints.required' => 'حداقل یک گروه تکراری انتخاب کنید.',
+        ]);
+
+        /** @var array<string, int> $sourceMap */
+        $sourceMap = [];
+        $sourceIds = $validated['source_question_ids'] ?? [];
+        $fingerprints = $validated['fingerprints'];
+
+        foreach ($fingerprints as $i => $fp) {
+            if (isset($sourceIds[$fp])) {
+                $sourceMap[$fp] = (int) $sourceIds[$fp];
+            } elseif (isset($sourceIds[$i])) {
+                $sourceMap[$fp] = (int) $sourceIds[$i];
+            }
+        }
+
+        $result = $assigner->copyFingerprintsToExam(
+            (int) $validated['exam_id'],
+            $fingerprints,
+            $sourceMap
+        );
+
+        app(AuditLogService::class)->log('question.copied_to_exam', null, null, [
+            'exam_id' => (int) $validated['exam_id'],
+            'created' => $result['created'],
+            'skipped' => $result['skipped'],
+        ]);
+
+        $message = $result['created'] > 0
+            ? "{$result['created']} سوال به آزمون اختصاص یافت."
+            : 'سوالی اضافه نشد (احتمالاً قبلاً در آزمون وجود دارد).';
+
+        return $this->successResponse($result, $message);
     }
 
     public function export(Request $request): BinaryFileResponse

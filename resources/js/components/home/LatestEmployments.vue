@@ -24,20 +24,24 @@
       >
         <button
           type="button"
-          class="shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition"
+          class="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition"
           :class="chipClass(null)"
           @click="selected = null"
         >
+          <span class="text-sm leading-none" aria-hidden="true">📋</span>
           همه
         </button>
         <button
           v-for="item in classifications"
           :key="item.id"
           type="button"
-          class="shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition"
+          class="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition"
           :class="chipClass(item.id)"
           @click="selected = item.id"
         >
+          <span class="text-sm leading-none" aria-hidden="true">{{
+            classificationIcon(item)
+          }}</span>
           {{ item.name }}
         </button>
       </div>
@@ -82,6 +86,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import HomeRail from './HomeRail.vue'
+import { classificationIcon } from '../../utils/classificationIcon'
 
 const props = defineProps({
   jobs: { type: Array, default: () => [] },

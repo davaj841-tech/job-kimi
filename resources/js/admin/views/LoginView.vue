@@ -1,9 +1,20 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-[#0f2744] px-4">
-    <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+  <div
+    class="relative flex min-h-screen items-center justify-center bg-[#0f2744] px-4 dark:bg-slate-950"
+  >
+    <div class="absolute left-4 top-4">
+      <ThemeToggle inverted />
+    </div>
+    <div
+      class="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl dark:bg-slate-900 dark:text-slate-100"
+    >
       <div class="mb-6 text-center">
-        <h1 class="text-2xl font-black text-slate-800">ورود به پنل مدیریت</h1>
-        <p class="mt-2 text-sm text-slate-500">فقط نقش‌های ادمین و اپراتور</p>
+        <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100">
+          ورود به پنل مدیریت
+        </h1>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          فقط نقش‌های ادمین و اپراتور
+        </p>
       </div>
 
       <div class="mb-6 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
@@ -35,7 +46,7 @@
       <div v-if="tab === 'password' && !showForgot" class="space-y-4">
         <form
           class="space-y-4"
-          autocomplete="off"
+          autocomplete="on"
           @submit.prevent="onPasswordLogin"
         >
           <div>
@@ -44,7 +55,7 @@
             >
             <input
               :value="username"
-              name="admin_username"
+              name="username"
               class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
               dir="ltr"
               lang="en"
@@ -64,8 +75,9 @@
             >
             <PasswordInput
               v-model="password"
+              name="password"
               input-class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
-              autocomplete="new-password"
+              autocomplete="current-password"
               placeholder="رمز عبور"
               @enter="onPasswordLogin"
             />
@@ -183,6 +195,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import PasswordInput from '../../components/PasswordInput.vue'
+import ThemeToggle from '../../components/ThemeToggle.vue'
 import { useRouter } from 'vue-router'
 import { useAdminAuthStore } from '../stores/auth'
 

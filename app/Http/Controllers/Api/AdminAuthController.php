@@ -118,7 +118,11 @@ class AdminAuthController extends BaseController
             );
 
             $url = rtrim(config('app.url'), '/').'/reset-password?token='.$token.'&email='.urlencode($user->email);
-            $this->mail->queueTo($user->email, new PasswordResetMail($url, $user->name ?? 'Admin', 60));
+            try {
+                $this->mail->queueTo($user->email, new PasswordResetMail($url, $user->name ?? 'Admin', 60));
+            } catch (\Throwable $e) {
+                report($e);
+            }
 
             $this->audit->log('admin.password_reset_requested', $user, null, [
                 'email' => $user->email,

@@ -27,6 +27,11 @@ const baleUrl = ref('')
 const androidPlayUrl = ref('')
 const androidBazaarUrl = ref('')
 const androidDirectUrl = ref('')
+const enamadEnabled = ref(false)
+const enamadUrl = ref('')
+const enamadLogoUrl = ref('')
+const enamadCode = ref('')
+const samandehiUrl = ref('')
 let loaded = false
 let inflight: Promise<void> | null = null
 
@@ -94,6 +99,11 @@ export function applySiteTheme(input: {
   android_play_url?: unknown
   android_bazaar_url?: unknown
   android_direct_url?: unknown
+  enamad_enabled?: unknown
+  enamad_url?: unknown
+  enamad_logo_url?: unknown
+  enamad_code?: unknown
+  samandehi_url?: unknown
 }): void {
   if (typeof input.site_name === 'string' && input.site_name.trim()) {
     siteName.value = input.site_name.trim()
@@ -115,6 +125,13 @@ export function applySiteTheme(input: {
     androidBazaarUrl.value = asUrl(input.android_bazaar_url)
   if ('android_direct_url' in input)
     androidDirectUrl.value = asUrl(input.android_direct_url)
+  if ('enamad_enabled' in input)
+    enamadEnabled.value = Boolean(input.enamad_enabled)
+  if ('enamad_url' in input) enamadUrl.value = asUrl(input.enamad_url)
+  if ('enamad_logo_url' in input)
+    enamadLogoUrl.value = asUrl(input.enamad_logo_url)
+  if ('enamad_code' in input) enamadCode.value = asUrl(input.enamad_code)
+  if ('samandehi_url' in input) samandehiUrl.value = asUrl(input.samandehi_url)
   if ('site_favicon' in input) {
     siteFavicon.value = asUrl(input.site_favicon)
     applyFavicon(siteFavicon.value)
@@ -129,7 +146,7 @@ export function applySiteTheme(input: {
   if ('site_font_size' in input) {
     const n = Number(input.site_font_size)
     if (Number.isFinite(n))
-      fontSize.value = Math.min(20, Math.max(13, Math.round(n)))
+      fontSize.value = Math.min(20, Math.max(15, Math.round(n)))
   }
 
   const preset = themePreset(layout.value)
@@ -207,9 +224,15 @@ export function resolveBrandLogo(_opts?: { mobile?: boolean }): string {
 export function useSiteTheme() {
   async function ensureLoaded(force = false) {
     if (loaded && !force) return
-    if (inflight) return inflight
+    if (inflight && !force) return inflight
+    if (force) {
+      loaded = false
+      inflight = null
+    }
     inflight = api
-      .get('/settings/public')
+      .get('/settings/public', {
+        params: force ? { _ts: Date.now() } : undefined,
+      })
       .then(({ data }) => {
         applySiteTheme(data?.data || {})
         loaded = true
@@ -240,6 +263,11 @@ export function useSiteTheme() {
     androidPlayUrl,
     androidBazaarUrl,
     androidDirectUrl,
+    enamadEnabled,
+    enamadUrl,
+    enamadLogoUrl,
+    enamadCode,
+    samandehiUrl,
     ensureLoaded,
     applySiteTheme,
     resolveBrandLogo,

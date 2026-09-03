@@ -119,5 +119,16 @@ final class ThemeBootstrap
     {
         cache()->forget('public_theme_bootstrap');
         cache()->forget('public_settings_payload');
+
+        // Clear CacheResponse middleware keys (fullUrl md5) for common hosts.
+        $paths = ['/api/v1/settings/public'];
+        $appUrl = config('app.url');
+        if (is_string($appUrl) && $appUrl !== '') {
+            $paths[] = rtrim($appUrl, '/').'/api/v1/settings/public';
+        }
+
+        foreach ($paths as $path) {
+            cache()->forget('response:'.md5($path));
+        }
     }
 }

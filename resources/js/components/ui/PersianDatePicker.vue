@@ -475,10 +475,40 @@ onBeforeUnmount(() => {
   @apply flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-white shadow-sm transition hover:bg-orange-600;
 }
 .pdp-meta-btn {
-  @apply inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-slate-800 hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-700;
+  @apply inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-slate-800 hover:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200;
 }
 .pdp-meta-btn.is-open {
-  @apply bg-orange-50 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300;
+  @apply bg-orange-50 text-orange-700 dark:bg-orange-100 dark:text-orange-800;
+}
+:global(.dark) .pdp-head {
+  background: #ffffff;
+}
+:global(.dark) .pdp-head .pdp-meta-btn {
+  color: #0f172a !important;
+}
+:global(.dark) .pdp-head .pdp-meta-btn.is-open {
+  color: #c2410c !important;
+  background: #ffedd5 !important;
+}
+:global(.dark) .pdp-grid-table,
+:global(.dark) .pdp-list {
+  background: #ffffff !important;
+  color-scheme: light;
+}
+:global(.dark) .pdp-grid-table .pdp-grid-opt,
+:global(.dark) .pdp-list .pdp-list-opt {
+  color: #0f172a !important;
+  background: transparent;
+}
+:global(.dark) .pdp-grid-table .pdp-grid-opt:not(.is-active):hover,
+:global(.dark) .pdp-list .pdp-list-opt:not(.is-active):hover {
+  background: #ffedd5 !important;
+  color: #0f172a !important;
+}
+:global(.dark) .pdp-grid-table .pdp-grid-opt.is-active,
+:global(.dark) .pdp-list .pdp-list-opt.is-active {
+  background: #f97316 !important;
+  color: #ffffff !important;
 }
 .pdp-weekdays {
   display: grid;
@@ -488,6 +518,10 @@ onBeforeUnmount(() => {
   font-size: 12px;
   font-weight: 700;
   text-align: center;
+}
+:global(.dark) .pdp-weekdays {
+  background: #1e293b;
+  color: #f8fafc;
 }
 .pdp-weekdays span {
   padding: 6px 0;
@@ -507,6 +541,19 @@ onBeforeUnmount(() => {
   transition:
     background 0.15s,
     color 0.15s;
+}
+:global(.dark) .pdp-day {
+  color: #e2e8f0;
+}
+:global(.dark) .pdp-day:not(.is-empty):hover {
+  background: rgba(249, 115, 22, 0.18);
+}
+:global(.dark) .pdp-day.is-friday {
+  background: rgba(236, 72, 153, 0.18);
+  color: #86efac;
+}
+:global(.dark) .pdp-day.is-friday:hover {
+  background: rgba(236, 72, 153, 0.28);
 }
 .pdp-day:not(.is-empty):hover {
   background: #fff7ed;
@@ -543,18 +590,32 @@ onBeforeUnmount(() => {
   max-height: 260px;
   overflow: auto;
   padding: 8px;
+  background: #ffffff;
+  color-scheme: light;
 }
 .pdp-grid-table--months {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .pdp-grid-opt {
-  @apply rounded-lg px-2 py-2 text-center text-xs font-semibold text-slate-700 hover:bg-orange-50 dark:text-slate-100 dark:hover:bg-slate-700 sm:text-sm;
+  @apply rounded-lg px-2 py-2 text-center text-xs font-semibold sm:text-sm;
+  color: #0f172a;
+  background: transparent;
+}
+.pdp-grid-opt:not(.is-active):hover {
+  background: #ffedd5;
+  color: #0f172a;
 }
 .pdp-grid-opt.is-active {
   @apply bg-orange-500 font-bold text-white hover:bg-orange-500;
 }
 .pdp-list-opt {
-  @apply w-full rounded-lg px-2 py-2 text-center text-xs font-medium text-slate-700 hover:bg-orange-50 dark:text-slate-200 dark:hover:bg-slate-700 sm:text-sm;
+  @apply w-full rounded-lg px-2 py-2 text-center text-xs font-medium sm:text-sm;
+  color: #0f172a;
+  background: transparent;
+}
+.pdp-list-opt:not(.is-active):hover {
+  background: #ffedd5;
+  color: #0f172a;
 }
 .pdp-list-opt.is-active {
   @apply bg-orange-500 font-bold text-white hover:bg-orange-500;
@@ -563,6 +624,6 @@ onBeforeUnmount(() => {
   @apply flex items-center justify-between border-t border-slate-100 px-3 py-2 dark:border-slate-700;
 }
 .pdp-link {
-  @apply text-xs font-medium text-orange-600 hover:underline;
+  @apply text-xs font-medium text-orange-600 hover:underline dark:text-orange-400;
 }
 </style>

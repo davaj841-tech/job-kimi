@@ -50,6 +50,22 @@ class PdfProductResource extends JsonResource
             'is_purchased' => $this->when(isset($this->is_purchased), (bool) $this->is_purchased),
             'purchase_date' => $this->when(isset($this->purchase_date), $this->purchase_date),
             'download_url' => $this->when(isset($this->download_url), $this->download_url),
+            'attachments' => collect($this->attachments ?? [])->values()->map(function ($item, $index) {
+                $row = is_array($item) ? $item : [];
+
+                return [
+                    'index' => $index,
+                    'name' => $row['name'] ?? basename((string) ($row['path'] ?? 'file')),
+                    'mime' => $row['mime'] ?? null,
+                    'extension' => $row['extension'] ?? null,
+                    'size' => isset($row['size']) ? (int) $row['size'] : null,
+                    'is_pdf' => ($row['extension'] ?? '') === 'pdf'
+                        || str_contains((string) ($row['mime'] ?? ''), 'pdf'),
+                    'download_url' => isset($this->download_url)
+                        ? url('/api/v1/pdf-products/'.$this->id.'/attachments/'.$index.'/download')
+                        : null,
+                ];
+            }),
             'created_at' => $createdAt?->toIso8601String(),
         ];
     }

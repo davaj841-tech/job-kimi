@@ -20,8 +20,9 @@ class LegalPagesTest extends TestCase
         $this->getJson('/api/v1/pages/privacy')->assertOk();
         $this->getJson('/api/v1/pages/about')->assertOk();
         $this->getJson('/api/v1/pages/contact')->assertOk();
+        $this->getJson('/api/v1/pages/refund')->assertOk();
 
-        $this->assertSame(4, CmsPage::query()->whereIn('slug', ['terms', 'privacy', 'about', 'contact'])->count());
+        $this->assertSame(5, CmsPage::query()->whereIn('slug', ['terms', 'privacy', 'about', 'contact', 'refund'])->count());
     }
 
     public function test_existing_legal_page_is_not_overwritten(): void

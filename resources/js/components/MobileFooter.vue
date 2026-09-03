@@ -22,6 +22,7 @@
         <RouterLink to="/contact">تماس</RouterLink>
         <RouterLink to="/terms">قوانین</RouterLink>
         <RouterLink to="/privacy">حریم خصوصی</RouterLink>
+        <RouterLink to="/refund">لغو و استرداد</RouterLink>
       </div>
     </details>
 
@@ -37,7 +38,7 @@
     </details>
 
     <div class="mb-2 flex justify-center">
-      <TrustBadges dark compact />
+      <TrustBadges compact />
     </div>
     <p class="text-center text-xs text-white/50">
       تمامی حقوق محفوظ است © {{ year }} جاب‌آزمون

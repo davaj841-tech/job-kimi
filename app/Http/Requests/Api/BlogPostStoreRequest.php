@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api;
 
+use App\Models\JobClassification;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -29,7 +30,7 @@ class BlogPostStoreRequest extends FormRequest
             'featured_image' => $this->hasFile('featured_image')
                 ? ['nullable', 'image', 'max:2048']
                 : ['nullable', 'string', 'max:500'],
-            'category' => ['required', 'string', 'max:100'],
+            'category' => ['nullable', 'string', 'max:100'],
             'job_classification_id' => ['nullable', 'integer', 'exists:job_classifications,id'],
             'auto_catalog' => ['sometimes', 'boolean'],
             'exam_ids' => ['nullable', 'array'],
@@ -50,10 +51,22 @@ class BlogPostStoreRequest extends FormRequest
             'pdf_ids' => $this->decodeIdList($this->input('pdf_ids')),
         ];
         if ($this->isMethod('post') && ! $this->has('status')) {
-            $merge['status'] = 'draft';
+            $merge['status'] = 'published';
         }
         if ($this->has('job_classification_id') && $this->input('job_classification_id') === '') {
             $merge['job_classification_id'] = null;
+        }
+        if (! filled($this->input('category'))) {
+            $classificationId = $merge['job_classification_id'] ?? $this->input('job_classification_id');
+            if ($classificationId) {
+                $name = JobClassification::query()->whereKey($classificationId)->value('name');
+                if (filled($name)) {
+                    $merge['category'] = $name;
+                }
+            }
+            if (! isset($merge['category'])) {
+                $merge['category'] = 'عمومی';
+            }
         }
         $this->merge($merge);
     }

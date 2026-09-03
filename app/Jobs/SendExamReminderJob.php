@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Morilog\Jalali\Jalalian;
 
 class SendExamReminderJob implements ShouldQueue
@@ -46,6 +47,11 @@ class SendExamReminderJob implements ShouldQueue
             $url = rtrim(config('app.url'), '/').'/jobs/'.$post->id;
 
             foreach ($users as $user) {
+                $dedupeKey = 'mail:exam_reminder:'.$user->id.':'.$post->id.':'.now()->toDateString();
+                if (! Cache::add($dedupeKey, 1, now()->addDays(2))) {
+                    continue;
+                }
+
                 $user->notify(new GenericDatabaseNotification(
                     'exam_reminder',
                     'یادآوری آزمون',

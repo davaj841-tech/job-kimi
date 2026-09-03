@@ -78,6 +78,12 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
+      - name: Install engine tests
+        run: php artisan test --filter=Install
+
+      - name: Build cPanel package (skip deps)
+        run: php scripts/build-cpanel-package.php --skip-deps --no-restore
+
       - name: PHPUnit
         run: php artisan test
 

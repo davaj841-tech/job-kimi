@@ -28,13 +28,14 @@
           />
         </div>
         <div
+          v-if="categories.length"
           class="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-1"
         >
           <button
             type="button"
             class="page-chip"
-            :class="!filters.category ? 'page-chip-on' : ''"
-            @click="filters.category = ''"
+            :class="!filters.categories.length ? 'page-chip-on' : ''"
+            @click="filters.categories = []"
           >
             همه
           </button>
@@ -43,8 +44,8 @@
             :key="cat"
             type="button"
             class="page-chip"
-            :class="filters.category === cat ? 'page-chip-on' : ''"
-            @click="filters.category = cat"
+            :class="filters.categories.includes(cat) ? 'page-chip-on' : ''"
+            @click="toggleCategory(cat)"
           >
             {{ cat }}
           </button>
@@ -114,6 +115,7 @@ import api from '../../api/client'
 import PdfCard from '../../components/pdf/PdfCard.vue'
 import PdfCardSkeleton from '../../components/pdf/PdfCardSkeleton.vue'
 import { toFaDigits, unwrapList, unwrapMeta } from '../../utils/format'
+import { setListPageMeta } from '../../services/meta'
 
 const pdfs = ref([])
 const categories = ref([])
@@ -125,9 +127,15 @@ const pagination = reactive({ total: 0 })
 
 const filters = reactive({
   search: '',
-  category: '',
+  categories: [],
   sort: 'newest',
 })
+
+function toggleCategory(cat) {
+  const idx = filters.categories.indexOf(cat)
+  if (idx >= 0) filters.categories.splice(idx, 1)
+  else filters.categories.push(cat)
+}
 
 async function fetchPdfs(reset = false) {
   if (reset) {
@@ -145,7 +153,9 @@ async function fetchPdfs(reset = false) {
       sort: filters.sort,
     }
     if (filters.search) params.search = filters.search
-    if (filters.category) params.category = filters.category
+    if (filters.categories.length) {
+      params.categories = filters.categories.join(',')
+    }
 
     const { data } = await api.get('/pdf-products', { params })
     const list = unwrapList(data)
@@ -175,11 +185,18 @@ function loadMore() {
 const debouncedSearch = useDebounceFn(() => fetchPdfs(true), 300)
 
 watch(
-  () => [filters.category, filters.sort],
+  () => [filters.categories.join(','), filters.sort],
   () => fetchPdfs(true)
 )
 
-onMounted(() => fetchPdfs(true))
+onMounted(() => {
+  setListPageMeta({
+    title: 'فروشگاه جزوه و نمونه سوال | جاب‌آزمون',
+    description: 'دانلود جزوه، نمونه سوال و منابع آموزشی آزمون‌های استخدامی',
+    path: '/pdfs',
+  })
+  fetchPdfs(true)
+})
 </script>
 
 <style scoped>

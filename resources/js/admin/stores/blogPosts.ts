@@ -5,7 +5,6 @@ import { unwrapList, unwrapMeta } from '../../utils/format'
 interface BlogPostsFilters {
   search: string
   status: string
-  category: string
 }
 
 interface BlogPostsState {
@@ -23,7 +22,6 @@ export const useBlogPostsStore = defineStore('adminBlogPosts', {
     filters: {
       search: '',
       status: '',
-      category: '',
     },
     loading: false,
     selected: null,
@@ -88,7 +86,7 @@ export const useBlogPostsStore = defineStore('adminBlogPosts', {
     },
 
     resetFilters() {
-      this.filters = { search: '', status: '', category: '' }
+      this.filters = { search: '', status: '' }
     },
   },
 })

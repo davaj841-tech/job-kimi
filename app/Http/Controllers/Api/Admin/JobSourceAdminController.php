@@ -86,11 +86,71 @@ class JobSourceAdminController extends BaseController
             '--force' => true,
         ]);
 
+        // Re-activate seeded official sources so crawl works after prior failures/backoff.
+        $reactivated = $this->reactivateOfficialSources();
+
         return $this->successResponse([
             'before' => $before,
             'after' => JobSource::query()->count(),
             'dispatchable' => JobSource::query()->dispatchable()->count(),
-        ], 'منابع پیش‌فرض بارگذاری شدند.');
+            'reactivated' => $reactivated,
+        ], 'منابع پیش‌فرض بارگذاری و برای جستجو فعال شدند.');
+    }
+
+    /**
+     * Enable + approve official seeded sources, clear health backoff, restore Active quality.
+     */
+    public function reactivateDefaults(): JsonResponse
+    {
+        $count = $this->reactivateOfficialSources();
+
+        return $this->successResponse([
+            'reactivated' => $count,
+            'dispatchable' => JobSource::query()->dispatchable()->count(),
+        ], 'منابع رسمی برای جستجوی خودکار فعال شدند.');
+    }
+
+    protected function reactivateOfficialSources(): int
+    {
+        $slugs = collect(config('aggregation.official_sources', []))
+            ->merge(config('aggregation.pilot_sources', []))
+            ->pluck('slug')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $query = JobSource::query();
+        if ($slugs !== []) {
+            $query->whereIn('slug', $slugs);
+        }
+
+        $sources = $query->with('endpoints')->get();
+        $count = 0;
+
+        foreach ($sources as $source) {
+            $source->fill([
+                'is_enabled' => true,
+                'is_approved' => true,
+                'quality_status' => JobSourceQualityStatus::Active,
+                'consecutive_failures' => 0,
+                'consecutive_empty_crawls' => 0,
+                'health_backoff_until' => null,
+            ]);
+            $source->save();
+
+            $source->endpoints()->update(['is_enabled' => true]);
+            $count++;
+        }
+
+        // Ensure feature flag is on so scheduled dispatch can run.
+        try {
+            app(\App\Services\FeatureFlagService::class)->enable('job-crawler');
+        } catch (\Throwable) {
+            // optional
+        }
+
+        return $count;
     }
 
     /**
@@ -542,6 +602,9 @@ class JobSourceAdminController extends BaseController
             $slug = $existing?->slug ?: (Str::slug($data['name']) ?: 'source-'.Str::random(6));
         }
 
+        $seeder = new PilotJobSourceSeeder;
+        $priority = (int) ($data['priority'] ?? ($existing !== null ? $existing->priority : null) ?? PilotJobSourceSeeder::PRIORITY_DEFAULT);
+
         return [
             'name' => $data['name'],
             'slug' => $slug,
@@ -549,7 +612,7 @@ class JobSourceAdminController extends BaseController
             'domain' => $domain,
             'source_type' => $data['source_type'],
             'reliability_level' => $data['reliability_level'],
-            'priority' => (int) ($data['priority'] ?? ($existing !== null ? $existing->priority : null) ?? 50),
+            'priority' => $seeder->normalizePriority($priority),
             'is_enabled' => array_key_exists('is_enabled', $data)
                 ? (bool) $data['is_enabled']
                 : ($existing !== null ? (bool) $existing->is_enabled : false),

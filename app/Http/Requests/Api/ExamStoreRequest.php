@@ -56,6 +56,8 @@ class ExamStoreRequest extends FormRequest
             'random_config.prefer_frequent' => ['sometimes', 'boolean'],
             'random_config.subjects' => ['nullable', 'array'],
             'random_config.subjects.*' => ['integer', 'min:0', 'max:200'],
+            'random_config.duplicate_fingerprints' => ['nullable', 'array'],
+            'random_config.duplicate_fingerprints.*' => ['string', 'max:128'],
         ];
     }
 

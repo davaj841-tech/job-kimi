@@ -27,8 +27,8 @@
         <button
           type="button"
           class="chip inline-flex items-center gap-1"
-          :class="!filters.job_classification_id ? 'chip-active' : ''"
-          @click="setClassification(null)"
+          :class="!selectedClassIds.length ? 'chip-active' : ''"
+          @click="clearClassifications"
         >
           <span aria-hidden="true">📋</span>
           همه
@@ -38,12 +38,8 @@
           :key="c.id"
           type="button"
           class="chip inline-flex items-center gap-1"
-          :class="
-            String(filters.job_classification_id) === String(c.id)
-              ? 'chip-active'
-              : ''
-          "
-          @click="setClassification(c.id)"
+          :class="isClassSelected(c.id) ? 'chip-active' : ''"
+          @click="toggleClassification(c.id)"
         >
           <span class="text-base leading-none" aria-hidden="true">{{
             classificationIcon(c)
@@ -157,6 +153,8 @@ import SkeletonCard from '../../components/ui/SkeletonCard.vue'
 import StarRating from '../../components/StarRating.vue'
 import { useAuthStore } from '../../stores/auth'
 import { formatPrice, unwrapList, apiErrorMessage } from '../../utils/format'
+import { classificationIcon } from '../../utils/classificationIcon'
+import { setListPageMeta } from '../../services/meta'
 
 const route = useRoute()
 const router = useRouter()
@@ -177,39 +175,25 @@ const accessOptions = [
 const filters = reactive({
   search: route.query.search || '',
   sort: 'latest',
-  job_classification_id: null,
   access: '',
 })
 
-function setClassification(id) {
-  filters.job_classification_id = id
+const selectedClassIds = ref([])
+
+function isClassSelected(id) {
+  return selectedClassIds.value.some((x) => Number(x) === Number(id))
+}
+
+function toggleClassification(id) {
+  const idx = selectedClassIds.value.findIndex((x) => Number(x) === Number(id))
+  if (idx >= 0) selectedClassIds.value.splice(idx, 1)
+  else selectedClassIds.value.push(id)
   load()
 }
 
-const classificationFallbackIcons = [
-  '🏛️',
-  '🏦',
-  '🎓',
-  '🏥',
-  '⚖️',
-  '🛡️',
-  '🏭',
-  '💼',
-  '📚',
-  '🧪',
-]
-
-function classificationIcon(item) {
-  if (item?.icon && String(item.icon).trim() !== '') {
-    return String(item.icon).trim()
-  }
-  const key = String(item?.slug || item?.name || item?.id || '')
-  let hash = 0
-  for (let i = 0; i < key.length; i += 1) {
-    hash =
-      (hash + key.charCodeAt(i) * (i + 1)) % classificationFallbackIcons.length
-  }
-  return classificationFallbackIcons[hash] || '📝'
+function clearClassifications() {
+  selectedClassIds.value = []
+  load()
 }
 
 function setAccess(value) {
@@ -240,7 +224,9 @@ async function load() {
       params: {
         search: filters.search || undefined,
         sort: filters.sort,
-        job_classification_id: filters.job_classification_id || undefined,
+        job_classification_ids: selectedClassIds.value.length
+          ? selectedClassIds.value.join(',')
+          : undefined,
         access: filters.access || undefined,
         per_page: 24,
       },
@@ -282,6 +268,12 @@ watch(
 )
 
 onMounted(() => {
+  setListPageMeta({
+    title: 'آزمون‌های استخدامی آنلاین | جاب‌آزمون',
+    description:
+      'آزمون‌های تمرینی و سنجش آمادگی استخدام — سوالات چندگزینه‌ای با پاسخنامه و تحلیل عملکرد',
+    path: '/exams',
+  })
   load()
   loadClassifications()
 })

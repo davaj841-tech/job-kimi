@@ -39,7 +39,13 @@
             required
             placeholder="09123456789 یا you@example.com"
           />
-          <button class="btn-primary" :disabled="loading">
+          <AuthCaptchaField
+            :mode="captchaMode"
+            :site-key="turnstileSiteKey"
+            action="forgot-password"
+            @update="onCaptcha"
+          />
+          <button class="btn-primary" :disabled="loading || !captchaReady">
             {{ loading ? '...' : 'ادامه ←' }}
           </button>
         </form>
@@ -90,7 +96,13 @@
               autocomplete="new-password"
             />
           </div>
-          <button class="btn-primary" :disabled="loading">
+          <AuthCaptchaField
+            :mode="captchaMode"
+            :site-key="turnstileSiteKey"
+            action="forgot-password"
+            @update="onCaptcha"
+          />
+          <button class="btn-primary" :disabled="loading || !captchaReady">
             {{ loading ? '...' : 'تغییر رمز عبور' }}
           </button>
           <button
@@ -144,7 +156,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import AuthCaptchaField from '../../components/auth/AuthCaptchaField.vue'
 import PasswordInput from '../../components/PasswordInput.vue'
 import api from '../../api/client'
 import { normalizeIranMobile } from '../../utils/iranMobile'
@@ -157,18 +170,64 @@ const loading = ref(false)
 const error = ref('')
 const step = ref('identify') // identify | otp | email | done
 
+const captchaMode = ref('math')
+const turnstileSiteKey = ref('')
+const captcha = reactive({
+  turnstile_token: '',
+  captcha_id: '',
+  captcha_answer: '',
+})
+
+const captchaReady = computed(() => {
+  if (captchaMode.value === 'turnstile') return !!captcha.turnstile_token
+  return !!(captcha.captcha_id && captcha.captcha_answer)
+})
+
+function onCaptcha(payload) {
+  captcha.turnstile_token = payload.turnstile_token || ''
+  captcha.captcha_id = payload.captcha_id || ''
+  captcha.captcha_answer = payload.captcha_answer || ''
+}
+
+function captchaPayload() {
+  if (captchaMode.value === 'turnstile') {
+    return { turnstile_token: captcha.turnstile_token }
+  }
+  return {
+    captcha_id: captcha.captcha_id,
+    captcha_answer: captcha.captcha_answer,
+  }
+}
+
+function resetCaptcha() {
+  captcha.turnstile_token = ''
+  captcha.captcha_id = ''
+  captcha.captcha_answer = ''
+}
+
+onMounted(async () => {
+  try {
+    const { data } = await api.get('/settings/public')
+    const s = data?.data || {}
+    captchaMode.value = s.captcha_mode === 'turnstile' ? 'turnstile' : 'math'
+    turnstileSiteKey.value = s.turnstile_site_key || ''
+  } catch {
+    captchaMode.value = 'math'
+  }
+})
+
 async function submitIdentify() {
   error.value = ''
   loading.value = true
   try {
     const id = identifier.value.trim()
-    const payload = { identifier: id }
-    // legacy support
+    const payload = { identifier: id, ...captchaPayload() }
     if (id.includes('@')) payload.email = id
 
     const { data } = await api.post('/auth/forgot-password', payload)
     const channel =
       data.data?.channel || (normalizeIranMobile(id) ? 'mobile' : 'email')
+    resetCaptcha()
     if (channel === 'mobile') {
       step.value = 'otp'
     } else {
@@ -176,6 +235,7 @@ async function submitIdentify() {
     }
   } catch (e) {
     error.value = e.response?.data?.message || 'ارسال ناموفق بود.'
+    resetCaptcha()
   } finally {
     loading.value = false
   }
@@ -190,6 +250,7 @@ async function submitOtp() {
       code: code.value.trim(),
       password: password.value,
       password_confirmation: password_confirmation.value,
+      ...captchaPayload(),
     })
     step.value = 'done'
   } catch (e) {
@@ -199,6 +260,7 @@ async function submitOtp() {
     } else {
       error.value = e.response?.data?.message || 'تغییر رمز ناموفق بود.'
     }
+    resetCaptcha()
   } finally {
     loading.value = false
   }

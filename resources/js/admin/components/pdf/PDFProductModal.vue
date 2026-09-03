@@ -27,19 +27,13 @@
           placeholder="توضیحات"
         />
         <div>
-          <label class="mb-1 block text-xs font-medium text-slate-600"
-            >طبقه‌بندی</label
-          >
-          <select v-model="form.job_classification_id" class="field">
-            <option value="">—</option>
-            <option
-              v-for="c in parentClassifications"
-              :key="c.id"
-              :value="c.id"
-            >
-              {{ c.raw_name || c.name }}
-            </option>
-          </select>
+          <ClassificationSelect
+            v-model="form.job_classification_id"
+            :items="parentClassifications"
+            :multiple="false"
+            :show-all="true"
+            label="طبقه‌بندی"
+          />
         </div>
         <input
           v-model.number="form.price"
@@ -52,10 +46,53 @@
         <FileUploader
           v-model="form.file"
           accept="application/pdf,.pdf"
-          label="فایل PDF"
-          hint="فقط PDF تا ۲۰MB"
+          label="فایل اصلی PDF *"
+          hint="فایل اصلی محصول — فقط PDF تا ۲۰MB"
           :max-size-mb="20"
         />
+        <div>
+          <label class="mb-1.5 block text-xs font-bold text-slate-500"
+            >فایل‌های تکمیلی (اختیاری)</label
+          >
+          <input
+            type="file"
+            multiple
+            accept=".pdf,.doc,.docx,.zip,.rar,.jpg,.jpeg,.png,.xls,.xlsx,.ppt,.pptx"
+            class="field h-auto py-2"
+            @change="onExtraFiles"
+          />
+          <p class="mt-1 text-[11px] text-slate-400">
+            PDF، Word، Excel، ZIP و تصویر — هر کدام تا ۲۰MB (حداکثر ۱۰ فایل)
+          </p>
+          <ul v-if="form.extra_files.length" class="mt-2 space-y-1">
+            <li
+              v-for="(file, idx) in form.extra_files"
+              :key="`${file.name}-${idx}`"
+              class="flex items-center justify-between rounded-lg bg-slate-50 px-2 py-1 text-xs"
+            >
+              <span class="truncate">{{ file.name }}</span>
+              <button
+                type="button"
+                class="text-red-500"
+                @click="removeExtraFile(idx)"
+              >
+                حذف
+              </button>
+            </li>
+          </ul>
+          <ul
+            v-if="existingAttachments.length"
+            class="mt-2 space-y-1 text-xs text-slate-500"
+          >
+            <li
+              v-for="file in existingAttachments"
+              :key="file.index"
+              class="rounded-lg bg-slate-50 px-2 py-1"
+            >
+              پیوست فعلی: {{ file.name }}
+            </li>
+          </ul>
+        </div>
         <FileUploader
           v-model="form.thumbnail"
           accept="image/*"
@@ -87,6 +124,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import FileUploader from '../ui/FileUploader.vue'
+import ClassificationSelect from '../ui/ClassificationSelect.vue'
 import StatusToggle from '../ui/StatusToggle.vue'
 
 const props = defineProps({
@@ -102,6 +140,7 @@ const form = reactive(empty())
 const parentClassifications = computed(() =>
   (props.classifications || []).filter((c) => !c.parent_id)
 )
+const existingAttachments = computed(() => props.product?.attachments || [])
 
 watch(
   () => [props.open, props.product],
@@ -122,6 +161,7 @@ function empty() {
     price: 0,
     is_active: true,
     file: null,
+    extra_files: [],
     thumbnail: null,
   }
 }
@@ -135,13 +175,25 @@ function map(p) {
     price: Number(p.price || 0),
     is_active: Boolean(p.is_active),
     file: null,
+    extra_files: [],
     thumbnail: null,
   }
 }
 
+function onExtraFiles(event) {
+  const picked = Array.from(event.target.files || [])
+  const merged = [...form.extra_files, ...picked].slice(0, 10)
+  form.extra_files = merged
+  event.target.value = ''
+}
+
+function removeExtraFile(index) {
+  form.extra_files.splice(index, 1)
+}
+
 function submit() {
   if (!props.product?.id && !(form.file instanceof File)) {
-    error.value = 'فایل PDF الزامی است.'
+    error.value = 'فایل PDF اصلی الزامی است.'
     return
   }
   saving.value = true

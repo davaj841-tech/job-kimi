@@ -91,6 +91,10 @@ class PDFProductService
             return ['success' => false, 'message' => 'موجودی کیف پول کافی نیست.', 'error' => 'insufficient_balance'];
         }
 
+        if ($user->isWalletFrozen()) {
+            return ['success' => false, 'message' => 'کیف پول شما مسدود است.', 'error' => 'wallet_frozen'];
+        }
+
         try {
             return DB::transaction(function () use ($user, $pdf, $amount, $original, $discount, $coupon) {
                 $tx = Transaction::query()->create([
@@ -146,6 +150,8 @@ class PDFProductService
             });
         } catch (InsufficientBalanceException) {
             return ['success' => false, 'message' => 'موجودی کیف پول کافی نیست.', 'error' => 'insufficient_balance'];
+        } catch (\App\Exceptions\WalletFrozenException) {
+            return ['success' => false, 'message' => 'کیف پول شما مسدود است.', 'error' => 'wallet_frozen'];
         }
     }
 
@@ -192,8 +198,19 @@ class PDFProductService
             ['order_id' => (string) $transaction->id, 'idempotency_key' => $idempotencyKey]
         );
 
+        // Retry once with the same idempotency key if the gateway call fails.
         if ($result['error'] || ! $result['authority']) {
-            $transaction->update(['status' => 'failed']);
+            $result = $this->paymentService->initiate(
+                $gateway,
+                $amount,
+                'خرید PDF '.$pdf->title.' — JobAzmoon',
+                $callback,
+                ['order_id' => (string) $transaction->id, 'idempotency_key' => $idempotencyKey]
+            );
+        }
+
+        if ($result['error'] || ! $result['authority']) {
+            $transaction->update(['status' => Transaction::STATUS_FAILED]);
 
             return [
                 'success' => false,
@@ -284,9 +301,14 @@ class PDFProductService
 
     /**
      * @param  array<string, mixed>  $data
+     * @param  list<UploadedFile>  $extraFiles
      */
-    public function storeUploaded(array $data, UploadedFile $file, ?UploadedFile $thumbnail = null): PdfProduct
-    {
+    public function storeUploaded(
+        array $data,
+        UploadedFile $file,
+        ?UploadedFile $thumbnail = null,
+        array $extraFiles = []
+    ): PdfProduct {
         $uuid = (string) Str::uuid();
         $filePath = $file->storeAs('pdfs', $uuid.'.pdf', 'local');
 
@@ -302,10 +324,72 @@ class PDFProductService
             'price' => $data['price'],
             'category' => $data['category'] ?? null,
             'file_path' => $filePath,
+            'attachments' => $this->storeExtraFiles($extraFiles),
             'thumbnail' => $thumbnailPath,
             'is_active' => $data['is_active'] ?? true,
             'job_post_id' => $data['job_post_id'] ?? null,
+            'job_classification_id' => $data['job_classification_id'] ?? null,
         ]);
+    }
+
+    /**
+     * @param  list<UploadedFile>  $files
+     * @return list<array{path: string, name: string, mime: string, extension: string, size: int}>
+     */
+    public function storeExtraFiles(array $files): array
+    {
+        $stored = [];
+        foreach ($files as $file) {
+            if (! $file instanceof UploadedFile) {
+                continue;
+            }
+            $ext = strtolower($file->getClientOriginalExtension() ?: 'bin');
+            $uuid = (string) Str::uuid();
+            $path = $file->storeAs('pdf_attachments', $uuid.'.'.$ext, 'local');
+            $stored[] = [
+                'path' => $path,
+                'name' => $file->getClientOriginalName(),
+                'mime' => $file->getMimeType() ?: 'application/octet-stream',
+                'extension' => $ext,
+                'size' => (int) $file->getSize(),
+            ];
+        }
+
+        return $stored;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>|null  $existing
+     * @param  list<UploadedFile>  $files
+     * @return list<array<string, mixed>>
+     */
+    public function mergeAttachments(?array $existing, array $files): array
+    {
+        return array_values(array_merge($existing ?? [], $this->storeExtraFiles($files)));
+    }
+
+    public function absoluteAttachmentPath(string $relativePath): ?string
+    {
+        $path = str_replace('\\', '/', ltrim($relativePath, '/'));
+        if ($path === '' || str_contains($path, '..')) {
+            return null;
+        }
+        if (! str_starts_with($path, 'pdf_attachments/')) {
+            $path = 'pdf_attachments/'.basename($path);
+        }
+
+        if (! Storage::disk('local')->exists($path)) {
+            return null;
+        }
+
+        $full = str_replace('\\', '/', Storage::disk('local')->path($path));
+        $root = str_replace('\\', '/', Storage::disk('local')->path('pdf_attachments'));
+
+        if (str_starts_with($full, rtrim($root, '/').'/') || $full === $root) {
+            return Storage::disk('local')->path($path);
+        }
+
+        return null;
     }
 
     public function absoluteFilePath(PdfProduct $pdf): ?string

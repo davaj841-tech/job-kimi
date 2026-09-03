@@ -6,6 +6,7 @@ use App\Models\PdfProduct;
 use App\Models\PdfPurchase;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class PDFProductRepository
@@ -18,9 +19,7 @@ class PDFProductRepository
     {
         $query = PdfProduct::query()->where('is_active', true);
 
-        if (! empty($filters['category'])) {
-            $query->where('category', $filters['category']);
-        }
+        $this->applyCategoryFilters($query, $filters);
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];
@@ -109,9 +108,7 @@ class PDFProductRepository
             $query->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN));
         }
 
-        if (! empty($filters['category'])) {
-            $query->where('category', $filters['category']);
-        }
+        $this->applyCategoryFilters($query, $filters);
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];
@@ -122,5 +119,29 @@ class PDFProductRepository
         }
 
         return $query->latest()->paginate($filters['per_page'] ?? 15);
+    }
+
+    /**
+     * @param  Builder<PdfProduct>  $query
+     * @param  array<string, mixed>  $filters
+     */
+    private function applyCategoryFilters(Builder $query, array $filters): void
+    {
+        if (! empty($filters['category'])) {
+            $query->where('category', $filters['category']);
+        }
+
+        $categoryFilter = $filters['categories'] ?? null;
+        if ($categoryFilter === null || $categoryFilter === '') {
+            return;
+        }
+
+        $list = is_array($categoryFilter)
+            ? $categoryFilter
+            : array_filter(array_map('trim', explode(',', (string) $categoryFilter)));
+
+        if ($list !== []) {
+            $query->whereIn('category', $list);
+        }
     }
 }

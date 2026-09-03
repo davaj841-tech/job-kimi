@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Support\ThemeBootstrap;
+use App\Support\ProcOpen;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -264,8 +265,12 @@ class BackupService
         $pass = (string) config('database.connections.mysql.password');
 
         $mysqldump = $this->findMysqldump();
-        if (! $mysqldump) {
-            Log::warning('mysqldump not found; falling back to PDO dump');
+        if (! $mysqldump || ! ProcOpen::available()) {
+            if (! ProcOpen::available()) {
+                Log::info('proc_open unavailable; using PDO dump for MySQL backup');
+            } else {
+                Log::warning('mysqldump not found; falling back to PDO dump');
+            }
             $this->dumpMysqlViaPdo($sqlFile);
 
             return;
@@ -366,8 +371,10 @@ class BackupService
             }
         }
 
-        $which = Process::run(['mysqldump', '--version']);
-        if ($which->successful()) {
+        $which = ProcOpen::available()
+            ? Process::run(['mysqldump', '--version'])
+            : null;
+        if ($which && $which->successful()) {
             return 'mysqldump';
         }
 
@@ -563,6 +570,12 @@ class BackupService
             throw new RuntimeException('برنامه mysql برای بازگردانی یافت نشد.');
         }
 
+        if (! ProcOpen::available()) {
+            throw new RuntimeException(
+                'بازگردانی از طریق mysql CLI روی این هاست ممکن نیست (proc_open غیرفعال است). فایل SQL را دستی وارد کنید.'
+            );
+        }
+
         $host = config('database.connections.mysql.host');
         $port = config('database.connections.mysql.port', 3306);
         $db = config('database.connections.mysql.database');
@@ -615,8 +628,10 @@ class BackupService
             }
         }
 
-        $which = Process::run(['mysql', '--version']);
-        if ($which->successful()) {
+        $which = ProcOpen::available()
+            ? Process::run(['mysql', '--version'])
+            : null;
+        if ($which && $which->successful()) {
             return 'mysql';
         }
 

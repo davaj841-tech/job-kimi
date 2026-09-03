@@ -43,6 +43,36 @@ function fail(string $msg, int $code = 1): never
     exit($code);
 }
 
+/** @param list<string> $files */
+function lintPhpFiles(array $files): void
+{
+    foreach ($files as $file) {
+        if (! is_file($file)) {
+            fail('PHP lint target missing: '.$file);
+        }
+        $descriptor = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+        $proc = proc_open(
+            [PHP_BINARY, '-l', $file],
+            $descriptor,
+            $pipes,
+            dirname($file)
+        );
+        if (! is_resource($proc)) {
+            fail('Failed to start php -l for: '.$file);
+        }
+        fclose($pipes[0]);
+        $stdout = stream_get_contents($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $status = proc_close($proc);
+        if ($status !== 0) {
+            fail(trim($stderr !== '' ? $stderr : (string) $stdout));
+        }
+        out('PHP lint OK: '.$file);
+    }
+}
+
 function run(string $cmd, string $cwd): void
 {
     out('> '.$cmd);
@@ -56,6 +86,12 @@ function run(string $cmd, string $cwd): void
         fail('Command failed ('.$status.'): '.$cmd);
     }
 }
+
+lintPhpFiles([
+    $root.DIRECTORY_SEPARATOR.'cpanel-installer'.DIRECTORY_SEPARATOR.'install.php',
+    $root.DIRECTORY_SEPARATOR.'cpanel-installer'.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'InstallEngine.php',
+    $root.DIRECTORY_SEPARATOR.'scripts'.DIRECTORY_SEPARATOR.'build-cpanel-package.php',
+]);
 
 if (! $skipDeps) {
     // Horizon declares ext-pcntl/posix; Windows (and many shared hosts) lack them.
@@ -245,6 +281,23 @@ if (! is_dir($outDir) && ! mkdir($outDir, 0755, true) && ! is_dir($outDir)) {
 }
 
 if (is_file($output)) {
+    $newestSource = 0;
+    $watch = [
+        'app/Support/EnamadBadge.php',
+        'config/enamad.php',
+        'resources/js/components/TrustBadges.vue',
+        'public/build/manifest.json',
+    ];
+    foreach ($watch as $rel) {
+        $abs = $root.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $rel);
+        if (is_file($abs)) {
+            $newestSource = max($newestSource, (int) filemtime($abs));
+        }
+    }
+    $zipMtime = (int) filemtime($output);
+    if ($newestSource > $zipMtime) {
+        out('Note: existing '.$output.' is older than current source — rebuilding fresh package.');
+    }
     @unlink($output);
 }
 
@@ -343,6 +396,24 @@ foreach ($storagePlaceholders as $zipPath => $contents) {
 }
 
 out('Closing ZIP (finalizing '.$added.' entries)…');
+
+// Stamp package so hosts/admins can verify they got a fresh build (not a stale dist/ artifact).
+$gitHead = trim((string) shell_exec('git rev-parse --short HEAD 2>NUL') ?: shell_exec('git rev-parse --short HEAD 2>/dev/null') ?: '');
+$buildInfo = [
+    'product' => 'JobAzmoon',
+    'built_at' => gmdate('c'),
+    'built_at_local' => date('Y-m-d H:i:s T'),
+    'git_commit' => $gitHead !== '' ? $gitHead : null,
+    'php' => PHP_VERSION,
+    'files_added' => $added,
+];
+$buildInfoJson = json_encode($buildInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+if (! is_string($buildInfoJson)) {
+    fail('Failed to encode build-info.json');
+}
+$zip->addFromString('build-info.json', $buildInfoJson);
+$added++;
+
 if (! $zip->close()) {
     fail('ZipArchive::close failed while writing '.$output);
 }
@@ -377,6 +448,7 @@ $mustHave = [
     'routes/console.php',
     // Required by bootstrap/app.php when storage/installed is absent (every cPanel artisan boot).
     'routes/install.php',
+    'build-info.json',
     'storage/framework/cache/.gitignore',
     'storage/framework/sessions/.gitignore',
     'storage/framework/views/.gitignore',
@@ -486,8 +558,13 @@ $bundleIterator = new RecursiveIteratorIterator(
 /** @var SplFileInfo $item */
 foreach ($bundleIterator as $item) {
     $abs = $item->getPathname();
-    $rel = 'JobAzmoon-Installer/'.substr($abs, strlen($bundleDir) + 1);
+    // Flat ZIP root: extract directly into public_html (WordPress-style).
+    // Nested JobAzmoon-Installer/ breaks install.php path resolution (~/job vs public_html/job).
+    $rel = substr($abs, strlen($bundleDir) + 1);
     $rel = str_replace('\\', '/', $rel);
+    if ($rel === '' || $rel === false) {
+        continue;
+    }
     if ($item->isDir()) {
         $bundleArchive->addEmptyDir($rel);
     } elseif ($item->isFile()) {
@@ -496,8 +573,38 @@ foreach ($bundleIterator as $item) {
 }
 $bundleArchive->close();
 
+$bundleVerify = new ZipArchive;
+if ($bundleVerify->open($bundleZip) !== true) {
+    fail('Cannot verify JobAzmoon-Installer.zip');
+}
+$flatMust = ['install.php', 'lib/InstallEngine.php', 'package/jobazmoon-core.zip'];
+foreach ($flatMust as $path) {
+    if ($bundleVerify->locateName($path) === false) {
+        $bundleVerify->close();
+        fail('Installer ZIP missing flat path: '.$path);
+    }
+}
+if ($bundleVerify->locateName('JobAzmoon-Installer/install.php') !== false) {
+    $bundleVerify->close();
+    fail('Installer ZIP must not nest files under JobAzmoon-Installer/ — extract goes to public_html root.');
+}
+$bundleVerify->close();
+
 out('Installer folder: '.$bundleDir);
 out('Installer ZIP: '.$bundleZip.' ('.round(((int) filesize($bundleZip)) / (1024 * 1024), 2).' MB)');
+
+out('');
+out('Running installer regression tests...');
+run('php '.escapeshellarg($root.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.'phpunit').' --filter=Install', $root);
+
+out('');
+out('Running installer smoke tests...');
+run('php '.escapeshellarg($root.DIRECTORY_SEPARATOR.'cpanel-installer'.DIRECTORY_SEPARATOR.'test-routes-install-smoke.php'), $root);
+run('php '.escapeshellarg($root.DIRECTORY_SEPARATOR.'cpanel-installer'.DIRECTORY_SEPARATOR.'test-cache-path-smoke.php'), $root);
+
+if (is_file($root.DIRECTORY_SEPARATOR.'scripts'.DIRECTORY_SEPARATOR.'verify-package-contents.php')) {
+    run('php '.escapeshellarg($root.DIRECTORY_SEPARATOR.'scripts'.DIRECTORY_SEPARATOR.'verify-package-contents.php').' '.escapeshellarg($output), $root);
+}
 
 if (! $skipDeps && ! $noRestore) {
     out('');

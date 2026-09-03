@@ -64,7 +64,12 @@ class PasswordResetController extends BaseController
             );
 
             $url = rtrim(config('app.url'), '/').'/reset-password?token='.$token.'&email='.urlencode($user->email);
-            $this->mail->queueTo($user->email, new PasswordResetMail($url, $user->name, 60));
+            try {
+                $this->mail->queueTo($user->email, new PasswordResetMail($url, $user->name, 60));
+            } catch (\Throwable $e) {
+                report($e);
+                // Never expose SMTP/mailer internals; token is stored for retry / support.
+            }
         }
 
         return $this->successResponse(['channel' => 'email'], 'در صورت وجود حساب، لینک بازنشانی به ایمیل ارسال شد.');
@@ -88,7 +93,7 @@ class PasswordResetController extends BaseController
             'password.confirmed' => 'تکرار رمز عبور مطابقت ندارد.',
         ]);
 
-        $verify = $this->otpAuthService->verifyOtp($data['mobile'], $data['code']);
+        $verify = $this->otpAuthService->verifyOtpCodeOnly($data['mobile'], $data['code']);
         if (! ($verify['success'] ?? false)) {
             return $this->errorResponse($verify['message'] ?? 'کد نامعتبر است.', $verify['http'] ?? 422);
         }
@@ -96,8 +101,6 @@ class PasswordResetController extends BaseController
         /** @var User $user */
         $user = $verify['user'];
         $user->update(['password' => $data['password']]);
-
-        // revoke token created by OTP verify — user should login with password
         $user->tokens()->delete();
 
         return $this->successResponse(null, 'رمز عبور با موفقیت تغییر کرد. اکنون وارد شوید.');
@@ -108,7 +111,7 @@ class PasswordResetController extends BaseController
         $data = $request->validate([
             'email' => ['required', 'email'],
             'token' => ['required', 'string'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', 'confirmed', Password::min(8)],
         ]);
 
         $row = DB::table('password_reset_tokens')->where('email', $data['email'])->first();
@@ -128,6 +131,7 @@ class PasswordResetController extends BaseController
 
         $user->update(['password' => $data['password']]);
         DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
+        $user->tokens()->delete();
 
         return $this->successResponse(null, 'رمز عبور با موفقیت تغییر کرد.');
     }

@@ -9,6 +9,7 @@ use App\Models\JobClassification;
 use App\Models\JobPost;
 use App\Models\PdfProduct;
 use App\Models\SubscriptionPlan;
+use App\Services\HomeFeedCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 
@@ -16,13 +17,14 @@ class HomeFeedController extends BaseController
 {
     public function __invoke(): JsonResponse
     {
-        $payload = Cache::remember('home_feed_v3', 45, function () {
+        $payload = Cache::remember(HomeFeedCache::KEY, 45, function () {
             $jobs = JobPost::query()
                 ->with(['classification:id,name,parent_id'])
                 ->where('status', 'approved')
-                ->latest('id')
+                ->orderByDesc('published_at')
+                ->orderByDesc('id')
                 ->limit(80)
-                ->get(['id', 'title', 'company_name', 'province', 'city', 'status', 'job_classification_id', 'created_at', 'registration_deadline']);
+                ->get(['id', 'title', 'company_name', 'province', 'city', 'status', 'job_classification_id', 'created_at', 'published_at', 'registration_deadline']);
 
             $exams = Exam::query()
                 ->where('status', 'published')
@@ -61,7 +63,7 @@ class HomeFeedController extends BaseController
                 ->orderBy('sort_order')
                 ->orderBy('id')
                 ->limit(24)
-                ->get(['id', 'name', 'parent_id']);
+                ->get(['id', 'name', 'parent_id', 'icon', 'color', 'logo_path']);
 
             return [
                 'jobs' => $jobs->map(function (JobPost $j) {
@@ -75,6 +77,7 @@ class HomeFeedController extends BaseController
                         'classification_parent_id' => $j->classification?->parent_id,
                         'classification_name' => $j->classification?->name,
                         'created_at' => $j->created_at?->toIso8601String(),
+                        'published_at' => $j->published_at?->toIso8601String(),
                         'registration_deadline' => $j->registration_deadline?->toIso8601String(),
                     ];
                 })->values()->all(),
@@ -86,6 +89,7 @@ class HomeFeedController extends BaseController
                     'total_questions' => $e->total_questions,
                     'is_free' => (bool) $e->is_free,
                     'price' => $e->price,
+                    'job_classification_id' => $e->job_classification_id,
                     'avg_rating' => (float) ($e->getAttribute('avg_rating') ?? 0),
                     'ratings_count' => (int) ($e->getAttribute('ratings_count') ?? 0),
                     'has_negative_marking' => (bool) $e->has_negative_marking,
@@ -126,6 +130,9 @@ class HomeFeedController extends BaseController
                     'id' => $c->id,
                     'name' => $c->name,
                     'parent_id' => $c->parent_id,
+                    'icon' => $c->icon,
+                    'color' => $c->color,
+                    'logo_url' => $c->logo_url,
                     'child_ids' => $c->children?->pluck('id')->map(fn (mixed $id) => (int) $id)->values()->all() ?? [],
                 ])->values()->all(),
             ];

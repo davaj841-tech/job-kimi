@@ -22,17 +22,27 @@
       "
     >
       <div
-        class="flex h-16 items-center gap-2 border-b border-surface-line px-5 dark:border-slate-700"
+        class="flex h-16 items-center justify-between gap-2 border-b border-surface-line px-4 dark:border-slate-700 sm:px-5"
       >
-        <SiteBrandLogo variant="desktop" size="sm" />
-        <div class="min-w-0">
-          <p class="truncate text-sm font-black text-ink dark:text-white">
-            {{ siteName }}
-          </p>
-          <p class="text-[10px] text-ink-muted dark:text-slate-400">
-            پنل کاربری
-          </p>
+        <div class="flex min-w-0 items-center gap-2">
+          <SiteBrandLogo variant="desktop" size="sm" />
+          <div class="min-w-0">
+            <p class="truncate text-sm font-black text-ink dark:text-white">
+              {{ siteName }}
+            </p>
+            <p class="text-[10px] text-ink-muted dark:text-slate-400">
+              پنل کاربری
+            </p>
+          </div>
         </div>
+        <button
+          type="button"
+          class="rounded-lg p-2 text-ink hover:bg-slate-100 dark:text-white dark:hover:bg-slate-700 lg:hidden"
+          aria-label="بستن منو"
+          @click="sidebarOpen = false"
+        >
+          <XMarkIcon class="h-6 w-6" />
+        </button>
       </div>
 
       <nav class="flex-1 space-y-1 overflow-y-auto p-3">

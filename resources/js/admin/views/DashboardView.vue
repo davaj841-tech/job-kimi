@@ -38,6 +38,132 @@
     </div>
 
     <template v-else>
+      <div
+        class="rounded-2xl border p-4 shadow-sm"
+        :class="aggregationHealthPanelClass"
+      >
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-base font-bold text-slate-800">سلامت تجمیع آگهی</h2>
+            <p class="text-xs text-slate-500">
+              وضعیت Production سیستم Job Aggregation
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span
+              class="rounded-full px-3 py-1 text-xs font-bold"
+              :class="aggregationStatusBadgeClass"
+            >
+              {{ aggregationStatusLabel }}
+            </span>
+            <RouterLink
+              to="/admin/crawl-monitoring"
+              class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-50"
+            >
+              مانیتورینگ
+            </RouterLink>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+          <div class="rounded-xl bg-white/80 p-3">
+            <p class="text-[11px] text-slate-500">فلگ job-crawler</p>
+            <p class="mt-1 text-sm font-bold">
+              {{ aggregationHealth?.feature_flag?.enabled ? 'روشن' : 'خاموش' }}
+            </p>
+          </div>
+          <div class="rounded-xl bg-white/80 p-3">
+            <p class="text-[11px] text-slate-500">زمان‌بندی</p>
+            <p class="mt-1 text-sm font-bold">
+              {{ aggregationHealth?.scheduler?.enabled ? 'فعال' : 'غیرفعال' }}
+            </p>
+            <p class="mt-0.5 text-[10px] text-slate-400">
+              {{
+                (aggregationHealth?.scheduler?.times || []).join('، ') ||
+                'بدون ساعت'
+              }}
+            </p>
+          </div>
+          <div class="rounded-xl bg-white/80 p-3">
+            <p class="text-[11px] text-slate-500">منابع فعال</p>
+            <p class="mt-1 text-sm font-bold">
+              {{ faNum(aggregationHealth?.sources?.dispatchable) }}
+              <span class="text-xs font-medium text-slate-400">
+                / {{ faNum(aggregationHealth?.sources?.enabled) }}
+              </span>
+            </p>
+          </div>
+          <div class="rounded-xl bg-white/80 p-3">
+            <p class="text-[11px] text-slate-500">در انتظار / منتشرشده</p>
+            <p class="mt-1 text-sm font-bold">
+              {{ faNum(aggregationHealth?.jobs?.pending) }}
+              /
+              {{ faNum(aggregationHealth?.jobs?.approved) }}
+            </p>
+          </div>
+          <div class="rounded-xl bg-white/80 p-3">
+            <p class="text-[11px] text-slate-500">آخرین خزش</p>
+            <p class="mt-1 text-sm font-bold">
+              {{ faDateTime(aggregationHealth?.last_crawled_at) }}
+            </p>
+          </div>
+          <div class="rounded-xl bg-white/80 p-3">
+            <p class="text-[11px] text-slate-500">آخرین خطا</p>
+            <p
+              class="mt-1 line-clamp-2 text-xs font-medium text-slate-700"
+              :title="aggregationHealth?.last_error?.message || ''"
+            >
+              {{ aggregationHealth?.last_error?.message || 'خطایی ثبت نشده' }}
+            </p>
+          </div>
+        </div>
+
+        <ul
+          v-if="(aggregationHealth?.alerts || []).length"
+          class="mt-3 space-y-1 rounded-xl bg-white/70 p-3 text-xs text-amber-900"
+        >
+          <li
+            v-for="alert in aggregationHealth.alerts"
+            :key="alert.code"
+            class="flex items-start justify-between gap-2"
+          >
+            <span>
+              <span
+                class="ml-1 font-bold"
+                :class="
+                  alert.severity === 'critical'
+                    ? 'text-red-700'
+                    : 'text-amber-800'
+                "
+              >
+                {{ alert.title }}:
+              </span>
+              {{ alert.message }}
+            </span>
+            <RouterLink
+              v-if="alert.link"
+              :to="alert.link"
+              class="shrink-0 font-bold text-desk-dark underline"
+            >
+              مشاهده
+            </RouterLink>
+          </li>
+        </ul>
+        <ul
+          v-else-if="(aggregationHealth?.issues || []).length"
+          class="mt-3 space-y-1 rounded-xl bg-white/70 p-3 text-xs text-amber-900"
+        >
+          <li
+            v-for="(issue, idx) in aggregationHealth.issues"
+            :key="idx"
+            class="flex gap-2"
+          >
+            <span>•</span>
+            <span>{{ issue }}</span>
+          </li>
+        </ul>
+      </div>
+
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           v-for="stat in topStats"
@@ -195,6 +321,7 @@ const recent = ref({
 const subscriptionDistribution = ref([])
 const topPages = ref([])
 const deviceDistribution = ref([])
+const aggregationHealth = ref(null)
 let pollTimer
 
 const quickActions = [
@@ -205,6 +332,30 @@ const quickActions = [
   { to: '/admin/aggregated-jobs', label: 'تجمیع', icon: '☑' },
   { to: '/admin/job-posts', label: 'آگهی‌ها', icon: '💼' },
 ]
+
+const aggregationStatusLabel = computed(() => {
+  const s = aggregationHealth.value?.status
+  if (s === 'ok') return 'سالم'
+  if (s === 'warn') return 'هشدار'
+  if (s === 'critical') return 'بحرانی'
+  return 'نامشخص'
+})
+
+const aggregationStatusBadgeClass = computed(() => {
+  const s = aggregationHealth.value?.status
+  if (s === 'ok') return 'bg-emerald-100 text-emerald-800'
+  if (s === 'warn') return 'bg-amber-100 text-amber-900'
+  if (s === 'critical') return 'bg-red-100 text-red-800'
+  return 'bg-slate-100 text-slate-600'
+})
+
+const aggregationHealthPanelClass = computed(() => {
+  const s = aggregationHealth.value?.status
+  if (s === 'ok') return 'border-emerald-200 bg-emerald-50/60'
+  if (s === 'warn') return 'border-amber-200 bg-amber-50/70'
+  if (s === 'critical') return 'border-red-200 bg-red-50/70'
+  return 'border-slate-200 bg-white'
+})
 
 const visitSeries = computed(() =>
   (charts.value.visits || []).map((r) => ({
@@ -234,6 +385,21 @@ function faDate(v) {
   if (!v) return '—'
   try {
     return new Date(v).toLocaleDateString('fa-IR')
+  } catch {
+    return String(v)
+  }
+}
+
+function faDateTime(v) {
+  if (!v) return '—'
+  try {
+    return new Date(v).toLocaleString('fa-IR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
   } catch {
     return String(v)
   }
@@ -402,6 +568,7 @@ async function loadStats(silent = false) {
     subscriptionDistribution.value = payload.subscription_distribution || []
     topPages.value = payload.top_pages || []
     deviceDistribution.value = payload.charts?.devices || []
+    aggregationHealth.value = payload.aggregation_health || null
   } catch (e) {
     error.value = e.response?.data?.message || 'بارگذاری داشبورد ناموفق بود.'
   } finally {

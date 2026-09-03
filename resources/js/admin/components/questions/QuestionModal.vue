@@ -4,7 +4,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
   >
     <div
-      class="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+      class="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:text-slate-100"
     >
       <div class="mb-4 flex items-center justify-between">
         <h3 class="text-lg font-bold">
@@ -59,6 +59,7 @@
             <label class="label">{{ opt.label }}</label>
             <RichEditor
               v-model="form[`option_${opt.key}`]"
+              size="compact"
               @update:model-value="autosave"
             />
           </div>
@@ -250,9 +251,9 @@ async function submit() {
 
 <style scoped>
 .label {
-  @apply mb-1 block text-xs font-medium text-slate-600;
+  @apply mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300;
 }
 .field {
-  @apply w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-orange-400;
+  @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-orange-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100;
 }
 </style>

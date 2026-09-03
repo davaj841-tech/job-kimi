@@ -124,12 +124,12 @@
       <div class="mt-4 space-y-3">
         <div>
           <label class="mb-1 block text-xs text-slate-500">رسته شغلی</label>
-          <select v-model="catalog.job_classification_id" class="field">
-            <option value="">بدون رسته</option>
-            <option v-for="c in classifications" :key="c.id" :value="c.id">
-              {{ c.name }}
-            </option>
-          </select>
+          <ClassificationSelect
+            v-model="catalog.job_classification_id"
+            :items="classifications"
+            :multiple="false"
+            :show-all="true"
+          />
         </div>
         <CatalogAttachFields
           v-model:auto-catalog="catalog.auto_catalog"
@@ -153,6 +153,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import adminApi from '../api/client'
 import CatalogAttachFields from '../components/catalog/CatalogAttachFields.vue'
+import ClassificationSelect from '../components/ui/ClassificationSelect.vue'
 import DataTable from '../components/ui/DataTable.vue'
 import PaginationBar from '../components/ui/PaginationBar.vue'
 import { useToast } from '../../composables/useToast'

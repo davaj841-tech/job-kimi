@@ -87,7 +87,7 @@ final class CriticalBusinessFlowsTest extends TestCase
 
         $response->assertOk();
         $this->assertGreaterThanOrEqual(1, $response->json('data.created'));
-        $this->assertDatabaseHas('job_posts', ['status' => 'pending']);
+        $this->assertDatabaseHas('job_posts', ['status' => 'approved']);
     }
 
     // ─── #20: IDOR Prevention ───

@@ -36,7 +36,7 @@ class CanonicalService
         }
 
         if ($model instanceof PdfProduct) {
-            return url('/pdf-products/'.$model->getKey());
+            return url('/pdfs/'.$model->getKey());
         }
 
         if ($model instanceof CmsPage) {

@@ -10,6 +10,7 @@ use App\Repositories\PDFProductRepository;
 use App\Services\Payment\GatewayCallbackService;
 use App\Services\PaymentService;
 use App\Services\PDFProductService;
+use App\Services\Seo\SeoManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -22,11 +23,12 @@ class PDFProductController extends BaseController
         protected PDFProductRepository $pdfProductRepository,
         protected PaymentService $paymentService,
         protected GatewayCallbackService $gatewayCallback,
+        protected SeoManager $seoManager,
     ) {}
 
     public function index(Request $request): JsonResponse
     {
-        $filters = $request->only(['category', 'search', 'price_min', 'price_max', 'per_page', 'sort']);
+        $filters = $request->only(['category', 'categories', 'search', 'price_min', 'price_max', 'per_page', 'sort']);
         $products = $this->pdfProductService->getAvailable($filters);
 
         $purchasedIds = [];
@@ -76,7 +78,17 @@ class PDFProductController extends BaseController
         $pdf->purchase_date = $purchase?->purchased_at?->toIso8601String();
         $pdf->download_url = $isPurchased ? $this->pdfProductService->getDownloadUrl($pdf) : null;
 
-        return $this->successResponse(new PdfProductResource($pdf));
+        $data = (new PdfProductResource($pdf))->resolve();
+        $breadcrumbs = [
+            ['name' => 'خانه', 'url' => url('/')],
+            ['name' => 'فروشگاه', 'url' => url('/pdfs')],
+            ['name' => $pdf->title, 'url' => url('/pdfs/'.$pdf->getKey())],
+        ];
+        $seo = $this->seoManager->buildPublicPayload($pdf, $breadcrumbs);
+        $data['seo'] = $seo;
+        $data['schema'] = $seo['schema'];
+
+        return $this->successResponse($data);
     }
 
     public function purchase(Request $request, int $id): JsonResponse
@@ -159,6 +171,39 @@ class PDFProductController extends BaseController
 
         return response()->download($path, $filename, [
             'Content-Type' => 'application/pdf',
+        ]);
+    }
+
+    public function downloadAttachment(Request $request, int $id, int $index): BinaryFileResponse|JsonResponse
+    {
+        $pdf = $this->pdfProductRepository->findActive($id);
+
+        if (! $pdf) {
+            return $this->errorResponse('محصول یافت نشد.', 404);
+        }
+
+        if (! $this->pdfProductService->canDownload($request->user(), $pdf)) {
+            return $this->errorResponse('دسترسی غیرمجاز.', 403);
+        }
+
+        $attachments = collect($pdf->attachments ?? [])->values();
+        $attachment = $attachments->get($index);
+
+        if (! is_array($attachment)) {
+            return $this->errorResponse('فایل پیوست یافت نشد.', 404);
+        }
+
+        $path = $this->pdfProductService->absoluteAttachmentPath((string) ($attachment['path'] ?? ''));
+
+        if (! $path || ! file_exists($path)) {
+            return $this->errorResponse('فایل یافت نشد.', 404);
+        }
+
+        $name = (string) ($attachment['name'] ?? 'attachment');
+        $mime = (string) ($attachment['mime'] ?? 'application/octet-stream');
+
+        return response()->download($path, $name, [
+            'Content-Type' => $mime,
         ]);
     }
 

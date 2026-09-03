@@ -46,6 +46,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property int|null $subscription_plan_id
  * @property Carbon|null $subscription_expires_at
  * @property numeric-string|float|int|null $wallet_balance
+ * @property Carbon|null $wallet_frozen_at
  * @property bool $is_verified
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -104,6 +105,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return [
             'wallet_balance' => 'decimal:0',
+            'wallet_frozen_at' => 'datetime',
             'subscription_expires_at' => 'datetime',
             'otp_expires_at' => 'datetime',
             'locked_until' => 'datetime',
@@ -149,6 +151,16 @@ class User extends Authenticatable implements FilamentUser
     public function walletLedgers(): HasMany
     {
         return $this->hasMany(WalletLedger::class);
+    }
+
+    public function isWalletFrozen(): bool
+    {
+        return $this->wallet_frozen_at !== null;
+    }
+
+    public function walletStatus(): string
+    {
+        return $this->isWalletFrozen() ? 'frozen' : 'active';
     }
 
     protected static function booted(): void

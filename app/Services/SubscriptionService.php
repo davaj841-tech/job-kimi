@@ -75,6 +75,10 @@ class SubscriptionService
             return ['success' => false, 'message' => 'موجودی کیف پول کافی نیست.', 'error' => 'insufficient_balance'];
         }
 
+        if ($user->isWalletFrozen()) {
+            return ['success' => false, 'message' => 'کیف پول شما مسدود است.', 'error' => 'wallet_frozen'];
+        }
+
         try {
             return DB::transaction(function () use ($user, $plan, $amount, $original, $discount, $coupon) {
                 $tx = Transaction::query()->create([

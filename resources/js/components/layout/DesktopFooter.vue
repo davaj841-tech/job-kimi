@@ -9,7 +9,7 @@
         <p class="mb-3 leading-7 text-white/70">
           آزمون استخدامی، رزومه‌ساز و آگهی شغلی در یک مسیر.
         </p>
-        <TrustBadges dark compact />
+        <TrustBadges compact />
         <SocialLinks wrap-class="mt-3" />
       </div>
 
@@ -71,6 +71,7 @@ const columns = [
     links: [
       { to: '/terms', label: 'قوانین و مقررات' },
       { to: '/privacy', label: 'حریم خصوصی' },
+      { to: '/refund', label: 'لغو و استرداد' },
       { to: '/about', label: 'درباره ما' },
     ],
   },

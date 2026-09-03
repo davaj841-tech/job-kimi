@@ -89,6 +89,19 @@ export const useQuestionsStore = defineStore('adminQuestions', {
       return data.data
     },
 
+    async importFullExam({ file }: { file: File }) {
+      const form = new FormData()
+      form.append('file', file)
+      const { data } = await adminApi.post(
+        '/admin/questions/import-exam',
+        form,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      )
+      return data.data
+    },
+
     /** @deprecated alias — use importQuestions({ file, exam_id }) */
     async importFromExcel({
       file,
@@ -111,6 +124,23 @@ export const useQuestionsStore = defineStore('adminQuestions', {
       a.download = `questions-${Date.now()}.xlsx`
       a.click()
       URL.revokeObjectURL(url)
+    },
+
+    async copyToExam({
+      exam_id,
+      fingerprints,
+      source_question_ids = {},
+    }: {
+      exam_id: number | string
+      fingerprints: string[]
+      source_question_ids?: Record<string, number | string>
+    }) {
+      const { data } = await adminApi.post('/admin/questions/copy-to-exam', {
+        exam_id,
+        fingerprints,
+        source_question_ids,
+      })
+      return data.data
     },
 
     async generateWithAI(params: Record<string, unknown>) {

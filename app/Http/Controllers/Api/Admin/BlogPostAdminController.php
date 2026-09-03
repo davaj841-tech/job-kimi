@@ -47,7 +47,7 @@ class BlogPostAdminController extends BaseController
         }
 
         $data['created_by'] = $request->user()->id;
-        $data['status'] = $data['status'] ?? 'draft';
+        $data['status'] = $data['status'] ?? 'published';
 
         $post = $this->blogPostService->create($data);
 
@@ -92,6 +92,7 @@ class BlogPostAdminController extends BaseController
         }
 
         $post->delete();
+        $this->blogPostService->forgetHomeFeedCache();
 
         return $this->successResponse(null, 'پست حذف شد.');
     }

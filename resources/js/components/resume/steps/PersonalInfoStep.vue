@@ -71,10 +71,19 @@
           dir="ltr"
           inputmode="numeric"
           maxlength="10"
-          placeholder="۱۰ رقم"
+          placeholder="۱۰ رقم معتبر ایران"
           required
           @input="onNational"
         />
+        <p
+          v-if="
+            String(local.personal.national_code || '').length === 10 &&
+            !isValidNationalCode(local.personal.national_code)
+          "
+          class="mt-1 text-xs text-brand"
+        >
+          کد ملی معتبر نیست
+        </p>
       </label>
       <JalaliBirthInput v-model="local.personal.birth_date" required />
 
@@ -170,6 +179,7 @@ import PhotoUpload from '../PhotoUpload.vue'
 import SearchSelect from '../SearchSelect.vue'
 import { ACADEMIC_FIELDS } from '../../../data/academicFields'
 import { IRAN_PROVINCES, citiesForProvince } from '../../../utils/iranCities'
+import { isValidNationalCode } from '../../../utils/validators'
 
 const militaryOptions = [
   'پایان خدمت',

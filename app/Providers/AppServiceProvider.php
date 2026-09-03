@@ -38,6 +38,7 @@ use App\Services\Aggregation\Parsers\OfficialAnnouncementHtmlParser;
 use App\Services\Aggregation\Parsers\SourceParserRegistry;
 use App\Services\Aggregation\SafeHttpFetcher;
 use App\Support\IranMobile;
+use App\Support\ProcOpen;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -55,6 +56,11 @@ class AppServiceProvider extends ServiceProvider
             $this->app['config']->set('cache.default', 'file');
             $this->app['config']->set('queue.default', 'sync');
         }
+
+        $this->app->singleton(\App\Services\Sms\SmsLogger::class);
+        $this->app->singleton(\App\Services\Sms\SmsManager::class);
+        $this->app->singleton(\App\Services\Sms\SmsServiceInterface::class, \App\Services\Sms\SmsManager::class);
+        $this->app->singleton(\App\Services\Sms\SmsService::class, fn ($app) => new \App\Services\Sms\SmsService($app->make(\App\Services\Sms\SmsManager::class)));
 
         $this->app->singleton(IpHelper::class);
 
@@ -95,8 +101,20 @@ class AppServiceProvider extends ServiceProvider
         // Ensure API validation / auth messages stay Persian
         app()->setLocale(config('app.locale', 'fa'));
 
+        // Shared hosting: Pulse Servers / some tooling needs shell helpers; avoid noise.
+        if (! ProcOpen::available()) {
+            config(['pulse.enabled' => false]);
+        }
+
         if ($this->app->environment('production') && config('app.debug')) {
             report(new \RuntimeException('APP_DEBUG is enabled in production — disable it immediately.'));
+        }
+
+        // Legacy MAIL_SCHEME=tls|ssl must never reach Symfony (only smtp|smtps).
+        try {
+            app(\App\Services\MailConfigService::class)->normalizeConfiguredSmtpScheme();
+        } catch (\Throwable) {
+            // Installer / early boot may lack Settings; ignore.
         }
 
         Feature::observe(FeatureObserver::class);

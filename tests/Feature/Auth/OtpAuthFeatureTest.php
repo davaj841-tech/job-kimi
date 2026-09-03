@@ -30,7 +30,7 @@ class OtpAuthFeatureTest extends TestCase
                     'expires_in',
                 ],
             ])
-            ->assertJsonPath('data.expires_in', 120);
+            ->assertJsonPath('data.expires_in', 180);
 
         $this->assertDatabaseHas('users', [
             'mobile' => '09121234567',
@@ -81,8 +81,16 @@ class OtpAuthFeatureTest extends TestCase
 
     public function test_send_otp_fails_when_sms_cannot_be_delivered(): void
     {
-        config(['services.sms.allow_log_fallback' => false]);
-        config(['services.kavenegar.api_key' => null]);
+        config([
+            'sms.allow_log_fallback' => false,
+            'services.sms.allow_log_fallback' => false,
+            'sms.melipayamak.username' => null,
+            'sms.melipayamak.password' => null,
+            'services.melipayamak.username' => null,
+            'services.melipayamak.password' => null,
+            'services.kavenegar.api_key' => null,
+            'sms.kavenegar.api_key' => null,
+        ]);
 
         $response = $this->postJson('/api/v1/auth/otp/send', $this->withAuthCaptcha([
             'mobile' => '09121234570',

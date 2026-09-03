@@ -7,6 +7,8 @@ use App\Models\GeneratedContent;
 use App\Models\Seo\SeoAnalysis;
 use App\Models\Seo\SeoKeyword;
 use App\Models\Seo\SeoMeta;
+use App\Models\Setting;
+use App\Support\Utf8Text;
 use Illuminate\Database\Eloquent\Model;
 
 class SeoManager
@@ -77,9 +79,13 @@ class SeoManager
      */
     public function buildHomePayload(): array
     {
+        $title = (string) Setting::getFilled('meta_title', config('seo.default_title'));
+        $description = Setting::getFilled('meta_description', config('seo.default_description'));
+        $description = $description !== null ? (string) $description : null;
+
         $meta = $this->metaGenerator->generateForPage(
-            (string) config('seo.default_title'),
-            config('seo.default_description') !== null ? (string) config('seo.default_description') : null,
+            $title,
+            $description,
             url('/'),
         );
 
@@ -122,6 +128,8 @@ class SeoManager
      */
     public function updateMeta(Model $model, array $data): SeoMeta
     {
+        $data = $this->sanitizeMetaPayload($data);
+
         if (method_exists($model, 'seoMeta')) {
             return $model->seoMeta()->updateOrCreate(
                 ['seoable_type' => $model->getMorphClass(), 'seoable_id' => $model->getKey()],
@@ -133,6 +141,30 @@ class SeoManager
             ['seoable_type' => $model->getMorphClass(), 'seoable_id' => $model->getKey()],
             $data
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function sanitizeMetaPayload(array $data): array
+    {
+        foreach (['title', 'og_title', 'description', 'og_description', 'canonical', 'og_image', 'twitter_card'] as $field) {
+            if (! array_key_exists($field, $data) || ! is_string($data[$field])) {
+                continue;
+            }
+
+            $max = match ($field) {
+                'description', 'og_description' => 320,
+                'title', 'og_title' => 255,
+                'canonical', 'og_image' => 500,
+                default => 255,
+            };
+
+            $data[$field] = Utf8Text::limit($data[$field], $max, '');
+        }
+
+        return $data;
     }
 
     /**

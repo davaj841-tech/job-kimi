@@ -16,7 +16,7 @@ class PageController extends BaseController
 
     public function show(string $slug): JsonResponse
     {
-        if (in_array($slug, ['terms', 'privacy', 'about', 'contact'], true)) {
+        if (in_array($slug, ['terms', 'privacy', 'about', 'contact', 'refund'], true)) {
             LegalPages::ensure();
         }
 

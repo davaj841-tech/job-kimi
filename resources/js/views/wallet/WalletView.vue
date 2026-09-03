@@ -14,6 +14,14 @@
       </div>
 
       <template v-else>
+        <div
+          v-if="walletFrozen"
+          class="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+        >
+          کیف پول شما مسدود است. مشاهده موجودی و تراکنش‌ها مجاز است، اما شارژ و
+          خرید غیرفعال است.
+        </div>
+
         <Card
           class="overflow-hidden bg-gradient-to-l from-brand to-brand-dark p-8 text-white shadow-lg"
         >
@@ -24,7 +32,8 @@
           <div class="mt-6 flex flex-wrap gap-3">
             <button
               type="button"
-              class="rounded-xl bg-white px-6 py-2.5 text-sm font-bold text-brand transition hover:bg-brand-soft"
+              class="rounded-xl bg-white px-6 py-2.5 text-sm font-bold text-brand transition hover:bg-brand-soft disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="walletFrozen"
               @click="showCharge = true"
             >
               شارژ کیف پول
@@ -38,7 +47,7 @@
           </div>
         </Card>
 
-        <Card v-if="showCharge" class="space-y-3 p-5">
+        <Card v-if="showCharge && !walletFrozen" class="space-y-3 p-5">
           <h2 class="text-lg font-bold dark:text-white">شارژ کیف پول</h2>
           <label class="block text-sm font-medium dark:text-slate-300"
             >مبلغ (ریال)</label
@@ -79,7 +88,22 @@
         </Card>
 
         <Card class="p-5">
-          <h2 class="mb-4 text-lg font-bold dark:text-white">تراکنش‌ها</h2>
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-lg font-bold dark:text-white">تراکنش‌ها</h2>
+            <select
+              v-model="typeFilter"
+              class="input-field max-w-[180px] text-sm"
+              @change="onFilterChange"
+            >
+              <option value="">همه</option>
+              <option value="deposit">واریز</option>
+              <option value="purchase">خرید</option>
+              <option value="withdrawal">برداشت</option>
+              <option value="refund">بازگشت وجه</option>
+              <option value="bonus">Bonus</option>
+              <option value="adjustment">Adjustment</option>
+            </select>
+          </div>
           <EmptyState
             v-if="!transactions.length"
             title="تراکنشی نیست"
@@ -105,7 +129,7 @@
                 >
                   <td class="py-3">
                     <p class="font-medium dark:text-white">
-                      {{ tx.description || tx.type }}
+                      {{ tx.description || typeLabel(tx.type) }}
                     </p>
                     <p
                       v-if="tx.invoice_number"
@@ -123,7 +147,9 @@
                   <td
                     class="py-3 font-bold"
                     :class="
-                      tx.type === 'deposit' ? 'text-emerald-600' : 'text-brand'
+                      tx.type === 'deposit' || tx.type === 'refund'
+                        ? 'text-emerald-600'
+                        : 'text-brand'
                     "
                   >
                     {{ formatPrice(tx.amount) }}
@@ -141,6 +167,30 @@
                 </tr>
               </tbody>
             </table>
+          </div>
+          <div
+            v-if="meta.last_page > 1"
+            class="mt-4 flex items-center justify-between text-sm"
+          >
+            <button
+              type="button"
+              class="rounded-lg border px-3 py-1.5 disabled:opacity-40"
+              :disabled="meta.current_page <= 1 || txLoading"
+              @click="goPage(meta.current_page - 1)"
+            >
+              قبلی
+            </button>
+            <span class="text-ink-muted">
+              صفحه {{ meta.current_page }} از {{ meta.last_page }}
+            </span>
+            <button
+              type="button"
+              class="rounded-lg border px-3 py-1.5 disabled:opacity-40"
+              :disabled="meta.current_page >= meta.last_page || txLoading"
+              @click="goPage(meta.current_page + 1)"
+            >
+              بعدی
+            </button>
           </div>
         </Card>
       </template>
@@ -162,8 +212,12 @@ const { enabled: walletEnabled } = useFeature('wallet')
 const toast = useToast()
 
 const loading = ref(true)
+const txLoading = ref(false)
 const balance = ref(0)
+const walletFrozen = ref(false)
 const transactions = ref<any[]>([])
+const meta = ref({ current_page: 1, last_page: 1, per_page: 15, total: 0 })
+const typeFilter = ref('')
 const amount = ref(100000)
 const charging = ref(false)
 const showCharge = ref(false)
@@ -172,6 +226,17 @@ const gateway = ref('zarinpal')
 
 function formatPrice(v: number | string) {
   return new Intl.NumberFormat('fa-IR').format(Number(v || 0)) + ' ریال'
+}
+
+function typeLabel(t: string) {
+  return (
+    {
+      deposit: 'واریز',
+      purchase: 'خرید',
+      withdrawal: 'برداشت',
+      refund: 'بازگشت وجه',
+    }[t] || t
+  )
 }
 
 function statusLabel(s: string) {
@@ -198,10 +263,19 @@ async function loadGateways() {
   }
 }
 
-async function load() {
-  const { data } = await api.get('/wallet')
-  balance.value = data.data?.balance || 0
-  transactions.value = data.data?.transactions || []
+async function load(page = 1) {
+  txLoading.value = true
+  try {
+    const params: Record<string, string | number> = { page, per_page: 15 }
+    if (typeFilter.value) params.type = typeFilter.value
+    const { data } = await api.get('/wallet', { params })
+    balance.value = data.data?.balance || 0
+    walletFrozen.value = Boolean(data.data?.wallet_frozen)
+    transactions.value = data.data?.transactions || []
+    meta.value = data.data?.meta || meta.value
+  } finally {
+    txLoading.value = false
+  }
 }
 
 onMounted(async () => {
@@ -215,6 +289,14 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+function onFilterChange() {
+  load(1)
+}
+
+function goPage(page: number) {
+  load(page)
+}
 
 async function charge() {
   charging.value = true

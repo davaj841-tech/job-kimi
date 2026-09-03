@@ -33,7 +33,7 @@
           min="0"
           required
           class="field"
-          placeholder="قیمت (تومان) *"
+          placeholder="قیمت (ریال) *"
         />
 
         <div>
@@ -87,7 +87,7 @@
         <p class="text-left text-xs text-slate-500" dir="rtl">
           قیمت نهایی:
           <span class="font-bold text-desk-orange"
-            >{{ Number(form.price || 0).toLocaleString('fa-IR') }} تومان</span
+            >{{ Number(form.price || 0).toLocaleString('fa-IR') }} ریال</span
           >
         </p>
 

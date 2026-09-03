@@ -70,7 +70,7 @@ interface JobPostsFilters {
   status: string
   province: string
   city: string
-  job_classification_id: string
+  job_classification_ids: (number | string)[]
   deadline_from: string
   deadline_to: string
 }
@@ -102,7 +102,7 @@ export const useJobPostsStore = defineStore('adminJobPosts', {
       status: '',
       province: '',
       city: '',
-      job_classification_id: '',
+      job_classification_ids: [],
       deadline_from: '',
       deadline_to: '',
     },
@@ -114,9 +114,18 @@ export const useJobPostsStore = defineStore('adminJobPosts', {
     async fetchJobPosts(page = 1) {
       this.loading = true
       try {
-        const { data } = await adminApi.get('/admin/job-posts', {
-          params: { ...this.filters, page, per_page: 20 },
-        })
+        const params: Record<string, unknown> = {
+          ...this.filters,
+          page,
+          per_page: 20,
+        }
+        if (this.filters.job_classification_ids.length) {
+          params.job_classification_ids =
+            this.filters.job_classification_ids.join(',')
+        } else {
+          delete params.job_classification_ids
+        }
+        const { data } = await adminApi.get('/admin/job-posts', { params })
         this.posts = unwrapList(data) as Record<string, unknown>[]
         this.meta = unwrapMeta(data) || {}
       } finally {
@@ -196,7 +205,7 @@ export const useJobPostsStore = defineStore('adminJobPosts', {
         status: '',
         province: '',
         city: '',
-        job_classification_id: '',
+        job_classification_ids: [],
         deadline_from: '',
         deadline_to: '',
       }

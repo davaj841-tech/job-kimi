@@ -2,30 +2,63 @@
 
 namespace App\Services\Sms;
 
-use App\Models\Setting;
-use Illuminate\Support\Facades\Log;
-
-class SmsService
+/**
+ * Backward-compatible facade; delegates to {@see SmsManager}.
+ */
+class SmsService implements SmsServiceInterface
 {
+    public function __construct(protected SmsManager $manager) {}
+
     public function gateway(): SmsGatewayInterface
     {
-        // انتخاب درگاه SMS از تنظیمات ادمین
-        return match (Setting::getFilled('sms_gateway', config('services.sms.gateway', 'kavenegar'))) {
-            'melipayamak' => new MeliPayamakSmsGateway,
-            default => new KavenegarSmsGateway,
-        };
+        return $this->manager->gateway();
+    }
+
+    public function sendSMS(string $mobile, string $message, string $messageType = 'transactional'): bool
+    {
+        return $this->manager->sendSMS($mobile, $message, $messageType);
     }
 
     public function sendOtp(string $mobile, string $code): bool
     {
-        $message = "کد تایید جاب‌آزمون: {$code}";
+        return $this->manager->sendOtp($mobile, $code);
+    }
 
-        try {
-            return $this->gateway()->send($mobile, $message);
-        } catch (\Throwable $e) {
-            Log::error('SMS send failed', ['error' => $e->getMessage(), 'mobile' => $mobile]);
+    public function sendDetailed(string $mobile, string $message, string $messageType = 'transactional'): SmsResult
+    {
+        return $this->manager->sendDetailed($mobile, $message, $messageType);
+    }
 
-            return false;
-        }
+    public function sendOtpDetailed(string $mobile, string $code): SmsResult
+    {
+        return $this->manager->sendOtpDetailed($mobile, $code);
+    }
+
+    public function queue(string $mobile, string $message, string $messageType = 'transactional'): bool
+    {
+        return $this->manager->queue($mobile, $message, $messageType);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function health(): array
+    {
+        return $this->manager->health();
+    }
+
+    public function isEnabled(): bool
+    {
+        return $this->manager->isEnabled();
+    }
+
+    public function isOtpEnabled(): bool
+    {
+        return $this->manager->isOtpEnabled();
+    }
+
+    public function isTransactionalEnabled(): bool
+    {
+        return $this->manager->isTransactionalEnabled();
     }
 }

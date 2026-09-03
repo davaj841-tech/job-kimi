@@ -33,22 +33,20 @@
           <button
             type="button"
             class="page-chip"
-            :class="!filters.job_classification_id ? 'page-chip-on' : ''"
-            @click="filters.job_classification_id = ''"
+            :class="
+              !filters.job_classification_ids.length ? 'page-chip-on' : ''
+            "
+            @click="filters.job_classification_ids = []"
           >
             همه
           </button>
 
           <button
-            v-for="cat in classifications"
+            v-for="cat in chipClassifications"
             :key="cat.id"
             type="button"
             class="page-chip"
-            :class="
-              String(filters.job_classification_id) === String(cat.id)
-                ? 'page-chip-on'
-                : ''
-            "
+            :class="isCategorySelected(cat.id) ? 'page-chip-on' : ''"
             @click="toggleCategory(cat.id)"
           >
             {{ cat.name }}
@@ -190,7 +188,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import JobCardCompact from '../../components/jobs/JobCardCompact.vue'
 import JobCardSkeleton from '../../components/jobs/JobCardSkeleton.vue'
@@ -199,6 +197,16 @@ import EmptyState from '../../components/EmptyState.vue'
 import { useJobList } from '../../composables/useJobList'
 import { IRAN_PROVINCES } from '../../utils/provinces'
 import { toFaDigits } from '../../utils/format'
+import { setListPageMeta } from '../../services/meta'
+
+onMounted(() => {
+  setListPageMeta({
+    title: 'آگهی‌های استخدامی | جاب‌آزمون',
+    description:
+      'جدیدترین آگهی‌های استخدامی دولتی و خصوصی — بانک، نفت، آموزش و پرورش، شهرداری و شرکت‌های بورسی',
+    path: '/jobs',
+  })
+})
 
 const showFilters = ref(false)
 const selectedJob = ref(null)
@@ -213,14 +221,22 @@ const {
   filters,
   pagination,
   classifications,
+  homeClassifications,
   provinces,
   fetchJobs,
   loadMore,
   debouncedSearch,
-  toggleCategory,
   resetFilters,
   toggleBookmark,
+  toggleCategory,
+  isCategorySelected,
 } = useJobList()
+
+const chipClassifications = computed(() => {
+  const home = homeClassifications.value || []
+  if (home.length) return home
+  return (classifications.value || []).filter((c) => !c.parent_id)
+})
 
 const provinceOptions = computed(() => {
   const fromApi = provinces.value || []

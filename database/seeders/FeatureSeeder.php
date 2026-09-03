@@ -30,7 +30,9 @@ class FeatureSeeder extends Seeder
             ],
             [
                 'name' => 'job-crawler',
-                'enabled' => false,
+                // Must stay on by default: Install seeds sources then FeatureSeeder.
+                // A disabled flag makes jobs:aggregate-dispatch a silent no-op every minute.
+                'enabled' => true,
                 'config' => null,
                 'description' => 'خزشگر آگهی استخدام',
                 'created_at' => $now,

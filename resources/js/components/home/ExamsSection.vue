@@ -18,6 +18,34 @@
         </RouterLink>
       </div>
 
+      <div
+        v-if="classifications.length"
+        class="scrollbar-hide mb-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        <button
+          type="button"
+          class="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition"
+          :class="chipClass(null)"
+          @click="selectedClass = null"
+        >
+          <span class="text-sm leading-none" aria-hidden="true">📋</span>
+          همه
+        </button>
+        <button
+          v-for="item in classifications"
+          :key="item.id"
+          type="button"
+          class="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition"
+          :class="chipClass(item.id)"
+          @click="selectedClass = item.id"
+        >
+          <span class="text-sm leading-none" aria-hidden="true">{{
+            classificationIcon(item)
+          }}</span>
+          {{ item.name }}
+        </button>
+      </div>
+
       <div v-if="loading" class="py-10 text-center text-sm text-desk-muted">
         در حال بارگذاری...
       </div>
@@ -70,6 +98,21 @@
         <p class="text-sm text-red-500">{{ error }}</p>
       </div>
       <div
+        v-else-if="hasAnyExams && selectedClass"
+        class="rounded-2xl border border-dashed border-desk-blue/30 bg-surface p-8 text-center"
+      >
+        <p class="text-sm text-desk-muted">
+          آزمونی برای این رسته در صفحه اصلی نیست.
+        </p>
+        <button
+          type="button"
+          class="mt-3 text-xs font-bold text-brand hover:underline"
+          @click="selectedClass = null"
+        >
+          نمایش همه آزمون‌ها
+        </button>
+      </div>
+      <div
         v-else
         class="rounded-2xl border border-dashed border-desk-blue/30 bg-surface p-8 text-center"
       >
@@ -80,21 +123,49 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { classificationIcon } from '../../utils/classificationIcon'
 import HomeRail from './HomeRail.vue'
 
 const props = defineProps({
   exams: { type: Array, default: () => [] },
+  classifications: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
   error: { type: String, default: '' },
 })
 
 const auth = useAuthStore()
 const router = useRouter()
+const selectedClass = ref(null)
 
-const displayExams = computed(() => (props.exams || []).slice(0, 12))
+const hasAnyExams = computed(() => (props.exams || []).length > 0)
+
+const displayExams = computed(() => {
+  const list = (props.exams || []).slice(0, 12)
+  if (!selectedClass.value) return list
+
+  const parent = (props.classifications || []).find(
+    (c) => Number(c.id) === Number(selectedClass.value)
+  )
+  const ids = new Set([
+    Number(selectedClass.value),
+    ...(parent?.child_ids || []).map(Number),
+  ])
+
+  return list.filter((exam) => ids.has(Number(exam.job_classification_id)))
+})
+
+function chipClass(id) {
+  const on =
+    id === null
+      ? !selectedClass.value
+      : Number(selectedClass.value) === Number(id)
+  return on
+    ? 'bg-desk-dark text-white'
+    : 'bg-slate-100 text-desk-text hover:bg-slate-200'
+}
 
 function examPath(exam) {
   const slug = exam.slug || exam.id

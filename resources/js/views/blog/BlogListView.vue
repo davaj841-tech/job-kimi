@@ -36,11 +36,18 @@ import { onMounted, ref } from 'vue'
 import api from '../../api/client'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import PageShell from '../../components/layout/PageShell.vue'
+import { setListPageMeta } from '../../services/meta'
 
 const posts = ref([])
 const loading = ref(true)
 
 onMounted(async () => {
+  setListPageMeta({
+    title: 'بلاگ استخدامی | جاب‌آزمون',
+    description:
+      'مقالات و نکات آمادگی آزمون‌های استخدامی، مصاحبه شغلی و رزومه‌نویسی',
+    path: '/blog',
+  })
   try {
     const { data } = await api.get('/blog-posts')
     posts.value = data.data?.data || data.data || []

@@ -92,6 +92,10 @@ class SiteAutoHealService
             'token mismatch',
             'Operation timed out',
             'SSL',
+            'proc_open',
+            'Process class relies',
+            'NamespaceNotFoundException',
+            'There are no commands defined in the "user" namespace',
         ];
 
         $count = 0;

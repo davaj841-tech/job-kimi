@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\JobSource;
 use App\Services\Aggregation\AggregationScheduleService;
+use App\Services\FeatureFlagService;
 use Database\Seeders\PilotJobSourceSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
@@ -19,7 +20,7 @@ class BootstrapAggregationCommand extends Command
 
     protected $description = 'Seed aggregation sources and default schedule for automatic job collection';
 
-    public function handle(AggregationScheduleService $schedule): int
+    public function handle(AggregationScheduleService $schedule, FeatureFlagService $features): int
     {
         $seedSources = (bool) $this->option('seed-sources');
         $enableSchedule = (bool) $this->option('enable-schedule');
@@ -28,6 +29,10 @@ class BootstrapAggregationCommand extends Command
             $seedSources = JobSource::query()->count() === 0;
             $enableSchedule = ! $schedule->isEnabled() || $schedule->enabledGlobalTimes() === [];
         }
+
+        // Always ensure the gate flag is on — DatabaseSeeder historically left it off.
+        $features->enable('job-crawler');
+        $this->info('Feature flag job-crawler: enabled');
 
         if ($seedSources) {
             $before = JobSource::query()->count();

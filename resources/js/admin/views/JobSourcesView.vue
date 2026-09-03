@@ -14,6 +14,13 @@
         <button class="btn-muted" :disabled="seeding" @click="seedDefaults">
           {{ seeding ? '...' : 'بارگذاری منابع پیش‌فرض' }}
         </button>
+        <button
+          class="btn-dark"
+          :disabled="reactivating"
+          @click="reactivateDefaults"
+        >
+          {{ reactivating ? '...' : 'فعال‌سازی جستجوی خودکار' }}
+        </button>
         <button class="btn-dark" @click="openCreate">افزودن منبع</button>
       </div>
     </div>
@@ -916,6 +923,7 @@ const formError = ref('')
 const testingId = ref(null)
 const testResult = ref(null)
 const seeding = ref(false)
+const reactivating = ref(false)
 const endpoints = ref([])
 
 const columns = [
@@ -1330,12 +1338,39 @@ async function seedDefaults() {
     await refreshOverview()
     await refreshDefaultCatalog()
     alert(
-      `منابع بارگذاری شد: ${res.before} → ${res.after} (قابل خزش: ${res.dispatchable})`
+      `منابع بارگذاری شد: ${res.before} → ${res.after} (قابل خزش: ${res.dispatchable}${res.reactivated != null ? `، فعال‌شده: ${res.reactivated}` : ''})`
     )
   } catch (e) {
     formError.value = e.response?.data?.message || 'خطا در بارگذاری منابع'
   } finally {
     seeding.value = false
+  }
+}
+
+async function reactivateDefaults() {
+  if (
+    !confirm(
+      'همه منابع رسمی فعال، تایید و برای جستجوی خودکار آماده شوند؟ (خطاهای سلامت هم پاک می‌شود)'
+    )
+  ) {
+    return
+  }
+  reactivating.value = true
+  formError.value = ''
+  try {
+    const res = await store.reactivateDefaults()
+    await store.fetchSources(1)
+    quality.value = await aggregation.fetchStats()
+    await refreshOverview()
+    await refreshDefaultCatalog()
+    alert(
+      `فعال شد: ${res.reactivated ?? 0} منبع · قابل جستجو: ${res.dispatchable ?? 0}`
+    )
+  } catch (e) {
+    formError.value =
+      e.response?.data?.message || 'خطا در فعال‌سازی جستجوی خودکار'
+  } finally {
+    reactivating.value = false
   }
 }
 

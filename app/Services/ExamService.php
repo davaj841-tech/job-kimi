@@ -433,6 +433,47 @@ class ExamService
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public function questionFeedback(ExamAttempt $attempt, int $questionId, ?string $selectedAnswer = null): ?array
+    {
+        $answers = $attempt->answers ?? [];
+        $qid = (string) $questionId;
+        $userAnswer = $selectedAnswer;
+        if ($userAnswer === null || $userAnswer === '') {
+            $userAnswer = array_key_exists($qid, $answers)
+                ? $answers[$qid]
+                : ($answers[$questionId] ?? null);
+        }
+
+        if ($userAnswer === null || $userAnswer === '') {
+            return null;
+        }
+
+        $question = Question::query()
+            ->whereKey($questionId)
+            ->where('exam_id', $attempt->exam_id)
+            ->first();
+
+        if (! $question) {
+            return null;
+        }
+
+        $correct = strtolower((string) $question->correct_answer);
+        $given = strtolower((string) $userAnswer);
+
+        return [
+            'question_id' => $question->id,
+            'user_answer' => $userAnswer,
+            'correct_answer' => $question->correct_answer,
+            'correct_answer_text' => self::optionBody($question, $question->correct_answer),
+            'user_answer_text' => self::optionBody($question, $userAnswer),
+            'is_correct' => $correct === $given,
+            'explanation' => $question->explanation,
+        ];
+    }
+
+    /**
      * نام فارسی درس برای کارنامه و تحلیل (اسلاگ انگلیسی هرگز به کاربر نشان داده نشود).
      */
     public static function subjectDisplayName(?string $slug, ?string $label = null): string

@@ -14,8 +14,9 @@
       >
         <p class="mb-2 font-bold text-orange-700">نمونه فایل XLSX</p>
         <p class="mb-3 text-xs text-slate-600">
-          ستون‌ها: عنوان، برچسب سئو، طبقه‌بندی، شرح، استان‌ها، شهر، مهلت
-          ثبت‌نام، تاریخ آزمون، لینک ثبت‌نام، ویژه
+          ستون‌ها: عنوان، برچسب سئو، طبقه‌بندی، شرح، استان‌ها، شهر، مهلت ثبت‌نام
+          (شمسی مثل ۱۴۰۵/۰۶/۱۵)، تاریخ آزمون، لینک ثبت‌نام، ویژه. آگهی‌های
+          واردشده بلافاصله در سایت نمایش داده می‌شوند.
         </p>
         <button
           type="button"
@@ -39,6 +40,9 @@
       <div v-if="result" class="mt-3 rounded-xl bg-slate-50 p-3 text-sm">
         <p>ایجاد: {{ result.created ?? 0 }}</p>
         <p>رد شده: {{ result.skipped ?? 0 }}</p>
+        <p v-if="(result.duplicates ?? 0) > 0" class="text-amber-600">
+          تکراری: {{ result.duplicates }}
+        </p>
         <ul
           v-if="result.errors?.length"
           class="mt-2 max-h-28 overflow-y-auto text-xs text-red-600"

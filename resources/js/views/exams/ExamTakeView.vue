@@ -97,6 +97,20 @@
           <button
             type="button"
             class="exam-tool"
+            :class="showInstantFeedback ? 'exam-tool-on' : ''"
+            :aria-pressed="showInstantFeedback"
+            :title="
+              showInstantFeedback
+                ? 'پس از هر پاسخ، جواب و توضیح نشان داده می‌شود'
+                : 'برای دیدن جواب و توضیح بعد از هر سوال فعال کنید'
+            "
+            @click="toggleInstantFeedback"
+          >
+            {{ showInstantFeedback ? '✓ پاسخ و توضیح' : 'پاسخ و توضیح' }}
+          </button>
+          <button
+            type="button"
+            class="exam-tool"
             @click="session.showAnswerSheet = true"
           >
             پاسخبرگ
@@ -194,11 +208,7 @@
               :key="opt.key"
               type="button"
               class="exam-option"
-              :class="
-                examStore.answers[item.id] === opt.key
-                  ? 'exam-option-selected'
-                  : ''
-              "
+              :class="optionClasses(item, opt.key)"
               @click="selectAnswer(item.id, opt.key)"
             >
               <span
@@ -221,6 +231,36 @@
                 v-html="renderKatexHtml(opt.label)"
               />
             </button>
+          </div>
+
+          <div
+            v-if="showInstantFeedback && feedbackFor(item.id)"
+            class="mt-4 rounded-xl border px-4 py-3 text-sm"
+            :class="
+              feedbackFor(item.id)?.is_correct
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                : 'border-amber-200 bg-amber-50 text-amber-950'
+            "
+          >
+            <p class="font-bold">
+              {{
+                feedbackFor(item.id)?.is_correct
+                  ? '✓ پاسخ شما صحیح است'
+                  : '✗ پاسخ شما نادرست است'
+              }}
+            </p>
+            <p v-if="!feedbackFor(item.id)?.is_correct" class="mt-1">
+              پاسخ صحیح:
+              <span class="font-bold">{{
+                feedbackFor(item.id)?.correct_answer_text ||
+                feedbackFor(item.id)?.correct_answer
+              }}</span>
+            </p>
+            <p
+              v-if="feedbackFor(item.id)?.explanation"
+              class="mt-2 leading-7 text-slate-700"
+              v-html="renderKatexHtml(feedbackFor(item.id)?.explanation || '')"
+            />
           </div>
         </article>
 
@@ -382,6 +422,21 @@ const PERSIAN_LETTERS = ['الف', 'ب', 'ج', 'د']
 const submitting = ref(false)
 const submitError = ref('')
 const syncing = ref(false)
+const showInstantFeedback = ref(
+  typeof localStorage !== 'undefined' &&
+    localStorage.getItem('ja_exam_instant_feedback') === '1'
+)
+const feedbackMap = ref<
+  Record<
+    number,
+    {
+      is_correct: boolean
+      correct_answer: string
+      correct_answer_text?: string
+      explanation?: string | null
+    }
+  >
+>({})
 const now = ref(Date.now())
 let timer: ReturnType<typeof setInterval> | undefined
 let debounceTimer: ReturnType<typeof setTimeout> | undefined
@@ -485,6 +540,62 @@ function jumpTo(id: number) {
 function selectAnswer(questionId: number, key: string) {
   examStore.setAnswer(questionId, key)
   queueAutosave()
+  if (showInstantFeedback.value) {
+    void fetchFeedback(questionId)
+  }
+}
+
+function toggleInstantFeedback() {
+  showInstantFeedback.value = !showInstantFeedback.value
+  try {
+    localStorage.setItem(
+      'ja_exam_instant_feedback',
+      showInstantFeedback.value ? '1' : '0'
+    )
+  } catch {
+    /* ignore */
+  }
+  if (showInstantFeedback.value) {
+    for (const q of session.filteredQuestions) {
+      if (isAnswered(q.id)) void fetchFeedback(q.id)
+    }
+  } else {
+    feedbackMap.value = {}
+  }
+}
+
+function feedbackFor(questionId: number) {
+  return feedbackMap.value[questionId] ?? feedbackMap.value[Number(questionId)]
+}
+
+async function fetchFeedback(questionId: number) {
+  if (!examStore.current || !isAnswered(questionId)) return
+  const { examId, attemptId } = examStore.current
+  const answer = examStore.answers[questionId]
+  try {
+    const { data } = await api.post(`/exams/${examId}/feedback/${attemptId}`, {
+      question_id: questionId,
+      answer,
+    })
+    const payload = data?.data
+    if (payload?.question_id) {
+      feedbackMap.value[payload.question_id] = payload
+    }
+  } catch {
+    /* feedback optional */
+  }
+}
+
+function optionClasses(item: ExamQuestion, key: string) {
+  const selected = examStore.answers[item.id] === key
+  const fb = feedbackFor(item.id)
+  const classes: string[] = []
+  if (selected) classes.push('exam-option-selected')
+  if (showInstantFeedback.value && fb) {
+    if (key === fb.correct_answer) classes.push('exam-option-correct')
+    else if (selected && !fb.is_correct) classes.push('exam-option-wrong')
+  }
+  return classes.join(' ')
 }
 
 function selectOptionByIndex(optIdx: number) {
@@ -809,9 +920,9 @@ async function submit() {
   background: #f8fafc;
 }
 .exam-tool-on {
-  border-color: #f59e0b;
-  background: #fffbeb;
-  color: #92400e;
+  border-color: #ef394e;
+  background: #fef2f2;
+  color: #b91c1c;
 }
 
 .exam-font-btn {
@@ -860,6 +971,14 @@ async function submit() {
   border-color: #ef394e;
   background: #fff5f6;
   box-shadow: 0 0 0 3px rgba(239, 57, 78, 0.08);
+}
+.exam-option-correct {
+  border-color: #10b981 !important;
+  background: #ecfdf5 !important;
+}
+.exam-option-wrong {
+  border-color: #f59e0b !important;
+  background: #fffbeb !important;
 }
 
 .exam-option-letter {

@@ -24,6 +24,14 @@
       </div>
       <div class="mt-5 flex flex-wrap justify-end gap-2">
         <button
+          v-if="tx?.is_refundable"
+          type="button"
+          class="btn-danger"
+          @click="$emit('refund', tx)"
+        >
+          بازگشت وجه
+        </button>
+        <button
           v-if="tx?.status === 'success'"
           type="button"
           class="btn-orange"
@@ -52,7 +60,7 @@ const props = defineProps({
   open: Boolean,
   tx: { type: Object, default: null },
 })
-defineEmits(['close'])
+defineEmits(['close', 'refund'])
 
 const regenLoading = ref(false)
 const regenMsg = ref('')
@@ -131,6 +139,9 @@ function statusLabel(s) {
 </script>
 
 <style scoped>
+.btn-danger {
+  @apply rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white;
+}
 .btn-muted {
   @apply rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-700;
 }

@@ -114,4 +114,39 @@ return [
         'max_chain_depth' => 10,
     ],
 
+    'list_pages' => [
+        'jobs' => [
+            'title' => 'آگهی‌های استخدامی | جاب‌آزمون',
+            'description' => 'جدیدترین آگهی‌های استخدامی دولتی و خصوصی — بانک، نفت، آموزش و پرورش، شهرداری و شرکت‌های بورسی',
+        ],
+        'exams' => [
+            'title' => 'آزمون‌های استخدامی آنلاین | جاب‌آزمون',
+            'description' => 'آزمون‌های تمرینی و سنجش آمادگی استخدام — سوالات چندگزینه‌ای با پاسخنامه و تحلیل عملکرد',
+        ],
+        'blog' => [
+            'title' => 'بلاگ استخدامی | جاب‌آزمون',
+            'description' => 'مقالات و نکات آمادگی آزمون‌های استخدامی، مصاحبه شغلی و رزومه‌نویسی',
+        ],
+        'articles' => [
+            'title' => 'مقالات استخدامی | جاب‌آزمون',
+            'description' => 'راهنمای جامع آزمون‌های استخدامی، منابع مطالعه و استراتژی قبولی',
+        ],
+        'pdfs' => [
+            'title' => 'فروشگاه جزوه و نمونه سوال | جاب‌آزمون',
+            'description' => 'دانلود جزوه، نمونه سوال و منابع آموزشی آزمون‌های استخدامی',
+        ],
+    ],
+
+    'automation' => [
+        'auto_optimize_on_create' => env('SEO_AUTO_OPTIMIZE', true),
+        'auto_optimize_min_score' => 75,
+        'sitemap_invalidate_on_change' => true,
+        'ping_search_engines' => env('SEO_PING_ENGINES', true),
+        'ping_debounce_seconds' => 300,
+        'ping_endpoints' => [
+            'google' => 'https://www.google.com/ping?sitemap={url}',
+            'bing' => 'https://www.bing.com/ping?sitemap={url}',
+        ],
+    ],
+
 ];

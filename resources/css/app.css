@@ -68,7 +68,7 @@
         --theme-accent: #f97316;
         --theme-page: #f8fafc;
         --font-site: 'Estedad Variable', Estedad, Tahoma, sans-serif;
-        --font-size-site: 16px;
+        --font-size-site: 17px;
         color-scheme: light;
     }
 
@@ -88,7 +88,10 @@
     html {
         direction: rtl;
         -webkit-tap-highlight-color: transparent;
-        font-size: 14px;
+        /* Chrome often renders Persian UI smaller than Firefox — keep a solid base. */
+        font-size: 17px;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
         overflow-x: clip;
         max-width: 100%;
         transition: background-color 0.3s ease, color 0.3s ease;
@@ -97,6 +100,12 @@
     @screen md {
         html {
             font-size: 16px;
+        }
+    }
+
+    @media screen and (-webkit-min-device-pixel-ratio: 0) and (max-width: 1023px) {
+        html {
+            font-size: 17px;
         }
     }
 
@@ -110,6 +119,7 @@
         font-feature-settings: 'ss01', 'kern';
         letter-spacing: -0.01em;
         line-height: 1.75;
+        font-size: var(--font-size-site, 1rem);
     }
 
     h1, h2, h3, h4, .font-display {
@@ -361,6 +371,39 @@ html.dark .chip-active {
 
 html.dark .pdp-trigger {
     @apply border-slate-500 bg-slate-800 text-slate-100;
+}
+
+html.dark #admin-app {
+    color-scheme: dark;
+}
+
+html.dark #admin-app .text-slate-800,
+html.dark #admin-app .text-slate-700,
+html.dark #admin-app .text-desk-dark {
+    color: rgb(226 232 240);
+}
+
+html.dark #admin-app .text-slate-600,
+html.dark #admin-app .text-slate-500 {
+    color: rgb(148 163 184);
+}
+
+html.dark #admin-app .bg-slate-50,
+html.dark #admin-app .bg-slate-100 {
+    background-color: rgb(15 23 42);
+}
+
+html.dark #admin-app .border-slate-200,
+html.dark #admin-app .border-slate-100 {
+    border-color: rgb(51 65 85);
+}
+
+html.dark #admin-app input:not([type='checkbox']):not([type='radio']),
+html.dark #admin-app select,
+html.dark #admin-app textarea {
+    background-color: rgb(15 23 42);
+    color: rgb(241 245 249);
+    border-color: rgb(51 65 85);
 }
 
 #app {

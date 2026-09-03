@@ -6,7 +6,12 @@
       :href="item.href"
       target="_blank"
       rel="noopener noreferrer"
-      class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/10 transition hover:bg-white/20"
+      class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl transition"
+      :class="
+        props.tone === 'light'
+          ? 'bg-white shadow-sm ring-1 ring-slate-200 hover:bg-slate-50'
+          : 'bg-white/10 hover:bg-white/20'
+      "
       :title="item.label"
       :aria-label="item.label"
     >
@@ -30,8 +35,15 @@
 import { computed, onMounted } from 'vue'
 import { useSiteTheme } from '../composables/useSiteTheme'
 
-defineProps({
+const props = defineProps({
   wrapClass: { type: String, default: '' },
+  tone: {
+    type: String,
+    default: 'dark',
+    validator: (v) => ['dark', 'light'].includes(v),
+  },
+  /** فقط شبکه‌های اجتماعی (بدون اپ‌استور) */
+  socialOnly: { type: Boolean, default: false },
 })
 
 const {
@@ -78,6 +90,11 @@ const items = computed(() =>
       href: androidDirectUrl.value,
       icon: apk,
     },
-  ].filter((x) => !!x.href)
+  ]
+    .filter((x) => !!x.href)
+    .filter(
+      (x) =>
+        !props.socialOnly || ['ig', 'tg', 'wa', 'ru', 'bale'].includes(x.key)
+    )
 )
 </script>

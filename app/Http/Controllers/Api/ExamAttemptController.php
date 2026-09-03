@@ -134,6 +134,51 @@ class ExamAttemptController extends BaseController
         return $this->successResponse(new ExamAttemptResource($attempt));
     }
 
+    public function feedback(Request $request, int $id, int $attemptId): JsonResponse
+    {
+        $user = $request->user();
+        $attempt = ExamAttempt::query()
+            ->whereKey($attemptId)
+            ->where('exam_id', $id)
+            ->where('user_id', $user->id)
+            ->where('status', 'in_progress')
+            ->first();
+
+        if (! $attempt) {
+            return $this->errorResponse('تلاش آزمون یافت نشد.', 404);
+        }
+
+        if ($this->examService->checkExpiry($attempt)) {
+            return $this->errorResponse('زمان آزمون به پایان رسیده است.', 422);
+        }
+
+        $data = $request->validate([
+            'question_id' => ['required', 'integer', 'min:1'],
+            'answer' => ['nullable', 'string', 'max:10'],
+        ]);
+
+        $questionId = (int) $data['question_id'];
+        $selected = isset($data['answer']) ? strtolower(trim((string) $data['answer'])) : null;
+        if ($selected === '') {
+            $selected = null;
+        }
+
+        // Persist the just-selected answer so feedback works before autosave debounce.
+        if ($selected !== null) {
+            $answers = $attempt->answers ?? [];
+            $answers[(string) $questionId] = $selected;
+            $attempt->answers = $answers;
+            $attempt->save();
+        }
+
+        $payload = $this->examService->questionFeedback($attempt, $questionId, $selected);
+        if ($payload === null) {
+            return $this->errorResponse('پس از انتخاب پاسخ، توضیح در دسترس است.', 422);
+        }
+
+        return $this->successResponse($payload);
+    }
+
     public function retryWrong(Request $request, int $id, int $attemptId): JsonResponse
     {
         $user = $request->user();

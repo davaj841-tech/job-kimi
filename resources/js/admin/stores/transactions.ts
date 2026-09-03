@@ -75,5 +75,14 @@ export const useTransactionsStore = defineStore('adminTransactions', {
       this.selected = data.data || null
       return this.selected
     },
+
+    async refund(id: number | string, reason: string) {
+      const { data } = await adminApi.post(`/admin/transactions/${id}/refund`, {
+        reason,
+      })
+      await this.fetchTransactions((this.meta.current_page as number) || 1)
+      await this.fetchStats()
+      return data.data
+    },
   },
 })

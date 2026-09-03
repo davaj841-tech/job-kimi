@@ -25,17 +25,21 @@
           placeholder="جستجو عنوان آزمون"
           @keyup.enter="apply"
         />
-        <select v-model="store.filters.job_classification_id" class="field">
-          <option value="">همه طبقه‌بندی‌ها</option>
-          <option v-for="c in store.classifications" :key="c.id" :value="c.id">
-            {{ c.name }}
-          </option>
-        </select>
         <select v-model="store.filters.status" class="field">
           <option value="">همه وضعیت‌ها</option>
           <option value="published">منتشر شده</option>
           <option value="draft">پیش‌نویس</option>
           <option value="archived">بایگانی</option>
+        </select>
+        <select v-model="classificationFilter" class="field">
+          <option value="">همه طبقه‌بندی‌ها</option>
+          <option
+            v-for="item in store.classifications"
+            :key="item.id"
+            :value="item.id"
+          >
+            {{ item.name }}
+          </option>
         </select>
         <select v-model="store.filters.is_free" class="field">
           <option value="">همه قیمت‌ها</option>
@@ -221,6 +225,17 @@ const pages = computed(() => {
   )
     out.push(i)
   return out
+})
+
+const classificationFilter = computed({
+  get() {
+    const ids = store.filters.job_classification_ids
+    return ids.length ? String(ids[0]) : ''
+  },
+  set(val) {
+    store.filters.job_classification_ids =
+      val === '' || val === null ? [] : [Number(val)]
+  },
 })
 
 function fa(n) {

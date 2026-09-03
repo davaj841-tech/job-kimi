@@ -15,6 +15,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\AnalyticsService;
+use App\Services\Aggregation\AggregationHealthService;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\JsonResponse;
@@ -265,6 +266,8 @@ class AdminDashboardController extends BaseController
         );
         $topPages = $analytics->topPages(10, now()->subDays(29), now());
 
+        $aggregationHealth = app(AggregationHealthService::class)->snapshot();
+
         return $this->successResponse([
             'counts' => $counts,
             'charts' => $charts,
@@ -273,6 +276,7 @@ class AdminDashboardController extends BaseController
             'top_users' => $topUsers,
             'top_exams' => $topExams,
             'top_pages' => $topPages,
+            'aggregation_health' => $aggregationHealth,
         ]);
     }
 

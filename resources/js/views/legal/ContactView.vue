@@ -70,6 +70,7 @@
         <AuthCaptchaField
           :mode="captchaMode"
           :site-key="turnstileSiteKey"
+          action="contact"
           @update="onCaptcha"
         />
         <p v-if="error" class="text-sm text-red-500">{{ error }}</p>

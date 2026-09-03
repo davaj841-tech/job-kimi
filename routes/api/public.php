@@ -70,11 +70,12 @@ Route::get('/pdf-products/{id}', [PDFProductController::class, 'show'])->whereNu
 Route::get('/exams', [ExamController::class, 'index'])->middleware(['throttle:exams', 'cache.response:300']);
 Route::get('/exams/{slug}', [ExamController::class, 'show'])->middleware('throttle:exams');
 
-Route::post('/contact', [ContactController::class, 'store'])->middleware(['auth.captcha', 'throttle:contact']);
+Route::post('/contact', [ContactController::class, 'store'])->middleware(['auth.captcha:contact', 'throttle:contact']);
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->middleware('throttle:newsletter');
-Route::get('/home-feed', HomeFeedController::class)
-    ->middleware('cache.response:120');
-Route::get('/settings/public', [PublicSettingsController::class, 'index'])->middleware('cache.response:300');
+Route::get('/home-feed', HomeFeedController::class);
+// No cache.response: theme/font changes must appear on the public site immediately.
+// Controller still uses a short Laravel cache that Setting::set / ThemeBootstrap::forget clear.
+Route::get('/settings/public', [PublicSettingsController::class, 'index']);
 Route::get('/banners', [BannerController::class, 'index'])->middleware('cache.response:300');
 Route::get('/pages/{slug}', [PageController::class, 'show']);
 Route::get('/leaderboard', [LeaderboardController::class, 'index']);

@@ -75,6 +75,7 @@
             <input
               v-model="loginForm.login"
               type="text"
+              name="username"
               class="input-field text-left"
               dir="ltr"
               lang="en"
@@ -95,6 +96,7 @@
             >
             <PasswordInput
               v-model="loginForm.password"
+              name="password"
               input-class="input-field"
               autocomplete="current-password"
               required
@@ -104,6 +106,7 @@
           <AuthCaptchaField
             :mode="captchaMode"
             :site-key="turnstileSiteKey"
+            action="login"
             @update="onCaptcha"
           />
           <button
@@ -233,6 +236,7 @@
           <AuthCaptchaField
             :mode="captchaMode"
             :site-key="turnstileSiteKey"
+            action="register"
             @update="onCaptcha"
           />
           <button
@@ -263,6 +267,7 @@
             <AuthCaptchaField
               :mode="captchaMode"
               :site-key="turnstileSiteKey"
+              action="otp-send"
               @update="onCaptcha"
             />
             <button
@@ -291,6 +296,7 @@
             <AuthCaptchaField
               :mode="captchaMode"
               :site-key="turnstileSiteKey"
+              action="otp-verify"
               @update="onCaptcha"
             />
             <button
@@ -315,10 +321,6 @@
         <p v-if="error" class="mt-3 text-center text-xs font-medium text-brand">
           {{ error }}
         </p>
-
-        <div class="mt-5 flex justify-center pb-4">
-          <TrustBadges />
-        </div>
       </div>
     </div>
   </div>
@@ -332,7 +334,6 @@ import AuthCaptchaField from '../../components/auth/AuthCaptchaField.vue'
 import PasswordInput from '../../components/PasswordInput.vue'
 import PasswordRulesHint from '../../components/auth/PasswordRulesHint.vue'
 import SiteBrandLogo from '../../components/SiteBrandLogo.vue'
-import TrustBadges from '../../components/TrustBadges.vue'
 import { useAuthStore } from '../../stores/auth'
 import { normalizeIranMobile } from '../../utils/iranMobile'
 

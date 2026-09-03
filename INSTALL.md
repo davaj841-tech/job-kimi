@@ -40,7 +40,7 @@ dist/JobAzmoon-Installer.zip
 یکی از این دو:
 
 **الف)** محتویات `dist/JobAzmoon-Installer/` را داخل `public_html` بریزید  
-**ب)** `dist/JobAzmoon-Installer.zip` را آپلود و Extract کنید، سپس محتویات پوشه را به ریشه `public_html` منتقل کنید
+**ب)** `dist/JobAzmoon-Installer.zip` را مستقیم داخل `public_html` Extract کنید (فایل‌ها در **ریشه** ZIP هستند، نه داخل پوشه تو در تو)
 
 ساختار نهایی روی هاست **قبل از نصب** باید این باشد:
 
@@ -53,7 +53,7 @@ public_html/
     └── jobazmoon-core.zip
 ```
 
-پوشه `JobAzmoon-Installer` را به‌صورت تو در تو داخل `public_html` رها نکنید؛ محتویاتش را در ریشه `public_html` قرار دهید.
+اگر بعد از Extract مسیر `public_html/JobAzmoon-Installer/install.php` دیدید، یعنی ZIP قدیمی بوده — فایل‌ها را یک سطح بالا به `public_html` منتقل کنید تا `public_html/install.php` شود.
 
 ---
 

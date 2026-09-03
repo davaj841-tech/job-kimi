@@ -1873,7 +1873,7 @@ PHP;
 </IfModule>
 
 # Deny sensitive files if ever placed under document root
-<FilesMatch "(^\.env|^\.env\.|composer\.(json|lock)|package(-lock)?\.json|artisan)$">
+<FilesMatch "(^\.env|^\.env\.|composer\.(json|lock)|package(-lock)?\.json|yarn\.lock|artisan)$">
     Require all denied
 </FilesMatch>
 
@@ -1957,6 +1957,14 @@ HT;
         if (! file_exists($link)) {
             if (@symlink($target, $link)) {
                 return is_link($link) || is_dir($link) ? 'pass' : 'warn';
+            }
+
+            try {
+                $this->copyDir($target, $link);
+                if (is_dir($link)) {
+                    return 'warn';
+                }
+            } catch (Throwable) {
             }
 
             return 'fail';

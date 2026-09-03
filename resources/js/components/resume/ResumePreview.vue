@@ -256,7 +256,9 @@ const props = defineProps({
 const theme = computed(() => resumeThemeById(props.templateId))
 const layout = computed(() => theme.value.layout || 'classic')
 const isBanner = computed(() =>
-  ['banner', 'magazine', 'bold'].includes(layout.value)
+  ['banner', 'magazine', 'bold', 'coral', 'aurora', 'dual'].includes(
+    layout.value
+  )
 )
 const headerBg = computed(() => {
   const h = theme.value.header
@@ -699,5 +701,56 @@ function expRange(exp) {
 }
 .layout-sidebar .cv-dots i.on {
   background: #fff;
+}
+.layout-coral .cv-banner {
+  background: linear-gradient(135deg, #fb7185, #e11d48);
+}
+.layout-coral .cv-sec h2 {
+  color: #e11d48;
+  border-bottom-color: #fda4af;
+}
+.layout-aurora .cv-banner {
+  background: linear-gradient(120deg, #5b21b6, #7c3aed 45%, #a855f7);
+}
+.layout-aurora .cv-item {
+  border-right: 3px solid #a78bfa;
+  background: #f5f3ff;
+  border-radius: 0 10px 10px 0;
+  padding: 8px 10px;
+}
+.layout-paper {
+  background: #fafaf9;
+}
+.layout-paper .cv-bar {
+  height: 2px;
+  background: #a8a29e;
+}
+.layout-paper .cv-head h1 {
+  color: #292524;
+  font-weight: 600;
+}
+.layout-paper .cv-sec h2 {
+  color: #57534e;
+  border-bottom: 1px dashed #d6d3d1;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.layout-geo .cv-banner {
+  clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%);
+  padding-bottom: 36px;
+}
+.layout-geo .cv-item {
+  border-right: 0;
+  border: 1px solid #a5f3fc;
+  border-radius: 12px;
+  padding: 10px;
+  background: #ecfeff;
+}
+.layout-dual .cv-banner {
+  background: linear-gradient(90deg, #0f2744 55%, #9f1239 55%);
+}
+.layout-dual .cv-sec h2 {
+  border-bottom: 2px solid #9f1239;
+  color: #0f2744;
 }
 </style>

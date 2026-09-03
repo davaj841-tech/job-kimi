@@ -39,7 +39,7 @@ class PaymentGatewayManager
             return $fromDb;
         }
 
-        return (string) Setting::get('payment_gateway', 'zarinpal');
+        return (string) Setting::get('payment_gateway', config('payment.default_gateway', 'zarinpal'));
     }
 
     /**

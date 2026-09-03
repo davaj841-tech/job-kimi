@@ -12,7 +12,9 @@ use App\Services\JobPostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -27,7 +29,7 @@ class JobPostAdminController extends BaseController
     public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
-            'status', 'search', 'per_page', 'province', 'city', 'job_classification_id', 'deadline_from', 'deadline_to',
+            'status', 'search', 'per_page', 'province', 'city', 'job_classification_id', 'job_classification_ids', 'deadline_from', 'deadline_to',
         ]);
         $posts = $this->jobPostRepository->getAdminList($filters);
 
@@ -133,11 +135,23 @@ class JobPostAdminController extends BaseController
         ]);
 
         $import = new JobPostsImport($request->user()->id);
-        Excel::import($import, $request->file('file'));
+
+        // Keep Persian headers as-is; default slug turns «عنوان» into «aanoan».
+        HeadingRowFormatter::default(HeadingRowFormatter::FORMATTER_NONE);
+        try {
+            Excel::import($import, $request->file('file'));
+        } finally {
+            HeadingRowFormatter::reset();
+        }
+
+        if ($import->created > 0) {
+            \App\Services\JobPostsCache::forget();
+        }
 
         return $this->successResponse([
             'created' => $import->created,
             'skipped' => $import->skipped,
+            'duplicates' => $import->duplicates,
             'errors' => $import->errors,
         ], 'ورود اکسل انجام شد.');
     }
@@ -149,16 +163,16 @@ class JobPostAdminController extends BaseController
         $sheet->setTitle('آگهی‌ها');
 
         $headers = [
-            'title',
-            'seo_tag',
-            'classification',
-            'description',
-            'provinces',
-            'city',
-            'registration_deadline',
-            'exam_date',
-            'registration_link',
-            'is_featured',
+            'عنوان',
+            'برچسب_سئو',
+            'طبقه_بندی',
+            'شرح',
+            'استان‌ها',
+            'شهر',
+            'مهلت_ثبت_نام',
+            'تاریخ_آزمون',
+            'لینک_ثبت_نام',
+            'ویژه',
         ];
 
         foreach ($headers as $i => $header) {
@@ -173,8 +187,8 @@ class JobPostAdminController extends BaseController
                 'شرح کامل آگهی استخدام',
                 'تهران،اصفهان',
                 'تهران',
-                '2026-09-01',
-                '2026-10-15',
+                '1405/06/15',
+                '1405/07/20',
                 'https://example.com/register',
                 '1',
             ],
@@ -185,7 +199,7 @@ class JobPostAdminController extends BaseController
                 'توضیحات نمونه',
                 'فارس',
                 '',
-                '2026-08-20',
+                '1405/05/30',
                 '',
                 '',
                 '0',

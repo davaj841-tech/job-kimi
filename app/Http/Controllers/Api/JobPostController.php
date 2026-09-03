@@ -27,6 +27,7 @@ class JobPostController extends BaseController
             'province',
             'city',
             'job_classification_id',
+            'job_classification_ids',
             'is_featured',
             'search',
             'per_page',

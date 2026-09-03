@@ -99,6 +99,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Admin health alerts (no extra tables)
+    |--------------------------------------------------------------------------
+    */
+    'alerts' => [
+        'stale_crawl_hours' => (int) env('AGGREGATION_ALERT_STALE_HOURS', 6),
+        'pending_jobs_threshold' => (int) env('AGGREGATION_ALERT_PENDING_THRESHOLD', 50),
+        'notify_cooldown_minutes' => (int) env('AGGREGATION_ALERT_NOTIFY_COOLDOWN', 360),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Official employment sources (Phases 5–8)
     |--------------------------------------------------------------------------
     |

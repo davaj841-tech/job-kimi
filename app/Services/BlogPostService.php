@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BlogPost;
 use App\Repositories\BlogPostRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class BlogPostService
@@ -71,10 +72,13 @@ class BlogPostService
             $data['slug'] = $this->generateSlug($data['title']);
         }
 
-        $data['status'] = $data['status'] ?? 'draft';
+        $data['status'] = $data['status'] ?? 'published';
         $data = $this->normalizeCatalog($data);
 
-        return BlogPost::query()->create($data);
+        $post = BlogPost::query()->create($data);
+        $this->forgetHomeFeedCache();
+
+        return $post;
     }
 
     /**
@@ -84,6 +88,7 @@ class BlogPostService
     {
         $data = $this->normalizeCatalog($data);
         $post->update($data);
+        $this->forgetHomeFeedCache();
 
         return $post->fresh(['creator']);
     }
@@ -130,6 +135,7 @@ class BlogPostService
         }
 
         $post->update(['status' => 'published']);
+        $this->forgetHomeFeedCache();
 
         return $post->fresh(['creator']);
     }
@@ -143,7 +149,13 @@ class BlogPostService
         }
 
         $post->update(['status' => 'draft']);
+        $this->forgetHomeFeedCache();
 
         return $post->fresh(['creator']);
+    }
+
+    public function forgetHomeFeedCache(): void
+    {
+        HomeFeedCache::forget();
     }
 }

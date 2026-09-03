@@ -42,11 +42,24 @@ class WalletController extends BaseController
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $transactions = $this->transactionRepository->recentForUser($user, 20);
+        $filters = $request->validate([
+            'type' => ['nullable', 'string', 'in:deposit,purchase,withdrawal,refund,bonus,adjustment'],
+            'category' => ['nullable', 'string', 'in:deposit,purchase,withdrawal,refund,bonus,adjustment'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:5', 'max:50'],
+        ]);
+
+        $perPage = (int) ($filters['per_page'] ?? 15);
+        $paginated = $this->transactionRepository->getByUser($user, [
+            'type' => $filters['type'] ?? $filters['category'] ?? null,
+            'per_page' => $perPage,
+        ]);
 
         return $this->successResponse([
             'balance' => $this->manageWallet->balance($user),
-            'transactions' => $transactions->map(fn (Transaction $tx) => [
+            'wallet_status' => $user->walletStatus(),
+            'wallet_frozen' => $user->isWalletFrozen(),
+            'transactions' => $paginated->map(fn (Transaction $tx) => [
                 'id' => $tx->id,
                 'type' => $tx->type,
                 'amount' => (int) $tx->amount,
@@ -55,6 +68,12 @@ class WalletController extends BaseController
                 'invoice_number' => $tx->invoice_number,
                 'created_at' => $tx->created_at?->toIso8601String(),
             ])->values(),
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+            ],
         ]);
     }
 
@@ -89,6 +108,13 @@ class WalletController extends BaseController
         $amount = (int) $data['amount'];
         $gateway = $this->paymentService->resolveGatewayName($data['gateway'] ?? null);
         $user = $request->user();
+
+        if ($user->isWalletFrozen()) {
+            return $this->errorResponse('کیف پول شما مسدود است. لطفاً با پشتیبانی تماس بگیرید.', 422, [
+                'code' => 'wallet_frozen',
+            ]);
+        }
+
         $idempotencyKey = $this->idempotencyService->generateKey();
 
         $transaction = Transaction::query()->create([
@@ -167,6 +193,9 @@ class WalletController extends BaseController
             fn (Transaction $tx) => $tx->type === 'deposit',
             function (Transaction $locked) {
                 $user = User::query()->findOrFail($locked->user_id);
+                if ($user->isWalletFrozen()) {
+                    throw new \App\Exceptions\WalletFrozenException($user);
+                }
                 $this->walletService->deposit($user, (int) $locked->amount, $locked);
             }
         );

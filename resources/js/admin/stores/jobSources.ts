@@ -163,6 +163,12 @@ export const useJobSourcesStore = defineStore('adminJobSources', {
       const { data } = await adminApi.post('/admin/job-sources/seed-defaults')
       return data.data
     },
+    async reactivateDefaults() {
+      const { data } = await adminApi.post(
+        '/admin/job-sources/reactivate-defaults'
+      )
+      return data.data
+    },
     async fetchCrawlOverview() {
       const { data } = await adminApi.get('/admin/job-sources/crawl-overview')
       return data.data

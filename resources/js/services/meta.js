@@ -288,6 +288,49 @@ export function setArticleMeta(article) {
   );
 }
 
+export function setListPageMeta({ title, description, path, breadcrumbs } = {}) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const url = path ? `${origin}${path.startsWith('/') ? path : `/${path}`}` : undefined;
+  setPageMeta({
+    title,
+    description,
+    url,
+    type: 'website',
+    breadcrumbs:
+      breadcrumbs ??
+      (title
+        ? [{ name: 'خانه', url: `${origin}/` }, { name: title, url }]
+        : undefined),
+  });
+}
+
+export function setPdfMeta(pdf) {
+  if (!pdf) return;
+
+  const breadcrumbs = [
+    { name: 'خانه', url: typeof window !== 'undefined' ? `${window.location.origin}/` : '/' },
+    { name: 'فروشگاه', url: typeof window !== 'undefined' ? `${window.location.origin}/pdfs` : '/pdfs' },
+    {
+      name: pdf.title,
+      url: pdf.seo?.meta?.canonical_url || (typeof window !== 'undefined' ? window.location.href : undefined),
+    },
+  ];
+
+  if (pdf.seo?.meta) {
+    applySeoPayload(pdf.seo, { breadcrumbs });
+    return;
+  }
+
+  setPageMeta({
+    title: `${pdf.title} | جاب‌آزمون`,
+    description: (pdf.description || '').replace(/<[^>]+>/g, '').slice(0, 160),
+    image: pdf.cover || pdf.thumbnail_url,
+    url: typeof window !== 'undefined' ? window.location.href : undefined,
+    type: 'product',
+    breadcrumbs,
+  });
+}
+
 export default {
   applySeoPayload,
   setPageMeta,
@@ -295,4 +338,6 @@ export default {
   setBlogPostMeta,
   setExamMeta,
   setArticleMeta,
+  setListPageMeta,
+  setPdfMeta,
 };

@@ -177,6 +177,12 @@ const routes = [
         meta: { title: 'حریم خصوصی' },
     },
     {
+        path: '/refund',
+        name: 'refund',
+        component: () => import('../views/legal/RefundView.vue'),
+        meta: { title: 'لغو و استرداد وجه' },
+    },
+    {
         path: '/about',
         name: 'about',
         component: () => import('../views/legal/AboutView.vue'),

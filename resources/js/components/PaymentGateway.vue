@@ -51,6 +51,7 @@ const props = withDefaults(
     authority?: string | null
     callbackStatus?: string | null
     verifyEndpoint?: string
+    idempotencyKey?: string | null
     autoVerify?: boolean
   }>(),
   {
@@ -60,6 +61,7 @@ const props = withDefaults(
     authority: null,
     callbackStatus: null,
     verifyEndpoint: '/wallet/verify',
+    idempotencyKey: null,
     autoVerify: true,
   }
 )
@@ -100,12 +102,15 @@ async function handleCallback(
 ): Promise<void> {
   loading.value = true
   try {
-    const { data } = await api.post(props.verifyEndpoint, null, {
-      params: {
-        Authority: authority,
-        Status: callbackStatus || '',
-      },
-    })
+    const params: Record<string, string> = {
+      Authority: authority,
+      Status: callbackStatus || '',
+    }
+    if (props.idempotencyKey) {
+      params.ik = props.idempotencyKey
+    }
+
+    const { data } = await api.post(props.verifyEndpoint, null, { params })
 
     const ok = Boolean(data?.success)
     if (ok) {

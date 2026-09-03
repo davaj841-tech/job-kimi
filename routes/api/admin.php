@@ -65,11 +65,15 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'role:su
     Route::put('/exams/{id}', [AdminExamController::class, 'update'])->whereNumber('id');
     Route::delete('/exams/{id}', [AdminExamController::class, 'destroy'])->whereNumber('id');
 
+    Route::get('/questions/duplicates', [QuestionController::class, 'duplicates']);
+    Route::post('/questions/copy-to-exam', [QuestionController::class, 'copyToExam']);
     Route::get('/questions', [QuestionController::class, 'index']);
     Route::post('/questions', [QuestionController::class, 'store']);
     Route::get('/questions/export', [QuestionController::class, 'export']);
     Route::get('/questions/import-sample', [QuestionController::class, 'importSample']);
     Route::post('/questions/import', [QuestionController::class, 'import']);
+    Route::get('/questions/import-exam-sample', [QuestionController::class, 'importExamSample']);
+    Route::post('/questions/import-exam', [QuestionController::class, 'importExam']);
     Route::get('/exams/{id}/preview', [AdminExamController::class, 'preview'])->whereNumber('id');
     Route::post('/exams/{id}/practice/start', [AdminExamController::class, 'practiceStart'])->whereNumber('id');
     Route::post('/exams/{id}/practice/submit/{attemptId}', [AdminExamController::class, 'practiceSubmit'])->whereNumber('id')->whereNumber('attemptId');
@@ -90,6 +94,7 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'role:su
     Route::get('/job-sources/default-catalog', [JobSourceAdminController::class, 'defaultCatalog']);
     Route::post('/job-sources/bulk-disable-defaults', [JobSourceAdminController::class, 'bulkDisableDefaults']);
     Route::post('/job-sources/seed-defaults', [JobSourceAdminController::class, 'seedDefaults']);
+    Route::post('/job-sources/reactivate-defaults', [JobSourceAdminController::class, 'reactivateDefaults']);
     Route::post('/job-sources/{id}/approve', [JobSourceAdminController::class, 'approve'])->whereNumber('id');
     Route::post('/job-sources/{id}/unapprove', [JobSourceAdminController::class, 'unapprove'])->whereNumber('id');
     Route::post('/job-sources/{id}/enable', [JobSourceAdminController::class, 'enable'])->whereNumber('id');
@@ -112,6 +117,8 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'role:su
     Route::delete('/crawler-runs/{id}', [CrawlerRunAdminController::class, 'destroy'])->whereNumber('id');
 
     Route::get('/aggregation/quality-stats', [AggregationQualityController::class, 'stats']);
+    Route::get('/aggregation/health', [AggregationQualityController::class, 'health']);
+    Route::post('/aggregation/health/notify', [AggregationQualityController::class, 'notifyAlerts']);
     Route::get('/aggregation/pending-jobs', [AggregationQualityController::class, 'pendingJobs']);
     Route::get('/aggregation/jobs/{id}', [AggregationQualityController::class, 'showJob'])->whereNumber('id');
     Route::put('/aggregation/jobs/{id}', [AggregationQualityController::class, 'updateJob'])->whereNumber('id');
@@ -149,6 +156,7 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'role:su
     Route::get('/transactions/stats', [TransactionAdminController::class, 'stats']);
     Route::get('/transactions', [TransactionAdminController::class, 'index']);
     Route::get('/transactions/{id}', [TransactionAdminController::class, 'show'])->whereNumber('id');
+    Route::post('/transactions/{id}/refund', [TransactionAdminController::class, 'refund'])->whereNumber('id');
     Route::post('/transactions/{id}/regenerate-invoice', [InvoiceController::class, 'regenerate'])->whereNumber('id');
 
     Route::get('/coupons', [CouponAdminController::class, 'index']);
@@ -170,6 +178,9 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'role:su
     Route::get('/wallets/{id}/history', [WalletAdminController::class, 'history'])->whereNumber('id');
     Route::post('/wallets/{id}/charge', [WalletAdminController::class, 'charge'])->whereNumber('id');
     Route::post('/wallets/{id}/deduct', [WalletAdminController::class, 'deduct'])->whereNumber('id');
+    Route::post('/wallets/{id}/freeze', [WalletAdminController::class, 'freeze'])->whereNumber('id');
+    Route::post('/wallets/{id}/unfreeze', [WalletAdminController::class, 'unfreeze'])->whereNumber('id');
+    Route::get('/wallets/{id}/ledger', [WalletAdminController::class, 'ledger'])->whereNumber('id');
 
     Route::get('/settings', [SettingsAdminController::class, 'index']);
     Route::put('/settings', [SettingsAdminController::class, 'update']);
