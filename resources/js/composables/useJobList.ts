@@ -41,13 +41,16 @@ export function useJobList() {
 
   const filters = reactive({
     search: '',
-    job_classification_id: '',
+    job_classification_ids: [] as (number | string)[],
     province: '',
     employment_type: '',
     sort: 'newest',
   })
 
   const classifications = ref<Array<{ id: number | string; name: string }>>([])
+  const homeClassifications = ref<
+    Array<Record<string, unknown> & { id: number | string; name: string }>
+  >([])
   const provinces = ref<string[]>([])
   const bookmarkedIds = ref<number[]>(readBookmarks())
 
@@ -65,6 +68,8 @@ export function useJobList() {
       const payload = data?.data ?? data ?? {}
       classifications.value =
         payload.classifications || payload.home_classifications || []
+      homeClassifications.value =
+        payload.home_classifications || payload.classifications || []
       provinces.value = payload.provinces || []
     } catch {
       classifications.value = []
@@ -96,8 +101,10 @@ export function useJobList() {
         sort: filters.sort || 'newest',
       }
       if (filters.search) params.search = filters.search
-      if (filters.job_classification_id) {
-        params.job_classification_id = filters.job_classification_id
+      if (filters.job_classification_ids.length) {
+        params.job_classification_ids = filters.job_classification_ids
+          .map(String)
+          .join(',')
       }
       if (filters.province) params.province = filters.province
       if (filters.employment_type)
@@ -148,14 +155,19 @@ export function useJobList() {
   const debouncedSearch = useDebounceFn(() => fetchJobs(true), 300)
 
   function toggleCategory(id: number | string) {
-    const next = String(id)
-    filters.job_classification_id =
-      String(filters.job_classification_id) === next ? '' : next
+    const n = Number(id)
+    const idx = filters.job_classification_ids.findIndex((x) => Number(x) === n)
+    if (idx >= 0) filters.job_classification_ids.splice(idx, 1)
+    else filters.job_classification_ids.push(id)
+  }
+
+  function isCategorySelected(id: number | string) {
+    return filters.job_classification_ids.some((x) => Number(x) === Number(id))
   }
 
   function resetFilters() {
     filters.search = ''
-    filters.job_classification_id = ''
+    filters.job_classification_ids = []
     filters.province = ''
     filters.employment_type = ''
     filters.sort = 'newest'
@@ -174,7 +186,7 @@ export function useJobList() {
 
   watch(
     () => [
-      filters.job_classification_id,
+      filters.job_classification_ids.join(','),
       filters.province,
       filters.employment_type,
       filters.sort,
@@ -205,11 +217,13 @@ export function useJobList() {
     filters,
     pagination,
     classifications,
+    homeClassifications,
     provinces,
     fetchJobs,
     loadMore,
     debouncedSearch,
     toggleCategory,
+    isCategorySelected,
     resetFilters,
     toggleBookmark,
     totalLabel: computed(() => pagination.total),

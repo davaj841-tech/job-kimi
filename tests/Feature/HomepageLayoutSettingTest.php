@@ -5,12 +5,37 @@ namespace Tests\Feature;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class HomepageLayoutSettingTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_saving_theme_clears_public_settings_and_response_cache(): void
+    {
+        $this->getJson('/api/v1/settings/public')
+            ->assertOk()
+            ->assertJsonPath('data.homepage_layout', 'atlas');
+
+        $stale = [
+            'success' => true,
+            'data' => ['homepage_layout' => 'atlas'],
+        ];
+        Cache::put('response:'.md5('/api/v1/settings/public'), $stale, 300);
+        Cache::put('response:'.md5(rtrim((string) config('app.url'), '/').'/api/v1/settings/public'), $stale, 300);
+
+        Setting::set('homepage_layout', 'ocean', 'homepage');
+
+        $this->assertFalse(Cache::has('public_settings_payload'));
+        $this->assertFalse(Cache::has('public_theme_bootstrap'));
+        $this->assertFalse(Cache::has('response:'.md5('/api/v1/settings/public')));
+
+        $this->getJson('/api/v1/settings/public')
+            ->assertOk()
+            ->assertJsonPath('data.homepage_layout', 'ocean');
+    }
 
     public function test_public_settings_default_to_atlas_layout(): void
     {

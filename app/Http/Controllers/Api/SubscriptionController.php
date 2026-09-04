@@ -7,10 +7,12 @@ use App\Models\SubscriptionPlan;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\Payment\GatewayCallbackService;
+use App\Services\Payment\PaymentGatewayManager;
 use App\Services\PaymentService;
 use App\Services\SubscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SubscriptionController extends BaseController
 {
@@ -62,7 +64,7 @@ class SubscriptionController extends BaseController
             'plan_id' => ['required', 'integer', 'exists:subscription_plans,id'],
             'payment_method' => ['required', 'in:wallet,zarinpal,nextpay,idpay'],
             'coupon_code' => ['nullable', 'string', 'max:50'],
-            'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay,mellat,shaparak'],
+            'gateway' => ['nullable', 'string', Rule::in(app(PaymentGatewayManager::class)->registeredCodes())],
         ]);
 
         $plan = SubscriptionPlan::query()->findOrFail($data['plan_id']);
@@ -96,7 +98,7 @@ class SubscriptionController extends BaseController
             'plan_id' => ['required', 'integer', 'exists:subscription_plans,id'],
             'payment_method' => ['required', 'in:wallet,zarinpal,nextpay,idpay'],
             'coupon_code' => ['nullable', 'string', 'max:50'],
-            'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay,mellat,shaparak'],
+            'gateway' => ['nullable', 'string', Rule::in(app(PaymentGatewayManager::class)->registeredCodes())],
         ]);
 
         $plan = SubscriptionPlan::query()->findOrFail($data['plan_id']);

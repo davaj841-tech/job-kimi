@@ -44,6 +44,7 @@ class TransactionResource extends JsonResource
             'discount_amount' => (int) ($this->discount_amount ?? 0),
             'original_amount' => $this->original_amount !== null ? (int) $this->original_amount : null,
             'coupon_id' => $this->coupon_id,
+            'is_refundable' => $this->resource instanceof Transaction ? $this->resource->isRefundable() : false,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

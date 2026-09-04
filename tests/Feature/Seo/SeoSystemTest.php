@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Seo;
 
 use App\Jobs\Seo\AnalyzeSeoJob;
+use App\Jobs\Seo\AutoOptimizeSeoJob;
 use App\Jobs\Seo\RunSeoAuditJob;
 use App\Models\CmsPage;
 use App\Models\Exam;
@@ -38,6 +39,7 @@ final class SeoSystemTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Queue::fake();
         $this->admin = User::factory()->create(['role' => 'admin']);
     }
 
@@ -382,7 +384,7 @@ final class SeoSystemTest extends TestCase
         Queue::fake();
 
         $exam = Exam::factory()->create(['title' => 'آزمون اولیه']);
-        Queue::assertPushed(AnalyzeSeoJob::class);
+        Queue::assertPushed(AutoOptimizeSeoJob::class);
 
         Queue::fake();
         $exam->update(['title' => 'آزمون به‌روز']);

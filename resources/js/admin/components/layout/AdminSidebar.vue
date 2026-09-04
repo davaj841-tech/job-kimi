@@ -171,8 +171,14 @@ const groups = [
         permission: 'job_posts',
       },
       {
+        to: '/admin/job-post-comments',
+        label: 'نظرات آگهی‌ها',
+        icon: '✎',
+        permission: 'job_posts',
+      },
+      {
         to: '/admin/job-sources',
-        label: 'منابع تجمیع',
+        label: 'منابع جستجو',
         icon: '◎',
         permission: 'aggregation',
       },
@@ -223,6 +229,12 @@ const groups = [
         icon: '◈',
         permission: 'wallets',
       },
+      {
+        to: '/admin/payment-gateways',
+        label: 'درگاه‌های پرداخت',
+        icon: '💳',
+        adminOnly: true,
+      },
     ],
   },
   {
@@ -244,7 +256,10 @@ const visibleGroups = computed(() =>
     .filter((g) => !g.adminOnly || auth.isSuperAdmin)
     .map((g) => ({
       ...g,
-      items: g.items.filter((item) => auth.can(item.permission)),
+      items: g.items.filter(
+        (item) =>
+          (!item.adminOnly || auth.isSuperAdmin) && auth.can(item.permission)
+      ),
     }))
     .filter((g) => g.items.length)
 )

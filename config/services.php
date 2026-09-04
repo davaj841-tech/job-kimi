@@ -36,9 +36,13 @@ return [
     ],
 
     'sms' => [
-        'gateway' => env('SMS_GATEWAY', 'kavenegar'),
+        'gateway' => env('SMS_GATEWAY', env('SMS_PROVIDER', 'melipayamak')),
         // local/testing may log OTP instead of sending; production must fail closed.
         'allow_log_fallback' => env('SMS_ALLOW_LOG_FALLBACK', env('APP_ENV') !== 'production'),
+        'allow_legacy_plaintext_otp' => env('SMS_ALLOW_LEGACY_PLAINTEXT_OTP', false),
+        'timeout' => (int) env('SMS_TIMEOUT', 10),
+        'otp_template' => env('SMS_OTP_TEMPLATE', 'کد تایید جاب‌آزمون: {code}'),
+        'enabled' => filter_var(env('SMS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
     ],
 
     'kavenegar' => [
@@ -49,11 +53,20 @@ return [
         'username' => env('MELIPAYAMAK_USERNAME'),
         'password' => env('MELIPAYAMAK_PASSWORD'),
         'from' => env('MELIPAYAMAK_FROM'),
+        'api_url' => env('MELIPAYAMAK_API_URL', 'https://rest.payamak-panel.com/api/SendSMS'),
+        // Approved pattern bodyId for shared service line OTP (BaseServiceNumber).
+        'pattern_body_id' => env('MELIPAYAMAK_PATTERN_BODY_ID'),
+        // Pattern variable text; use {code} for OTP. Multiple vars: "{code};name"
+        'pattern_text' => env('MELIPAYAMAK_PATTERN_TEXT', '{code}'),
     ],
 
     'zarinpal' => [
         'merchant_id' => env('ZARINPAL_MERCHANT_ID'),
         'sandbox' => env('ZARINPAL_SANDBOX', false),
+        'timeout' => (int) env('ZARINPAL_TIMEOUT', 15),
+        'currency' => env('ZARINPAL_CURRENCY', 'IRR'),
+        'base_url' => env('ZARINPAL_BASE_URL'),
+        'sandbox_base_url' => env('ZARINPAL_SANDBOX_BASE_URL', 'https://sandbox.zarinpal.com'),
     ],
 
     'nextpay' => [
@@ -77,9 +90,47 @@ return [
         'password' => env('SHAPARAK_PASSWORD'),
     ],
 
+    'parsian' => [
+        'pin' => env('PARSIAN_PIN'),
+        'login_account' => env('PARSIAN_LOGIN_ACCOUNT'),
+    ],
+
+    'saman' => [
+        'terminal_id' => env('SAMAN_TERMINAL_ID'),
+    ],
+
+    'pasargad' => [
+        'merchant_code' => env('PASARGAD_MERCHANT_CODE'),
+        'terminal_code' => env('PASARGAD_TERMINAL_CODE'),
+        'private_key' => env('PASARGAD_PRIVATE_KEY'),
+    ],
+
+    'sadad' => [
+        'merchant_id' => env('SADAD_MERCHANT_ID'),
+        'terminal_id' => env('SADAD_TERMINAL_ID'),
+        'terminal_key' => env('SADAD_TERMINAL_KEY'),
+    ],
+
+    'ap' => [
+        'username' => env('AP_USERNAME'),
+        'password' => env('AP_PASSWORD'),
+        'merchant_config_id' => env('AP_MERCHANT_CONFIG_ID'),
+    ],
+
     'turnstile' => [
-        'site_key' => env('TURNSTILE_SITE_KEY'),
+        // Public site key — overridable via Admin Settings (turnstile_site_key).
+        'site_key' => env('TURNSTILE_SITE_KEY', '0x4AAAAAAEiAUvpbmcvevZFU'),
+        // Secret ONLY from .env — never Admin Settings / frontend / logs.
         'secret' => env('TURNSTILE_SECRET_KEY'),
+        // Bootstrap default when DB setting turnstile_enabled is unset.
+        'enabled' => filter_var(env('TURNSTILE_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+        // Comma-separated hostnames allowed in siteverify response (plus APP_URL host).
+        'hostnames' => array_values(array_filter(array_map(
+            static fn (string $h): string => strtolower(trim($h)),
+            explode(',', (string) env('TURNSTILE_HOSTNAMES', ''))
+        ))),
+        'timeout' => (int) env('TURNSTILE_TIMEOUT', 10),
+        'max_token_age_seconds' => (int) env('TURNSTILE_MAX_TOKEN_AGE', 300),
     ],
 
     'openai' => [

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div
     v-if="open"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
@@ -8,7 +8,7 @@
         {{ mode === 'charge' ? 'شارژ دستی' : 'کسر موجودی' }}
       </h3>
       <p v-if="user" class="mb-3 text-sm text-slate-500">
-        {{ user.name }} — موجودی: {{ fa(user.balance) }} تومان
+        {{ user.name }} — موجودی: {{ fa(user.balance) }} ریال
       </p>
       <form class="space-y-3" @submit.prevent="submit">
         <input
@@ -17,7 +17,7 @@
           min="1000"
           required
           class="field"
-          placeholder="مبلغ (تومان) *"
+          placeholder="مبلغ (ریال) *"
         />
         <textarea
           v-model="note"

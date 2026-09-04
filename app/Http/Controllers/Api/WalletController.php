@@ -12,10 +12,13 @@ use App\Repositories\TransactionRepository;
 use App\Services\AuditLogService;
 use App\Services\IdempotencyService;
 use App\Services\Payment\GatewayCallbackService;
+use App\Services\Payment\PaymentGatewayManager;
 use App\Services\PaymentService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use RuntimeException;
 
 class WalletController extends BaseController
 {
@@ -42,11 +45,24 @@ class WalletController extends BaseController
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $transactions = $this->transactionRepository->recentForUser($user, 20);
+        $filters = $request->validate([
+            'type' => ['nullable', 'string', 'in:deposit,purchase,withdrawal,refund,bonus,adjustment'],
+            'category' => ['nullable', 'string', 'in:deposit,purchase,withdrawal,refund,bonus,adjustment'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:5', 'max:50'],
+        ]);
+
+        $perPage = (int) ($filters['per_page'] ?? 15);
+        $paginated = $this->transactionRepository->getByUser($user, [
+            'type' => $filters['type'] ?? $filters['category'] ?? null,
+            'per_page' => $perPage,
+        ]);
 
         return $this->successResponse([
             'balance' => $this->manageWallet->balance($user),
-            'transactions' => $transactions->map(fn (Transaction $tx) => [
+            'wallet_status' => $user->walletStatus(),
+            'wallet_frozen' => $user->isWalletFrozen(),
+            'transactions' => $paginated->map(fn (Transaction $tx) => [
                 'id' => $tx->id,
                 'type' => $tx->type,
                 'amount' => (int) $tx->amount,
@@ -55,6 +71,12 @@ class WalletController extends BaseController
                 'invoice_number' => $tx->invoice_number,
                 'created_at' => $tx->created_at?->toIso8601String(),
             ])->values(),
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+            ],
         ]);
     }
 
@@ -80,15 +102,26 @@ class WalletController extends BaseController
 
         $data = $request->validate([
             'amount' => ['required', 'integer', 'min:'.$minCharge, 'max:'.$maxCharge],
-            'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay,mellat,shaparak'],
+            'gateway' => ['nullable', 'string', Rule::in(app(PaymentGatewayManager::class)->registeredCodes())],
         ], [
             'amount.min' => 'مبلغ شارژ کمتر از حد مجاز است.',
             'amount.max' => 'مبلغ شارژ بیشتر از حد مجاز است.',
         ]);
 
         $amount = (int) $data['amount'];
-        $gateway = $this->paymentService->resolveGatewayName($data['gateway'] ?? null);
+        try {
+            $gateway = $this->paymentService->resolveGatewayName($data['gateway'] ?? null);
+        } catch (RuntimeException $e) {
+            return $this->errorResponse($e->getMessage(), 422);
+        }
         $user = $request->user();
+
+        if ($user->isWalletFrozen()) {
+            return $this->errorResponse('کیف پول شما مسدود است. لطفاً با پشتیبانی تماس بگیرید.', 422, [
+                'code' => 'wallet_frozen',
+            ]);
+        }
+
         $idempotencyKey = $this->idempotencyService->generateKey();
 
         $transaction = Transaction::query()->create([
@@ -111,19 +144,10 @@ class WalletController extends BaseController
             ['order_id' => (string) $transaction->id, 'idempotency_key' => $idempotencyKey]
         );
 
-        // Retry once with the same idempotency key if the gateway call fails.
+        // No automatic retry: a second request can create a duplicate bank payment
+        // when the first attempt timed out after the gateway already issued an authority.
         if ($result['error'] || ! $result['authority']) {
-            $result = $this->initiatePayment->handle(
-                $gateway,
-                $amount,
-                'شارژ کیف پول JobAzmoon',
-                $callback,
-                ['order_id' => (string) $transaction->id, 'idempotency_key' => $idempotencyKey]
-            );
-        }
-
-        if ($result['error'] || ! $result['authority']) {
-            $transaction->update(['status' => Transaction::STATUS_FAILED]);
+            $this->paymentService->markInitiateFailure($transaction, $result['error'] ?? null);
 
             return $this->errorResponse($result['error'] ?? 'خطا در اتصال به درگاه پرداخت.', 400);
         }
@@ -167,6 +191,9 @@ class WalletController extends BaseController
             fn (Transaction $tx) => $tx->type === 'deposit',
             function (Transaction $locked) {
                 $user = User::query()->findOrFail($locked->user_id);
+                if ($user->isWalletFrozen()) {
+                    throw new \App\Exceptions\WalletFrozenException($user);
+                }
                 $this->walletService->deposit($user, (int) $locked->amount, $locked);
             }
         );

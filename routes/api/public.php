@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ExamController;
 use App\Http\Controllers\Api\FeatureController;
 use App\Http\Controllers\Api\GeneratedContentPublicController;
 use App\Http\Controllers\Api\HomeFeedController;
+use App\Http\Controllers\Api\JobPostCommentController;
 use App\Http\Controllers\Api\JobPostController;
 use App\Http\Controllers\Api\LeaderboardController;
 use App\Http\Controllers\Api\NewsletterController;
@@ -56,6 +57,7 @@ Route::get('/exam-subjects', function () {
 Route::get('/job-posts', [JobPostController::class, 'index'])->middleware('cache.response:120');
 Route::get('/job-posts/filters', [JobPostController::class, 'filters']);
 Route::get('/job-posts/{id}', [JobPostController::class, 'show'])->whereNumber('id');
+Route::get('/job-posts/{id}/comments', [JobPostCommentController::class, 'index'])->whereNumber('id');
 
 Route::get('/blog-posts', [BlogPostController::class, 'index']);
 Route::get('/blog-posts/{slug}', [BlogPostController::class, 'show']);
@@ -70,11 +72,12 @@ Route::get('/pdf-products/{id}', [PDFProductController::class, 'show'])->whereNu
 Route::get('/exams', [ExamController::class, 'index'])->middleware(['throttle:exams', 'cache.response:300']);
 Route::get('/exams/{slug}', [ExamController::class, 'show'])->middleware('throttle:exams');
 
-Route::post('/contact', [ContactController::class, 'store'])->middleware(['auth.captcha', 'throttle:contact']);
+Route::post('/contact', [ContactController::class, 'store'])->middleware(['auth.captcha:contact', 'throttle:contact']);
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->middleware('throttle:newsletter');
-Route::get('/home-feed', HomeFeedController::class)
-    ->middleware('cache.response:120');
-Route::get('/settings/public', [PublicSettingsController::class, 'index'])->middleware('cache.response:300');
+Route::get('/home-feed', HomeFeedController::class);
+// No cache.response: theme/font changes must appear on the public site immediately.
+// Controller still uses a short Laravel cache that Setting::set / ThemeBootstrap::forget clear.
+Route::get('/settings/public', [PublicSettingsController::class, 'index']);
 Route::get('/banners', [BannerController::class, 'index'])->middleware('cache.response:300');
 Route::get('/pages/{slug}', [PageController::class, 'show']);
 Route::get('/leaderboard', [LeaderboardController::class, 'index']);

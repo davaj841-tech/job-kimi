@@ -22,7 +22,7 @@ class ResumeDataRule implements ValidationRule
             'personal' => ['required', 'array'],
             'personal.full_name' => ['nullable', 'string', 'max:100'],
             'personal.birth_date' => ['nullable', 'string', 'regex:/^\d{2}\/\d{2}\/\d{4}$/'],
-            'personal.national_code' => ['nullable', 'string', 'regex:/^\d{10}$/'],
+            'personal.national_code' => ['nullable', 'string', new \App\Rules\IranianNationalCode],
             'personal.mobile' => ['nullable', 'string', 'max:11'],
             'personal.email' => ['nullable', 'email'],
             'personal.address' => ['nullable', 'string', 'max:255'],

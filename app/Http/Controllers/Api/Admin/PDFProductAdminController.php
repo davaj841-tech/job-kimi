@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
 
 class PDFProductAdminController extends BaseController
 {
+    public const EXTRA_FILE_RULE = 'mimes:pdf,doc,docx,zip,rar,jpg,jpeg,png,xls,xlsx,ppt,pptx';
+
     public function __construct(
         protected PDFProductService $pdfProductService,
         protected PDFProductRepository $pdfProductRepository
@@ -46,13 +48,16 @@ class PDFProductAdminController extends BaseController
             'job_classification_id' => ['nullable', 'exists:job_classifications,id'],
             'is_active' => ['sometimes', 'boolean'],
             'file' => ['required', 'file', 'mimes:pdf', 'max:20480'],
+            'extra_files' => ['nullable', 'array', 'max:10'],
+            'extra_files.*' => ['file', self::EXTRA_FILE_RULE, 'max:20480'],
             'thumbnail' => ['nullable', 'image', 'max:2048'],
         ]);
 
         $product = $this->pdfProductService->storeUploaded(
             $data,
             $request->file('file'),
-            $request->file('thumbnail')
+            $request->file('thumbnail'),
+            $request->file('extra_files', []) ?? []
         );
 
         app(AuditLogService::class)->log('pdf.created', $product, null, [
@@ -92,10 +97,12 @@ class PDFProductAdminController extends BaseController
             'job_classification_id' => ['nullable', 'exists:job_classifications,id'],
             'is_active' => ['sometimes', 'boolean'],
             'file' => ['nullable', 'file', 'mimes:pdf', 'max:20480'],
+            'extra_files' => ['nullable', 'array', 'max:10'],
+            'extra_files.*' => ['file', self::EXTRA_FILE_RULE, 'max:20480'],
             'thumbnail' => ['nullable', 'image', 'max:2048'],
         ]);
 
-        unset($data['file'], $data['thumbnail']);
+        unset($data['file'], $data['thumbnail'], $data['extra_files']);
 
         if ($request->hasFile('file')) {
             $uuid = (string) Str::uuid();
@@ -106,6 +113,14 @@ class PDFProductAdminController extends BaseController
             $uuid = (string) Str::uuid();
             $ext = $request->file('thumbnail')->getClientOriginalExtension() ?: 'jpg';
             $data['thumbnail'] = $request->file('thumbnail')->storeAs('pdf_thumbnails', $uuid.'.'.$ext, 'public');
+        }
+
+        $extraFiles = $request->file('extra_files', []) ?? [];
+        if ($extraFiles) {
+            $data['attachments'] = $this->pdfProductService->mergeAttachments(
+                $product->attachments,
+                $extraFiles
+            );
         }
 
         $product->update($data);

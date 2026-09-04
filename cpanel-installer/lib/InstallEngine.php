@@ -20,7 +20,7 @@ final class InstallEngine
 
     public const PACKAGE_FILE = 'jobazmoon-core.zip';
 
-    public const INSTALLER_VERSION = '2.1.0';
+    public const INSTALLER_VERSION = '2.3.0';
 
     /** Absolute minimum free disk when package size is unknown. */
     public const MIN_DISK_BYTES = 400 * 1024 * 1024;
@@ -56,12 +56,19 @@ final class InstallEngine
     ) {}
 
     /**
-     * Locked only when both .env and storage/installed exist.
+     * Locked when .env exists and an install marker is present
+     * (storage/installed and/or storage/app/installed.lock).
      */
     public function isLocked(): bool
     {
         return is_file($this->jobDir.DIRECTORY_SEPARATOR.'.env')
-            && is_file($this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed');
+            && $this->hasInstalledMarker();
+    }
+
+    public function hasInstalledMarker(): bool
+    {
+        return is_file($this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed')
+            || is_file($this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'installed.lock');
     }
 
     /**
@@ -70,7 +77,7 @@ final class InstallEngine
     public function installationStatus(): string
     {
         $envExists = is_file($this->jobDir.DIRECTORY_SEPARATOR.'.env');
-        $markerExists = is_file($this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed');
+        $markerExists = $this->hasInstalledMarker();
         $artisanExists = is_file($this->jobDir.DIRECTORY_SEPARATOR.'artisan');
         $autoloadExists = is_file($this->jobDir.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php');
         $bootstrapExists = is_file($this->jobDir.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php');
@@ -143,19 +150,21 @@ final class InstallEngine
         $requiredDisk = $packageSize > 0
             ? (int) ($packageSize * self::DISK_MULTIPLIER) + self::DISK_BUFFER_BYTES
             : self::MIN_DISK_BYTES;
+        $minPhp = $this->resolvedMinPhp();
         $freeDisk = (int) @disk_free_space($this->publicHtml);
 
         return array_merge([
             [
-                'label' => 'PHP >= '.self::MIN_PHP,
-                'ok' => version_compare(PHP_VERSION, self::MIN_PHP, '>='),
-                'fix' => 'در cPanel نسخه PHP را روی ۸.۲ یا ۸.۳ بگذارید. نسخه فعلی: '.PHP_VERSION,
+                'label' => 'PHP >= '.$minPhp,
+                'ok' => version_compare(PHP_VERSION, $minPhp, '>='),
+                'fix' => 'در cPanel نسخه PHP را روی '.$minPhp.' یا بالاتر بگذارید. نسخه فعلی: '.PHP_VERSION,
                 'warn' => false,
             ],
             $ext('pdo'),
             $ext('pdo_mysql'),
             $ext('openssl'),
             $ext('mbstring'),
+            $ext('tokenizer'),
             $ext('xml'),
             $ext('dom'),
             $ext('ctype'),
@@ -209,6 +218,70 @@ final class InstallEngine
                 'warn' => true,
             ],
         ]);
+    }
+
+    /**
+     * Minimum PHP version from package composer.json when available; otherwise MIN_PHP.
+     */
+    public function resolvedMinPhp(): string
+    {
+        $candidates = [
+            $this->jobDir.DIRECTORY_SEPARATOR.'composer.json',
+        ];
+
+        if (is_file($this->packagePath)) {
+            try {
+                $zip = new ZipArchive;
+                if ($zip->open($this->packagePath) === true) {
+                    $raw = $zip->getFromName('composer.json');
+                    $zip->close();
+                    if (is_string($raw) && $raw !== '') {
+                        $data = json_decode($raw, true);
+                        $parsed = $this->parseComposerPhpConstraint(is_array($data) ? $data : []);
+                        if ($parsed !== null) {
+                            return $parsed;
+                        }
+                    }
+                }
+            } catch (Throwable) {
+            }
+        }
+
+        foreach ($candidates as $path) {
+            if (! is_file($path)) {
+                continue;
+            }
+            $data = json_decode((string) file_get_contents($path), true);
+            $parsed = $this->parseComposerPhpConstraint(is_array($data) ? $data : []);
+            if ($parsed !== null) {
+                return $parsed;
+            }
+        }
+
+        return self::MIN_PHP;
+    }
+
+    /**
+     * @param  array<string, mixed>  $composer
+     */
+    private function parseComposerPhpConstraint(array $composer): ?string
+    {
+        $constraint = (string) ($composer['require']['php'] ?? '');
+        if ($constraint === '') {
+            return null;
+        }
+
+        // Prefer the lowest explicit version in constraints like "^8.2" or ">=8.2.0,<9".
+        if (preg_match('/(\d+\.\d+(?:\.\d+)?)/', $constraint, $m)) {
+            $version = $m[1];
+            if (substr_count($version, '.') === 1) {
+                $version .= '.0';
+            }
+
+            return $version;
+        }
+
+        return null;
     }
 
     /**
@@ -480,6 +553,10 @@ final class InstallEngine
                 throw new RuntimeException('فایل bootstrap/app.php پس از کپی یافت نشد. نصب متوقف شد.');
             }
 
+            // Must exist before any Laravel boot (migrate/seed/cache) — ZIP may omit empty dirs.
+            $this->ensureFrameworkDirectories();
+            $push('پوشه‌های storage/framework و bootstrap/cache آماده شد.');
+
             $pubSrc = $this->jobDir.DIRECTORY_SEPARATOR.'public';
             if (is_dir($pubSrc)) {
                 $indexPath = $this->publicHtml.DIRECTORY_SEPARATOR.'index.php';
@@ -565,10 +642,18 @@ final class InstallEngine
                 $_SERVER[$k] = $v;
             }
 
+            $this->ensureFrameworkDirectories();
             $this->applyPermissionsRecursive($this->jobDir);
             $perm = $this->permissionReport();
             if (! $perm['ok']) {
-                throw new RuntimeException('برخی پوشه‌های storage یا bootstrap/cache قابل نوشتن نیستند.');
+                $failed = array_values(array_map(
+                    static fn (array $i): string => $i['label'],
+                    array_filter($perm['items'], static fn (array $i): bool => ! $i['ok'])
+                ));
+                throw new RuntimeException(
+                    'برخی پوشه‌های storage یا bootstrap/cache قابل نوشتن نیستند'
+                    .($failed !== [] ? ': '.implode(', ', $failed) : '.')
+                );
             }
             $push('مجوزهای پوشه بررسی شد.');
 
@@ -622,6 +707,15 @@ final class InstallEngine
                 $warnings[] = 'seed کامل نشد — می‌توانید بعداً از پنل تنظیم کنید.';
             }
 
+            try {
+                $bootstrap = $this->artisan('jobs:bootstrap-aggregation');
+                if ($bootstrap['code'] === 0) {
+                    $push('تجمیع آگهی (منابع + زمان‌بندی) آماده شد.');
+                }
+            } catch (Throwable) {
+                $warnings[] = 'bootstrap تجمیع آگهی انجام نشد — از پنل ادمین «منابع پیش‌فرض» و «دیسپاچ دستی» را اجرا کنید.';
+            }
+
             $linkResult = $this->ensureStorageLink();
             if ($linkResult === 'pass') {
                 $push('لینک storage برقرار شد.');
@@ -641,7 +735,16 @@ final class InstallEngine
                 $routeCache = $this->artisan('route:cache');
                 if ($routeCache['code'] !== 0) {
                     $warnings[] = 'route:cache اجرا نشد (هشدار — نصب ادامه یافت).';
-                } else {
+                }
+                try {
+                    $eventCache = $this->artisan('event:cache');
+                    if ($eventCache['code'] !== 0) {
+                        $warnings[] = 'event:cache اجرا نشد (هشدار — نصب ادامه یافت).';
+                    }
+                } catch (Throwable) {
+                    $warnings[] = 'event:cache روی این هاست در دسترس نبود.';
+                }
+                if ($routeCache['code'] === 0) {
                     $push('کش production ساخته شد.');
                 }
             } catch (Throwable) {
@@ -656,17 +759,13 @@ final class InstallEngine
             }
 
             $appVersion = $this->detectApplicationVersion();
-            $installedPath = $this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed';
-            $installedDir = dirname($installedPath);
-            if (! is_dir($installedDir)) {
-                @mkdir($installedDir, 0775, true);
-            }
-            file_put_contents($installedPath, json_encode([
+            $payload = json_encode([
                 'installed_at' => date('c'),
                 'installer_version' => self::INSTALLER_VERSION,
                 'application_version' => $appVersion,
                 'installer' => 'cpanel',
-            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            $this->writeInstalledMarkers($payload !== false ? $payload : '{}');
             $this->writeEnvFile($envPath, ['APP_INSTALLED' => 'true']);
             $push('نشانگر نصب ذخیره شد.');
 
@@ -1059,9 +1158,8 @@ final class InstallEngine
             $add('لینک storage', false, 'لینک storage وجود ندارد — هدف: '.$linkTarget, 'fail');
         }
 
-        $markerPath = $this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed';
-        $markerOk = is_file($markerPath);
-        $add('نشانگر نصب (storage/installed)', $markerOk);
+        $markerOk = $this->hasInstalledMarker();
+        $add('نشانگر نصب (storage/installed + storage/app/installed.lock)', $markerOk);
 
         $canBoot = is_file($this->jobDir.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php')
             && is_file($this->jobDir.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php')
@@ -1109,22 +1207,73 @@ final class InstallEngine
     }
 
     /**
+     * Relative writable paths under the installation root (jobDir).
+     * Used for mkdir + permission checks — never hard-coded absolute paths.
+     *
+     * @return list<string>
+     */
+    public function requiredWritableRelativePaths(): array
+    {
+        return [
+            'storage',
+            'storage/app',
+            'storage/app/public',
+            'storage/app/private',
+            'storage/framework',
+            'storage/framework/cache',
+            'storage/framework/cache/data',
+            'storage/framework/sessions',
+            'storage/framework/views',
+            'storage/logs',
+            'bootstrap/cache',
+        ];
+    }
+
+    /**
+     * Create Laravel framework/cache directories under jobDir before any boot/artisan.
+     * Idempotent. Throws if a required directory cannot be created.
+     *
+     * @throws RuntimeException
+     */
+    public function ensureFrameworkDirectories(): void
+    {
+        foreach ($this->requiredWritableRelativePaths() as $rel) {
+            $path = $this->jobPath($rel);
+            if (is_dir($path)) {
+                @chmod($path, 0775);
+
+                continue;
+            }
+            if (! @mkdir($path, 0775, true) && ! is_dir($path)) {
+                throw new RuntimeException('ایجاد پوشه لازم برای Laravel ممکن نشد: '.$rel);
+            }
+            @chmod($path, 0775);
+        }
+    }
+
+    /**
+     * Absolute path under installation root (jobDir) for a relative POSIX-style path.
+     */
+    public function jobPath(string $relative): string
+    {
+        $normalized = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, trim($relative, '/\\'));
+
+        return $normalized === ''
+            ? $this->jobDir
+            : $this->jobDir.DIRECTORY_SEPARATOR.$normalized;
+    }
+
+    /**
      * @return array{ok: bool, items: list<array{label: string, ok: bool}>}
      */
     public function permissionReport(): array
     {
-        $paths = [
-            'storage' => $this->jobDir.DIRECTORY_SEPARATOR.'storage',
-            'storage/framework' => $this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'framework',
-            'storage/logs' => $this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'logs',
-            'bootstrap/cache' => $this->jobDir.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'cache',
-        ];
+        $this->ensureFrameworkDirectories();
+
         $items = [];
         $ok = true;
-        foreach ($paths as $label => $path) {
-            if (! is_dir($path)) {
-                @mkdir($path, 0775, true);
-            }
+        foreach ($this->requiredWritableRelativePaths() as $label) {
+            $path = $this->jobPath($label);
             $writable = $this->writableCheck($path);
             $items[] = ['label' => $label, 'ok' => $writable];
             if (! $writable) {
@@ -1317,7 +1466,12 @@ final class InstallEngine
             'bootstrap'.DIRECTORY_SEPARATOR.'app.php' => 'فایل bootstrap/app.php',
             'config' => 'پوشه config/',
             'routes' => 'پوشه routes/',
+            'routes'.DIRECTORY_SEPARATOR.'web.php' => 'فایل routes/web.php',
+            // bootstrap/app.php loads this whenever storage/installed is missing (cPanel migrate/seed boot).
+            'routes'.DIRECTORY_SEPARATOR.'install.php' => 'فایل routes/install.php',
             'vendor'.DIRECTORY_SEPARATOR.'autoload.php' => 'فایل vendor/autoload.php',
+            'composer.json' => 'فایل composer.json',
+            'composer.lock' => 'فایل composer.lock',
             'public' => 'پوشه public/',
             'storage' => 'پوشه storage/',
         ];
@@ -1337,15 +1491,64 @@ final class InstallEngine
                         .'composer install --no-dev --optimize-autoloader را اجرا کنید و دوباره بسته را بسازید.'
                     );
                 }
+                if (str_ends_with(str_replace('\\', '/', $rel), 'routes/install.php')) {
+                    throw new RuntimeException(
+                        'فایل routes/install.php در بسته نیست. بدون این فایل Laravel قبل از تکمیل نصب '
+                        .'(require routes/install.php) بوت نمی‌شود. بسته را دوباره با scripts/build-cpanel-package.php بسازید.'
+                    );
+                }
                 throw new RuntimeException('بسته Laravel ناقص است: '.$label.' یافت نشد.');
             }
         }
 
-        $manifest = $root.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'build'.DIRECTORY_SEPARATOR.'manifest.json';
-        if (! is_file($manifest)) {
+        $this->assertValidFrontendManifest(
+            $root.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'build'.DIRECTORY_SEPARATOR.'manifest.json'
+        );
+    }
+
+    /**
+     * Require a non-empty Vite manifest JSON (presence alone is not enough).
+     *
+     * @throws RuntimeException
+     */
+    public function assertValidFrontendManifest(string $manifestPath): void
+    {
+        if (! is_file($manifestPath)) {
             throw new RuntimeException(
                 'فایل public/build/manifest.json یافت نشد. قبل از بسته‌بندی روی سیستم خودتان npm run build اجرا کنید.'
             );
+        }
+
+        $raw = (string) file_get_contents($manifestPath);
+        if (trim($raw) === '') {
+            throw new RuntimeException('فایل public/build/manifest.json خالی است. npm run build را دوباره اجرا کنید.');
+        }
+
+        $data = json_decode($raw, true);
+        if (! is_array($data) || $data === []) {
+            throw new RuntimeException(
+                'فایل public/build/manifest.json نامعتبر یا خالی است. قبل از بسته‌بندی npm run build را اجرا کنید.'
+            );
+        }
+    }
+
+    /**
+     * Persist both legacy and preferred install lock markers.
+     */
+    private function writeInstalledMarkers(string $payload): void
+    {
+        $legacy = $this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed';
+        $preferred = $this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'installed.lock';
+
+        foreach ([$legacy, $preferred] as $path) {
+            $dir = dirname($path);
+            if (! is_dir($dir) && ! @mkdir($dir, 0775, true) && ! is_dir($dir)) {
+                throw new RuntimeException('ایجاد پوشه نشانگر نصب ممکن نشد: '.$dir);
+            }
+            if (file_put_contents($path, $payload) === false) {
+                throw new RuntimeException('نوشتن نشانگر نصب ممکن نشد: '.$path);
+            }
+            @chmod($path, 0644);
         }
     }
 
@@ -1489,11 +1692,26 @@ final class InstallEngine
 
     private function writableCheck(string $path): bool
     {
-        if (is_dir($path) || is_file($path)) {
-            return is_writable($path);
+        if (! is_dir($path) && ! is_file($path)) {
+            return is_writable(dirname($path));
         }
 
-        return is_writable(dirname($path));
+        if (! is_writable($path)) {
+            return false;
+        }
+
+        // Prove write works on shared hosts where is_writable() can lie.
+        if (is_dir($path)) {
+            $probe = $path.DIRECTORY_SEPARATOR.'.installer_write_probe_'.bin2hex(random_bytes(3));
+            $ok = @file_put_contents($probe, 'ok') !== false;
+            if ($ok) {
+                @unlink($probe);
+            }
+
+            return $ok;
+        }
+
+        return true;
     }
 
     /**
@@ -1654,34 +1872,46 @@ final class InstallEngine
             throw new RuntimeException('فایل bootstrap/app.php یافت نشد؛ نوشتن index.php ممکن نیست.');
         }
 
-        $code = <<<'PHP'
+        $jobLeaf = basename(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, rtrim($this->jobDir, "/\\")));
+        if ($jobLeaf === '' || $jobLeaf === '.' || $jobLeaf === '..' || ! preg_match('/^[A-Za-z0-9._-]+$/', $jobLeaf)) {
+            $jobLeaf = 'job';
+        }
+
+        $code = <<<PHP
 <?php
 
-use Illuminate\Http\Request;
+use Illuminate\\Http\\Request;
 
 define('LARAVEL_START', microtime(true));
 
-$job = dirname(__DIR__).DIRECTORY_SEPARATOR.'job';
+// Sibling of public_html — resolved at install time (default: ../job)
+\$job = dirname(__DIR__).DIRECTORY_SEPARATOR.'{$jobLeaf}';
 
-$phpTimeLimit = (int) ini_get('max_execution_time');
-if ($phpTimeLimit > 0 && $phpTimeLimit < 60) {
+\$phpTimeLimit = (int) ini_get('max_execution_time');
+if (\$phpTimeLimit > 0 && \$phpTimeLimit < 60) {
     @set_time_limit(120);
 }
 
-if (file_exists($maintenance = $job.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'maintenance.php')) {
-    require $maintenance;
+if (file_exists(\$maintenance = \$job.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'maintenance.php')) {
+    require \$maintenance;
 }
 
-require $job.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php';
+\$autoload = \$job.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php';
+if (! is_file(\$autoload)) {
+    http_response_code(500);
+    echo 'Application vendor missing.';
+    exit(1);
+}
+require \$autoload;
 
-$appBootstrap = $job.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php';
-if (! is_file($appBootstrap)) {
+\$appBootstrap = \$job.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php';
+if (! is_file(\$appBootstrap)) {
     http_response_code(500);
     echo 'Application bootstrap missing.';
     exit(1);
 }
 
-(require_once $appBootstrap)
+(require_once \$appBootstrap)
     ->handleRequest(Request::capture());
 PHP;
         file_put_contents($publicHtml.DIRECTORY_SEPARATOR.'index.php', $code);
@@ -1702,7 +1932,7 @@ PHP;
 </IfModule>
 
 # Deny sensitive files if ever placed under document root
-<FilesMatch "(^\.env|^\.env\.|composer\.(json|lock)|package(-lock)?\.json|artisan)$">
+<FilesMatch "(^\.env|^\.env\.|composer\.(json|lock)|package(-lock)?\.json|yarn\.lock|artisan)$">
     Require all denied
 </FilesMatch>
 
@@ -1788,6 +2018,14 @@ HT;
                 return is_link($link) || is_dir($link) ? 'pass' : 'warn';
             }
 
+            try {
+                $this->copyDir($target, $link);
+                if (is_dir($link)) {
+                    return 'warn';
+                }
+            } catch (Throwable) {
+            }
+
             return 'fail';
         }
 
@@ -1832,10 +2070,28 @@ HT;
         if ($app !== null) {
             return $app;
         }
+
+        // Blade / file cache require these dirs at bootstrap — create before require.
+        $this->ensureFrameworkDirectories();
+
         chdir($this->jobDir);
         require_once $this->jobDir.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php';
         $app = require $this->jobDir.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php';
         $app->make(Kernel::class)->bootstrap();
+
+        // Confirm view compiled path resolves inside this installation root.
+        try {
+            $compiled = (string) $app['config']->get('view.compiled', '');
+            if ($compiled === '' || ! is_dir($compiled)) {
+                $fallback = $this->jobPath('storage/framework/views');
+                if (! is_dir($fallback)) {
+                    @mkdir($fallback, 0775, true);
+                }
+                $app['config']->set('view.compiled', $fallback);
+            }
+        } catch (Throwable) {
+            // Config may not be fully available in edge cases; dirs already ensured.
+        }
 
         return $app;
     }
@@ -1846,6 +2102,7 @@ HT;
      */
     private function artisan(string $command, array $params = []): array
     {
+        $this->ensureFrameworkDirectories();
         $app = $this->laravelApp();
         $kernel = $app->make(Kernel::class);
         $code = $kernel->call($command, $params);

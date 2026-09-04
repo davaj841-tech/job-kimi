@@ -1,63 +1,68 @@
 <template>
   <PageShell title="📝 آزمون‌ها" subtitle="تمرین و سنجش آمادگی استخدام">
-    <!-- Search + sort -->
-    <div class="mb-3 flex gap-2">
-      <input
-        v-model="filters.search"
-        class="input-field flex-1"
-        placeholder="جستجوی آزمون..."
-        @keyup.enter="load"
-      />
-      <select v-model="filters.sort" class="field w-32" @change="load">
-        <option value="latest">جدیدترین</option>
-        <option value="popular">محبوب‌ترین</option>
-        <option value="participants">پرشرکت‌کننده</option>
-        <option value="rating">بالاترین امتیاز</option>
-      </select>
-    </div>
-
-    <!-- Classification chips -->
     <div
-      v-if="classifications.length"
-      class="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      class="sticky top-[calc(3.65rem+env(safe-area-inset-top))] z-20 -mx-4 mb-4 border-b border-surface-line bg-surface-page/95 px-4 py-3 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95 lg:top-[4.5rem]"
     >
-      <button
-        type="button"
-        class="chip"
-        :class="!filters.job_classification_id ? 'chip-active' : ''"
-        @click="setClassification(null)"
-      >
-        همه
-      </button>
-      <button
-        v-for="c in classifications"
-        :key="c.id"
-        type="button"
-        class="chip"
-        :class="
-          String(filters.job_classification_id) === String(c.id)
-            ? 'chip-active'
-            : ''
-        "
-        @click="setClassification(c.id)"
-      >
-        <span v-if="c.icon">{{ c.icon }}</span>
-        {{ c.name }}
-      </button>
-    </div>
+      <!-- Search + sort -->
+      <div class="mb-3 flex gap-2">
+        <input
+          v-model="filters.search"
+          class="input-field flex-1"
+          placeholder="جستجوی آزمون..."
+          @keyup.enter="load"
+        />
+        <select v-model="filters.sort" class="field w-32" @change="load">
+          <option value="latest">جدیدترین</option>
+          <option value="popular">محبوب‌ترین</option>
+          <option value="participants">پرشرکت‌کننده</option>
+          <option value="rating">بالاترین امتیاز</option>
+        </select>
+      </div>
 
-    <!-- Access chips -->
-    <div class="mb-4 flex gap-2">
-      <button
-        v-for="opt in accessOptions"
-        :key="opt.value"
-        type="button"
-        class="chip"
-        :class="filters.access === opt.value ? 'chip-active' : ''"
-        @click="setAccess(opt.value)"
+      <!-- Classification chips -->
+      <div
+        v-if="classifications.length"
+        class="mb-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {{ opt.label }}
-      </button>
+        <button
+          type="button"
+          class="chip inline-flex items-center gap-1"
+          :class="!selectedClassIds.length ? 'chip-active' : ''"
+          @click="clearClassifications"
+        >
+          <span aria-hidden="true">📋</span>
+          همه
+        </button>
+        <button
+          v-for="c in classifications"
+          :key="c.id"
+          type="button"
+          class="chip inline-flex items-center gap-1"
+          :class="isClassSelected(c.id) ? 'chip-active' : ''"
+          @click="toggleClassification(c.id)"
+        >
+          <span class="text-base leading-none" aria-hidden="true">{{
+            classificationIcon(c)
+          }}</span>
+          {{ c.name }}
+        </button>
+      </div>
+
+      <!-- Access chips -->
+      <div
+        class="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        <button
+          v-for="opt in accessOptions"
+          :key="opt.value"
+          type="button"
+          class="chip shrink-0"
+          :class="filters.access === opt.value ? 'chip-active' : ''"
+          @click="setAccess(opt.value)"
+        >
+          {{ opt.label }}
+        </button>
+      </div>
     </div>
 
     <SkeletonCard v-if="loading" :count="5" />
@@ -148,6 +153,8 @@ import SkeletonCard from '../../components/ui/SkeletonCard.vue'
 import StarRating from '../../components/StarRating.vue'
 import { useAuthStore } from '../../stores/auth'
 import { formatPrice, unwrapList, apiErrorMessage } from '../../utils/format'
+import { classificationIcon } from '../../utils/classificationIcon'
+import { setListPageMeta } from '../../services/meta'
 
 const route = useRoute()
 const router = useRouter()
@@ -168,14 +175,27 @@ const accessOptions = [
 const filters = reactive({
   search: route.query.search || '',
   sort: 'latest',
-  job_classification_id: null,
   access: '',
 })
 
-function setClassification(id) {
-  filters.job_classification_id = id
+const selectedClassIds = ref([])
+
+function isClassSelected(id) {
+  return selectedClassIds.value.some((x) => Number(x) === Number(id))
+}
+
+function toggleClassification(id) {
+  const idx = selectedClassIds.value.findIndex((x) => Number(x) === Number(id))
+  if (idx >= 0) selectedClassIds.value.splice(idx, 1)
+  else selectedClassIds.value.push(id)
   load()
 }
+
+function clearClassifications() {
+  selectedClassIds.value = []
+  load()
+}
+
 function setAccess(value) {
   filters.access = value
   load()
@@ -204,7 +224,9 @@ async function load() {
       params: {
         search: filters.search || undefined,
         sort: filters.sort,
-        job_classification_id: filters.job_classification_id || undefined,
+        job_classification_ids: selectedClassIds.value.length
+          ? selectedClassIds.value.join(',')
+          : undefined,
         access: filters.access || undefined,
         per_page: 24,
       },
@@ -246,6 +268,12 @@ watch(
 )
 
 onMounted(() => {
+  setListPageMeta({
+    title: 'آزمون‌های استخدامی آنلاین | جاب‌آزمون',
+    description:
+      'آزمون‌های تمرینی و سنجش آمادگی استخدام — سوالات چندگزینه‌ای با پاسخنامه و تحلیل عملکرد',
+    path: '/exams',
+  })
   load()
   loadClassifications()
 })

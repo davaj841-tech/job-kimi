@@ -375,15 +375,21 @@ class JobAggregatorPhase7ScheduleTest extends TestCase
     public function test_laravel_scheduler_registers_aggregate_dispatch_every_minute(): void
     {
         $events = app(Schedule::class)->events();
-        $found = collect($events)->contains(
-            fn ($e) => str_contains($e->command ?? $e->description ?? '', 'jobs:aggregate-dispatch')
-                || str_contains(json_encode($e), 'jobs:aggregate-dispatch')
-        );
+        // Shared-hosting schedule uses Schedule::call(...)->name('jobs-aggregate-dispatch')
+        // (not Schedule::command), so $e->command is null — match the named callback.
+        $found = collect($events)->contains(function ($e) {
+            $haystack = implode(' ', array_filter([
+                (string) ($e->command ?? ''),
+                (string) ($e->description ?? ''),
+                method_exists($e, 'getSummaryForDisplay') ? (string) $e->getSummaryForDisplay() : '',
+            ]));
 
-        $this->assertTrue(
-            $found || collect($events)->contains(fn ($e) => property_exists($e, 'command') && str_contains((string) $e->command, 'aggregate-dispatch')),
-            'Expected jobs:aggregate-dispatch on the Laravel schedule'
-        );
+            return str_contains($haystack, 'jobs-aggregate-dispatch')
+                || str_contains($haystack, 'jobs:aggregate-dispatch')
+                || str_contains($haystack, 'aggregate-dispatch');
+        });
+
+        $this->assertTrue($found, 'Expected jobs-aggregate-dispatch on the Laravel schedule');
     }
 
     public function test_manual_dispatch_now_endpoint_queues_without_sync_crawl(): void

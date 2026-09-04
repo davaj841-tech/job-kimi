@@ -15,6 +15,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default gateway name (fallback when DB default is empty)
+    |--------------------------------------------------------------------------
+    */
+    'default_gateway' => env('PAYMENT_GATEWAY', 'zarinpal'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Amount unit
+    |--------------------------------------------------------------------------
+    |
+    | All wallet/subscription/PDF amounts and ZarinPal IRR requests use rials.
+    | Do not convert in controllers or the frontend.
+    |
+    */
+    'amount_unit' => 'rial',
+    'currency' => 'IRR',
+
+    /*
+    |--------------------------------------------------------------------------
     | Pending payment timeout
     |--------------------------------------------------------------------------
     |

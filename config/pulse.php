@@ -43,7 +43,7 @@ return [
     |
     */
 
-    'enabled' => env('PULSE_ENABLED', true),
+    'enabled' => env('PULSE_ENABLED', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -169,6 +169,7 @@ return [
         Recorders\Servers::class => [
             'server_name' => env('PULSE_SERVER_NAME', gethostname()),
             'directories' => explode(':', env('PULSE_SERVER_DIRECTORIES', '/')),
+            'enabled' => env('PULSE_SERVERS_ENABLED', false),
         ],
 
         Recorders\SlowJobs::class => [

@@ -90,6 +90,12 @@ function toFormData(payload: Record<string, unknown> | null | undefined) {
   const form = new FormData()
   Object.entries(payload || {}).forEach(([key, value]) => {
     if (value === null || value === undefined || value === '') return
+    if (key === 'extra_files' && Array.isArray(value)) {
+      value.forEach((file) => {
+        if (file instanceof File) form.append('extra_files[]', file)
+      })
+      return
+    }
     if (value instanceof File) {
       form.append(key, value)
       return

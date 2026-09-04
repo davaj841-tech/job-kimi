@@ -2,10 +2,13 @@
 
 namespace App\Services\Payment;
 
+use App\Models\Setting;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
-class ZarinPalGateway implements PaymentGatewayInterface
+class ZarinPalGateway extends AbstractPaymentGateway
 {
     public function getName(): string
     {
@@ -17,26 +20,48 @@ class ZarinPalGateway implements PaymentGatewayInterface
         return 'زرین‌پال';
     }
 
+    public function requiredCredentialKeys(): array
+    {
+        return ['merchant_id'];
+    }
+
     protected function sandbox(): bool
     {
+        $fromSetting = Setting::getFilled('zarinpal_sandbox', null);
+        if ($fromSetting !== null && $fromSetting !== '') {
+            return filter_var($fromSetting, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $fromRow = $this->credential('sandbox');
+        if ($fromRow !== '') {
+            return filter_var($fromRow, FILTER_VALIDATE_BOOLEAN);
+        }
+
         return (bool) config('services.zarinpal.sandbox', false);
     }
 
     protected function apiBase(): string
     {
-        return $this->sandbox()
-            ? 'https://sandbox.zarinpal.com'
-            : 'https://payment.zarinpal.com';
-    }
+        if ($this->sandbox()) {
+            return rtrim((string) config('services.zarinpal.sandbox_base_url', 'https://sandbox.zarinpal.com'), '/');
+        }
 
-    protected function startPayBase(): string
-    {
-        return $this->apiBase();
+        $configured = config('services.zarinpal.base_url');
+        if (filled($configured)) {
+            return rtrim((string) $configured, '/');
+        }
+
+        return 'https://payment.zarinpal.com';
     }
 
     protected function merchantId(): string
     {
-        return (string) config('services.zarinpal.merchant_id', '');
+        return $this->credential('merchant_id');
+    }
+
+    protected function timeout(): int
+    {
+        return max(5, (int) config('services.zarinpal.timeout', 15));
     }
 
     /**
@@ -66,10 +91,14 @@ class ZarinPalGateway implements PaymentGatewayInterface
 
     public function request(int $amount, string $description, string $callbackUrl, array $meta = []): array
     {
+        if ($amount < 1000) {
+            return ['authority' => null, 'payment_url' => null, 'error' => 'مبلغ پرداخت نامعتبر است.'];
+        }
+
         $merchantId = $this->merchantId();
 
         if (blank($merchantId)) {
-            return ['authority' => null, 'payment_url' => null, 'error' => 'merchant_id زرین‌پال تنظیم نشده است.'];
+            return ['authority' => null, 'payment_url' => null, 'error' => 'اطلاعات اتصال این درگاه کامل نشده است.'];
         }
 
         $payload = [
@@ -77,15 +106,20 @@ class ZarinPalGateway implements PaymentGatewayInterface
             'amount' => $amount,
             'callback_url' => $callbackUrl,
             'description' => mb_substr($description, 0, 500),
-            'currency' => 'IRR',
+            'currency' => (string) config('services.zarinpal.currency', 'IRR'),
         ];
         $metadata = $this->metadata($meta);
         if ($metadata !== []) {
             $payload['metadata'] = $metadata;
         }
 
+        $started = microtime(true);
+
         try {
-            $response = Http::acceptJson()->asJson()->timeout(30)
+            $response = Http::acceptJson()
+                ->asJson()
+                ->timeout($this->timeout())
+                ->connectTimeout(min(5, $this->timeout()))
                 ->post($this->apiBase().'/pg/v4/payment/request.json', $payload);
 
             $data = $response->json('data') ?? [];
@@ -100,6 +134,8 @@ class ZarinPalGateway implements PaymentGatewayInterface
                 Log::warning('ZarinPal request failed', [
                     'http' => $response->status(),
                     'code' => $code,
+                    'sandbox' => $this->sandbox(),
+                    'duration_ms' => (int) ((microtime(true) - $started) * 1000),
                 ]);
 
                 return ['authority' => null, 'payment_url' => null, 'error' => is_string($error) ? $error : 'خطا در ایجاد درخواست پرداخت.'];
@@ -107,11 +143,21 @@ class ZarinPalGateway implements PaymentGatewayInterface
 
             return [
                 'authority' => $authority,
-                'payment_url' => $this->startPayBase().'/pg/StartPay/'.$authority,
+                'payment_url' => $this->apiBase().'/pg/StartPay/'.$authority,
                 'error' => null,
             ];
-        } catch (\Throwable $e) {
-            Log::error('ZarinPal request exception', ['error' => $e->getMessage()]);
+        } catch (ConnectionException $e) {
+            Log::warning('ZarinPal request timeout/connection', [
+                'exception' => class_basename($e),
+                'sandbox' => $this->sandbox(),
+            ]);
+
+            return ['authority' => null, 'payment_url' => null, 'error' => 'ارتباط با درگاه پرداخت برقرار نشد.'];
+        } catch (Throwable $e) {
+            Log::error('ZarinPal request exception', [
+                'exception' => class_basename($e),
+                'sandbox' => $this->sandbox(),
+            ]);
 
             return ['authority' => null, 'payment_url' => null, 'error' => 'ارتباط با درگاه پرداخت برقرار نشد.'];
         }
@@ -119,18 +165,28 @@ class ZarinPalGateway implements PaymentGatewayInterface
 
     public function verify(string $authority, int $amount, array $meta = []): array
     {
+        if ($amount < 1000 || $authority === '') {
+            return ['success' => false, 'ref_id' => null, 'error' => 'اطلاعات پرداخت نامعتبر است.'];
+        }
+
         $merchantId = $this->merchantId();
 
         if (blank($merchantId)) {
-            return ['success' => false, 'ref_id' => null, 'error' => 'merchant_id زرین‌پال تنظیم نشده است.'];
+            return ['success' => false, 'ref_id' => null, 'error' => 'اطلاعات اتصال این درگاه کامل نشده است.'];
         }
 
+        $started = microtime(true);
+
         try {
-            $response = Http::acceptJson()->asJson()->timeout(30)->post($this->apiBase().'/pg/v4/payment/verify.json', [
-                'merchant_id' => $merchantId,
-                'amount' => $amount,
-                'authority' => $authority,
-            ]);
+            $response = Http::acceptJson()
+                ->asJson()
+                ->timeout($this->timeout())
+                ->connectTimeout(min(5, $this->timeout()))
+                ->post($this->apiBase().'/pg/v4/payment/verify.json', [
+                    'merchant_id' => $merchantId,
+                    'amount' => $amount,
+                    'authority' => $authority,
+                ]);
 
             $data = $response->json('data') ?? [];
             $code = (int) ($data['code'] ?? 0);
@@ -138,6 +194,7 @@ class ZarinPalGateway implements PaymentGatewayInterface
             if ($paid !== null && (int) $paid !== $amount) {
                 Log::warning('ZarinPal verify amount mismatch', [
                     'expected' => $amount,
+                    'duration_ms' => (int) ((microtime(true) - $started) * 1000),
                 ]);
 
                 return ['success' => false, 'ref_id' => null, 'error' => 'مبلغ پرداخت با تراکنش همخوانی ندارد'];
@@ -155,9 +212,23 @@ class ZarinPalGateway implements PaymentGatewayInterface
                 ?? data_get($response->json(), 'errors.0.message')
                 ?? 'پرداخت ناموفق بود';
 
+            Log::warning('ZarinPal verify failed', [
+                'http' => $response->status(),
+                'code' => $code,
+                'duration_ms' => (int) ((microtime(true) - $started) * 1000),
+            ]);
+
             return ['success' => false, 'ref_id' => null, 'error' => is_string($message) ? $message : 'پرداخت ناموفق بود'];
-        } catch (\Throwable $e) {
-            Log::error('ZarinPal verify exception', ['error' => $e->getMessage()]);
+        } catch (ConnectionException $e) {
+            Log::warning('ZarinPal verify timeout/connection', [
+                'exception' => class_basename($e),
+            ]);
+
+            return ['success' => false, 'ref_id' => null, 'error' => 'ارتباط با درگاه پرداخت برقرار نشد.'];
+        } catch (Throwable $e) {
+            Log::error('ZarinPal verify exception', [
+                'exception' => class_basename($e),
+            ]);
 
             return ['success' => false, 'ref_id' => null, 'error' => 'ارتباط با درگاه پرداخت برقرار نشد.'];
         }

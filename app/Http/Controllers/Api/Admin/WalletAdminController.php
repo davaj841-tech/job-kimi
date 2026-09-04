@@ -81,11 +81,18 @@ class WalletAdminController extends BaseController
             ->pluck('total', 'user_id');
 
         $data = $items->getCollection()->map(function (User $user) use ($deposits, $withdrawals): array {
+            $reconcile = $this->walletService->reconcile($user);
+
             return [
                 'id' => $user->id,
                 'name' => $user->name,
                 'mobile' => $user->mobile,
                 'balance' => (int) $user->wallet_balance,
+                'ledger_total' => $reconcile['ledger'],
+                'reconciled' => $reconcile['ok'],
+                'wallet_status' => $user->walletStatus(),
+                'wallet_frozen' => $user->isWalletFrozen(),
+                'wallet_frozen_at' => $user->wallet_frozen_at?->toIso8601String(),
                 'total_charged' => (int) ($deposits[$user->id] ?? 0),
                 'total_withdrawn' => (int) ($withdrawals[$user->id] ?? 0),
                 'last_transaction_at' => $user->last_transaction_at,
@@ -189,5 +196,117 @@ class WalletAdminController extends BaseController
             'balance' => $this->walletService->getBalance($user),
             'transaction' => new TransactionResource($tx),
         ], 'مبلغ از کیف پول کسر شد.');
+    }
+
+    public function freeze(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $admin = $request->user();
+
+        $user = \Illuminate\Support\Facades\DB::transaction(function () use ($id, $data, $admin) {
+            $locked = User::query()->whereKey($id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->isWalletFrozen()) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'reason' => ['کیف پول از قبل مسدود است.'],
+                ]);
+            }
+
+            User::query()->whereKey($locked->id)->update(['wallet_frozen_at' => now()]);
+            $locked->refresh();
+
+            app(AuditLogService::class)->log('wallet.freeze', $locked, [
+                'wallet_frozen_at' => null,
+            ], [
+                'reason' => $data['reason'],
+                'wallet_frozen_at' => $locked->wallet_frozen_at?->toIso8601String(),
+                'target_user_id' => $locked->id,
+                'admin_id' => $admin?->id,
+            ], $admin?->id);
+
+            return $locked;
+        });
+
+        return $this->successResponse([
+            'wallet_status' => $user->walletStatus(),
+            'wallet_frozen_at' => $user->wallet_frozen_at?->toIso8601String(),
+        ], 'کیف پول مسدود شد.');
+    }
+
+    public function unfreeze(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $admin = $request->user();
+
+        $user = \Illuminate\Support\Facades\DB::transaction(function () use ($id, $data, $admin) {
+            $locked = User::query()->whereKey($id)->lockForUpdate()->firstOrFail();
+
+            if (! $locked->isWalletFrozen()) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'reason' => ['کیف پول از قبل فعال است.'],
+                ]);
+            }
+
+            $previous = $locked->wallet_frozen_at?->toIso8601String();
+            User::query()->whereKey($locked->id)->update(['wallet_frozen_at' => null]);
+            $locked->refresh();
+
+            app(AuditLogService::class)->log('wallet.unfreeze', $locked, [
+                'wallet_frozen_at' => $previous,
+            ], [
+                'reason' => $data['reason'],
+                'target_user_id' => $locked->id,
+                'admin_id' => $admin?->id,
+            ], $admin?->id);
+
+            return $locked;
+        });
+
+        return $this->successResponse([
+            'wallet_status' => $user->walletStatus(),
+            'wallet_frozen_at' => null,
+        ], 'کیف پول فعال شد.');
+    }
+
+    public function ledger(Request $request, int $id): JsonResponse
+    {
+        $user = User::query()->findOrFail($id);
+        $items = WalletLedger::query()
+            ->where('user_id', $user->id)
+            ->orderByDesc('id')
+            ->paginate((int) $request->query('per_page', 30));
+
+        return $this->successResponse([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'mobile' => $user->mobile,
+                'balance' => (int) $user->wallet_balance,
+                'wallet_status' => $user->walletStatus(),
+            ],
+            'data' => $items->getCollection()->map(fn (WalletLedger $row) => [
+                'id' => $row->id,
+                'direction' => $row->direction,
+                'amount' => (int) $row->amount,
+                'balance_after' => (int) $row->balance_after,
+                'type' => $row->type,
+                'reference' => $row->reference,
+                'description' => $row->description,
+                'transaction_id' => $row->transaction_id,
+                'created_at' => $row->created_at?->toIso8601String(),
+            ])->values(),
+            'meta' => [
+                'current_page' => $items->currentPage(),
+                'last_page' => $items->lastPage(),
+                'per_page' => $items->perPage(),
+                'total' => $items->total(),
+            ],
+        ]);
     }
 }

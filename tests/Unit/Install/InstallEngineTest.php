@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Install;
 
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\View\Compilers\BladeCompiler;
 use InstallEngine;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -34,19 +36,27 @@ final class InstallEngineTest extends TestCase
         $engine = $this->engine();
         $reqs = $engine->requirements();
         $labels = array_column($reqs, 'label');
+        $minPhp = $engine->resolvedMinPhp();
 
-        $this->assertContains('PHP >= '.InstallEngine::MIN_PHP, $labels);
+        $this->assertContains('PHP >= '.$minPhp, $labels);
 
         $phpItem = null;
         foreach ($reqs as $item) {
-            if ($item['label'] === 'PHP >= '.InstallEngine::MIN_PHP) {
+            if ($item['label'] === 'PHP >= '.$minPhp) {
                 $phpItem = $item;
                 break;
             }
         }
         $this->assertNotNull($phpItem);
-        $this->assertSame(version_compare(PHP_VERSION, InstallEngine::MIN_PHP, '>='), $phpItem['ok']);
+        $this->assertSame(version_compare(PHP_VERSION, $minPhp, '>='), $phpItem['ok']);
         $this->assertFalse($phpItem['warn']);
+    }
+
+    public function test_resolved_min_php_reads_composer_constraint(): void
+    {
+        $engine = $this->engine();
+        $this->assertMatchesRegularExpression('/^\d+\.\d+\.\d+$/', $engine->resolvedMinPhp());
+        $this->assertTrue(version_compare($engine->resolvedMinPhp(), '8.0.0', '>='));
     }
 
     public function test_requirements_reports_missing_package(): void
@@ -525,11 +535,116 @@ final class InstallEngineTest extends TestCase
         $this->assertDirectoryDoesNotExist($lib);
     }
 
+    public function test_job_path_uses_installation_root_not_hardcoded_absolute(): void
+    {
+        $engine = $this->engine();
+        $expected = $this->tmpRoot.DIRECTORY_SEPARATOR.'job'
+            .DIRECTORY_SEPARATOR.'storage'
+            .DIRECTORY_SEPARATOR.'framework'
+            .DIRECTORY_SEPARATOR.'views';
+
+        $this->assertSame($expected, $engine->jobPath('storage/framework/views'));
+        $this->assertSame($expected, $engine->jobPath('\\storage\\framework\\views'));
+    }
+
+    public function test_ensure_framework_directories_creates_missing_cache_paths_before_boot(): void
+    {
+        $job = $this->tmpRoot.DIRECTORY_SEPARATOR.'job';
+        mkdir($job, 0755, true);
+        // Simulate incomplete ZIP extract: only top-level storage, no framework children.
+        mkdir($job.DIRECTORY_SEPARATOR.'storage', 0755, true);
+
+        $engine = $this->engine();
+        $this->assertDirectoryDoesNotExist($engine->jobPath('storage/framework/views'));
+        $this->assertDirectoryDoesNotExist($engine->jobPath('storage/framework/sessions'));
+        $this->assertDirectoryDoesNotExist($engine->jobPath('storage/framework/cache'));
+        $this->assertDirectoryDoesNotExist($engine->jobPath('bootstrap/cache'));
+
+        $engine->ensureFrameworkDirectories();
+
+        foreach ($engine->requiredWritableRelativePaths() as $rel) {
+            $path = $engine->jobPath($rel);
+            $this->assertDirectoryExists($path, 'Missing required path: '.$rel);
+            $this->assertTrue(is_writable($path), 'Not writable: '.$rel);
+        }
+
+        // Idempotent
+        $engine->ensureFrameworkDirectories();
+        $this->assertDirectoryExists($engine->jobPath('storage/framework/views'));
+    }
+
+    public function test_permission_report_includes_nested_framework_paths(): void
+    {
+        mkdir($this->tmpRoot.DIRECTORY_SEPARATOR.'job', 0755, true);
+        $engine = $this->engine();
+        $report = $engine->permissionReport();
+        $labels = array_column($report['items'], 'label');
+
+        $this->assertContains('storage/framework/cache', $labels);
+        $this->assertContains('storage/framework/sessions', $labels);
+        $this->assertContains('storage/framework/views', $labels);
+        $this->assertContains('storage/logs', $labels);
+        $this->assertContains('bootstrap/cache', $labels);
+        $this->assertTrue($report['ok']);
+    }
+
+    /**
+     * Regression: Laravel throws "Please provide a valid cache path." when view compiled dir is missing/empty.
+     */
+    public function test_blade_compiler_rejects_empty_cache_path_but_accepts_ensured_views_dir(): void
+    {
+        if (! class_exists(BladeCompiler::class)) {
+            $this->markTestSkipped('Illuminate BladeCompiler not available.');
+        }
+
+        $fs = new Filesystem;
+
+        try {
+            new BladeCompiler($fs, '');
+            $this->fail('Expected InvalidArgumentException for empty cache path.');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertStringContainsString('Please provide a valid cache path.', $e->getMessage());
+        }
+
+        mkdir($this->tmpRoot.DIRECTORY_SEPARATOR.'job', 0755, true);
+        $engine = $this->engine();
+        $engine->ensureFrameworkDirectories();
+        $compiled = $engine->jobPath('storage/framework/views');
+
+        $compiler = new BladeCompiler($fs, $compiled);
+        $ref = new \ReflectionProperty($compiler, 'cachePath');
+        $ref->setAccessible(true);
+        $this->assertSame($compiled, $ref->getValue($compiler));
+        $this->assertDirectoryExists($compiled);
+    }
+
+    public function test_installer_source_ensures_dirs_before_laravel_boot_and_migrate(): void
+    {
+        $src = (string) file_get_contents(__DIR__.'/../../../cpanel-installer/lib/InstallEngine.php');
+        $ensurePos = strpos($src, 'ensureFrameworkDirectories()');
+        $migratePos = strpos($src, "artisan('migrate'");
+        $laravelAppPos = strpos($src, 'private function laravelApp()');
+        $this->assertNotFalse($ensurePos);
+        $this->assertNotFalse($migratePos);
+        $this->assertNotFalse($laravelAppPos);
+        $this->assertLessThan($migratePos, $ensurePos);
+
+        $laravelFn = substr($src, (int) $laravelAppPos);
+        $this->assertMatchesRegularExpression(
+            '/function laravelApp\(\)[\s\S]*?ensureFrameworkDirectories\(\)/',
+            $laravelFn
+        );
+    }
+
     private function engine(): InstallEngine
     {
         $public = $this->tmpRoot.DIRECTORY_SEPARATOR.'public_html';
-        mkdir($public, 0755, true);
-        mkdir($public.DIRECTORY_SEPARATOR.'package', 0755, true);
+        if (! is_dir($public)) {
+            mkdir($public, 0755, true);
+        }
+        if (! is_dir($public.DIRECTORY_SEPARATOR.'package')) {
+            mkdir($public.DIRECTORY_SEPARATOR.'package', 0755, true);
+        }
 
         return new InstallEngine(
             $public,

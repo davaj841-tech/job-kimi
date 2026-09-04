@@ -9,6 +9,7 @@ use App\Services\BackupService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
@@ -107,10 +108,7 @@ final class UpdateManager
             $backupId = 'upd-'.$update->uuid;
             $update->backup_id = $backupId;
 
-            $fullBackup = $this->backups->createBackup();
-            $update->full_backup_path = $fullBackup;
-            $update->appendLog('بکاپ کامل ایجاد شد: '.basename($fullBackup));
-
+            // Files backup first — rollback must work even when full DB backup fails (common on cPanel).
             $filesBackup = $this->backupTouchedFiles(
                 $backupId,
                 $inspected['files'],
@@ -120,7 +118,24 @@ final class UpdateManager
             $update->save();
             $update->appendLog('بکاپ فایل‌های هدف ایجاد شد.');
 
-            if ((! empty($manifest['migration_required']) || $inspected['migrations'] !== []) && $update->full_backup_path) {
+            $migrationNeeded = ! empty($manifest['migration_required']) || $inspected['migrations'] !== [];
+
+            try {
+                $fullBackup = $this->backups->createBackup();
+                $update->full_backup_path = $fullBackup;
+                $update->save();
+                $update->appendLog('بکاپ کامل ایجاد شد: '.basename($fullBackup));
+            } catch (Throwable $backupError) {
+                if ($migrationNeeded) {
+                    throw $backupError;
+                }
+                $update->appendLog(
+                    'هشدار: بکاپ کامل DB انجام نشد (به‌روزرسانی فقط فایل ادامه می‌یابد): '.$backupError->getMessage(),
+                    'warning'
+                );
+            }
+
+            if ($migrationNeeded && $update->full_backup_path) {
                 $dbBackup = $this->extractDatabaseFromFullBackup($update->full_backup_path, $backupId);
                 $update->database_backup_path = $dbBackup;
                 $update->save();
@@ -479,11 +494,25 @@ final class UpdateManager
 
     private function refreshCaches(): void
     {
-        Artisan::call('optimize:clear');
-        if (app()->environment('production')) {
-            Artisan::call('config:cache');
-            Artisan::call('route:cache');
-            Artisan::call('view:cache');
+        try {
+            Artisan::call('optimize:clear');
+        } catch (Throwable $e) {
+            Log::warning('Update optimize:clear failed', ['error' => $e->getMessage()]);
+        }
+
+        if (! app()->environment('production')) {
+            return;
+        }
+
+        foreach (['config:cache', 'route:cache', 'view:cache'] as $command) {
+            try {
+                $exit = Artisan::call($command);
+                if ($exit !== 0) {
+                    Log::warning("Update {$command} returned non-zero", ['exit' => $exit, 'output' => Artisan::output()]);
+                }
+            } catch (Throwable $e) {
+                Log::warning("Update {$command} failed", ['error' => $e->getMessage()]);
+            }
         }
     }
 

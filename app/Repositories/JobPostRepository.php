@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\JobClassification;
 use App\Models\JobPost;
 use App\Models\User;
+use App\Support\JobClassificationQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -24,9 +25,7 @@ class JobPostRepository
 
         $this->applyLocationFilters($query, $filters);
 
-        if (! empty($filters['job_classification_id'])) {
-            $query->where('job_classification_id', $filters['job_classification_id']);
-        }
+        JobClassificationQuery::applyClassificationFilter($query, $filters);
 
         if (isset($filters['is_featured']) && $filters['is_featured'] !== '') {
             $query->where('is_featured', filter_var($filters['is_featured'], FILTER_VALIDATE_BOOLEAN));
@@ -44,11 +43,6 @@ class JobPostRepository
             $query->where('employment_type', $filters['employment_type']);
         }
 
-        $query->where(function ($q) {
-            $q->whereNull('registration_deadline')
-                ->orWhereDate('registration_deadline', '>=', now()->toDateString());
-        });
-
         $sort = $filters['sort'] ?? 'newest';
         if ($sort === 'deadline') {
             $query->orderByRaw('registration_deadline IS NULL')
@@ -56,6 +50,7 @@ class JobPostRepository
                 ->orderByDesc('is_featured');
         } else {
             $query->orderByDesc('is_featured')
+                ->orderByDesc('published_at')
                 ->orderByDesc('created_at');
         }
 
@@ -75,10 +70,6 @@ class JobPostRepository
             ])
             ->withCount(['exams as related_exams_count', 'pdfProducts as related_pdfs_count'])
             ->where('status', 'approved')
-            ->where(function ($q) {
-                $q->whereNull('registration_deadline')
-                    ->orWhereDate('registration_deadline', '>=', now()->toDateString());
-            })
             ->find($id);
     }
 
@@ -115,9 +106,7 @@ class JobPostRepository
 
         $this->applyLocationFilters($query, $filters);
 
-        if (! empty($filters['job_classification_id'])) {
-            $query->where('job_classification_id', $filters['job_classification_id']);
-        }
+        JobClassificationQuery::applyClassificationFilter($query, $filters);
 
         if (! empty($filters['deadline_from'])) {
             $query->whereDate('registration_deadline', '>=', $filters['deadline_from']);

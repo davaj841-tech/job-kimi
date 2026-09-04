@@ -38,8 +38,26 @@
                 @click="downloadPdf"
               >
                 <ArrowDownTrayIcon class="h-5 w-5" />
-                دانلود فایل
+                دانلود PDF اصلی
               </button>
+              <div
+                v-if="purchasedAttachments.length"
+                class="rounded-xl border border-surface-line bg-surface p-3"
+              >
+                <p class="mb-2 text-xs font-bold text-desk-muted">
+                  فایل‌های تکمیلی
+                </p>
+                <button
+                  v-for="file in purchasedAttachments"
+                  :key="file.index"
+                  type="button"
+                  class="mb-1.5 flex w-full items-center justify-between rounded-lg bg-surface-page px-2.5 py-2 text-xs font-medium last:mb-0"
+                  @click="downloadAttachment(file)"
+                >
+                  <span class="truncate">{{ file.name }}</span>
+                  <ArrowDownTrayIcon class="h-4 w-4 shrink-0" />
+                </button>
+              </div>
               <p
                 v-if="pdf.is_free && !pdf.is_purchased"
                 class="text-center text-xs text-desk-muted"
@@ -219,6 +237,7 @@ import {
   toFaDigits,
   unwrapItem,
 } from '../../utils/format'
+import { setPdfMeta } from '../../services/meta'
 
 const route = useRoute()
 const router = useRouter()
@@ -252,6 +271,10 @@ const descriptionHtml = computed(() => {
   if (d.includes('<')) return d
   return `<p>${d.replace(/\n/g, '<br/>')}</p>`
 })
+const purchasedAttachments = computed(() => {
+  if (!pdf.value?.is_purchased && Number(pdf.value?.price) !== 0) return []
+  return (pdf.value?.attachments || []).filter((file) => file?.download_url)
+})
 
 async function loadWallet() {
   try {
@@ -268,6 +291,7 @@ async function loadWallet() {
 async function load() {
   const { data } = await api.get(`/pdf-products/${route.params.id}`)
   pdf.value = unwrapItem(data)
+  setPdfMeta(pdf.value)
 }
 
 onMounted(async () => {
@@ -382,6 +406,24 @@ async function downloadPdf() {
     a.click()
   } catch (e) {
     toast.error(apiErrorMessage(e, 'دانلود ممکن نشد.'))
+  }
+}
+
+async function downloadAttachment(file) {
+  if (file?.index == null) return
+  try {
+    const { data } = await api.get(
+      `/pdf-products/${route.params.id}/attachments/${file.index}/download`,
+      { responseType: 'blob' }
+    )
+    const url = URL.createObjectURL(data)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = file.name || 'attachment'
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    toast.error(apiErrorMessage(e, 'دانلود پیوست ممکن نشد.'))
   }
 }
 </script>

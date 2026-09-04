@@ -2,6 +2,9 @@
   <div class="space-y-4">
     <div v-for="field in fields" :key="field.key" class="space-y-1.5">
       <label class="label">{{ field.label }}</label>
+      <p v-if="field.hint" class="text-[11px] leading-5 text-slate-400">
+        {{ field.hint }}
+      </p>
 
       <input
         v-if="
@@ -19,8 +22,13 @@
         "
         :dir="field.ltr ? 'ltr' : undefined"
         class="field"
+        :class="field.ltr ? 'font-mono text-xs' : ''"
         :value="modelValue[field.key] ?? ''"
-        :placeholder="field.placeholder || ''"
+        :placeholder="
+          field.placeholder ||
+          (field.secret ? 'برای تغییر، کلید جدید را وارد کنید' : '')
+        "
+        @focus="onSecretFocus(field, $event)"
         @input="set(field.key, $event.target.value)"
       />
 
@@ -155,6 +163,22 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'dirty', 'upload'])
+
+function isMaskedSecret(value) {
+  if (value == null || value === '') return false
+  const v = String(value)
+  if (v === '********' || v === '****') return true
+  if (/^[0-9a-f]{8}-\*{4}-\*{4}-\*{4}-[0-9a-f]{12}$/i.test(v)) return true
+  return /^[^*]{1,8}\*{4,}[^*]{0,8}$/.test(v)
+}
+
+function onSecretFocus(field, event) {
+  if (!field.secret) return
+  const current = props.modelValue?.[field.key]
+  if (!isMaskedSecret(current)) return
+  set(field.key, '')
+  event.target.value = ''
+}
 
 function set(key, value) {
   const current =

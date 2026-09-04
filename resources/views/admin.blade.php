@@ -10,9 +10,9 @@
   <script>
     (function () {
       try {
-        if (localStorage.getItem('ja_theme') === 'dark') {
-          document.documentElement.classList.add('dark');
-        }
+        var theme = localStorage.getItem('ja_theme');
+        var dark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.classList.add('dark');
       } catch (e) {}
     })();
   </script>

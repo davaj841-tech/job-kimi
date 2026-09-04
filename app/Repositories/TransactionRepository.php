@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\WalletLedger;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -17,9 +18,7 @@ class TransactionRepository
     {
         $query = Transaction::query()->where('user_id', $user->id);
 
-        if (! empty($filters['type'])) {
-            $query->where('type', $filters['type']);
-        }
+        $this->applyTypeFilter($query, $filters);
 
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -34,6 +33,36 @@ class TransactionRepository
         }
 
         return $query->latest()->paginate($filters['per_page'] ?? 15);
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<Transaction>  $query
+     * @param  array<string, mixed>  $filters
+     */
+    private function applyTypeFilter($query, array $filters): void
+    {
+        $type = $filters['type'] ?? $filters['category'] ?? null;
+        if ($type === null || $type === '') {
+            return;
+        }
+
+        match ($type) {
+            'deposit' => $query
+                ->where('type', 'deposit')
+                ->whereDoesntHave('walletLedger', fn ($q) => $q->whereIn('type', [
+                    WalletLedger::TYPE_ADMIN_CREDIT,
+                    WalletLedger::TYPE_ADMIN_DEBIT,
+                ])),
+            'purchase' => $query->where('type', 'purchase'),
+            'withdrawal' => $query->where('type', 'withdrawal'),
+            'refund' => $query->where('type', 'refund'),
+            'bonus' => $query->whereHas('walletLedger', fn ($q) => $q->where('type', WalletLedger::TYPE_ADMIN_CREDIT)),
+            'adjustment' => $query->whereHas('walletLedger', fn ($q) => $q->whereIn('type', [
+                WalletLedger::TYPE_ADMIN_CREDIT,
+                WalletLedger::TYPE_ADMIN_DEBIT,
+            ])),
+            default => $query->where('type', $type),
+        };
     }
 
     /**

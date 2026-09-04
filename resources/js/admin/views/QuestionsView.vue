@@ -15,7 +15,13 @@
           📚 مدیریت دروس
         </button>
         <button class="btn-muted" @click="importOpen = true">ورود Excel</button>
+        <button class="btn-muted" @click="fullExamImportOpen = true">
+          ورود آزمون کامل
+        </button>
         <button class="btn-muted" @click="onExport">خروجی Excel</button>
+        <button class="btn-muted" @click="toggleDuplicates">
+          {{ showDuplicates ? 'بازگشت به بانک' : 'سوالات تکراری بین آزمون‌ها' }}
+        </button>
         <button class="btn-orange" @click="aiOpen = true">تولید با AI</button>
       </div>
     </div>
@@ -62,6 +68,145 @@
       </div>
     </div>
 
+    <div v-if="showDuplicates" class="rounded-xl bg-white p-4 shadow-sm">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">
+            سوالات تکراری بین آزمون‌های مختلف
+          </h2>
+          <p class="mt-1 text-xs text-slate-500">
+            {{ fa(duplicateMeta.total_groups || 0) }} گروه تکراری —
+            {{ fa(duplicateMeta.total_questions || 0) }} سوال
+          </p>
+        </div>
+        <button
+          class="btn-muted"
+          :disabled="duplicatesLoading"
+          @click="loadDuplicates"
+        >
+          {{ duplicatesLoading ? '...' : 'بروزرسانی' }}
+        </button>
+      </div>
+
+      <div
+        v-if="duplicatesLoading"
+        class="py-8 text-center text-sm text-slate-500"
+      >
+        در حال بررسی تکراری‌ها...
+      </div>
+      <div
+        v-else-if="!duplicateGroups.length"
+        class="py-8 text-center text-sm text-slate-500"
+      >
+        سوال تکراری بین آزمون‌های مختلف یافت نشد.
+      </div>
+      <div v-else class="space-y-3">
+        <div
+          class="flex flex-wrap items-end gap-3 rounded-xl border border-orange-100 bg-orange-50/50 p-3"
+        >
+          <div class="min-w-[12rem] flex-1">
+            <label class="mb-1 block text-xs font-bold text-slate-600"
+              >اختصاص گروه‌های انتخاب‌شده به آزمون</label
+            >
+            <select v-model="bulkAssignExamId" class="field">
+              <option value="">انتخاب آزمون مقصد</option>
+              <option v-for="e in examsStore.exams" :key="e.id" :value="e.id">
+                {{ e.title }}
+              </option>
+            </select>
+          </div>
+          <button
+            class="btn-orange"
+            :disabled="
+              !bulkAssignExamId || !selectedFingerprints.length || assigning
+            "
+            @click="assignSelectedGroups"
+          >
+            {{ assigning ? 'در حال اختصاص...' : 'اختصاص انتخاب‌شده‌ها' }}
+          </button>
+        </div>
+
+        <div
+          v-for="group in duplicateGroups"
+          :key="group.fingerprint"
+          class="overflow-hidden rounded-xl border border-orange-100"
+        >
+          <div
+            class="flex flex-wrap items-center gap-2 bg-orange-50 px-4 py-2 text-sm font-bold text-orange-800"
+          >
+            <input
+              v-model="selectedFingerprints"
+              type="checkbox"
+              class="h-4 w-4 accent-orange-500"
+              :value="group.fingerprint"
+            />
+            <span>
+              {{ fa(group.count) }} بار در {{ fa(group.exam_count) }} آزمون
+            </span>
+          </div>
+          <p
+            class="border-b border-orange-100 px-4 py-3 text-sm text-slate-700"
+          >
+            {{ group.preview }}
+          </p>
+          <div class="divide-y divide-slate-100">
+            <div
+              v-for="item in group.questions"
+              :key="item.id"
+              class="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm"
+            >
+              <label
+                class="flex min-w-0 flex-1 cursor-pointer items-center gap-2"
+              >
+                <input
+                  v-model="assignSources[group.fingerprint]"
+                  type="radio"
+                  class="h-4 w-4 accent-orange-500"
+                  :name="`src-${group.fingerprint}`"
+                  :value="item.id"
+                />
+                <div>
+                  <p class="font-bold text-slate-800">{{ item.exam_title }}</p>
+                  <p class="text-xs text-slate-500">
+                    سوال #{{ fa(item.id) }} — پاسخ
+                    {{ answerLabel(item.correct_answer) }}
+                  </p>
+                </div>
+              </label>
+              <div class="flex gap-2">
+                <button class="act" @click="openEditById(item.id)">
+                  ویرایش
+                </button>
+                <button class="act" @click="goExamQuestions(item.exam_id)">
+                  آزمون
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            class="flex flex-wrap items-center gap-2 border-t border-orange-100 bg-slate-50 px-4 py-2"
+          >
+            <select
+              v-model="assignTargets[group.fingerprint]"
+              class="field max-w-xs flex-1"
+            >
+              <option value="">آزمون مقصد</option>
+              <option v-for="e in examsStore.exams" :key="e.id" :value="e.id">
+                {{ e.title }}
+              </option>
+            </select>
+            <button
+              class="btn-orange text-xs"
+              :disabled="!assignTargets[group.fingerprint] || assigning"
+              @click="assignGroup(group)"
+            >
+              اختصاص این سوال
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div
       v-if="loadingExams"
       class="rounded-xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm"
@@ -69,7 +214,7 @@
       در حال بارگذاری آزمون‌ها...
     </div>
 
-    <div v-else class="space-y-3">
+    <div v-else-if="!showDuplicates" class="space-y-3">
       <div
         v-for="exam in visibleExams"
         :key="exam.id"
@@ -190,6 +335,12 @@
     @close="importOpen = false"
     @imported="onImport"
   />
+  <FullExamImportModal
+    ref="fullExamImportRef"
+    :open="fullExamImportOpen"
+    @close="fullExamImportOpen = false"
+    @imported="onFullExamImport"
+  />
   <AIGenerateModal
     ref="aiRef"
     :open="aiOpen"
@@ -217,6 +368,7 @@ import adminApi from '../api/client'
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
 import AIGenerateModal from '../components/questions/AIGenerateModal.vue'
 import BulkImportModal from '../components/questions/BulkImportModal.vue'
+import FullExamImportModal from '../components/questions/FullExamImportModal.vue'
 import QuestionModal from '../components/questions/QuestionModal.vue'
 import SubjectManagerModal from '../components/questions/SubjectManagerModal.vue'
 import { useToast } from '../../composables/useToast'
@@ -232,12 +384,23 @@ const toast = useToast()
 
 const modalOpen = ref(false)
 const importOpen = ref(false)
+const fullExamImportOpen = ref(false)
 const aiOpen = ref(false)
 const subjectManagerOpen = ref(false)
 const editing = ref(null)
 const importRef = ref(null)
+const fullExamImportRef = ref(null)
 const aiRef = ref(null)
 const loadingExams = ref(true)
+const showDuplicates = ref(false)
+const duplicatesLoading = ref(false)
+const duplicateGroups = ref([])
+const duplicateMeta = reactive({ total_groups: 0, total_questions: 0 })
+const assignTargets = reactive({})
+const assignSources = reactive({})
+const selectedFingerprints = ref([])
+const bulkAssignExamId = ref('')
+const assigning = ref(false)
 const expanded = ref(new Set())
 const examBuckets = reactive({})
 const confirm = reactive({ open: false, title: '', message: '', action: null })
@@ -391,10 +554,16 @@ async function onImport({ file, exam_id }) {
     importRef.value?.setResult(result)
     const created = result?.created ?? 0
     const skipped = result?.skipped ?? 0
+    const duplicates = result?.duplicates ?? 0
     if (created > 0) {
       toast.success(
-        `${created} سوال وارد شد${skipped ? ` (${skipped} رد شد)` : ''}.`
+        `${created} سوال وارد شد${skipped ? ` (${skipped} رد شد${duplicates ? `، ${duplicates} تکراری` : ''})` : ''}.`
       )
+    } else if (duplicates > 0) {
+      const msg =
+        result?.errors?.[0] || `${duplicates} سوال تکراری بود و وارد نشد.`
+      toast.error(msg)
+      importRef.value?.setError(msg)
     } else {
       toast.error(result?.errors?.[0] || 'هیچ سوالی وارد نشد.')
       importRef.value?.setError(
@@ -420,12 +589,168 @@ async function onImport({ file, exam_id }) {
     toast.error(msg)
   }
 }
+
+async function onFullExamImport({ file }) {
+  fullExamImportRef.value?.setLoading(true)
+  try {
+    const result = await store.importFullExam({ file })
+    fullExamImportRef.value?.setResult(result)
+    const created = result?.created ?? 0
+    const examId = result?.exam?.id
+    if (created > 0 && examId) {
+      toast.success(`آزمون «${result.exam.title}» با ${created} سوال ایجاد شد.`)
+    } else if (examId) {
+      toast.error(
+        result?.errors?.[0] ||
+          'آزمون ساخته شد ولی هیچ سوالی وارد نشد. شیت سوالات را بررسی کنید.'
+      )
+      fullExamImportRef.value?.setError(
+        result?.errors?.[0] || 'هیچ سوالی وارد نشد.'
+      )
+    } else {
+      toast.error(result?.errors?.[0] || 'ورود آزمون کامل ناموفق بود.')
+      fullExamImportRef.value?.setError(
+        result?.errors?.[0] || 'ورود آزمون کامل ناموفق بود.'
+      )
+    }
+    await examsStore.fetchExamOptions().catch(() => {})
+    if (examId) {
+      const next = new Set(expanded.value)
+      next.add(Number(examId))
+      expanded.value = next
+      await loadExamQuestions(examId)
+    }
+  } catch (e) {
+    const data = e.response?.data
+    const msg =
+      data?.errors?.file?.[0] || data?.message || 'ورود آزمون کامل ناموفق بود.'
+    fullExamImportRef.value?.setError(msg)
+    toast.error(msg)
+  }
+}
+
 async function onExport() {
   try {
     await store.exportQuestions()
     toast.success('فایل خروجی آماده شد.')
   } catch (e) {
     toast.error(e.response?.data?.message || 'خروجی ناموفق بود.')
+  }
+}
+
+function toggleDuplicates() {
+  showDuplicates.value = !showDuplicates.value
+  if (showDuplicates.value && !duplicateGroups.value.length) {
+    loadDuplicates()
+  }
+}
+
+async function loadDuplicates() {
+  duplicatesLoading.value = true
+  try {
+    const { data } = await adminApi.get('/admin/questions/duplicates', {
+      params: { per_page: 50 },
+    })
+    const payload = data?.data || data || {}
+    duplicateGroups.value = payload.groups || []
+    duplicateMeta.total_groups = payload.total_groups || 0
+    duplicateMeta.total_questions = payload.total_questions || 0
+    for (const group of duplicateGroups.value) {
+      const fp = group.fingerprint
+      if (!assignSources[fp] && group.questions?.length) {
+        assignSources[fp] = group.questions[0].id
+      }
+    }
+  } catch (e) {
+    toast.error(e.response?.data?.message || 'بارگذاری تکراری‌ها ناموفق بود.')
+  } finally {
+    duplicatesLoading.value = false
+  }
+}
+
+async function openEditById(id) {
+  try {
+    const question = await store.fetchQuestion(id)
+    editing.value = question
+    modalOpen.value = true
+  } catch {
+    toast.error('سوال یافت نشد.')
+  }
+}
+
+function goExamQuestions(examId) {
+  showDuplicates.value = false
+  store.filters.exam_id = String(examId)
+  const next = new Set(expanded.value)
+  next.add(Number(examId))
+  expanded.value = next
+  loadExamQuestions(examId)
+}
+
+function buildSourceMap(fingerprints) {
+  const map = {}
+  for (const fp of fingerprints) {
+    if (assignSources[fp]) {
+      map[fp] = assignSources[fp]
+    }
+  }
+  return map
+}
+
+async function assignGroup(group) {
+  const examId = assignTargets[group.fingerprint]
+  if (!examId) {
+    toast.error('آزمون مقصد را انتخاب کنید.')
+    return
+  }
+  assigning.value = true
+  try {
+    const result = await store.copyToExam({
+      exam_id: examId,
+      fingerprints: [group.fingerprint],
+      source_question_ids: buildSourceMap([group.fingerprint]),
+    })
+    toast.success(
+      result.created > 0
+        ? `${result.created} سوال به آزمون اختصاص یافت.`
+        : 'سوالی اضافه نشد (احتمالاً قبلاً در آزمون وجود دارد).'
+    )
+    await examsStore.fetchExamOptions().catch(() => {})
+    if (examId) {
+      const next = new Set(expanded.value)
+      next.add(Number(examId))
+      expanded.value = next
+      await loadExamQuestions(examId)
+    }
+  } catch (e) {
+    toast.error(e.response?.data?.message || 'اختصاص سوال ناموفق بود.')
+  } finally {
+    assigning.value = false
+  }
+}
+
+async function assignSelectedGroups() {
+  if (!bulkAssignExamId.value || !selectedFingerprints.value.length) return
+  assigning.value = true
+  try {
+    const result = await store.copyToExam({
+      exam_id: bulkAssignExamId.value,
+      fingerprints: selectedFingerprints.value,
+      source_question_ids: buildSourceMap(selectedFingerprints.value),
+    })
+    toast.success(
+      `${result.created} سوال اختصاص یافت${result.skipped ? ` (${result.skipped} رد شد)` : ''}.`
+    )
+    selectedFingerprints.value = []
+    await examsStore.fetchExamOptions().catch(() => {})
+    const next = new Set(expanded.value)
+    next.add(Number(bulkAssignExamId.value))
+    expanded.value = next
+    await loadExamQuestions(bulkAssignExamId.value)
+  } catch (e) {
+    toast.error(e.response?.data?.message || 'اختصاص سوالات ناموفق بود.')
+  } finally {
+    assigning.value = false
   }
 }
 async function onGenerate(params) {

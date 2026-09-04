@@ -128,6 +128,85 @@ final class InstallEngineAuditTest extends TestCase
         $method->invoke($this->engine(), $root);
     }
 
+    /**
+     * Regression for cPanel production failure:
+     * require(/home/.../job/routes/install.php): Failed to open stream: No such file or directory
+     *
+     * bootstrap/app.php loads routes/install.php whenever storage/installed is missing,
+     * which is always true during InstallEngine artisan migrate/seed boot.
+     */
+    public function test_validate_laravel_package_missing_routes_install_php_reproduces_cpanel_error(): void
+    {
+        $bootstrap = (string) file_get_contents(dirname(__DIR__, 3).DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php');
+        $this->assertStringContainsString("base_path('routes/install.php')", $bootstrap);
+        $this->assertStringContainsString("storage_path('installed')", $bootstrap);
+
+        $root = $this->minimalLaravelTree();
+        $installRoutes = $root.DIRECTORY_SEPARATOR.'routes'.DIRECTORY_SEPARATOR.'install.php';
+        $this->assertFileExists($installRoutes);
+        unlink($installRoutes);
+        $this->assertFileDoesNotExist($installRoutes);
+
+        $requiredPath = $root.DIRECTORY_SEPARATOR.'routes'.DIRECTORY_SEPARATOR.'install.php';
+        $captured = null;
+        set_error_handler(static function (int $severity, string $errstr) use (&$captured): bool {
+            $captured = $errstr;
+
+            return true;
+        });
+        try {
+            /** @psalm-suppress UnresolvableInclude */
+            include $requiredPath;
+        } finally {
+            restore_error_handler();
+        }
+        $this->assertNotNull($captured, 'Expected PHP warning when requiring missing routes/install.php');
+        $this->assertStringContainsString('routes'.DIRECTORY_SEPARATOR.'install.php', (string) $captured);
+        $this->assertTrue(
+            str_contains((string) $captured, 'Failed to open stream')
+            || str_contains((string) $captured, 'Failed opening'),
+            'Expected missing-file include warning, got: '.$captured
+        );
+        // Canonical production error text from the cPanel host report (documented for regression).
+        $canonicalCpanelError = 'require(/home/jobazmoo/job/routes/install.php): Failed to open stream: No such file or directory';
+        $this->assertStringContainsString('routes/install.php', $canonicalCpanelError);
+        $this->assertStringContainsString('Failed to open stream', $canonicalCpanelError);
+
+        $method = new ReflectionMethod(InstallEngine::class, 'validateLaravelPackage');
+        $method->setAccessible(true);
+
+        try {
+            $method->invoke($this->engine(), $root);
+            $this->fail('Expected missing routes/install.php exception');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('routes/install.php', $e->getMessage());
+            $this->assertMatchesRegularExpression('/require|بوت|نصب|بسته/u', $e->getMessage());
+        }
+    }
+
+    public function test_validate_laravel_package_accepts_tree_with_routes_install_php(): void
+    {
+        $root = $this->minimalLaravelTree();
+        $method = new ReflectionMethod(InstallEngine::class, 'validateLaravelPackage');
+        $method->setAccessible(true);
+        $method->invoke($this->engine(), $root);
+        $this->assertFileExists($root.DIRECTORY_SEPARATOR.'routes'.DIRECTORY_SEPARATOR.'install.php');
+        $this->assertFileExists($root.DIRECTORY_SEPARATOR.'routes'.DIRECTORY_SEPARATOR.'web.php');
+    }
+
+    public function test_build_script_must_not_deny_routes_install_php(): void
+    {
+        $src = (string) file_get_contents(dirname(__DIR__, 3).DIRECTORY_SEPARATOR.'scripts'.DIRECTORY_SEPARATOR.'build-cpanel-package.php');
+        $this->assertStringContainsString("'routes/install.php'", $src);
+        $this->assertStringContainsString('Do NOT deny bare "install.php"', $src);
+
+        // denyNameExact must not list install.php (that historically dropped routes/install.php from ZIP).
+        if (! preg_match('/\$denyNameExact\s*=\s*\[(.*?)\];/s', $src, $m)) {
+            $this->fail('Could not locate $denyNameExact in build script');
+        }
+        $this->assertStringNotContainsString("'install.php'", $m[1]);
+    }
+
     public function test_validate_laravel_package_missing_vendor_autoload_persian_composer_message(): void
     {
         $root = $this->minimalLaravelTree(withAutoload: false);
@@ -171,6 +250,33 @@ final class InstallEngineAuditTest extends TestCase
             $this->assertStringContainsString('manifest.json', $e->getMessage());
             $this->assertStringContainsString('npm run build', $e->getMessage());
         }
+    }
+
+    public function test_validate_laravel_package_rejects_empty_manifest_json(): void
+    {
+        $root = $this->minimalLaravelTree(withManifest: true);
+        file_put_contents(
+            $root.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'build'.DIRECTORY_SEPARATOR.'manifest.json',
+            '{}'
+        );
+
+        $method = new ReflectionMethod(InstallEngine::class, 'validateLaravelPackage');
+        $method->setAccessible(true);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/manifest\.json/u');
+        $method->invoke($this->engine(), $root);
+    }
+
+    public function test_assert_valid_frontend_manifest_accepts_vite_shape(): void
+    {
+        $path = $this->tmpRoot.DIRECTORY_SEPARATOR.'manifest.json';
+        file_put_contents($path, json_encode([
+            'resources/js/app.ts' => ['file' => 'assets/app-abc.js', 'isEntry' => true],
+        ]));
+
+        $this->engine()->assertValidFrontendManifest($path);
+        $this->assertTrue(true);
     }
 
     public function test_validate_database_input_invalid(): void
@@ -651,14 +757,23 @@ final class InstallEngineAuditTest extends TestCase
             mkdir($root.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $dir), 0755, true);
         }
         file_put_contents($root.DIRECTORY_SEPARATOR.'artisan', "#!/usr/bin/env php\n");
+        file_put_contents($root.DIRECTORY_SEPARATOR.'composer.json', "{}\n");
+        file_put_contents($root.DIRECTORY_SEPARATOR.'composer.lock', "{}\n");
         file_put_contents($root.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php', "<?php\nreturn null;\n");
+        file_put_contents($root.DIRECTORY_SEPARATOR.'routes'.DIRECTORY_SEPARATOR.'web.php', "<?php\n");
+        file_put_contents($root.DIRECTORY_SEPARATOR.'routes'.DIRECTORY_SEPARATOR.'install.php', "<?php\n");
         if ($withAutoload) {
             file_put_contents($root.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php', "<?php\n");
         }
         if ($withManifest) {
             file_put_contents(
                 $root.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'build'.DIRECTORY_SEPARATOR.'manifest.json',
-                '{}'
+                json_encode([
+                    'resources/js/app.ts' => [
+                        'file' => 'assets/app.js',
+                        'isEntry' => true,
+                    ],
+                ], JSON_UNESCAPED_SLASHES)
             );
         }
 

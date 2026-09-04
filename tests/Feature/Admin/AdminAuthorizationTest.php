@@ -167,6 +167,23 @@ class AdminAuthorizationTest extends TestCase
         ]);
     }
 
+    public function test_wallet_admin_deduct_is_audited(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
+        $user = User::factory()->create(['wallet_balance' => 10000]);
+        Sanctum::actingAs($admin);
+
+        $this->postJson('/api/v1/admin/wallets/'.$user->id.'/deduct', [
+            'amount' => 3000,
+            'reason' => 'تست کسر',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'wallet.admin_deducted',
+            'user_id' => $admin->id,
+        ]);
+    }
+
     public function test_only_super_admin_can_purge_audit_logs(): void
     {
         AuditLog::query()->create([

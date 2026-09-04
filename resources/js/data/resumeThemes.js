@@ -106,11 +106,61 @@ export const RESUME_THEMES = [
     layout: 'bold',
     fontFamily: 'Vazirmatn, Tahoma, sans-serif',
   },
+  {
+    id: 11,
+    group: 'creative',
+    name: 'مرجانی زنده',
+    accent: '#e11d48',
+    header: '#fb7185',
+    sidebar: '#fff1f2',
+    layout: 'coral',
+    fontFamily: 'Vazirmatn, Tahoma, sans-serif',
+  },
+  {
+    id: 12,
+    group: 'modern',
+    name: 'شفق بنفش',
+    accent: '#7c3aed',
+    header: '#5b21b6',
+    sidebar: '#f5f3ff',
+    layout: 'aurora',
+    fontFamily: 'Vazirmatn, Tahoma, sans-serif',
+  },
+  {
+    id: 13,
+    group: 'minimal',
+    name: 'کاغذی ساده',
+    accent: '#57534e',
+    header: '#fafaf9',
+    sidebar: '#f5f5f4',
+    layout: 'paper',
+    fontFamily: 'Georgia, Vazirmatn, serif',
+  },
+  {
+    id: 14,
+    group: 'creative',
+    name: 'هندسی فیروزه‌ای',
+    accent: '#0891b2',
+    header: '#155e75',
+    sidebar: '#ecfeff',
+    layout: 'geo',
+    fontFamily: 'Vazirmatn, Tahoma, sans-serif',
+  },
+  {
+    id: 15,
+    group: 'official',
+    name: 'دو رنگ رسمی',
+    accent: '#9f1239',
+    header: '#0f2744',
+    sidebar: '#fff1f2',
+    layout: 'dual',
+    fontFamily: 'Vazirmatn, Tahoma, sans-serif',
+  },
 ]
 
 export function resumeThemeById(id) {
   let n = Number(id) || 1
   if (n < 1) n = 1
-  if (n > 10) n = ((n - 1) % 10) + 1
+  if (n > 15) n = ((n - 1) % 15) + 1
   return RESUME_THEMES.find((t) => t.id === n) || RESUME_THEMES[0]
 }

@@ -12,6 +12,7 @@ use App\Models\CrawlerRun;
 use App\Models\JobPost;
 use App\Models\JobSource;
 use App\Repositories\JobPostRepository;
+use App\Services\Aggregation\AggregationHealthService;
 use App\Services\Aggregation\SourceHealthService;
 use App\Services\JobPostService;
 use Carbon\CarbonInterface;
@@ -25,7 +26,18 @@ class AggregationQualityController extends BaseController
         protected JobPostRepository $jobPosts,
         protected JobPostService $jobPostService,
         protected SourceHealthService $health,
+        protected AggregationHealthService $aggregationHealth,
     ) {}
+
+    public function health(): JsonResponse
+    {
+        return $this->successResponse($this->aggregationHealth->snapshot());
+    }
+
+    public function notifyAlerts(\App\Services\Aggregation\AggregationAlertNotifier $notifier): JsonResponse
+    {
+        return $this->successResponse($notifier->notifyAdmins(), 'هشدارها برای مدیران ارسال شد.');
+    }
 
     public function stats(): JsonResponse
     {
@@ -201,7 +213,7 @@ class AggregationQualityController extends BaseController
     public function pendingJobs(Request $request): JsonResponse
     {
         $filters = $request->only([
-            'status', 'search', 'per_page', 'province', 'city', 'job_classification_id', 'deadline_from', 'deadline_to',
+            'status', 'search', 'per_page', 'province', 'city', 'job_classification_id', 'job_classification_ids', 'deadline_from', 'deadline_to',
             'job_source_id',
         ]);
         $filters['aggregated_only'] = true;

@@ -165,9 +165,18 @@
                 dir="ltr"
                 maxlength="10"
                 inputmode="numeric"
-                placeholder="۱۰ رقم"
+                placeholder="۱۰ رقم معتبر ایران"
                 @input="onNationalCodeInput"
               />
+              <p
+                v-if="
+                  form.national_code.length === 10 &&
+                  !isValidNationalCode(form.national_code)
+                "
+                class="mt-1 text-xs text-brand"
+              >
+                کد ملی معتبر نیست
+              </p>
             </div>
             <JalaliBirthInput v-model="form.birth_date" />
             <div>
@@ -403,6 +412,7 @@ import {
   unwrapList,
 } from '../../utils/format'
 import { IRAN_PROVINCES, citiesForProvince } from '../../utils/iranCities'
+import { isValidNationalCode } from '../../utils/validators'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -527,11 +537,16 @@ function onPostalCodeInput(event: Event): void {
 async function saveProfile() {
   saving.value = true
   try {
+    const national = form.national_code || ''
+    if (national && !isValidNationalCode(national)) {
+      toast.error('کد ملی واردشده معتبر نیست.')
+      return
+    }
     await auth.updateProfile({
       name: form.name || null,
       email: form.email || null,
       province: form.birth_province || null,
-      national_code: form.national_code || null,
+      national_code: national || null,
       home_phone: form.home_phone || null,
       military_status: form.military_status || null,
       insurance_history: form.insurance_history || null,

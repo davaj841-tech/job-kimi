@@ -69,6 +69,7 @@ const sections = [
   { key: 'exam', label: 'آزمون' },
   { key: 'security', label: 'امنیت' },
   { key: 'social', label: 'شبکه‌های اجتماعی و اپ' },
+  { key: 'trust', label: 'نماد اعتماد' },
 ]
 
 const fieldMap = {
@@ -90,10 +91,26 @@ const fieldMap = {
     { key: 'support_email', label: 'ایمیل پشتیبانی', type: 'email', ltr: true },
     { key: 'support_phone', label: 'شماره تماس', type: 'text', ltr: true },
     { key: 'onboarding_enabled', label: 'نمایش تور آشنایی', type: 'toggle' },
+    {
+      key: 'blog_comments_require_approval',
+      label: 'تایید نظرات وبلاگ قبل از نمایش',
+      type: 'toggle',
+    },
+    {
+      key: 'job_comments_require_approval',
+      label: 'تایید نظرات آگهی شغلی قبل از نمایش',
+      type: 'toggle',
+    },
   ],
   mail: [
     { key: 'smtp_host', label: 'SMTP Host', type: 'text', ltr: true },
     { key: 'smtp_port', label: 'SMTP Port', type: 'number' },
+    {
+      key: 'smtp_encryption',
+      label: 'Encryption (tls / ssl / null)',
+      type: 'text',
+      ltr: true,
+    },
     { key: 'smtp_username', label: 'Username', type: 'text', ltr: true },
     { key: 'smtp_password', label: 'Password', type: 'text', ltr: true },
     {
@@ -106,11 +123,6 @@ const fieldMap = {
   ],
   homepage: [
     {
-      key: 'homepage_layout',
-      label: 'تم کل سایت (صفحه اول، صفحات جانبی، موبایل، داشبورد، پنل و فوتر)',
-      type: 'homepage-layout',
-    },
-    {
       key: 'site_font',
       label: 'فونت فارسی سایت',
       type: 'site-font',
@@ -119,6 +131,11 @@ const fieldMap = {
       key: 'site_font_size',
       label: 'اندازه فونت سایت',
       type: 'site-font-size',
+    },
+    {
+      key: 'homepage_layout',
+      label: 'تم کل سایت (صفحه اول، صفحات جانبی، موبایل، داشبورد، پنل و فوتر)',
+      type: 'homepage-layout',
     },
     {
       key: 'primary_color',
@@ -164,19 +181,87 @@ const fieldMap = {
   ],
   sms: [
     {
+      key: 'sms_enabled',
+      label: 'فعال‌سازی SMS',
+      type: 'toggle',
+    },
+    {
+      key: 'sms_otp_enabled',
+      label: 'SMS ورود / OTP',
+      type: 'toggle',
+    },
+    {
+      key: 'sms_transactional_enabled',
+      label: 'SMS تراکنشی (اشتراک، پرداخت و …)',
+      type: 'toggle',
+    },
+    {
+      key: 'sms_marketing_enabled',
+      label: 'SMS بازاریابی',
+      type: 'toggle',
+    },
+    {
       key: 'sms_gateway',
       label: 'سرویس پیامک',
       type: 'select',
       options: [
         { value: 'kavenegar', label: 'Kavenegar' },
-        { value: 'melipayamak', label: 'MeliPayamak' },
+        { value: 'melipayamak', label: 'ملی پیامک (MeliPayamak)' },
       ],
     },
-    { key: 'sms_api_key', label: 'API Key', type: 'text', ltr: true },
-    { key: 'sms_otp_template', label: 'قالب پیام OTP', type: 'textarea' },
+    {
+      key: 'sms_api_key',
+      label: 'API Key کاوه‌نگار (برای ملی پیامک استفاده نشود)',
+      type: 'text',
+      ltr: true,
+      hint: 'فقط برای Kavenegar',
+    },
+    {
+      key: 'sms_username',
+      label: 'نام کاربری ملی پیامک',
+      type: 'text',
+      ltr: true,
+      hint: 'نام کاربری پنل ملی پیامک (معمولاً شماره موبایل)',
+    },
+    {
+      key: 'sms_password',
+      label: 'رمز وب‌سرویس / API Key ملی پیامک',
+      type: 'text',
+      ltr: true,
+      secret: true,
+      hint: 'کلمه عبور وب‌سرویس از پنل ملی پیامک — معمولاً UUID مثل 21e5e8d1-83e2-446d-9a62-bc1c8ee61403. برای تغییر، مقدار جدید را جایگزین کنید و ذخیره کنید.',
+    },
+    {
+      key: 'sms_from',
+      label: 'شماره خط ارسال (From)',
+      type: 'text',
+      ltr: true,
+    },
+    {
+      key: 'sms_pattern_body_id',
+      label: 'کد پترن OTP (bodyId خط خدماتی)',
+      type: 'text',
+      ltr: true,
+    },
+    {
+      key: 'sms_pattern_text',
+      label: 'متغیرهای پترن (مثلاً {code} یا {code};نام)',
+      type: 'text',
+      ltr: true,
+    },
+    {
+      key: 'sms_otp_template',
+      label: 'قالب پیام OTP ساده (بدون پترن) — از {code} استفاده کنید',
+      type: 'textarea',
+    },
     {
       key: 'sms_subscription_reminder_template',
       label: 'قالب یادآوری اشتراک',
+      type: 'textarea',
+    },
+    {
+      key: 'sms_subscription_expired_template',
+      label: 'قالب انقضای اشتراک',
       type: 'textarea',
     },
   ],
@@ -225,18 +310,19 @@ const fieldMap = {
       label: 'Cloudflare Turnstile Site Key',
       type: 'text',
       ltr: true,
+      hint: 'کلید عمومی ویجت. در صورت خالی بودن از TURNSTILE_SITE_KEY در .env استفاده می‌شود.',
     },
     {
-      key: 'turnstile_secret_key',
-      label: 'Secret Key',
-      type: 'text',
-      ltr: true,
+      key: 'turnstile_enabled',
+      label: 'فعال بودن Turnstile',
+      type: 'toggle',
+      hint: 'وقتی روشن باشد و Secret در .env تنظیم شده باشد، فرم‌های حساس از Turnstile استفاده می‌کنند؛ در غیر این صورت کپچای ریاضی.',
     },
-    { key: 'turnstile_enabled', label: 'فعال بودن Turnstile', type: 'toggle' },
     {
       key: 'captcha_enabled',
       label: 'فعال بودن Captcha (سازگاری)',
       type: 'toggle',
+      hint: 'حالت سازگاری قدیمی. تایید فرم‌های auth همیشه فعال است؛ Turnstile و math همزمان اجرا نمی‌شوند.',
     },
   ],
   social: [
@@ -245,8 +331,6 @@ const fieldMap = {
     { key: 'whatsapp_url', label: 'واتساپ', type: 'url', ltr: true },
     { key: 'rubika_url', label: 'روبیکا', type: 'url', ltr: true },
     { key: 'bale_url', label: 'بله', type: 'url', ltr: true },
-    { key: 'enamad_url', label: 'لینک نماد اعتماد', type: 'url', ltr: true },
-    { key: 'samandehi_url', label: 'لینک ساماندهی', type: 'url', ltr: true },
     {
       key: 'android_play_url',
       label: 'لینک گوگل پلی (اپ اندروید)',
@@ -267,6 +351,41 @@ const fieldMap = {
       accept: '.apk',
       maxSizeMb: 50,
       hint: 'فایل APK را اینجا آپلود کنید — حداکثر ۵۰ مگابایت',
+    },
+  ],
+  trust: [
+    {
+      key: 'enamad_enabled',
+      label: 'نمایش نماد اینماد',
+      type: 'toggle',
+      hint: 'پس از دریافت کد رسمی از enamad.ir فعال کنید.',
+    },
+    {
+      key: 'enamad_id',
+      label: 'شناسه اینماد (id)',
+      type: 'text',
+      ltr: true,
+      hint: 'عدد داخل لینک trustseal.enamad.ir',
+    },
+    {
+      key: 'enamad_code',
+      label: 'کد اینماد (Code)',
+      type: 'text',
+      ltr: true,
+      hint: 'رشته Code داخل لینک رسمی — در HTML عمومی نمایش داده می‌شود.',
+    },
+    {
+      key: 'enamad_url',
+      label: 'لینک رسمی اینماد (اختیاری)',
+      type: 'url',
+      ltr: true,
+      hint: 'می‌توانید لینک کامل trustseal.enamad.ir را paste کنید؛ id و Code استخراج می‌شود.',
+    },
+    {
+      key: 'samandehi_url',
+      label: 'لینک ساماندهی (https)',
+      type: 'url',
+      ltr: true,
     },
   ],
 }

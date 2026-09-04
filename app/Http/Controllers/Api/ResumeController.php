@@ -125,7 +125,7 @@ class ResumeController extends BaseController
     public function updateTemplate(Request $request, int $id): JsonResponse
     {
         $data = $request->validate([
-            'template_id' => ['required', 'integer', 'between:1,10'],
+            'template_id' => ['required', 'integer', 'between:1,15'],
         ]);
 
         $resume = $this->resumeRepository->findById($id, $request->user());

@@ -9,6 +9,7 @@ import App from './App.vue'
 import router from './router'
 import { useFeatureStore } from './stores/feature'
 import { useSiteTheme } from './composables/useSiteTheme'
+import { useThemeStore } from './stores/themeStore'
 
 function activateWaitingWorker(reg: ServiceWorkerRegistration): void {
   if (reg.waiting) {
@@ -74,6 +75,8 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
 const pinia = createPinia()
 app.use(pinia)
 app.use(router)
+
+useThemeStore(pinia).init()
 
 useFeatureStore(pinia)
   .fetch()

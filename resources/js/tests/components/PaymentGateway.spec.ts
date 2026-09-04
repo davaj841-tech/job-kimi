@@ -45,6 +45,7 @@ describe('PaymentGateway.vue', () => {
       props: {
         authority: 'A0001',
         callbackStatus: 'OK',
+        idempotencyKey: 'ik-test-uuid',
         verifyEndpoint: '/wallet/verify',
         autoVerify: true,
       },
@@ -56,7 +57,11 @@ describe('PaymentGateway.vue', () => {
       '/wallet/verify',
       null,
       expect.objectContaining({
-        params: expect.objectContaining({ Authority: 'A0001', Status: 'OK' }),
+        params: expect.objectContaining({
+          Authority: 'A0001',
+          Status: 'OK',
+          ik: 'ik-test-uuid',
+        }),
       })
     )
     expect(wrapper.find('[data-testid="payment-success"]').exists()).toBe(true)

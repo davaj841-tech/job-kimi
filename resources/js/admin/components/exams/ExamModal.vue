@@ -43,19 +43,13 @@
           </p>
         </div>
         <div>
-          <label class="mb-1 block text-xs font-medium text-slate-600"
-            >طبقه‌بندی *</label
-          >
-          <select v-model="form.job_classification_id" required class="input">
-            <option disabled value="">انتخاب طبقه‌بندی</option>
-            <option
-              v-for="c in parentClassifications"
-              :key="c.id"
-              :value="c.id"
-            >
-              {{ c.raw_name || c.name }}
-            </option>
-          </select>
+          <ClassificationSelect
+            v-model="form.job_classification_id"
+            :items="parentClassifications"
+            :multiple="false"
+            :show-all="false"
+            label="طبقه‌بندی *"
+          />
         </div>
         <div>
           <label class="mb-1 block text-xs font-medium text-slate-600"
@@ -178,6 +172,63 @@
                 )
               }}
             </p>
+
+            <div
+              v-if="form.job_classification_id"
+              class="space-y-2 rounded-lg border border-orange-100 bg-orange-50/40 p-2"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-xs font-bold text-slate-700">
+                  سوالات تکراری بین آزمون‌ها (اختیاری)
+                </p>
+                <button
+                  type="button"
+                  class="text-[11px] font-bold text-orange-600"
+                  :disabled="duplicatesLoading"
+                  @click="loadExamDuplicates"
+                >
+                  {{ duplicatesLoading ? '...' : 'بروزرسانی' }}
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-500">
+                سوالات انتخاب‌شده در استخر آزمون تصادفی این آزمون قرار می‌گیرند.
+              </p>
+              <div
+                v-if="duplicatesLoading"
+                class="py-2 text-center text-xs text-slate-500"
+              >
+                در حال بارگذاری...
+              </div>
+              <div
+                v-else-if="!duplicateGroups.length"
+                class="py-2 text-center text-xs text-slate-500"
+              >
+                سوال تکراری برای این طبقه‌بندی یافت نشد.
+              </div>
+              <div
+                v-else
+                class="max-h-40 space-y-1 overflow-y-auto rounded-lg bg-white p-2"
+              >
+                <label
+                  v-for="group in duplicateGroups"
+                  :key="group.fingerprint"
+                  class="flex cursor-pointer items-start gap-2 rounded-md px-1 py-1 hover:bg-slate-50"
+                >
+                  <input
+                    v-model="form.duplicate_fingerprints"
+                    type="checkbox"
+                    class="mt-0.5 h-4 w-4 accent-orange-500"
+                    :value="group.fingerprint"
+                  />
+                  <span class="text-[11px] leading-snug text-slate-700">
+                    {{ group.preview }}
+                    <span class="text-slate-400">
+                      ({{ group.count }} بار)
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </div>
           </template>
         </div>
 
@@ -229,7 +280,9 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import adminApi from '../../api/client'
 import { useExamSubjectsStore } from '../../stores/examSubjects'
+import ClassificationSelect from '../ui/ClassificationSelect.vue'
 import RichEditor from '../ui/RichEditor.vue'
 
 const props = defineProps({
@@ -244,6 +297,8 @@ const subjectsStore = useExamSubjectsStore()
 const saving = ref(false)
 const error = ref('')
 const form = reactive(emptyForm())
+const duplicateGroups = ref([])
+const duplicatesLoading = ref(false)
 
 const parentClassifications = computed(() =>
   (props.classifications || []).filter((c) => !c.parent_id)
@@ -275,8 +330,24 @@ watch(
     if (!props.open) return
     Object.assign(form, props.exam?.id ? mapExam(props.exam) : emptyForm())
     error.value = ''
+    if (form.is_random && form.job_classification_id) {
+      loadExamDuplicates()
+    } else {
+      duplicateGroups.value = []
+    }
   },
   { immediate: true }
+)
+
+watch(
+  () => [form.is_random, form.job_classification_id],
+  ([isRandom, classId]) => {
+    if (!props.open || !isRandom || !classId) {
+      if (!isRandom) form.duplicate_fingerprints = []
+      return
+    }
+    loadExamDuplicates()
+  }
 )
 
 function emptySubjectCounts() {
@@ -305,6 +376,7 @@ function emptyForm() {
     is_random: false,
     prefer_frequent: true,
     subject_counts: emptySubjectCounts(),
+    duplicate_fingerprints: [],
   }
 }
 
@@ -332,6 +404,9 @@ function mapExam(exam) {
     is_random: Boolean(exam.is_random),
     prefer_frequent: cfg.prefer_frequent !== false,
     subject_counts: counts,
+    duplicate_fingerprints: Array.isArray(cfg.duplicate_fingerprints)
+      ? [...cfg.duplicate_fingerprints]
+      : [],
   }
 }
 
@@ -350,6 +425,28 @@ function normalizeSeo() {
 function onTitle() {
   if (props.exam?.id && form.seo_tag) return
   form.seo_tag = toSeoTag(form.title)
+}
+
+async function loadExamDuplicates() {
+  if (!form.job_classification_id) {
+    duplicateGroups.value = []
+    return
+  }
+  duplicatesLoading.value = true
+  try {
+    const { data } = await adminApi.get('/admin/questions/duplicates', {
+      params: {
+        job_classification_id: form.job_classification_id,
+        per_page: 100,
+      },
+    })
+    const payload = data?.data || data || {}
+    duplicateGroups.value = payload.groups || []
+  } catch {
+    duplicateGroups.value = []
+  } finally {
+    duplicatesLoading.value = false
+  }
 }
 
 async function submit() {
@@ -396,7 +493,11 @@ async function submit() {
       status: form.status,
       is_random: form.is_random,
       random_config: form.is_random
-        ? { prefer_frequent: form.prefer_frequent, subjects }
+        ? {
+            prefer_frequent: form.prefer_frequent,
+            subjects,
+            duplicate_fingerprints: form.duplicate_fingerprints || [],
+          }
         : null,
       job_post_id: null,
     }

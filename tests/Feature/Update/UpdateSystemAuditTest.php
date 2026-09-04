@@ -8,6 +8,7 @@ use App\Models\SystemUpdate;
 use App\Services\BackupService;
 use App\Services\Update\ManifestValidator;
 use App\Services\Update\SemVer;
+use App\Services\Update\UpdateHealthChecker;
 use App\Services\Update\UpdateLock;
 use App\Services\Update\UpdateManager;
 use App\Services\Update\UpdatePackBuilder;
@@ -366,6 +367,100 @@ final class UpdateSystemAuditTest extends TestCase
         $this->assertTrue($hasDb);
         $this->assertGreaterThan(100, strlen($sql));
         $this->assertStringNotContainsString('mysqldump unavailable', $sql);
+    }
+
+    public function test_file_only_update_succeeds_when_full_backup_unavailable(): void
+    {
+        file_put_contents($this->probeAbs, $this->probeSource('1.0.1-pack'));
+
+        $zip = app(UpdatePackBuilder::class)->build(
+            targetVersion: '1.0.1',
+            previousVersion: '1.0.0',
+            files: [$this->probeRel],
+            description: 'file-only no migration',
+            releaseType: 'patch',
+            migrationRequired: false,
+            maintenanceMode: false,
+            outputDir: $this->dir,
+        );
+
+        file_put_contents($this->probeAbs, $this->probeSource('1.0.0-prod'));
+        SemVer::writeCurrent('1.0.0');
+
+        $this->mock(BackupService::class, function ($mock): void {
+            $mock->shouldReceive('createBackup')
+                ->once()
+                ->andThrow(new \RuntimeException('mysqldump یافت نشد. بکاپ پایگاه داده انجام نشد.'));
+        });
+
+        $update = app(UpdateManager::class)->installFromZip($zip, null);
+
+        $this->assertSame(SystemUpdate::COMPLETED, $update->status);
+        $this->assertSame('1.0.1', SemVer::current());
+        $this->assertStringContainsString('1.0.1-pack', (string) file_get_contents($this->probeAbs));
+        $this->assertNotEmpty($update->files_backup_path);
+        $this->assertFileExists((string) $update->files_backup_path);
+        $this->assertNull($update->full_backup_path);
+        $this->assertFalse($update->migrations_ran);
+
+        $logMessages = [];
+        foreach ($update->log ?? [] as $entry) {
+            if (is_array($entry) && isset($entry['message'])) {
+                $logMessages[] = (string) $entry['message'];
+            }
+        }
+        $this->assertTrue(
+            (bool) preg_match('/بکاپ فایل/u', implode("\n", $logMessages)),
+            'Expected files backup log before install'
+        );
+    }
+
+    public function test_file_only_failure_rollback_complete_without_db_backup(): void
+    {
+        file_put_contents($this->probeAbs, $this->probeSource('1.0.2-broken'));
+
+        $zip = app(UpdatePackBuilder::class)->build(
+            targetVersion: '1.0.2',
+            previousVersion: '1.0.0',
+            files: [$this->probeRel],
+            description: 'file-only failure path',
+            releaseType: 'patch',
+            migrationRequired: false,
+            maintenanceMode: false,
+            outputDir: $this->dir,
+        );
+
+        file_put_contents($this->probeAbs, $this->probeSource('1.0.0-safe'));
+        SemVer::writeCurrent('1.0.0');
+
+        $this->mock(BackupService::class, function ($mock): void {
+            $mock->shouldReceive('createBackup')
+                ->once()
+                ->andThrow(new \RuntimeException('mysqldump یافت نشد.'));
+        });
+
+        $this->mock(UpdateHealthChecker::class, function ($mock): void {
+            $mock->shouldReceive('check')->andReturn([
+                'ok' => false,
+                'checks' => ['database' => 'fail'],
+                'version' => '1.0.0',
+            ]);
+        });
+
+        $caught = null;
+        try {
+            app(UpdateManager::class)->installFromZip($zip, null);
+        } catch (\Throwable $e) {
+            $caught = $e;
+        }
+
+        $this->assertNotNull($caught);
+        $row = SystemUpdate::query()->where('version', '1.0.2')->latest('id')->first();
+        $this->assertNotNull($row);
+        $this->assertSame(SystemUpdate::ROLLED_BACK, $row->status);
+        $this->assertTrue($row->rollback_complete, 'Files backup should allow complete rollback');
+        $this->assertSame('1.0.0', SemVer::current());
+        $this->assertStringContainsString('1.0.0-safe', (string) file_get_contents($this->probeAbs));
     }
 
     public function test_cpanel_compatibility_preflight(): void

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-dvh overflow-hidden bg-slate-100">
+  <div class="flex h-dvh overflow-hidden bg-slate-100 dark:bg-slate-950">
     <div
       v-if="sidebarOpen"
       class="fixed inset-0 z-40 bg-black/40 lg:hidden"
@@ -18,26 +18,26 @@
         <RouterView />
       </main>
       <nav
-        class="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-surface-line bg-white lg:hidden"
+        class="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-surface-line bg-white dark:border-slate-700 dark:bg-slate-900 lg:hidden"
         style="padding-bottom: env(safe-area-inset-bottom)"
         aria-label="بازگشت"
       >
         <a
           href="/"
-          class="flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-bold text-desk-dark"
+          class="flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-bold text-desk-dark dark:text-slate-200"
         >
           صفحه اول
         </a>
         <RouterLink
           to="/admin/dashboard"
-          class="flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-bold text-slate-500"
+          class="flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-bold text-slate-500 dark:text-slate-400"
         >
           داشبورد
         </RouterLink>
         <RouterLink
           v-if="isSuperAdmin"
           to="/admin/settings"
-          class="flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-bold text-slate-500"
+          class="flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-bold text-slate-500 dark:text-slate-400"
         >
           تنظیمات
         </RouterLink>

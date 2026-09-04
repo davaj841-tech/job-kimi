@@ -1,100 +1,81 @@
 <template>
   <div
+    v-if="hasBadges"
     class="flex flex-wrap items-center"
     :class="compact ? 'gap-1.5' : 'gap-3'"
   >
     <a
-      v-if="enamadUrl"
+      v-if="enamadEnabled && enamadUrl && enamadLogoUrl"
       :href="enamadUrl"
       target="_blank"
       rel="noopener noreferrer"
-      class="flex items-center justify-center rounded-md border text-center text-[10px] leading-4 transition hover:opacity-90"
-      :class="badgeClass"
+      referrerpolicy="origin"
+      class="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-md bg-white/95 transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+      :class="enamadSizeClass"
       title="نماد اعتماد الکترونیکی"
+      aria-label="نماد اعتماد الکترونیکی — مشاهده در سایت رسمی enamad.ir"
     >
-      <span>نماد اعتماد</span>
+      <img
+        :src="enamadLogoUrl"
+        alt="نماد اعتماد الکترونیکی"
+        referrerpolicy="origin"
+        loading="lazy"
+        decoding="async"
+        width="120"
+        height="120"
+        class="h-full w-full cursor-pointer object-contain"
+        :code="enamadCode"
+      />
     </a>
-    <div
-      v-else
-      class="flex items-center justify-center rounded-md border border-dashed text-center text-[10px] leading-4"
-      :class="placeholderClass"
-    >
-      نماد اعتماد
-    </div>
 
     <a
       v-if="samandehiUrl"
       :href="samandehiUrl"
       target="_blank"
       rel="noopener noreferrer"
-      class="flex items-center justify-center rounded-md border text-center text-[10px] leading-4 transition hover:opacity-90"
-      :class="badgeClass"
-      title="ساماندهی"
+      class="inline-flex shrink-0 items-center justify-center rounded-md border px-2 text-center text-[10px] leading-4 transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+      :class="samandehiClass"
+      title="نماد ساماندهی"
+      aria-label="نماد ساماندهی"
     >
       <span>ساماندهی</span>
     </a>
-    <div
-      v-else
-      class="flex items-center justify-center rounded-md border border-dashed text-center text-[10px] leading-4"
-      :class="placeholderClass"
-    >
-      ساماندهی
-    </div>
-
-    <div
-      class="flex items-center justify-center rounded-md border text-center text-[10px] font-bold leading-4"
-      :class="sslClass"
-      title="SSL"
-    >
-      SSL
-    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import api from '../api/client'
+import { computed, onMounted } from 'vue'
+import { useSiteTheme } from '../composables/useSiteTheme'
 
 const props = defineProps({
-  dark: { type: Boolean, default: false },
   compact: { type: Boolean, default: false },
 })
 
-const enamadUrl = ref('')
-const samandehiUrl = ref('')
+const {
+  enamadEnabled,
+  enamadUrl,
+  enamadLogoUrl,
+  enamadCode,
+  samandehiUrl,
+  ensureLoaded,
+} = useSiteTheme()
 
-const sizeClass = computed(() =>
-  props.compact ? 'h-8 w-[4.5rem]' : 'h-16 w-28'
+const enamadSizeClass = computed(() =>
+  props.compact ? 'h-16 w-[4.5rem]' : 'h-24 w-28'
 )
 
-const badgeClass = computed(() => [
-  sizeClass.value,
-  props.dark
-    ? 'border-white/30 bg-white/5 text-white/80'
-    : 'border-slate-300 bg-white text-slate-600',
+const samandehiClass = computed(() => [
+  props.compact ? 'h-8 min-w-[4.5rem]' : 'h-10 min-w-28',
+  'border-white/30 bg-white/5 text-white/80',
 ])
 
-const placeholderClass = computed(() => [
-  sizeClass.value,
-  props.dark
-    ? 'border-white/30 bg-white/5 text-white/55'
-    : 'border-slate-300 bg-slate-50 text-slate-500',
-])
+const hasBadges = computed(
+  () =>
+    (enamadEnabled.value && enamadUrl.value && enamadLogoUrl.value) ||
+    Boolean(samandehiUrl.value)
+)
 
-const sslClass = computed(() => [
-  props.compact ? 'h-8 w-12' : 'h-16 w-24',
-  props.dark
-    ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
-    : 'border-emerald-300 bg-emerald-50 text-emerald-700',
-])
-
-onMounted(async () => {
-  try {
-    const { data } = await api.get('/settings/public')
-    enamadUrl.value = data.data?.enamad_url || ''
-    samandehiUrl.value = data.data?.samandehi_url || ''
-  } catch {
-    // keep placeholders
-  }
+onMounted(() => {
+  ensureLoaded()
 })
 </script>

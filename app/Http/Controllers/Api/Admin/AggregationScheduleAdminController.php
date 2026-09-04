@@ -156,9 +156,15 @@ class AggregationScheduleAdminController extends BaseController
     public function dispatchNow(Request $request): JsonResponse
     {
         $dry = filter_var($request->input('dry_run', false), FILTER_VALIDATE_BOOLEAN);
+        $sync = filter_var(
+            $request->input('sync', config('aggregation.dispatch_sync', true)),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
         $code = Artisan::call('jobs:aggregate-dispatch', [
             '--force' => true,
             '--dry-run' => $dry,
+            '--sync' => $sync && ! $dry,
         ]);
         $output = trim(Artisan::output());
 
@@ -166,6 +172,7 @@ class AggregationScheduleAdminController extends BaseController
             'exit_code' => $code,
             'output' => $output,
             'queue' => config('aggregation.queue', 'crawlers'),
-        ], $dry ? 'Dry-run انجام شد.' : 'دیسپاچ دستی انجام شد.');
+            'sync' => $sync && ! $dry,
+        ], $dry ? 'Dry-run انجام شد.' : ($sync ? 'خزش هم‌زمان انجام شد.' : 'دیسپاچ در صف قرار گرفت.'));
     }
 }

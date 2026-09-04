@@ -111,6 +111,14 @@
     :open="detailOpen"
     :tx="selected"
     @close="detailOpen = false"
+    @refund="openRefund"
+  />
+  <TransactionRefundModal
+    ref="refundModalRef"
+    :open="refundOpen"
+    :tx="refundTx"
+    @close="refundOpen = false"
+    @submit="onRefund"
   />
 </template>
 
@@ -121,6 +129,7 @@ import JalaliDatepicker from '../components/ui/JalaliDatepicker.vue'
 import PaginationBar from '../components/ui/PaginationBar.vue'
 import StatCard from '../components/ui/StatCard.vue'
 import TransactionDetailModal from '../components/transactions/TransactionDetailModal.vue'
+import TransactionRefundModal from '../components/transactions/TransactionRefundModal.vue'
 import { formatDateTime, apiErrorMessage } from '../../utils/format'
 import { compareIsoDate, RANGE_ORDER_ERROR } from '../../utils/jalali'
 import { useToast } from '../../composables/useToast'
@@ -129,7 +138,10 @@ import { useTransactionsStore } from '../stores/transactions'
 const store = useTransactionsStore()
 const toast = useToast()
 const detailOpen = ref(false)
+const refundOpen = ref(false)
 const selected = ref(null)
+const refundTx = ref(null)
+const refundModalRef = ref(null)
 
 const dateRangeError = computed(() => {
   const cmp = compareIsoDate(store.filters.date_from, store.filters.date_to)
@@ -228,6 +240,24 @@ async function openDetail(row) {
   } catch (_e) {
     selected.value = row
     detailOpen.value = true
+  }
+}
+
+function openRefund(tx) {
+  refundTx.value = tx
+  detailOpen.value = false
+  refundOpen.value = true
+}
+
+async function onRefund({ reason }) {
+  if (!refundTx.value?.id) return
+  refundModalRef.value?.setSaving(true)
+  try {
+    await store.refund(refundTx.value.id, reason)
+    toast.success('بازگشت وجه انجام شد')
+    refundOpen.value = false
+  } catch (e) {
+    refundModalRef.value?.setError(apiErrorMessage(e))
   }
 }
 </script>

@@ -1,19 +1,25 @@
 <template>
   <header
-    class="flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 sm:px-6"
+    class="flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 dark:border-slate-700 dark:bg-slate-900 sm:px-6"
   >
     <div class="flex min-w-0 items-center gap-3">
       <button
         type="button"
-        class="rounded-lg bg-slate-100 p-2 text-slate-700 hover:bg-slate-200 lg:hidden"
+        class="rounded-lg bg-slate-100 p-2 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 lg:hidden"
         aria-label="منو"
         @click="$emit('toggle-sidebar')"
       >
         ☰
       </button>
       <div class="min-w-0">
-        <p class="truncate text-sm font-bold text-slate-800">{{ pageTitle }}</p>
-        <p class="text-xs text-slate-500">مدیریت جاب‌آزمون</p>
+        <p
+          class="truncate text-sm font-bold text-slate-800 dark:text-slate-100"
+        >
+          {{ pageTitle }}
+        </p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          مدیریت جاب‌آزمون
+        </p>
       </div>
     </div>
 
@@ -23,17 +29,21 @@
           v-for="q in visibleQuickLinks"
           :key="q.to"
           :to="q.to"
-          class="rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-desk-dark hover:bg-orange-50 hover:text-orange-600"
+          class="rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-desk-dark hover:bg-orange-50 hover:text-orange-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
           {{ q.label }}
         </RouterLink>
       </div>
       <div class="hidden text-left sm:block" dir="rtl">
-        <p class="text-xs font-bold text-desk-dark">{{ clockText }}</p>
+        <p class="text-xs font-bold text-desk-dark dark:text-slate-100">
+          {{ clockText }}
+        </p>
         <p class="text-[11px] text-slate-400">شمسی</p>
       </div>
+      <ThemeToggle />
+      <AdminNotificationBell />
       <div class="text-left text-xs" dir="ltr">
-        <p class="font-semibold text-slate-700">
+        <p class="font-semibold text-slate-700 dark:text-slate-200">
           {{ auth.user?.name || 'ادمین' }}
         </p>
         <p class="text-slate-400">{{ auth.user?.role || '' }}</p>
@@ -46,7 +56,7 @@
       </a>
       <button
         type="button"
-        class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200"
+        class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         @click="onLogout"
       >
         خروج
@@ -60,6 +70,8 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdminAuthStore } from '../../stores/auth'
 import { formatJalaliDateTime } from '../../../utils/jalali'
+import ThemeToggle from '../../../components/ThemeToggle.vue'
+import AdminNotificationBell from './AdminNotificationBell.vue'
 
 defineEmits(['toggle-sidebar'])
 

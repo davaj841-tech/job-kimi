@@ -44,7 +44,14 @@
           </div>
           <button
             type="button"
-            class="rounded-xl border border-surface-line px-3 py-2 text-xs font-medium dark:border-slate-700 lg:hidden"
+            class="inline-flex shrink-0 items-center gap-1 rounded-xl bg-brand px-2 py-2 text-xs font-bold text-white shadow-sm sm:px-3"
+            @click="printResume"
+          >
+            چاپ
+          </button>
+          <button
+            type="button"
+            class="shrink-0 rounded-xl border border-surface-line px-3 py-2 text-xs font-medium dark:border-slate-700 lg:hidden"
             @click="showPreview = true"
           >
             پیش‌نمایش
@@ -64,15 +71,6 @@
             @click="save"
           >
             {{ saving ? '…' : 'ذخیره' }}
-          </button>
-          <button
-            type="button"
-            class="inline-flex items-center gap-1.5 rounded-xl bg-brand px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
-            :disabled="exporting"
-            @click="exportPDF"
-          >
-            <DocumentArrowDownIcon class="h-4 w-4" />
-            <span class="hidden sm:inline">PDF</span>
           </button>
         </div>
       </div>
@@ -121,7 +119,26 @@
           </div>
 
           <div class="md:hidden">
-            <ThemePicker v-model="templateId" />
+            <button
+              type="button"
+              class="flex w-full items-center justify-between rounded-xl border border-surface-line bg-white px-4 py-3 text-sm font-bold dark:border-slate-700 dark:bg-slate-900"
+              @click="themeOpen = !themeOpen"
+            >
+              <span>قالب رزومه A4</span>
+              <ChevronDownIcon
+                class="h-5 w-5 transition"
+                :class="themeOpen ? 'rotate-180' : ''"
+              />
+            </button>
+            <div
+              v-if="themeOpen"
+              class="mt-2 rounded-2xl border border-surface-line bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
+            >
+              <ThemePicker
+                :model-value="templateId"
+                @update:model-value="pickTheme"
+              />
+            </div>
           </div>
 
           <div class="flex justify-between gap-2">
@@ -203,12 +220,25 @@
       />
 
       <aside
-        class="resume-pane hidden shrink-0 bg-slate-200 p-4 dark:bg-slate-950 lg:block"
+        class="hidden shrink-0 flex-col bg-slate-200 p-4 dark:bg-slate-950 lg:flex"
         :style="{ width: previewWidth + 'px' }"
       >
-        <p class="mb-3 text-center text-xs text-desk-muted">پیش‌نمایش A4</p>
-        <div class="preview-stage" :style="{ '--preview-zoom': previewZoom }">
-          <ResumePreview :data="resumeData" :template-id="templateId" />
+        <div
+          class="mb-3 flex shrink-0 items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+        >
+          <p class="text-xs font-bold text-desk-muted">پیش‌نمایش A4</p>
+          <button
+            type="button"
+            class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white shadow-sm"
+            @click="printResume"
+          >
+            چاپ
+          </button>
+        </div>
+        <div class="resume-pane min-h-0 flex-1">
+          <div class="preview-stage" :style="{ '--preview-zoom': previewZoom }">
+            <ResumePreview :data="resumeData" :template-id="templateId" />
+          </div>
         </div>
       </aside>
     </div>
@@ -236,7 +266,7 @@ import { useRoute } from 'vue-router'
 import {
   ArrowRightIcon,
   CheckIcon,
-  DocumentArrowDownIcon,
+  ChevronDownIcon,
 } from '@heroicons/vue/24/outline'
 import api from '../../api/client'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
@@ -254,6 +284,8 @@ import { apiErrorMessage, unwrapItem } from '../../utils/format'
 import { useToast } from '../../composables/useToast'
 import ThemePicker from '../../components/resume/ThemePicker.vue'
 import PageScrollFab from '../../components/ui/PageScrollFab.vue'
+import { isValidNationalCode } from '../../utils/validators'
+import { printResumePreview } from '../../utils/resumePrint'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -308,7 +340,6 @@ const emptyData = {
 
 const loading = ref(true)
 const saving = ref(false)
-const exporting = ref(false)
 const drafting = ref(false)
 const currentStep = ref(0)
 const activeTemplate = ref('modern')
@@ -501,7 +532,10 @@ function sanitizeData(data) {
   d.personal.national_code = String(d.personal.national_code || '')
     .replace(/\D/g, '')
     .slice(0, 10)
-  if (!/^\d{10}$/.test(d.personal.national_code)) {
+  if (
+    d.personal.national_code &&
+    !isValidNationalCode(d.personal.national_code)
+  ) {
     d.personal.national_code = ''
   }
   if (!/^\d{2}\/\d{2}\/\d{4}$/.test(String(d.personal.birth_date || ''))) {
@@ -519,6 +553,14 @@ function sanitizeData(data) {
 
 async function save() {
   if (!resumeData.value) return
+  const nc = String(resumeData.value.personal?.national_code || '').replace(
+    /\D/g,
+    ''
+  )
+  if (nc && !isValidNationalCode(nc)) {
+    toast.error('کد ملی واردشده معتبر نیست.')
+    return
+  }
   saving.value = true
   try {
     const { data } = await api.put(`/resumes/${resumeId.value}`, {
@@ -537,44 +579,21 @@ async function save() {
   }
 }
 
-async function exportPDF() {
-  exporting.value = true
-  try {
-    await save()
-    const { data } = await api.get(`/resumes/${resumeId.value}/pdf`, {
-      responseType: 'blob',
-    })
-    if (data instanceof Blob && data.type && data.type.includes('json')) {
-      const parsed = JSON.parse(await data.text())
-      throw new Error(parsed.message || 'دانلود PDF ممکن نشد.')
-    }
-    const url = URL.createObjectURL(data)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `resume-${resumeId.value}.pdf`
-    a.click()
-    URL.revokeObjectURL(url)
-  } catch (e) {
-    let msg = 'دانلود PDF ممکن نشد.'
-    const blob = e?.response?.data
-    if (blob instanceof Blob) {
-      try {
-        const parsed = JSON.parse(await blob.text())
-        if (parsed?.message) msg = parsed.message
-      } catch {
-        msg = apiErrorMessage(e, msg)
-      }
-    } else {
-      msg = apiErrorMessage(e, e?.message || msg)
-    }
-    toast.error(msg)
-  } finally {
-    exporting.value = false
-  }
-}
-
 function finishAndPreview() {
   showPreview.value = true
+}
+
+async function printResume() {
+  try {
+    if (!document.querySelector('.resume-a4')) {
+      showPreview.value = true
+      await nextTick()
+      await new Promise((r) => setTimeout(r, 350))
+    }
+    await printResumePreview()
+  } catch (e) {
+    toast.error(e?.message || 'چاپ ممکن نشد.')
+  }
 }
 
 function scrollStepTop() {

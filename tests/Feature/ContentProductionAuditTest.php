@@ -190,10 +190,15 @@ class ContentProductionAuditTest extends TestCase
         $this->getJson('/api/v1/articles/'.$slug)->assertNotFound();
 
         app(ContentGeneratorService::class)->publishContent($result['content']->fresh());
-        $this->getJson('/api/v1/articles/'.$slug)
+        $published = $this->getJson('/api/v1/articles/'.$slug)
             ->assertOk()
             ->assertJsonPath('data.slug', $slug)
-            ->assertJsonPath('data.meta.title', $result['content']->title);
+            ->assertJsonPath('data.title', $result['content']->title);
+
+        // SEO meta title is brand-suffixed / length-limited by SeoAutoOptimizer — not the raw title.
+        $metaTitle = (string) $published->json('data.meta.title');
+        $this->assertNotSame('', $metaTitle);
+        $this->assertStringContainsString('JobAzmoon', $metaTitle);
 
         $this->get('/sitemaps/articles.xml')->assertOk()->assertSee('/articles/'.$slug, false);
     }

@@ -10,6 +10,8 @@ use Illuminate\Support\Str;
 
 class SeoAnalyzer
 {
+    public function __construct(protected SeoSuggestionService $suggestions) {}
+
     public function analyze(Model $model): SeoAnalysis
     {
         $checks = $this->runChecks($model);
@@ -24,16 +26,20 @@ class SeoAnalyzer
         ];
 
         if (method_exists($model, 'seoAnalysis')) {
-            return $model->seoAnalysis()->updateOrCreate(
+            $analysis = $model->seoAnalysis()->updateOrCreate(
+                ['analyzable_type' => $model->getMorphClass(), 'analyzable_id' => $model->getKey()],
+                $payload
+            );
+        } else {
+            $analysis = SeoAnalysis::query()->updateOrCreate(
                 ['analyzable_type' => $model->getMorphClass(), 'analyzable_id' => $model->getKey()],
                 $payload
             );
         }
 
-        return SeoAnalysis::query()->updateOrCreate(
-            ['analyzable_type' => $model->getMorphClass(), 'analyzable_id' => $model->getKey()],
-            $payload
-        );
+        $this->suggestions->syncFromAnalysis($analysis);
+
+        return $analysis;
     }
 
     /**

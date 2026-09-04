@@ -22,17 +22,27 @@
       "
     >
       <div
-        class="flex h-16 items-center gap-2 border-b border-surface-line px-5 dark:border-slate-700"
+        class="flex h-16 items-center justify-between gap-2 border-b border-surface-line px-4 dark:border-slate-700 sm:px-5"
       >
-        <SiteBrandLogo variant="desktop" size="sm" />
-        <div class="min-w-0">
-          <p class="truncate text-sm font-black text-ink dark:text-white">
-            {{ siteName }}
-          </p>
-          <p class="text-[10px] text-ink-muted dark:text-slate-400">
-            پنل کاربری
-          </p>
+        <div class="flex min-w-0 items-center gap-2">
+          <SiteBrandLogo variant="desktop" size="sm" />
+          <div class="min-w-0">
+            <p class="truncate text-sm font-black text-ink dark:text-white">
+              {{ siteName }}
+            </p>
+            <p class="text-[10px] text-ink-muted dark:text-slate-400">
+              پنل کاربری
+            </p>
+          </div>
         </div>
+        <button
+          type="button"
+          class="rounded-lg p-2 text-ink hover:bg-slate-100 dark:text-white dark:hover:bg-slate-700 lg:hidden"
+          aria-label="بستن منو"
+          @click="sidebarOpen = false"
+        >
+          <XMarkIcon class="h-6 w-6" />
+        </button>
       </div>
 
       <nav class="flex-1 space-y-1 overflow-y-auto p-3">
@@ -77,10 +87,14 @@
           <button
             type="button"
             class="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-700 lg:hidden"
-            aria-label="منو"
+            :aria-label="sidebarOpen ? 'بستن منو' : 'باز کردن منو'"
             @click="sidebarOpen = !sidebarOpen"
           >
-            <Bars3Icon class="h-6 w-6 text-ink dark:text-white" />
+            <XMarkIcon
+              v-if="sidebarOpen"
+              class="h-6 w-6 text-ink dark:text-white"
+            />
+            <Bars3Icon v-else class="h-6 w-6 text-ink dark:text-white" />
           </button>
           <h1 class="text-sm font-bold text-ink dark:text-white sm:text-base">
             {{ pageTitle }}
@@ -148,9 +162,10 @@ import {
   SunIcon,
   UserCircleIcon,
   WalletIcon,
+  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 import AppToast from '../components/AppToast.vue'
-import BottomNav from '../components/BottomNav.vue'
+import BottomNav from '../components/layout/BottomNav.vue'
 import SiteBrandLogo from '../components/SiteBrandLogo.vue'
 import NavItem from '../components/user/NavItem.vue'
 import PageScrollFab from '../components/ui/PageScrollFab.vue'

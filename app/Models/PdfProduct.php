@@ -47,6 +47,7 @@ class PdfProduct extends Model
         'title',
         'description',
         'file_path',
+        'attachments',
         'thumbnail',
         'price',
         'category',
@@ -60,6 +61,7 @@ class PdfProduct extends Model
             'price' => 'decimal:0',
             'is_active' => 'boolean',
             'download_count' => 'integer',
+            'attachments' => 'array',
         ];
     }
 

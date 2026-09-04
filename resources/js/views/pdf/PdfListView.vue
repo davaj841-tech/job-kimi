@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-surface-page dark:bg-slate-950">
-    <div class="page-banner py-6 sm:py-8">
+    <div class="page-banner py-5 sm:py-6">
       <div class="mx-auto max-w-7xl px-4 text-right sm:text-center">
         <h1 class="page-title text-white sm:text-2xl">
           📄 فروشگاه منابع آموزشی
@@ -8,31 +8,34 @@
         <p class="mx-auto mt-1.5 max-w-2xl text-xs text-white/70 sm:text-sm">
           هر PDF جداگانه خریداری می‌شود — بدون اشتراک.
         </p>
-        <div class="relative mx-auto mt-5 max-w-xl">
+      </div>
+    </div>
+
+    <div
+      class="sticky top-[calc(3.65rem+env(safe-area-inset-top))] z-30 border-b border-surface-line bg-surface/95 backdrop-blur-md dark:bg-slate-900/95 lg:top-[4.5rem]"
+    >
+      <div class="mx-auto max-w-7xl space-y-2 px-4 py-3">
+        <div class="relative">
           <MagnifyingGlassIcon
-            class="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+            class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-desk-muted"
           />
           <input
             v-model="filters.search"
             type="search"
             placeholder="جستجو در PDFها…"
-            class="w-full rounded-xl border border-white/20 bg-white/10 py-2.5 pl-4 pr-12 text-sm text-white placeholder-slate-400 outline-none ring-brand backdrop-blur-sm focus:ring-2"
+            class="w-full rounded-xl border border-surface-line bg-white py-2.5 pl-4 pr-11 text-sm outline-none ring-brand focus:ring-2 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             @input="debouncedSearch"
           />
         </div>
-      </div>
-    </div>
-
-    <div
-      class="sticky top-[calc(3.65rem+env(safe-area-inset-top))] z-20 border-b border-surface-line bg-surface/95 lg:top-[4.5rem]"
-    >
-      <div class="mx-auto max-w-7xl px-4 py-3">
-        <div class="scrollbar-hide flex items-center gap-2 overflow-x-auto">
+        <div
+          v-if="categories.length"
+          class="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-1"
+        >
           <button
             type="button"
             class="page-chip"
-            :class="!filters.category ? 'page-chip-on' : ''"
-            @click="filters.category = ''"
+            :class="!filters.categories.length ? 'page-chip-on' : ''"
+            @click="filters.categories = []"
           >
             همه
           </button>
@@ -41,8 +44,8 @@
             :key="cat"
             type="button"
             class="page-chip"
-            :class="filters.category === cat ? 'page-chip-on' : ''"
-            @click="filters.category = cat"
+            :class="filters.categories.includes(cat) ? 'page-chip-on' : ''"
+            @click="toggleCategory(cat)"
           >
             {{ cat }}
           </button>
@@ -112,6 +115,7 @@ import api from '../../api/client'
 import PdfCard from '../../components/pdf/PdfCard.vue'
 import PdfCardSkeleton from '../../components/pdf/PdfCardSkeleton.vue'
 import { toFaDigits, unwrapList, unwrapMeta } from '../../utils/format'
+import { setListPageMeta } from '../../services/meta'
 
 const pdfs = ref([])
 const categories = ref([])
@@ -123,9 +127,15 @@ const pagination = reactive({ total: 0 })
 
 const filters = reactive({
   search: '',
-  category: '',
+  categories: [],
   sort: 'newest',
 })
+
+function toggleCategory(cat) {
+  const idx = filters.categories.indexOf(cat)
+  if (idx >= 0) filters.categories.splice(idx, 1)
+  else filters.categories.push(cat)
+}
 
 async function fetchPdfs(reset = false) {
   if (reset) {
@@ -143,7 +153,9 @@ async function fetchPdfs(reset = false) {
       sort: filters.sort,
     }
     if (filters.search) params.search = filters.search
-    if (filters.category) params.category = filters.category
+    if (filters.categories.length) {
+      params.categories = filters.categories.join(',')
+    }
 
     const { data } = await api.get('/pdf-products', { params })
     const list = unwrapList(data)
@@ -173,11 +185,18 @@ function loadMore() {
 const debouncedSearch = useDebounceFn(() => fetchPdfs(true), 300)
 
 watch(
-  () => [filters.category, filters.sort],
+  () => [filters.categories.join(','), filters.sort],
   () => fetchPdfs(true)
 )
 
-onMounted(() => fetchPdfs(true))
+onMounted(() => {
+  setListPageMeta({
+    title: 'فروشگاه جزوه و نمونه سوال | جاب‌آزمون',
+    description: 'دانلود جزوه، نمونه سوال و منابع آموزشی آزمون‌های استخدامی',
+    path: '/pdfs',
+  })
+  fetchPdfs(true)
+})
 </script>
 
 <style scoped>

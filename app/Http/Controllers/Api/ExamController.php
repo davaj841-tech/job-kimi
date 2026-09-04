@@ -47,7 +47,7 @@ class ExamController extends BaseController
     public function index(Request $request): JsonResponse
     {
         $filters = $request->only([
-            'category_id', 'job_classification_id', 'is_free', 'access', 'search', 'per_page', 'sort',
+            'category_id', 'job_classification_id', 'job_classification_ids', 'is_free', 'access', 'search', 'per_page', 'sort',
         ]);
         // کاتالوگ عمومی فقط آزمون‌های منتشرشده
         $filters['status'] = 'published';

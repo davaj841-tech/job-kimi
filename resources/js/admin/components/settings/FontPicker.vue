@@ -1,10 +1,10 @@
 <template>
-  <div class="grid gap-3 sm:grid-cols-5">
+  <div class="space-y-2">
     <button
       v-for="item in fonts"
       :key="item.id"
       type="button"
-      class="rounded-2xl border-2 p-3 text-right transition"
+      class="flex w-full items-center justify-between gap-3 rounded-xl border-2 px-4 py-3 text-right transition"
       :class="
         modelValue === item.id
           ? 'border-orange-500 bg-orange-50'
@@ -12,13 +12,13 @@
       "
       @click="$emit('update:modelValue', item.id)"
     >
-      <p class="text-sm font-black text-slate-800">{{ item.title }}</p>
-      <p
-        class="mt-2 text-xs leading-6 text-slate-600"
+      <span class="text-sm font-black text-slate-800">{{ item.title }}</span>
+      <span
+        class="text-xs leading-6 text-slate-600"
         :style="{ fontFamily: item.family }"
       >
         {{ item.sample }}
-      </p>
+      </span>
     </button>
   </div>
 </template>

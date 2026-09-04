@@ -51,6 +51,8 @@ class JobPostService
 
         $jobPost = $jobPost->fresh(['creator', 'approver', 'exams', 'pdfProducts', 'classification', 'attachments']);
 
+        JobPostsCache::forget();
+
         event(new JobPostApproved($jobPost));
 
         return $jobPost;

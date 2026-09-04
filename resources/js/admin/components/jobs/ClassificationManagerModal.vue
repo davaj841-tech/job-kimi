@@ -36,27 +36,38 @@
             <label class="mb-1 block text-xs text-slate-500"
               >شکلک / آیکون</label
             >
-            <div class="mb-2 flex flex-wrap gap-1">
+            <div
+              class="mb-2 flex max-h-36 flex-wrap gap-1 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50/80 p-2"
+            >
               <button
                 v-for="ic in iconOptions"
                 :key="ic"
                 type="button"
-                class="rounded-lg border px-2 py-1 text-xs"
+                class="flex h-9 w-9 items-center justify-center rounded-lg border text-lg leading-none transition"
                 :class="
-                  form.icon === ic
-                    ? 'border-orange-500 bg-orange-50'
-                    : 'border-slate-200'
+                  isIconSelected(ic)
+                    ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-400'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
                 "
+                :title="ic"
                 @click="form.icon = ic"
               >
                 {{ ic }}
               </button>
             </div>
-            <input
-              v-model="form.icon"
-              class="field"
-              placeholder="یا شکلک دلخواه 🏦"
-            />
+            <div class="flex items-center gap-2">
+              <span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-xl"
+                aria-hidden="true"
+                >{{ displayIcon(form.icon) }}</span
+              >
+              <input
+                v-model="form.icon"
+                class="field"
+                dir="ltr"
+                placeholder="یا شکلک دلخواه 🏦"
+              />
+            </div>
           </div>
 
           <div>
@@ -159,7 +170,7 @@
                     class="h-full w-full object-cover"
                     alt=""
                   />
-                  <span v-else>{{ node.icon || '●' }}</span>
+                  <span v-else>{{ displayIcon(node.icon) }}</span>
                 </span>
                 <div>
                   <p class="text-sm font-bold">{{ node.name }}</p>
@@ -219,7 +230,7 @@
                     class="h-full w-full object-cover"
                     alt=""
                   />
-                  <span v-else>{{ child.icon || '•' }}</span>
+                  <span v-else>{{ displayIcon(child.icon) }}</span>
                 </span>
                 <p class="text-sm">{{ child.name }}</p>
               </div>
@@ -268,6 +279,10 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import adminApi from '../../api/client'
+import {
+  CLASSIFICATION_ICON_OPTIONS,
+  resolveIconEmoji,
+} from '../../../utils/classificationIcon'
 
 const props = defineProps({ open: Boolean })
 const emit = defineEmits(['close', 'changed'])
@@ -281,21 +296,15 @@ const logoFile = ref(null)
 const logoPreview = ref('')
 const removeLogo = ref(false)
 
-const iconOptions = [
-  'bank',
-  'building',
-  'shield',
-  'school',
-  'city',
-  'briefcase',
-  'book',
-  'users',
-  '🏦',
-  '🏛',
-  '🛡',
-  '🏫',
-  '🏢',
-]
+const iconOptions = CLASSIFICATION_ICON_OPTIONS
+
+function displayIcon(icon) {
+  return resolveIconEmoji(icon, '📋')
+}
+
+function isIconSelected(ic) {
+  return displayIcon(form.icon) === ic || form.icon === ic
+}
 const colorPresets = [
   '#1e3a5f',
   '#0f766e',
@@ -310,7 +319,7 @@ const colorPresets = [
 const form = reactive({
   name: '',
   parent_id: '',
-  icon: 'briefcase',
+  icon: '💼',
   color: '#1e3a5f',
   is_active: true,
   show_on_home: true,
@@ -341,7 +350,7 @@ function resetForm() {
   editingId.value = null
   form.name = ''
   form.parent_id = ''
-  form.icon = 'briefcase'
+  form.icon = '💼'
   form.color = '#1e3a5f'
   form.is_active = true
   form.show_on_home = true
@@ -356,7 +365,7 @@ function edit(item) {
   editingId.value = item.id
   form.name = item.raw_name || item.name
   form.parent_id = item.parent_id || ''
-  form.icon = item.icon || 'briefcase'
+  form.icon = resolveIconEmoji(item.icon || '💼')
   form.color = item.color || '#1e3a5f'
   form.is_active = item.is_active !== false
   form.show_on_home = item.show_on_home !== false
@@ -387,7 +396,7 @@ async function save() {
     const fd = new FormData()
     fd.append('name', form.name.trim())
     if (form.parent_id) fd.append('parent_id', form.parent_id)
-    fd.append('icon', form.icon || 'briefcase')
+    fd.append('icon', form.icon || '💼')
     fd.append('color', form.color || '#1e3a5f')
     fd.append('is_active', form.is_active ? '1' : '0')
     fd.append('show_on_home', form.show_on_home ? '1' : '0')

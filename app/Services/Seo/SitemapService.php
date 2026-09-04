@@ -91,6 +91,7 @@ class SitemapService
         return Cache::remember('sitemap:articles', config('seo.sitemap.cache_ttl', 3600), function () {
             $articles = $this->indexableQuery(GeneratedContent::query()->published())->get(['slug', 'updated_at', 'published_at']);
             $xml = $this->openUrlset();
+            $xml .= $this->urlEntry(url('/articles'), now()->toAtomString(), 'daily', '0.85');
 
             foreach ($articles as $article) {
                 $xml .= $this->urlEntry(url("/articles/{$article->slug}"), ($article->updated_at ?? $article->published_at)?->toAtomString(), 'weekly', '0.75');
@@ -105,6 +106,7 @@ class SitemapService
         return Cache::remember('sitemap:blog', config('seo.sitemap.cache_ttl', 3600), function () {
             $posts = $this->indexableQuery(BlogPost::query()->where('status', 'published'))->get(['slug', 'updated_at']);
             $xml = $this->openUrlset();
+            $xml .= $this->urlEntry(url('/blog'), now()->toAtomString(), 'daily', '0.85');
 
             foreach ($posts as $post) {
                 $xml .= $this->urlEntry(url("/blog/{$post->slug}"), $post->updated_at?->toAtomString(), 'weekly', '0.7');
@@ -119,9 +121,10 @@ class SitemapService
         return Cache::remember('sitemap:files', config('seo.sitemap.cache_ttl', 3600), function () {
             $files = $this->indexableQuery(PdfProduct::query()->where('is_active', true))->get(['id', 'updated_at']);
             $xml = $this->openUrlset();
+            $xml .= $this->urlEntry(url('/pdfs'), now()->toAtomString(), 'daily', '0.85');
 
             foreach ($files as $file) {
-                $xml .= $this->urlEntry(url("/pdf-products/{$file->id}"), $file->updated_at?->toAtomString(), 'monthly', '0.5');
+                $xml .= $this->urlEntry(url("/pdfs/{$file->id}"), $file->updated_at?->toAtomString(), 'monthly', '0.5');
             }
 
             return $xml.'</urlset>';

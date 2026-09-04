@@ -2,33 +2,39 @@
 
 namespace App\Services;
 
-use App\Models\Setting;
-use App\Services\Sms\KavenegarSmsGateway;
-use App\Services\Sms\MeliPayamakSmsGateway;
 use App\Services\Sms\SmsGatewayInterface;
-use Illuminate\Support\Facades\Log;
+use App\Services\Sms\SmsResult;
+use App\Services\Sms\SmsService as CoreSmsService;
 
+/**
+ * Thin alias kept for existing jobs/controllers that inject SMSService.
+ */
 class SMSService
 {
+    public function __construct(protected CoreSmsService $sms) {}
+
     public function gateway(): SmsGatewayInterface
     {
-        return match (Setting::getFilled('sms_gateway', config('services.sms.gateway', 'kavenegar'))) {
-            'melipayamak' => new MeliPayamakSmsGateway,
-            default => new KavenegarSmsGateway,
-        };
+        return $this->sms->gateway();
     }
 
-    public function sendSMS(string $mobile, string $message): bool
+    public function sendSMS(string $mobile, string $message, string $messageType = 'transactional'): bool
     {
-        try {
-            return $this->gateway()->send($mobile, $message);
-        } catch (\Throwable $e) {
-            Log::error('SMS send failed', [
-                'error' => $e->getMessage(),
-                'mobile' => $mobile,
-            ]);
+        return $this->sms->sendSMS($mobile, $message, $messageType);
+    }
 
-            return false;
-        }
+    public function sendOtp(string $mobile, string $code): bool
+    {
+        return $this->sms->sendOtp($mobile, $code);
+    }
+
+    public function queue(string $mobile, string $message, string $messageType = 'transactional'): bool
+    {
+        return $this->sms->queue($mobile, $message, $messageType);
+    }
+
+    public function sendDetailed(string $mobile, string $message, string $messageType = 'transactional'): SmsResult
+    {
+        return $this->sms->sendDetailed($mobile, $message, $messageType);
     }
 }

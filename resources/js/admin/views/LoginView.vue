@@ -1,9 +1,20 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-[#0f2744] px-4">
-    <div class="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+  <div
+    class="relative flex min-h-screen items-center justify-center bg-[#0f2744] px-4 dark:bg-slate-950"
+  >
+    <div class="absolute left-4 top-4">
+      <ThemeToggle inverted />
+    </div>
+    <div
+      class="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl dark:bg-slate-900 dark:text-slate-100"
+    >
       <div class="mb-6 text-center">
-        <h1 class="text-2xl font-black text-slate-800">ورود به پنل مدیریت</h1>
-        <p class="mt-2 text-sm text-slate-500">فقط نقش‌های ادمین و اپراتور</p>
+        <h1 class="text-2xl font-black text-slate-800 dark:text-slate-100">
+          ورود به پنل مدیریت
+        </h1>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          فقط نقش‌های ادمین و اپراتور
+        </p>
       </div>
 
       <div class="mb-6 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
@@ -35,31 +46,27 @@
       <div v-if="tab === 'password' && !showForgot" class="space-y-4">
         <form
           class="space-y-4"
-          autocomplete="off"
+          autocomplete="on"
           @submit.prevent="onPasswordLogin"
         >
           <div>
             <label class="mb-1 block text-sm font-medium text-slate-700"
-              >نام کاربری</label
+              >نام کاربری، موبایل یا ایمیل</label
             >
             <input
               :value="username"
-              name="admin_username"
+              name="username"
               class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
               dir="ltr"
               lang="en"
               inputmode="text"
-              autocomplete="off"
-              autocapitalize="characters"
+              autocomplete="username"
+              autocapitalize="off"
+              autocorrect="off"
               spellcheck="false"
-              maxlength="20"
-              placeholder="نام کاربری"
-              @input="
-                username = String($event.target.value || '').replace(
-                  /[^a-zA-Z0-9_]/g,
-                  ''
-                )
-              "
+              maxlength="100"
+              placeholder="username / 09xxxxxxxxx / email@example.com"
+              @input="username = String($event.target.value || '')"
             />
           </div>
           <div>
@@ -68,8 +75,9 @@
             >
             <PasswordInput
               v-model="password"
+              name="password"
               input-class="h-11 w-full rounded-xl border border-slate-200 px-3 text-left outline-none focus:border-orange-500"
-              autocomplete="new-password"
+              autocomplete="current-password"
               placeholder="رمز عبور"
               @enter="onPasswordLogin"
             />
@@ -187,6 +195,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import PasswordInput from '../../components/PasswordInput.vue'
+import ThemeToggle from '../../components/ThemeToggle.vue'
 import { useRouter } from 'vue-router'
 import { useAdminAuthStore } from '../stores/auth'
 
@@ -206,8 +215,12 @@ const error = ref('')
 const info = ref('')
 
 const canSubmitPassword = computed(() => {
-  const u = username.value.trim()
-  return /^[a-zA-Z0-9_]{3,20}$/.test(u) && password.value.length >= 8
+  const id = username.value.trim()
+  if (id.length < 3 || password.value.length < 8) return false
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id)
+  const isMobile = /^09\d{9}$/.test(id.replace(/\s/g, ''))
+  const isUser = /^[a-zA-Z0-9_]{3,20}$/.test(id)
+  return isEmail || isMobile || isUser
 })
 
 function selectPasswordTab() {

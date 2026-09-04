@@ -22,6 +22,7 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'throttl
 
     Route::post('/exams/{id}/start', [ExamAttemptController::class, 'start']);
     Route::post('/exams/{id}/submit/{attemptId}', [ExamAttemptController::class, 'submit']);
+    Route::post('/exams/{id}/feedback/{attemptId}', [ExamAttemptController::class, 'feedback'])->whereNumber(['id', 'attemptId']);
     Route::get('/exams/{id}/result/{attemptId}', [ExamAttemptController::class, 'result']);
     Route::post('/exams/{id}/retry', [ExamAttemptController::class, 'retry']);
     Route::post('/exams/{id}/retry-wrong/{attemptId}', [ExamAttemptController::class, 'retryWrong']);

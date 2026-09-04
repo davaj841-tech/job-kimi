@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\JobPostCommentController;
 use App\Http\Controllers\Api\JobPostController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileExtrasController;
@@ -49,6 +50,7 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check'])->group(
     Route::post('/tickets/{id}/reply', [TicketController::class, 'reply'])->whereNumber('id');
 
     Route::post('/blog-posts/{id}/comments', [CommentController::class, 'store'])->whereNumber('id');
+    Route::post('/job-posts/{id}/comments', [JobPostCommentController::class, 'store'])->whereNumber('id');
 
     Route::get('/achievements', [ProfileExtrasController::class, 'achievements']);
     Route::get('/notification-preferences', [ProfileExtrasController::class, 'notificationPreferences']);

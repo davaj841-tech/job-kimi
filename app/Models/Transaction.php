@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 
@@ -100,5 +101,22 @@ class Transaction extends Model
     public function coupon(): BelongsTo
     {
         return $this->belongsTo(Coupon::class);
+    }
+
+    /** @return HasOne<WalletLedger, $this> */
+    public function walletLedger(): HasOne
+    {
+        return $this->hasOne(WalletLedger::class, 'transaction_id');
+    }
+
+    public function isRefundable(): bool
+    {
+        if ($this->status !== self::STATUS_COMPLETED || $this->type === 'refund') {
+            return false;
+        }
+
+        return ! WalletLedger::query()
+            ->where('source_key', 'refund:'.$this->id)
+            ->exists();
     }
 }

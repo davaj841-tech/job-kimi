@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BaseController;
 use App\Models\PaymentGateway;
 use App\Models\Setting;
 use App\Services\AuditLogService;
+use App\Support\EnamadBadge;
 use App\Support\PublicAsset;
 use App\Support\SiteFonts;
 use App\Support\SiteThemes;
@@ -30,10 +31,12 @@ class SettingsAdminController extends BaseController
             'onboarding_enabled',
             'popular_searches',
             'blog_comments_require_approval',
+            'job_comments_require_approval',
         ],
         'mail' => [
             'smtp_host',
             'smtp_port',
+            'smtp_encryption',
             'smtp_username',
             'smtp_password',
             'smtp_from_address',
@@ -74,10 +77,20 @@ class SettingsAdminController extends BaseController
             'min_wallet_charge',
         ],
         'sms' => [
+            'sms_enabled',
+            'sms_otp_enabled',
+            'sms_transactional_enabled',
+            'sms_marketing_enabled',
             'sms_gateway',
             'sms_api_key',
+            'sms_username',
+            'sms_password',
+            'sms_from',
+            'sms_pattern_body_id',
+            'sms_pattern_text',
             'sms_otp_template',
             'sms_subscription_reminder_template',
+            'sms_subscription_expired_template',
         ],
         'ai' => [
             'ai_enabled',
@@ -93,7 +106,6 @@ class SettingsAdminController extends BaseController
         ],
         'security' => [
             'turnstile_site_key',
-            'turnstile_secret_key',
             'turnstile_enabled',
             'captcha_enabled',
         ],
@@ -103,11 +115,16 @@ class SettingsAdminController extends BaseController
             'whatsapp_url',
             'rubika_url',
             'bale_url',
-            'enamad_url',
-            'samandehi_url',
             'android_play_url',
             'android_bazaar_url',
             'android_direct_url',
+        ],
+        'trust' => [
+            'enamad_enabled',
+            'enamad_id',
+            'enamad_code',
+            'enamad_url',
+            'samandehi_url',
         ],
         'subscription' => [
             'free_plan_exam_limit',
@@ -179,7 +196,11 @@ class SettingsAdminController extends BaseController
             if (! in_array($key, $allowed, true)) {
                 continue;
             }
-            if ($this->isSecretKey((string) $key) && ($value === null || $value === '' || $value === '********')) {
+            // Secret must live only in .env (TURNSTILE_SECRET_KEY) — never persist to Settings.
+            if ((string) $key === 'turnstile_secret_key') {
+                continue;
+            }
+            if ($this->isSecretKey((string) $key) && $this->isMaskedSecretValue($value)) {
                 continue;
             }
             if ($key === 'homepage_layout') {
@@ -212,6 +233,23 @@ class SettingsAdminController extends BaseController
                     continue;
                 }
                 $value = PublicAsset::url((string) $value);
+            }
+            if ($key === 'smtp_encryption') {
+                $value = strtolower((string) $value);
+                if (! in_array($value, ['tls', 'ssl', 'null', 'none'], true)) {
+                    $value = 'tls';
+                }
+            }
+            if ($group === 'trust') {
+                $stringValue = $this->sanitizeTrustSetting((string) $key, $value);
+                if ($key === 'enamad_url' && filled($stringValue)) {
+                    $parsed = EnamadBadge::parseOfficialUrl($stringValue);
+                    if ($parsed !== null) {
+                        Setting::set('enamad_id', $parsed['id'], 'trust');
+                        Setting::set('enamad_code', $parsed['code'], 'trust');
+                    }
+                }
+                $value = $stringValue;
             }
             if (is_bool($value)) {
                 $value = $value ? 'true' : 'false';
@@ -291,6 +329,7 @@ class SettingsAdminController extends BaseController
             'site_name' => 'JobAzmoon',
             'onboarding_enabled' => 'true',
             'smtp_port' => '587',
+            'smtp_encryption' => 'tls',
             'smtp_from_name' => 'جاب‌آزمون',
             'primary_color' => '#f97316',
             'secondary_color' => '#0f2744',
@@ -305,7 +344,11 @@ class SettingsAdminController extends BaseController
             'mellat_active' => 'false',
             'shaparak_active' => 'false',
             'min_wallet_charge' => '10000',
-            'sms_gateway' => 'kavenegar',
+            'sms_gateway' => 'melipayamak',
+            'sms_enabled' => 'true',
+            'sms_otp_enabled' => 'true',
+            'sms_transactional_enabled' => 'true',
+            'sms_marketing_enabled' => 'false',
             'ai_enabled' => 'true',
             'ai_provider' => 'openai',
             'ai_model' => 'gpt-4',
@@ -398,6 +441,8 @@ class SettingsAdminController extends BaseController
         return [
             'smtp_password',
             'sms_api_key',
+            // Melipayamak webservice password is often a UUID API key — still a secret.
+            'sms_password',
             'ai_api_key',
             'turnstile_secret_key',
             'nextpay_api_key',
@@ -411,6 +456,11 @@ class SettingsAdminController extends BaseController
 
     protected function isSecretKey(string $key): bool
     {
+        // sms_username is a Melipayamak panel username (often mobile) — not a secret; keep readable in admin.
+        if ($key === 'sms_username') {
+            return false;
+        }
+
         return in_array($key, $this->secretKeys(), true)
             || str_ends_with($key, '_secret')
             || str_ends_with($key, '_password');
@@ -425,7 +475,73 @@ class SettingsAdminController extends BaseController
             return '';
         }
 
+        $raw = (string) $value;
+
+        // Melipayamak webservice API keys look like UUIDs — show a recognizable partial mask.
+        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $raw) === 1) {
+            return strtolower(substr($raw, 0, 8)).'-****-****-****-'.strtolower(substr($raw, -12));
+        }
+
+        // Long opaque keys: keep prefix/suffix so admins can verify the right value is stored.
+        if (strlen($raw) >= 16) {
+            return substr($raw, 0, 4).str_repeat('*', 8).substr($raw, -4);
+        }
+
         return '********';
+    }
+
+    public function isMaskedSecretValue(mixed $value): bool
+    {
+        if ($value === null || $value === '') {
+            return true;
+        }
+        if (! is_string($value)) {
+            return false;
+        }
+        if ($value === '********' || $value === '****') {
+            return true;
+        }
+
+        // UUID-style mask: 21e5e8d1-****-****-****-bc1c8ee61403
+        if (preg_match('/^[0-9a-f]{8}-\*{4}-\*{4}-\*{4}-[0-9a-f]{12}$/i', $value) === 1) {
+            return true;
+        }
+
+        // Generic prefix****suffix mask
+        return (bool) preg_match('/^[^*]{1,8}\*{4,}[^*]{0,8}$/', $value);
+    }
+
+    protected function sanitizeTrustSetting(string $key, mixed $value): string
+    {
+        if ($key === 'enamad_enabled') {
+            return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+        }
+        if ($key === 'enamad_id') {
+            return EnamadBadge::sanitizeId((string) $value);
+        }
+        if ($key === 'enamad_code') {
+            return EnamadBadge::sanitizeCode((string) $value);
+        }
+        if ($key === 'enamad_url') {
+            $url = trim((string) $value);
+            if ($url === '') {
+                return '';
+            }
+            $parsed = EnamadBadge::parseOfficialUrl($url);
+
+            return $parsed !== null
+                ? EnamadBadge::verifyUrl($parsed['id'], $parsed['code'])
+                : '';
+        }
+        if ($key === 'samandehi_url') {
+            return EnamadBadge::sanitizeExternalUrl((string) $value, [
+                'logo.samandehi.ir',
+                'samandehi.ir',
+                'www.samandehi.ir',
+            ]);
+        }
+
+        return $value === null ? '' : (string) $value;
     }
 
     /**
@@ -435,7 +551,7 @@ class SettingsAdminController extends BaseController
     protected function withoutMaskedSecrets(array $values): array
     {
         foreach ($values as $key => $value) {
-            if ($this->isSecretKey((string) $key) && ($value === '********' || $value === '' || $value === null)) {
+            if ($this->isSecretKey((string) $key) && $this->isMaskedSecretValue($value)) {
                 unset($values[$key]);
             }
         }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Seo\SeoHeadRenderer;
+use App\Services\Seo\SeoRouteResolver;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
@@ -22,6 +24,7 @@ class SpaController extends Controller
         'exams',
         'jobs',
         'blog',
+        'articles',
         'pdfs',
         'my-purchases',
         'resumes',
@@ -39,12 +42,17 @@ class SpaController extends Controller
         'payment',
     ];
 
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, SeoRouteResolver $resolver, SeoHeadRenderer $headRenderer): Response
     {
         $path = trim($request->path(), '/');
         $status = $this->isKnownPath($path) ? 200 : 404;
+        $seoPayload = $resolver->resolve($path);
+        $seoHead = $headRenderer->render($seoPayload);
 
-        return response()->view('spa', [], $status);
+        return response()->view('spa', [
+            'seoHead' => $seoHead,
+            'seoPayload' => $seoPayload,
+        ], $status);
     }
 
     protected function isKnownPath(string $path): bool

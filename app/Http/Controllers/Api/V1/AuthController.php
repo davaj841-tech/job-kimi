@@ -336,7 +336,7 @@ class AuthController extends BaseController
             'name' => ['sometimes', 'nullable', 'string', 'max:100'],
             'province' => ['sometimes', 'nullable', 'string', 'max:100'],
             'email' => ['sometimes', 'nullable', 'email', 'max:191', 'unique:users,email,'.$user->id],
-            'national_code' => ['sometimes', 'nullable', 'string', 'regex:/^\d{10}$/'],
+            'national_code' => ['sometimes', 'nullable', 'string', new \App\Rules\IranianNationalCode],
             'home_phone' => ['sometimes', 'nullable', 'string', 'max:11'],
             'military_status' => ['sometimes', 'nullable', 'string', 'max:40'],
             'insurance_history' => ['sometimes', 'nullable', 'string', 'max:80'],
@@ -351,6 +351,7 @@ class AuthController extends BaseController
         ], [
             'email.unique' => 'این ایمیل قبلاً ثبت شده است.',
             'national_code.regex' => 'کد ملی باید ۱۰ رقم باشد.',
+            'national_code' => 'کد ملی واردشده معتبر نیست.',
             'postal_code.regex' => 'کد پستی باید ۱۰ رقم باشد.',
             'birth_date.regex' => 'تاریخ تولد را کامل وارد کنید.',
         ]);

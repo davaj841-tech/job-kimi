@@ -17,6 +17,7 @@ use App\Http\Middleware\TrustProxies;
 use App\Http\Middleware\VerifyAuthCaptcha;
 use App\Http\Middleware\VerifyTurnstileToken;
 use App\Services\SiteErrorLogger;
+use App\Exceptions\WalletFrozenException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -92,9 +93,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->report(function (Throwable $e) {
             try {
                 $request = request();
+                $url = null;
+                $method = null;
+                if (app()->runningInConsole()) {
+                    $argv = $_SERVER['argv'] ?? ['artisan'];
+                    $url = 'cli:'.implode(' ', array_map('strval', $argv));
+                    $method = 'CLI';
+                } else {
+                    $url = $request?->fullUrl();
+                    $method = $request?->method();
+                }
                 app(SiteErrorLogger::class)->report($e, [
-                    'url' => $request?->fullUrl(),
-                    'method' => $request?->method(),
+                    'url' => $url,
+                    'method' => $method,
                     'user_id' => $request?->user()?->id,
                 ]);
             } catch (Throwable) {
@@ -132,6 +143,14 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => "تعداد درخواست‌های شما بیش از حد مجاز است. لطفاً {$minutes} دقیقه دیگر تلاش کنید.",
                     'errors' => null,
                 ], 429, $e->getHeaders());
+            }
+
+            if ($e instanceof WalletFrozenException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'کیف پول شما مسدود است. لطفاً با پشتیبانی تماس بگیرید.',
+                    'errors' => ['code' => 'wallet_frozen'],
+                ], 422);
             }
 
             return null;

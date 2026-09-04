@@ -8,11 +8,11 @@ use App\Http\Requests\Api\ExamUpdateRequest;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\ExamCategory;
-use App\Models\JobClassification;
 use App\Models\JobPost;
 use App\Models\Question;
 use App\Services\AuditLogService;
 use App\Services\ExamService;
+use App\Support\JobClassificationQuery;
 use App\Support\OperatorPermissions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,6 +32,7 @@ class AdminExamController extends BaseController
             'search' => ['nullable', 'string', 'max:100'],
             'category_id' => ['nullable', 'integer', 'exists:exam_categories,id'],
             'job_classification_id' => ['nullable', 'integer', 'exists:job_classifications,id'],
+            'job_classification_ids' => ['nullable', 'string', 'max:500'],
             'status' => ['nullable', Rule::in(['draft', 'published', 'archived'])],
             'is_free' => ['nullable'],
             'sort' => ['nullable', Rule::in(['desc', 'asc', 'attempts'])],
@@ -56,11 +57,8 @@ class AdminExamController extends BaseController
             $query->where('category_id', $data['category_id']);
         }
 
-        if (! empty($data['job_classification_id'])) {
-            $classId = (int) $data['job_classification_id'];
-            $childIds = JobClassification::query()->where('parent_id', $classId)->pluck('id')->all();
-            $ids = array_merge([$classId], $childIds);
-            $query->whereIn('job_classification_id', $ids);
+        if (! empty($data['job_classification_id']) || ! empty($data['job_classification_ids'])) {
+            JobClassificationQuery::applyClassificationFilter($query, $data);
         }
 
         if (! empty($data['status'])) {

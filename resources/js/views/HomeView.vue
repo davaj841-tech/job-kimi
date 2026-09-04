@@ -11,7 +11,12 @@
       :plans="plans"
       :loading="loadingPlans"
     />
-    <ExamsSection :exams="exams" :loading="loadingExams" :error="examsError" />
+    <ExamsSection
+      :exams="exams"
+      :classifications="classifications"
+      :loading="loadingExams"
+      :error="examsError"
+    />
     <FileStoreStrip :files="files" :loading="loadingFiles" />
     <HomeArticles :articles="articles" :posts="posts" />
     <ResumeFaqRow />
@@ -22,6 +27,7 @@
 import { onMounted, ref } from 'vue'
 import { applySeoPayload } from '../services/meta'
 import api from '../api/client'
+import { unwrapList } from '../utils/format'
 import ExamsSection from '../components/home/ExamsSection.vue'
 import FileStoreStrip from '../components/home/FileStoreStrip.vue'
 import HomeArticles from '../components/home/HomeArticles.vue'
@@ -36,7 +42,7 @@ useScrollAnimations('.home-2026')
 
 const { layout, plansVariant, ensureLoaded } = useSiteTheme()
 
-const CACHE_KEY = 'ja_home_feed_v3'
+const CACHE_KEY = 'ja_home_feed_v5'
 
 const jobs = ref<any[]>([])
 const classifications = ref<any[]>([])
@@ -68,14 +74,114 @@ function applyFeed(data: any) {
 
 function hydrateFromCache() {
   try {
+    ;['ja_home_feed_v3', 'ja_home_feed_v4'].forEach((key) =>
+      sessionStorage.removeItem(key)
+    )
     const raw = sessionStorage.getItem(CACHE_KEY)
     if (!raw) return false
     const cached = JSON.parse(raw)
-    if (!cached?.data || Date.now() - (cached.at || 0) > 90_000) return false
+    if (!cached?.data || Date.now() - (cached.at || 0) > 30_000) return false
     applyFeed(cached.data)
     return true
   } catch {
     return false
+  }
+}
+
+function mapBlogPosts(rows: any[]) {
+  return (rows || []).map((p) => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    excerpt: p.excerpt,
+    category: p.category,
+    author_name: p.author_name,
+  }))
+}
+
+async function loadHomeData() {
+  const ts = Date.now()
+  try {
+    const [feedRes, blogRes, articlesRes] = await Promise.all([
+      api.get('/home-feed', { params: { _: ts } }),
+      api.get('/blog-posts', { params: { per_page: 8, _: ts } }),
+      api.get('/articles', { params: { per_page: 8, _: ts } }),
+    ])
+
+    const feed = feedRes?.data?.data || {}
+    applyFeed(feed)
+
+    const directPosts = unwrapList(blogRes?.data)
+    if (directPosts.length) {
+      posts.value = mapBlogPosts(directPosts)
+    }
+
+    const directArticles = unwrapList(articlesRes?.data)
+    if (directArticles.length) {
+      articles.value = directArticles
+    }
+
+    persistCache({
+      ...feed,
+      blog_posts: posts.value,
+      articles: articles.value,
+    })
+  } catch {
+    const [
+      jobsRes,
+      filtersRes,
+      blogRes,
+      articlesRes,
+      filesRes,
+      examsRes,
+      plansRes,
+    ] = await Promise.all([
+      api.get('/job-posts', { params: { per_page: 12 } }).catch(() => null),
+      api.get('/job-posts/filters').catch(() => null),
+      api.get('/blog-posts', { params: { per_page: 8 } }).catch(() => null),
+      api.get('/articles', { params: { per_page: 8 } }).catch(() => null),
+      api.get('/pdf-products', { params: { per_page: 12 } }).catch(() => null),
+      api
+        .get('/exams', { params: { per_page: 12 } })
+        .catch((e) => ({ __error: e })),
+      api.get('/subscription-plans').catch(() => null),
+    ])
+
+    const unwrap = (payload: any) => payload?.data?.data ?? payload?.data ?? []
+    const list = (payload: any) => {
+      const v = unwrap(payload)
+      return Array.isArray(v) ? v : v?.data || []
+    }
+
+    jobs.value = list(jobsRes)
+    classifications.value =
+      filtersRes?.data?.data?.home_classifications ||
+      filtersRes?.data?.data?.classifications ||
+      []
+    posts.value = mapBlogPosts(unwrapList(blogRes?.data))
+    articles.value = unwrapList(articlesRes?.data)
+    files.value = list(filesRes)
+    plans.value = list(plansRes)
+    if ((examsRes as any)?.__error) {
+      examsError.value = 'بارگذاری آزمون‌ها ناموفق بود.'
+      exams.value = []
+    } else {
+      exams.value = list(examsRes)
+    }
+    loadingJobs.value = false
+    loadingExams.value = false
+    loadingFiles.value = false
+    loadingPlans.value = false
+
+    persistCache({
+      jobs: jobs.value,
+      classifications: classifications.value,
+      blog_posts: posts.value,
+      articles: articles.value,
+      exams: exams.value,
+      files: files.value,
+      plans: plans.value,
+    })
   }
 }
 
@@ -122,66 +228,8 @@ onMounted(() => {
     })
 
   hydrateFromCache()
-  void ensureLoaded()
-
-  void api
-    .get('/home-feed')
-    .then(({ data }) => {
-      const feed = data?.data || {}
-      applyFeed(feed)
-      persistCache(feed)
-    })
-    .catch(() => {
-      // fallback: parallel calls if aggregate fails
-      void Promise.all([
-        api.get('/job-posts', { params: { per_page: 12 } }).catch(() => null),
-        api.get('/job-posts/filters').catch(() => null),
-        api.get('/blog-posts', { params: { per_page: 8 } }).catch(() => null),
-        api.get('/articles', { params: { per_page: 8 } }).catch(() => null),
-        api
-          .get('/pdf-products', { params: { per_page: 12 } })
-          .catch(() => null),
-        api
-          .get('/exams', { params: { per_page: 12 } })
-          .catch((e) => ({ __error: e })),
-        api.get('/subscription-plans').catch(() => null),
-      ]).then(
-        ([
-          jobsRes,
-          filtersRes,
-          blogRes,
-          articlesRes,
-          filesRes,
-          examsRes,
-          plansRes,
-        ]) => {
-          const unwrap = (payload: any) =>
-            payload?.data?.data ?? payload?.data ?? []
-          const list = (payload: any) => {
-            const v = unwrap(payload)
-            return Array.isArray(v) ? v : v?.data || []
-          }
-          jobs.value = list(jobsRes)
-          classifications.value =
-            filtersRes?.data?.data?.home_classifications ||
-            filtersRes?.data?.data?.classifications ||
-            []
-          posts.value = list(blogRes)
-          articles.value = list(articlesRes)
-          files.value = list(filesRes)
-          plans.value = list(plansRes)
-          if ((examsRes as any)?.__error) {
-            examsError.value = 'بارگذاری آزمون‌ها ناموفق بود.'
-            exams.value = []
-          } else {
-            exams.value = list(examsRes)
-          }
-          loadingJobs.value = false
-          loadingExams.value = false
-          loadingFiles.value = false
-          loadingPlans.value = false
-        }
-      )
-    })
+  // Force refetch so theme/layout saved in admin apply on homepage visit.
+  void ensureLoaded(true)
+  void loadHomeData()
 })
 </script>

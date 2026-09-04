@@ -4,6 +4,7 @@ namespace App\Services\Exam;
 
 use App\Models\Exam;
 use App\Models\Question;
+use App\Services\Question\QuestionAssignService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -28,8 +29,18 @@ class RandomExamAssembler
 
         $preferFrequent = (bool) ($config['prefer_frequent'] ?? true);
         $classificationId = (int) $exam->job_classification_id;
+        $duplicateFingerprints = is_array($config['duplicate_fingerprints'] ?? null)
+            ? array_values(array_filter($config['duplicate_fingerprints']))
+            : [];
 
         $picked = collect();
+
+        if ($duplicateFingerprints !== []) {
+            $assigner = app(QuestionAssignService::class);
+            foreach ($assigner->questionsForFingerprints($duplicateFingerprints, $classificationId, (int) $exam->id) as $question) {
+                $picked->push($question);
+            }
+        }
 
         foreach ($subjects as $slug => $count) {
             $slug = (string) $slug;

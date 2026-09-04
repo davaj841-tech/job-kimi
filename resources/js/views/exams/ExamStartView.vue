@@ -99,6 +99,42 @@
           </div>
         </div>
 
+        <div class="px-6 pb-4">
+          <button
+            type="button"
+            class="flex w-full items-start gap-3 rounded-2xl border p-4 text-right transition"
+            :class="
+              showInstantFeedback
+                ? 'border-brand bg-brand-soft/60 dark:border-brand dark:bg-brand/10'
+                : 'border-surface-line bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50'
+            "
+            :aria-pressed="showInstantFeedback"
+            @click="toggleInstantFeedback"
+          >
+            <span
+              class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border text-sm font-black"
+              :class="
+                showInstantFeedback
+                  ? 'border-brand bg-brand text-white'
+                  : 'border-slate-300 bg-white text-transparent dark:border-slate-600 dark:bg-slate-900'
+              "
+              aria-hidden="true"
+              >✓</span
+            >
+            <span class="min-w-0 flex-1">
+              <span class="block text-sm font-bold text-ink dark:text-white">
+                نمایش پاسخ و توضیح بعد از هر سوال
+              </span>
+              <span
+                class="mt-1 block text-xs leading-5 text-ink-muted dark:text-slate-400"
+              >
+                با فعال‌کردن این گزینه، بلافاصله بعد از زدن هر گزینه، جواب صحیح
+                و توضیح سوال نشان داده می‌شود. در طول آزمون هم قابل تغییر است.
+              </span>
+            </span>
+          </button>
+        </div>
+
         <div class="p-6 pt-2">
           <p v-if="error" class="mb-3 text-center text-sm text-brand">
             {{ error }}
@@ -204,11 +240,28 @@ const exam = ref<ExamStartViewExam | null>(null)
 const loading = ref(true)
 const isStarting = ref(false)
 const error = ref('')
+const showInstantFeedback = ref(
+  typeof localStorage !== 'undefined' &&
+    localStorage.getItem('ja_exam_instant_feedback') === '1'
+)
+
+function toggleInstantFeedback() {
+  showInstantFeedback.value = !showInstantFeedback.value
+  try {
+    localStorage.setItem(
+      'ja_exam_instant_feedback',
+      showInstantFeedback.value ? '1' : '0'
+    )
+  } catch {
+    /* ignore */
+  }
+}
 
 const rules = [
   'پس از شروع آزمون، تایمر به صورت خودکار شروع می‌شود و قابل توقف نیست.',
   'در بالای صفحه تب دروس دارید؛ می‌توانید همه دروس یا یک درس را انتخاب کنید.',
   'سوالات مانده و علامت‌گذاری در دسترس است.',
+  'می‌توانید نمایش پاسخ و توضیح بعد از هر سوال را فعال کنید.',
   'پاسخ‌ها به صورت خودکار ذخیره می‌شوند (حتی آفلاین).',
   'پس از اتمام زمان، آزمون به صورت خودکار ارسال می‌شود.',
 ]

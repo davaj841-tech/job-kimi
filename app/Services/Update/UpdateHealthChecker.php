@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 
-final class UpdateHealthChecker
+class UpdateHealthChecker
 {
     /**
      * @return array{ok: bool, checks: array<string, string>, version: string}
@@ -26,8 +26,17 @@ final class UpdateHealthChecker
             'version' => SemVer::isValid(SemVer::current()) ? 'ok' : 'fail',
         ];
 
+        $critical = ['php', 'laravel', 'database', 'storage', 'version'];
+        $ok = true;
+        foreach ($critical as $key) {
+            if (($checks[$key] ?? 'fail') === 'fail') {
+                $ok = false;
+                break;
+            }
+        }
+
         return [
-            'ok' => ! in_array('fail', $checks, true),
+            'ok' => $ok,
             'checks' => $checks,
             'version' => SemVer::current(),
         ];

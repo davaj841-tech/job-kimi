@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ThemeBootstrap;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -60,7 +61,6 @@ class Setting extends Model
         );
 
         Cache::forget("setting.{$key}");
-        Cache::forget('public_theme_bootstrap');
-        Cache::forget('public_settings_payload');
+        ThemeBootstrap::forget();
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Setting;
+use App\Services\Security\TurnstileService;
 use App\Services\Seo\SeoManager;
+use App\Support\EnamadBadge;
 use App\Support\PublicAsset;
 use App\Support\SiteFonts;
 use App\Support\SiteThemes;
@@ -11,20 +13,9 @@ use Illuminate\Http\JsonResponse;
 
 class PublicSettingsController extends BaseController
 {
-    public function index(): JsonResponse
+    public function index(TurnstileService $turnstile): JsonResponse
     {
-        $payload = cache()->remember('public_settings_payload', 60, function () {
-            $siteKey = (string) Setting::getFilled(
-                'turnstile_site_key',
-                config('services.turnstile.site_key', '')
-            );
-            $secret = (string) Setting::getFilled(
-                'turnstile_secret_key',
-                config('services.turnstile.secret', '')
-            );
-            // Prefer Turnstile when both keys exist; otherwise math captcha
-            $captchaMode = ($siteKey !== '' && $secret !== '') ? 'turnstile' : 'math';
-
+        $payload = cache()->remember('public_settings_payload', 60, function () use ($turnstile) {
             $siteLogo = PublicAsset::url((string) Setting::get('site_logo', ''));
 
             return [
@@ -47,19 +38,19 @@ class PublicSettingsController extends BaseController
                 'whatsapp_url' => Setting::get('whatsapp_url', ''),
                 'rubika_url' => Setting::get('rubika_url', ''),
                 'bale_url' => Setting::get('bale_url', ''),
-                'enamad_url' => Setting::get('enamad_url', ''),
-                'samandehi_url' => Setting::get('samandehi_url', ''),
+                ...EnamadBadge::publicPayload(),
                 'android_play_url' => Setting::get('android_play_url', ''),
                 'android_bazaar_url' => Setting::get('android_bazaar_url', ''),
                 'android_direct_url' => PublicAsset::url((string) Setting::get('android_direct_url', '')),
-                'captcha_mode' => $captchaMode,
-                'turnstile_enabled' => $captchaMode === 'turnstile',
-                'turnstile_site_key' => $captchaMode === 'turnstile' ? $siteKey : '',
-                'captcha_enabled' => true,
+                ...$turnstile->publicCaptchaPayload(),
+                'google_analytics_id' => Setting::getFilled('google_analytics_id', ''),
+                'google_tag_manager' => Setting::getFilled('google_tag_manager', ''),
                 'seo' => app(SeoManager::class)->buildHomePayload(),
             ];
         });
 
-        return $this->successResponse($payload)->header('Cache-Control', 'public, max-age=30');
+        // Avoid browser caching theme/layout so admin changes show on refresh.
+        return $this->successResponse($payload)
+            ->header('Cache-Control', 'private, max-age=0, must-revalidate');
     }
 }

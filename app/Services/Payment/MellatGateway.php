@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Log;
 use SoapClient;
 use Throwable;
 
-class MellatGateway implements PaymentGatewayInterface
+class MellatGateway extends AbstractPaymentGateway
 {
     public function getName(): string
     {
@@ -15,22 +15,27 @@ class MellatGateway implements PaymentGatewayInterface
 
     public function getDisplayName(): string
     {
-        return 'بانک ملت';
+        return 'بانک ملت (به‌پرداخت)';
+    }
+
+    public function requiredCredentialKeys(): array
+    {
+        return ['terminal_id', 'username', 'password'];
     }
 
     protected function terminalId(): string
     {
-        return (string) config('services.mellat.terminal_id', '');
+        return $this->credential('terminal_id');
     }
 
     protected function username(): string
     {
-        return (string) config('services.mellat.username', '');
+        return $this->credential('username');
     }
 
     protected function password(): string
     {
-        return (string) config('services.mellat.password', '');
+        return $this->credential('password');
     }
 
     /**
@@ -48,7 +53,7 @@ class MellatGateway implements PaymentGatewayInterface
         $password = $this->password();
 
         if (blank($terminalId) || blank($username) || blank($password)) {
-            return ['authority' => null, 'payment_url' => null, 'error' => 'اطلاعات درگاه بانک ملت تنظیم نشده است.'];
+            return ['authority' => null, 'payment_url' => null, 'error' => 'اطلاعات اتصال این درگاه کامل نشده است.'];
         }
 
         $orderId = (int) ($meta['order_id'] ?? (time().random_int(100, 999)));
@@ -79,7 +84,7 @@ class MellatGateway implements PaymentGatewayInterface
             $refId = $parts[1] ?? '';
 
             if ($code !== '0' || blank($refId)) {
-                Log::warning('Mellat request failed', ['raw' => $raw]);
+                Log::warning('Mellat request failed', ['code' => $code]);
 
                 return ['authority' => null, 'payment_url' => null, 'error' => 'خطا در ایجاد درخواست بانک ملت.'];
             }

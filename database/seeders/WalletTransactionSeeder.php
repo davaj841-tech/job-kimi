@@ -6,11 +6,16 @@ use App\Models\User;
 use Database\Factories\WalletTransactionFactory;
 use Illuminate\Database\Seeder;
 
-/** تراکنش‌های کیف پول روی جدول transactions. */
+/** Demo transactions only — bypasses WalletService; do NOT run on production. */
 class WalletTransactionSeeder extends Seeder
 {
     public function run(): void
     {
+        if (app()->environment('production')) {
+            $this->command?->warn('WalletTransactionSeeder skipped in production (would desync ledger).');
+
+            return;
+        }
         $users = User::query()->pluck('id');
         if ($users->isEmpty()) {
             $this->call(UserSeeder::class);

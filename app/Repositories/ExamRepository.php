@@ -4,8 +4,8 @@ namespace App\Repositories;
 
 use App\Models\Exam;
 use App\Models\ExamAttempt;
-use App\Models\JobClassification;
 use App\Models\User;
+use App\Support\JobClassificationQuery;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -26,12 +26,7 @@ class ExamRepository
             $query->where('category_id', $filters['category_id']);
         }
 
-        if (! empty($filters['job_classification_id'])) {
-            $classId = (int) $filters['job_classification_id'];
-            $childIds = JobClassification::query()->where('parent_id', $classId)->pluck('id')->all();
-            $ids = array_merge([$classId], $childIds);
-            $query->whereIn('job_classification_id', $ids);
-        }
+        JobClassificationQuery::applyClassificationFilter($query, $filters);
 
         if (isset($filters['is_free']) && $filters['is_free'] !== '') {
             $query->where('is_free', filter_var($filters['is_free'], FILTER_VALIDATE_BOOLEAN));

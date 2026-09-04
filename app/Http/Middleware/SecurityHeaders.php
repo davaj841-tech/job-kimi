@@ -73,7 +73,11 @@ final class SecurityHeaders
         $connectSrc = [
             "'self'",
             'https://api.zarinpal.com',
+            'https://payment.zarinpal.com',
+            'https://sandbox.zarinpal.com',
+            'https://www.zarinpal.com',
             'https://api.kavenegar.com',
+            'https://rest.payamak-panel.com',
             'https://*.sentry.io',
             'https://challenges.cloudflare.com',
         ];

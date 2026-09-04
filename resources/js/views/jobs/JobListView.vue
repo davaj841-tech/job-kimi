@@ -1,48 +1,52 @@
 <template>
   <div class="min-h-screen bg-surface-page dark:bg-slate-950">
     <div
-      class="bg-white/92 sticky top-[calc(3.65rem+env(safe-area-inset-top))] z-20 border-b border-surface-line backdrop-blur-md lg:top-[4.5rem]"
+      class="sticky top-[calc(3.65rem+env(safe-area-inset-top))] z-30 border-b border-surface-line bg-white/95 backdrop-blur-md dark:bg-slate-900/95 lg:top-[4.5rem]"
     >
       <div class="mx-auto max-w-7xl px-4 py-3">
         <div class="mb-2 flex items-center justify-between gap-2">
           <h1 class="page-title">آگهی‌های شغلی</h1>
         </div>
 
+        <div class="relative">
+          <MagnifyingGlassIcon
+            class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-desk-muted"
+          />
+          <input
+            v-model="filters.search"
+            type="search"
+            placeholder="عنوان شغل، سازمان..."
+            class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-3 pr-9 text-sm outline-none ring-brand focus:ring-2 dark:bg-slate-800 dark:text-white"
+            @input="debouncedSearch"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="sticky top-[calc(7.25rem+env(safe-area-inset-top))] z-20 border-b border-surface-line bg-surface/95 backdrop-blur-md dark:bg-slate-950/95 lg:top-[8.5rem]"
+    >
+      <div class="mx-auto max-w-7xl px-4 py-2">
         <div
           class="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-1"
         >
-          <div class="relative w-56 flex-shrink-0 sm:w-64">
-            <MagnifyingGlassIcon
-              class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-desk-muted"
-            />
-            <input
-              v-model="filters.search"
-              type="search"
-              placeholder="عنوان شغل، سازمان..."
-              class="w-full rounded-xl border-0 bg-slate-100 py-2 pl-3 pr-9 text-sm outline-none ring-brand focus:ring-2 dark:bg-slate-800 dark:text-white"
-              @input="debouncedSearch"
-            />
-          </div>
-
           <button
             type="button"
             class="page-chip"
-            :class="!filters.job_classification_id ? 'page-chip-on' : ''"
-            @click="filters.job_classification_id = ''"
+            :class="
+              !filters.job_classification_ids.length ? 'page-chip-on' : ''
+            "
+            @click="filters.job_classification_ids = []"
           >
             همه
           </button>
 
           <button
-            v-for="cat in classifications"
+            v-for="cat in chipClassifications"
             :key="cat.id"
             type="button"
             class="page-chip"
-            :class="
-              String(filters.job_classification_id) === String(cat.id)
-                ? 'page-chip-on'
-                : ''
-            "
+            :class="isCategorySelected(cat.id) ? 'page-chip-on' : ''"
             @click="toggleCategory(cat.id)"
           >
             {{ cat.name }}
@@ -63,7 +67,7 @@
 
         <div
           v-show="showFilters"
-          class="mt-3 grid grid-cols-2 gap-2 border-t border-surface-line pt-3 dark:border-slate-800 md:grid-cols-3"
+          class="mt-2 grid grid-cols-2 gap-2 border-t border-surface-line pt-2 dark:border-slate-800 md:grid-cols-3"
         >
           <select
             v-model="filters.province"
@@ -184,7 +188,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import JobCardCompact from '../../components/jobs/JobCardCompact.vue'
 import JobCardSkeleton from '../../components/jobs/JobCardSkeleton.vue'
@@ -193,6 +197,16 @@ import EmptyState from '../../components/EmptyState.vue'
 import { useJobList } from '../../composables/useJobList'
 import { IRAN_PROVINCES } from '../../utils/provinces'
 import { toFaDigits } from '../../utils/format'
+import { setListPageMeta } from '../../services/meta'
+
+onMounted(() => {
+  setListPageMeta({
+    title: 'آگهی‌های استخدامی | جاب‌آزمون',
+    description:
+      'جدیدترین آگهی‌های استخدامی دولتی و خصوصی — بانک، نفت، آموزش و پرورش، شهرداری و شرکت‌های بورسی',
+    path: '/jobs',
+  })
+})
 
 const showFilters = ref(false)
 const selectedJob = ref(null)
@@ -207,14 +221,22 @@ const {
   filters,
   pagination,
   classifications,
+  homeClassifications,
   provinces,
   fetchJobs,
   loadMore,
   debouncedSearch,
-  toggleCategory,
   resetFilters,
   toggleBookmark,
+  toggleCategory,
+  isCategorySelected,
 } = useJobList()
+
+const chipClassifications = computed(() => {
+  const home = homeClassifications.value || []
+  if (home.length) return home
+  return (classifications.value || []).filter((c) => !c.parent_id)
+})
 
 const provinceOptions = computed(() => {
   const fromApi = provinces.value || []

@@ -173,6 +173,9 @@
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-GETapi-v1-pdf-products--id--download">
                                 <a href="#endpoints-GETapi-v1-pdf-products--id--download">GET api/v1/pdf-products/{id}/download</a>
                             </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-GETapi-v1-pdf-products--id--attachments--index--download">
+                                <a href="#endpoints-GETapi-v1-pdf-products--id--attachments--index--download">GET api/v1/pdf-products/{id}/attachments/{index}/download</a>
+                            </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-GETapi-v1-my-purchases">
                                 <a href="#endpoints-GETapi-v1-my-purchases">GET api/v1/my-purchases</a>
                             </li>
@@ -295,6 +298,9 @@
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-v1-exams--id--submit--attemptId-">
                                 <a href="#endpoints-POSTapi-v1-exams--id--submit--attemptId-">POST api/v1/exams/{id}/submit/{attemptId}</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-POSTapi-v1-exams--id--feedback--attemptId-">
+                                <a href="#endpoints-POSTapi-v1-exams--id--feedback--attemptId-">POST api/v1/exams/{id}/feedback/{attemptId}</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-GETapi-v1-exams--id--result--attemptId-">
                                 <a href="#endpoints-GETapi-v1-exams--id--result--attemptId-">GET api/v1/exams/{id}/result/{attemptId}</a>
@@ -716,7 +722,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --data "{
     \"email\": \"gbailey@example.net\",
     \"token\": \"architecto\",
-    \"password\": \"]|{+-0pBNvYg\"
+    \"password\": \"|]|{+-\"
 }"
 </code></pre></div>
 
@@ -734,7 +740,7 @@ const headers = {
 let body = {
     "email": "gbailey@example.net",
     "token": "architecto",
-    "password": "]|{+-0pBNvYg"
+    "password": "|]|{+-"
 };
 
 fetch(url, {
@@ -850,10 +856,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="password"                data-endpoint="POSTapi-v1-auth-reset-password"
-               value="]|{+-0pBNvYg"
+               value="|]|{+-"
                data-component="body">
     <br>
-<p>فیلد value نباید کمتر از 8 کاراکتر باشد. Example: <code>]|{+-0pBNvYg</code></p>
+<p>Example: <code>|]|{+-</code></p>
         </div>
         </form>
 
@@ -1036,7 +1042,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --data "{
     \"code\": \"b\",
     \"amount\": 39,
-    \"type\": \"pdf\"
+    \"type\": \"subscription\"
 }"
 </code></pre></div>
 
@@ -1054,7 +1060,7 @@ const headers = {
 let body = {
     "code": "b",
     "amount": 39,
-    "type": "pdf"
+    "type": "subscription"
 };
 
 fetch(url, {
@@ -1170,10 +1176,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="type"                data-endpoint="POSTapi-v1-coupons-validate"
-               value="pdf"
+               value="subscription"
                data-component="body">
     <br>
-<p>Example: <code>pdf</code></p>
+<p>Example: <code>subscription</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>subscription</code></li> <li><code>pdf</code></li></ul>
         </div>
@@ -3090,7 +3096,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"name\": \"b\",
     \"mobile\": \"09564255931\",
     \"email\": \"cecil42@example.com\",
-    \"subject\": \"partnership\",
+    \"subject\": \"complaint\",
     \"message\": \"y\"
 }"
 </code></pre></div>
@@ -3110,7 +3116,7 @@ let body = {
     "name": "b",
     "mobile": "09564255931",
     "email": "cecil42@example.com",
-    "subject": "partnership",
+    "subject": "complaint",
     "message": "y"
 };
 
@@ -3239,10 +3245,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="subject"                data-endpoint="POSTapi-v1-contact"
-               value="partnership"
+               value="complaint"
                data-component="body">
     <br>
-<p>Example: <code>partnership</code></p>
+<p>Example: <code>complaint</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>support</code></li> <li><code>complaint</code></li> <li><code>suggestion</code></li> <li><code>partnership</code></li></ul>
         </div>
@@ -4345,9 +4351,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"plan_id\": 16,
-    \"payment_method\": \"zarinpal\",
+    \"payment_method\": \"nextpay\",
     \"coupon_code\": \"n\",
-    \"gateway\": \"nextpay\"
+    \"gateway\": \"architecto\"
 }"
 </code></pre></div>
 
@@ -4364,9 +4370,9 @@ const headers = {
 
 let body = {
     "plan_id": 16,
-    "payment_method": "zarinpal",
+    "payment_method": "nextpay",
     "coupon_code": "n",
-    "gateway": "nextpay"
+    "gateway": "architecto"
 };
 
 fetch(url, {
@@ -4470,10 +4476,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="payment_method"                data-endpoint="POSTapi-v1-subscription-upgrade"
-               value="zarinpal"
+               value="nextpay"
                data-component="body">
     <br>
-<p>Example: <code>zarinpal</code></p>
+<p>Example: <code>nextpay</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>wallet</code></li> <li><code>zarinpal</code></li> <li><code>nextpay</code></li> <li><code>idpay</code></li></ul>
         </div>
@@ -4496,12 +4502,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="gateway"                data-endpoint="POSTapi-v1-subscription-upgrade"
-               value="nextpay"
+               value="architecto"
                data-component="body">
     <br>
-<p>Example: <code>nextpay</code></p>
-Must be one of:
-<ul style="list-style-type: square;"><li><code>zarinpal</code></li> <li><code>nextpay</code></li> <li><code>idpay</code></li> <li><code>mellat</code></li> <li><code>shaparak</code></li></ul>
+<p>Example: <code>architecto</code></p>
         </div>
         </form>
 
@@ -4522,9 +4526,9 @@ Must be one of:
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"payment_method\": \"wallet\",
+    \"payment_method\": \"zarinpal\",
     \"coupon_code\": \"b\",
-    \"gateway\": \"nextpay\"
+    \"gateway\": \"architecto\"
 }"
 </code></pre></div>
 
@@ -4540,9 +4544,9 @@ const headers = {
 };
 
 let body = {
-    "payment_method": "wallet",
+    "payment_method": "zarinpal",
     "coupon_code": "b",
-    "gateway": "nextpay"
+    "gateway": "architecto"
 };
 
 fetch(url, {
@@ -4647,10 +4651,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="payment_method"                data-endpoint="POSTapi-v1-pdf-products--id--purchase"
-               value="wallet"
+               value="zarinpal"
                data-component="body">
     <br>
-<p>Example: <code>wallet</code></p>
+<p>Example: <code>zarinpal</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>wallet</code></li> <li><code>zarinpal</code></li> <li><code>nextpay</code></li> <li><code>idpay</code></li></ul>
         </div>
@@ -4673,12 +4677,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="gateway"                data-endpoint="POSTapi-v1-pdf-products--id--purchase"
-               value="nextpay"
+               value="architecto"
                data-component="body">
     <br>
-<p>Example: <code>nextpay</code></p>
-Must be one of:
-<ul style="list-style-type: square;"><li><code>zarinpal</code></li> <li><code>nextpay</code></li> <li><code>idpay</code></li> <li><code>mellat</code></li> <li><code>shaparak</code></li></ul>
+<p>Example: <code>architecto</code></p>
         </div>
         </form>
 
@@ -4803,6 +4805,142 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="url">
     <br>
 <p>The ID of the pdf product. Example: <code>564</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="endpoints-GETapi-v1-pdf-products--id--attachments--index--download">GET api/v1/pdf-products/{id}/attachments/{index}/download</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-GETapi-v1-pdf-products--id--attachments--index--download">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost/api/v1/pdf-products/564/attachments/564/download" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost/api/v1/pdf-products/564/attachments/564/download"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-pdf-products--id--attachments--index--download">
+    </span>
+<span id="execution-results-GETapi-v1-pdf-products--id--attachments--index--download" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-pdf-products--id--attachments--index--download"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-pdf-products--id--attachments--index--download"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-pdf-products--id--attachments--index--download" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-pdf-products--id--attachments--index--download">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-pdf-products--id--attachments--index--download" data-method="GET"
+      data-path="api/v1/pdf-products/{id}/attachments/{index}/download"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-pdf-products--id--attachments--index--download', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-v1-pdf-products--id--attachments--index--download"
+                    onclick="tryItOut('GETapi-v1-pdf-products--id--attachments--index--download');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-v1-pdf-products--id--attachments--index--download"
+                    onclick="cancelTryOut('GETapi-v1-pdf-products--id--attachments--index--download');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-v1-pdf-products--id--attachments--index--download"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/pdf-products/{id}/attachments/{index}/download</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-pdf-products--id--attachments--index--download"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-pdf-products--id--attachments--index--download"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="id"                data-endpoint="GETapi-v1-pdf-products--id--attachments--index--download"
+               value="564"
+               data-component="url">
+    <br>
+<p>The ID of the pdf product. Example: <code>564</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>index</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="index"                data-endpoint="GETapi-v1-pdf-products--id--attachments--index--download"
+               value="564"
+               data-component="url">
+    <br>
+<p>Example: <code>564</code></p>
             </div>
                     </form>
 
@@ -6246,20 +6384,20 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --form "description=Et animi quos velit et fugiat."\
     --form "provinces[]=d"\
     --form "city=l"\
-    --form "registration_deadline=2052-09-17"\
-    --form "exam_date=2052-09-17"\
+    --form "registration_deadline=2052-09-27"\
+    --form "exam_date=2052-09-27"\
     --form "registration_link=n"\
     --form "source_url=http://crooks.biz/et-fugiat-sunt-nihil-accusantium"\
     --form "attachment_titles[]=n"\
     --form "attachment_descriptions[]=i"\
     --form "remove_attachment_ids[]=16"\
     --form "is_featured=1"\
-    --form "status=pending"\
-    --form "auto_catalog=1"\
+    --form "status=draft"\
+    --form "auto_catalog="\
     --form "exam_ids[]=16"\
     --form "pdf_ids[]=16"\
-    --form "attachment=@C:\Users\Kardansoft\AppData\Local\Temp\php7490.tmp" \
-    --form "attachments[]=@C:\Users\Kardansoft\AppData\Local\Temp\php74B0.tmp" </code></pre></div>
+    --form "attachment=@C:\Users\Kardansoft\AppData\Local\Temp\php9D23.tmp" \
+    --form "attachments[]=@C:\Users\Kardansoft\AppData\Local\Temp\php9D43.tmp" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -6279,16 +6417,16 @@ body.append('job_classification_id', '16');
 body.append('description', 'Et animi quos velit et fugiat.');
 body.append('provinces[]', 'd');
 body.append('city', 'l');
-body.append('registration_deadline', '2052-09-17');
-body.append('exam_date', '2052-09-17');
+body.append('registration_deadline', '2052-09-27');
+body.append('exam_date', '2052-09-27');
 body.append('registration_link', 'n');
 body.append('source_url', 'http://crooks.biz/et-fugiat-sunt-nihil-accusantium');
 body.append('attachment_titles[]', 'n');
 body.append('attachment_descriptions[]', 'i');
 body.append('remove_attachment_ids[]', '16');
 body.append('is_featured', '1');
-body.append('status', 'pending');
-body.append('auto_catalog', '1');
+body.append('status', 'draft');
+body.append('auto_catalog', '');
 body.append('exam_ids[]', '16');
 body.append('pdf_ids[]', '16');
 body.append('attachment', document.querySelector('input[name="attachment"]').files[0]);
@@ -6457,10 +6595,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="registration_deadline"                data-endpoint="POSTapi-v1-job-posts-submit"
-               value="2052-09-17"
+               value="2052-09-27"
                data-component="body">
     <br>
-<p>فیلد value باید یک تاریخ معتبر باشد. فیلد value باید تاریخی بعد یا برابر با <code>today</code> باشد. Example: <code>2052-09-17</code></p>
+<p>فیلد value باید یک تاریخ معتبر باشد. فیلد value باید تاریخی بعد یا برابر با <code>today</code> باشد. Example: <code>2052-09-27</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>exam_date</code></b>&nbsp;&nbsp;
@@ -6469,10 +6607,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="exam_date"                data-endpoint="POSTapi-v1-job-posts-submit"
-               value="2052-09-17"
+               value="2052-09-27"
                data-component="body">
     <br>
-<p>فیلد value باید یک تاریخ معتبر باشد. فیلد value باید تاریخی بعد یا برابر با <code>registration_deadline</code> باشد. Example: <code>2052-09-17</code></p>
+<p>فیلد value باید یک تاریخ معتبر باشد. فیلد value باید تاریخی بعد یا برابر با <code>registration_deadline</code> باشد. Example: <code>2052-09-27</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>registration_link</code></b>&nbsp;&nbsp;
@@ -6508,7 +6646,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Must be a file. فیلد value نباید بزرگتر از 20480 کیلوبایت باشد. Example: <code>C:\Users\Kardansoft\AppData\Local\Temp\php7490.tmp</code></p>
+<p>Must be a file. فیلد value نباید بزرگتر از 20480 کیلوبایت باشد. Example: <code>C:\Users\Kardansoft\AppData\Local\Temp\php9D23.tmp</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>attachments</code></b>&nbsp;&nbsp;
@@ -6595,10 +6733,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="POSTapi-v1-job-posts-submit"
-               value="pending"
+               value="draft"
                data-component="body">
     <br>
-<p>Example: <code>pending</code></p>
+<p>Example: <code>draft</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>pending</code></li> <li><code>approved</code></li> <li><code>rejected</code></li> <li><code>draft</code></li> <li><code>expired</code></li></ul>
         </div>
@@ -6622,7 +6760,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>true</code></p>
+<p>Example: <code>false</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>exam_ids</code></b>&nbsp;&nbsp;
@@ -7242,7 +7380,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"subject\": \"b\",
     \"message\": \"n\",
     \"category\": \"bug\",
-    \"priority\": \"medium\"
+    \"priority\": \"low\"
 }"
 </code></pre></div>
 
@@ -7261,7 +7399,7 @@ let body = {
     "subject": "b",
     "message": "n",
     "category": "bug",
-    "priority": "medium"
+    "priority": "low"
 };
 
 fetch(url, {
@@ -7391,10 +7529,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="priority"                data-endpoint="POSTapi-v1-tickets"
-               value="medium"
+               value="low"
                data-component="body">
     <br>
-<p>Example: <code>medium</code></p>
+<p>Example: <code>low</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>low</code></li> <li><code>medium</code></li> <li><code>high</code></li></ul>
         </div>
@@ -8574,7 +8712,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="2"
                data-component="body">
     <br>
-<p>فیلد value باید بین 1 و 10 باشد. Example: <code>2</code></p>
+<p>فیلد value باید بین 1 و 15 باشد. Example: <code>2</code></p>
         </div>
         </form>
 
@@ -9488,7 +9626,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="2"
                data-component="body">
     <br>
-<p>فیلد value باید بین 1 و 10 باشد. Example: <code>2</code></p>
+<p>فیلد value باید بین 1 و 15 باشد. Example: <code>2</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>data</code></b>&nbsp;&nbsp;
@@ -9789,7 +9927,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="2"
                data-component="body">
     <br>
-<p>فیلد value باید بین 1 و 10 باشد. Example: <code>2</code></p>
+<p>فیلد value باید بین 1 و 15 باشد. Example: <code>2</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>data</code></b>&nbsp;&nbsp;
@@ -10238,7 +10376,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"answers\": [
-        \"d\"
+        \"b\"
     ]
 }"
 </code></pre></div>
@@ -10256,7 +10394,7 @@ const headers = {
 
 let body = {
     "answers": [
-        "d"
+        "b"
     ]
 };
 
@@ -10382,6 +10520,177 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 Must be one of:
 <ul style="list-style-type: square;"><li><code>a</code></li> <li><code>b</code></li> <li><code>c</code></li> <li><code>d</code></li></ul>
+        </div>
+        </form>
+
+                    <h2 id="endpoints-POSTapi-v1-exams--id--feedback--attemptId-">POST api/v1/exams/{id}/feedback/{attemptId}</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-POSTapi-v1-exams--id--feedback--attemptId-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost/api/v1/exams/564/feedback/564" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"question_id\": 16,
+    \"answer\": \"ngzmiy\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost/api/v1/exams/564/feedback/564"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "question_id": 16,
+    "answer": "ngzmiy"
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-exams--id--feedback--attemptId-">
+</span>
+<span id="execution-results-POSTapi-v1-exams--id--feedback--attemptId-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-exams--id--feedback--attemptId-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-exams--id--feedback--attemptId-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-exams--id--feedback--attemptId-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-exams--id--feedback--attemptId-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-exams--id--feedback--attemptId-" data-method="POST"
+      data-path="api/v1/exams/{id}/feedback/{attemptId}"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-exams--id--feedback--attemptId-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-v1-exams--id--feedback--attemptId-"
+                    onclick="tryItOut('POSTapi-v1-exams--id--feedback--attemptId-');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-v1-exams--id--feedback--attemptId-"
+                    onclick="cancelTryOut('POSTapi-v1-exams--id--feedback--attemptId-');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-v1-exams--id--feedback--attemptId-"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/exams/{id}/feedback/{attemptId}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-exams--id--feedback--attemptId-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-exams--id--feedback--attemptId-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="id"                data-endpoint="POSTapi-v1-exams--id--feedback--attemptId-"
+               value="564"
+               data-component="url">
+    <br>
+<p>The ID of the exam. Example: <code>564</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>attemptId</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="attemptId"                data-endpoint="POSTapi-v1-exams--id--feedback--attemptId-"
+               value="564"
+               data-component="url">
+    <br>
+<p>Example: <code>564</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>question_id</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="question_id"                data-endpoint="POSTapi-v1-exams--id--feedback--attemptId-"
+               value="16"
+               data-component="body">
+    <br>
+<p>فیلد value نباید کوچکتر از 1 باشد. Example: <code>16</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>answer</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="answer"                data-endpoint="POSTapi-v1-exams--id--feedback--attemptId-"
+               value="ngzmiy"
+               data-component="body">
+    <br>
+<p>فیلد value نباید بیشتر از 10 کاراکتر باشد. Example: <code>ngzmiy</code></p>
         </div>
         </form>
 
@@ -10799,7 +11108,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"answers\": [
-        \"d\"
+        \"c\"
     ]
 }"
 </code></pre></div>
@@ -10817,7 +11126,7 @@ const headers = {
 
 let body = {
     "answers": [
-        "d"
+        "c"
     ]
 };
 
@@ -11371,7 +11680,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: multipart/form-data" \
     --header "Accept: application/json" \
     --form "exam_id=16"\
-    --form "file=@C:\Users\Kardansoft\AppData\Local\Temp\php785B.tmp" </code></pre></div>
+    --form "file=@C:\Users\Kardansoft\AppData\Local\Temp\phpA023.tmp" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -11480,7 +11789,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Must be a file. فیلد value نباید بزرگتر از 20480 کیلوبایت باشد. Example: <code>C:\Users\Kardansoft\AppData\Local\Temp\php785B.tmp</code></p>
+<p>Must be a file. فیلد value نباید بزرگتر از 20480 کیلوبایت باشد. Example: <code>C:\Users\Kardansoft\AppData\Local\Temp\phpA023.tmp</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>exam_id</code></b>&nbsp;&nbsp;
@@ -11737,14 +12046,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --data "{
     \"exam_id\": \"architecto\",
     \"question_text\": \"n\",
-    \"question_type\": \"formula\",
+    \"question_type\": \"multiple_choice\",
     \"option_a\": \"g\",
     \"option_b\": \"z\",
     \"option_c\": \"m\",
     \"option_d\": \"i\",
-    \"correct_answer\": \"b\",
+    \"correct_answer\": \"a\",
     \"explanation\": \"y\",
-    \"difficulty\": \"easy\",
+    \"difficulty\": \"hard\",
     \"subject\": \"architecto\"
 }"
 </code></pre></div>
@@ -11763,14 +12072,14 @@ const headers = {
 let body = {
     "exam_id": "architecto",
     "question_text": "n",
-    "question_type": "formula",
+    "question_type": "multiple_choice",
     "option_a": "g",
     "option_b": "z",
     "option_c": "m",
     "option_d": "i",
-    "correct_answer": "b",
+    "correct_answer": "a",
     "explanation": "y",
-    "difficulty": "easy",
+    "difficulty": "hard",
     "subject": "architecto"
 };
 
@@ -11887,10 +12196,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="question_type"                data-endpoint="POSTapi-v1-questions"
-               value="formula"
+               value="multiple_choice"
                data-component="body">
     <br>
-<p>Example: <code>formula</code></p>
+<p>Example: <code>multiple_choice</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>multiple_choice</code></li> <li><code>formula</code></li></ul>
         </div>
@@ -11949,10 +12258,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="correct_answer"                data-endpoint="POSTapi-v1-questions"
-               value="b"
+               value="a"
                data-component="body">
     <br>
-<p>Example: <code>b</code></p>
+<p>Example: <code>a</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>a</code></li> <li><code>b</code></li> <li><code>c</code></li> <li><code>d</code></li></ul>
         </div>
@@ -11975,10 +12284,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="difficulty"                data-endpoint="POSTapi-v1-questions"
-               value="easy"
+               value="hard"
                data-component="body">
     <br>
-<p>Example: <code>easy</code></p>
+<p>Example: <code>hard</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>easy</code></li> <li><code>medium</code></li> <li><code>hard</code></li></ul>
         </div>
@@ -12138,14 +12447,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"question_text\": \"b\",
-    \"question_type\": \"formula\",
+    \"question_type\": \"multiple_choice\",
     \"option_a\": \"n\",
     \"option_b\": \"g\",
     \"option_c\": \"z\",
     \"option_d\": \"m\",
     \"correct_answer\": \"b\",
     \"explanation\": \"i\",
-    \"difficulty\": \"hard\",
+    \"difficulty\": \"medium\",
     \"subject\": \"architecto\"
 }"
 </code></pre></div>
@@ -12163,14 +12472,14 @@ const headers = {
 
 let body = {
     "question_text": "b",
-    "question_type": "formula",
+    "question_type": "multiple_choice",
     "option_a": "n",
     "option_b": "g",
     "option_c": "z",
     "option_d": "m",
     "correct_answer": "b",
     "explanation": "i",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "subject": "architecto"
 };
 
@@ -12304,10 +12613,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="question_type"                data-endpoint="PUTapi-v1-questions--id-"
-               value="formula"
+               value="multiple_choice"
                data-component="body">
     <br>
-<p>Example: <code>formula</code></p>
+<p>Example: <code>multiple_choice</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>multiple_choice</code></li> <li><code>formula</code></li></ul>
         </div>
@@ -12392,10 +12701,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="difficulty"                data-endpoint="PUTapi-v1-questions--id-"
-               value="hard"
+               value="medium"
                data-component="body">
     <br>
-<p>Example: <code>hard</code></p>
+<p>Example: <code>medium</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>easy</code></li> <li><code>medium</code></li> <li><code>hard</code></li></ul>
         </div>
@@ -12939,13 +13248,16 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"negative_mark_ratio\": 1,
     \"is_free\": false,
     \"price\": 52,
-    \"subscription_required\": \"any\",
-    \"status\": \"archived\",
-    \"is_random\": true,
+    \"subscription_required\": \"free\",
+    \"status\": \"published\",
+    \"is_random\": false,
     \"random_config\": {
         \"prefer_frequent\": true,
         \"subjects\": [
             5
+        ],
+        \"duplicate_fingerprints\": [
+            \"k\"
         ]
     }
 }"
@@ -12976,13 +13288,16 @@ let body = {
     "negative_mark_ratio": 1,
     "is_free": false,
     "price": 52,
-    "subscription_required": "any",
-    "status": "archived",
-    "is_random": true,
+    "subscription_required": "free",
+    "status": "published",
+    "is_random": false,
     "random_config": {
         "prefer_frequent": true,
         "subjects": [
             5
+        ],
+        "duplicate_fingerprints": [
+            "k"
         ]
     }
 };
@@ -13297,10 +13612,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="subscription_required"                data-endpoint="POSTapi-v1-exams"
-               value="any"
+               value="free"
                data-component="body">
     <br>
-<p>Example: <code>any</code></p>
+<p>Example: <code>free</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>free</code></li> <li><code>paid</code></li> <li><code>any</code></li></ul>
         </div>
@@ -13311,10 +13626,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="POSTapi-v1-exams"
-               value="archived"
+               value="published"
                data-component="body">
     <br>
-<p>Example: <code>archived</code></p>
+<p>Example: <code>published</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>draft</code></li> <li><code>published</code></li> <li><code>archived</code></li></ul>
         </div>
@@ -13338,7 +13653,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>true</code></p>
+<p>Example: <code>false</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
         <details>
@@ -13386,6 +13701,20 @@ Must be one of:
     <br>
 <p>فیلد value نباید کوچکتر از 0 باشد. فیلد value نباید بزرگتر از 200 باشد.</p>
                     </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>duplicate_fingerprints</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="random_config.duplicate_fingerprints[0]"                data-endpoint="POSTapi-v1-exams"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="random_config.duplicate_fingerprints[1]"                data-endpoint="POSTapi-v1-exams"
+               data-component="body">
+    <br>
+<p>فیلد value نباید بیشتر از 128 کاراکتر باشد.</p>
+                    </div>
                                     </details>
         </div>
         </form>
@@ -13419,15 +13748,18 @@ Must be one of:
     \"total_marks\": 40,
     \"has_negative_marking\": true,
     \"negative_mark_ratio\": 1,
-    \"is_free\": false,
+    \"is_free\": true,
     \"price\": 52,
-    \"subscription_required\": \"any\",
+    \"subscription_required\": \"free\",
     \"status\": \"published\",
-    \"is_random\": true,
+    \"is_random\": false,
     \"random_config\": {
-        \"prefer_frequent\": false,
+        \"prefer_frequent\": true,
         \"subjects\": [
             5
+        ],
+        \"duplicate_fingerprints\": [
+            \"k\"
         ]
     }
 }"
@@ -13456,15 +13788,18 @@ let body = {
     "total_marks": 40,
     "has_negative_marking": true,
     "negative_mark_ratio": 1,
-    "is_free": false,
+    "is_free": true,
     "price": 52,
-    "subscription_required": "any",
+    "subscription_required": "free",
     "status": "published",
-    "is_random": true,
+    "is_random": false,
     "random_config": {
-        "prefer_frequent": false,
+        "prefer_frequent": true,
         "subjects": [
             5
+        ],
+        "duplicate_fingerprints": [
+            "k"
         ]
     }
 };
@@ -13771,7 +14106,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>price</code></b>&nbsp;&nbsp;
@@ -13792,10 +14127,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="subscription_required"                data-endpoint="PUTapi-v1-exams--id-"
-               value="any"
+               value="free"
                data-component="body">
     <br>
-<p>Example: <code>any</code></p>
+<p>Example: <code>free</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>free</code></li> <li><code>paid</code></li> <li><code>any</code></li></ul>
         </div>
@@ -13833,7 +14168,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>true</code></p>
+<p>Example: <code>false</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
         <details>
@@ -13865,7 +14200,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>subjects</code></b>&nbsp;&nbsp;
@@ -13880,6 +14215,20 @@ Must be one of:
                data-component="body">
     <br>
 <p>فیلد value نباید کوچکتر از 0 باشد. فیلد value نباید بزرگتر از 200 باشد.</p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>duplicate_fingerprints</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="random_config.duplicate_fingerprints[0]"                data-endpoint="PUTapi-v1-exams--id-"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="random_config.duplicate_fingerprints[1]"                data-endpoint="PUTapi-v1-exams--id-"
+               data-component="body">
+    <br>
+<p>فیلد value نباید بیشتر از 128 کاراکتر باشد.</p>
                     </div>
                                     </details>
         </div>
@@ -14957,10 +15306,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"name\": \"علی رضایی\",
     \"province\": \"تهران\",
     \"email\": \"ali@example.com\",
-    \"national_code\": \"5642559314\",
-    \"home_phone\": \"khwayk\",
-    \"military_status\": \"c\",
-    \"insurance_history\": \"m\",
+    \"national_code\": \"architecto\",
+    \"home_phone\": \"ngzmiy\",
+    \"military_status\": \"v\",
+    \"insurance_history\": \"d\",
     \"birth_date\": \"42\\/55\\/9314\",
     \"birth_province\": \"k\",
     \"birth_city\": \"h\",
@@ -14988,10 +15337,10 @@ let body = {
     "name": "علی رضایی",
     "province": "تهران",
     "email": "ali@example.com",
-    "national_code": "5642559314",
-    "home_phone": "khwayk",
-    "military_status": "c",
-    "insurance_history": "m",
+    "national_code": "architecto",
+    "home_phone": "ngzmiy",
+    "military_status": "v",
+    "insurance_history": "d",
     "birth_date": "42\/55\/9314",
     "birth_province": "k",
     "birth_city": "h",
@@ -15150,10 +15499,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="national_code"                data-endpoint="PUTapi-v1-auth-profile"
-               value="5642559314"
+               value="architecto"
                data-component="body">
     <br>
-<p>Must match the regex /^\d{10}$/. Example: <code>5642559314</code></p>
+<p>Example: <code>architecto</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>home_phone</code></b>&nbsp;&nbsp;
@@ -15162,10 +15511,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="home_phone"                data-endpoint="PUTapi-v1-auth-profile"
-               value="khwayk"
+               value="ngzmiy"
                data-component="body">
     <br>
-<p>فیلد value نباید بیشتر از 11 کاراکتر باشد. Example: <code>khwayk</code></p>
+<p>فیلد value نباید بیشتر از 11 کاراکتر باشد. Example: <code>ngzmiy</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>military_status</code></b>&nbsp;&nbsp;
@@ -15174,10 +15523,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="military_status"                data-endpoint="PUTapi-v1-auth-profile"
-               value="c"
+               value="v"
                data-component="body">
     <br>
-<p>فیلد value نباید بیشتر از 40 کاراکتر باشد. Example: <code>c</code></p>
+<p>فیلد value نباید بیشتر از 40 کاراکتر باشد. Example: <code>v</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>insurance_history</code></b>&nbsp;&nbsp;
@@ -15186,10 +15535,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="insurance_history"                data-endpoint="PUTapi-v1-auth-profile"
-               value="m"
+               value="d"
                data-component="body">
     <br>
-<p>فیلد value نباید بیشتر از 80 کاراکتر باشد. Example: <code>m</code></p>
+<p>فیلد value نباید بیشتر از 80 کاراکتر باشد. Example: <code>d</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>birth_date</code></b>&nbsp;&nbsp;
@@ -15311,10 +15660,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"name\": \"علی رضایی\",
     \"province\": \"تهران\",
     \"email\": \"ali@example.com\",
-    \"national_code\": \"5642559314\",
-    \"home_phone\": \"khwayk\",
-    \"military_status\": \"c\",
-    \"insurance_history\": \"m\",
+    \"national_code\": \"architecto\",
+    \"home_phone\": \"ngzmiy\",
+    \"military_status\": \"v\",
+    \"insurance_history\": \"d\",
     \"birth_date\": \"42\\/55\\/9314\",
     \"birth_province\": \"k\",
     \"birth_city\": \"h\",
@@ -15342,10 +15691,10 @@ let body = {
     "name": "علی رضایی",
     "province": "تهران",
     "email": "ali@example.com",
-    "national_code": "5642559314",
-    "home_phone": "khwayk",
-    "military_status": "c",
-    "insurance_history": "m",
+    "national_code": "architecto",
+    "home_phone": "ngzmiy",
+    "military_status": "v",
+    "insurance_history": "d",
     "birth_date": "42\/55\/9314",
     "birth_province": "k",
     "birth_city": "h",
@@ -15504,10 +15853,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="national_code"                data-endpoint="PUTapi-v1-user-profile"
-               value="5642559314"
+               value="architecto"
                data-component="body">
     <br>
-<p>Must match the regex /^\d{10}$/. Example: <code>5642559314</code></p>
+<p>Example: <code>architecto</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>home_phone</code></b>&nbsp;&nbsp;
@@ -15516,10 +15865,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="home_phone"                data-endpoint="PUTapi-v1-user-profile"
-               value="khwayk"
+               value="ngzmiy"
                data-component="body">
     <br>
-<p>فیلد value نباید بیشتر از 11 کاراکتر باشد. Example: <code>khwayk</code></p>
+<p>فیلد value نباید بیشتر از 11 کاراکتر باشد. Example: <code>ngzmiy</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>military_status</code></b>&nbsp;&nbsp;
@@ -15528,10 +15877,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="military_status"                data-endpoint="PUTapi-v1-user-profile"
-               value="c"
+               value="v"
                data-component="body">
     <br>
-<p>فیلد value نباید بیشتر از 40 کاراکتر باشد. Example: <code>c</code></p>
+<p>فیلد value نباید بیشتر از 40 کاراکتر باشد. Example: <code>v</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>insurance_history</code></b>&nbsp;&nbsp;
@@ -15540,10 +15889,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="insurance_history"                data-endpoint="PUTapi-v1-user-profile"
-               value="m"
+               value="d"
                data-component="body">
     <br>
-<p>فیلد value نباید بیشتر از 80 کاراکتر باشد. Example: <code>m</code></p>
+<p>فیلد value نباید بیشتر از 80 کاراکتر باشد. Example: <code>d</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>birth_date</code></b>&nbsp;&nbsp;
@@ -16245,7 +16594,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --get "http://localhost/api/v1/wallet" \
     --header "Authorization: Bearer {YOUR_AUTH_TOKEN}" \
     --header "Content-Type: application/json" \
-    --header "Accept: application/json"</code></pre></div>
+    --header "Accept: application/json" \
+    --data "{
+    \"type\": \"bonus\",
+    \"category\": \"deposit\",
+    \"page\": 16,
+    \"per_page\": 22
+}"
+</code></pre></div>
 
 
 <div class="javascript-example">
@@ -16259,10 +16615,17 @@ const headers = {
     "Accept": "application/json",
 };
 
+let body = {
+    "type": "bonus",
+    "category": "deposit",
+    "page": 16,
+    "per_page": 22
+};
 
 fetch(url, {
     method: "GET",
     headers,
+    body: JSON.stringify(body),
 }).then(response =&gt; response.json());</code></pre></div>
 
 </span>
@@ -16365,7 +16728,60 @@ You can check the Dev Tools console for debugging information.</code></pre>
     <br>
 <p>Example: <code>application/json</code></p>
             </div>
-                        </form>
+                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>type</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="type"                data-endpoint="GETapi-v1-wallet"
+               value="bonus"
+               data-component="body">
+    <br>
+<p>Example: <code>bonus</code></p>
+Must be one of:
+<ul style="list-style-type: square;"><li><code>deposit</code></li> <li><code>purchase</code></li> <li><code>withdrawal</code></li> <li><code>refund</code></li> <li><code>bonus</code></li> <li><code>adjustment</code></li></ul>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>category</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="category"                data-endpoint="GETapi-v1-wallet"
+               value="deposit"
+               data-component="body">
+    <br>
+<p>Example: <code>deposit</code></p>
+Must be one of:
+<ul style="list-style-type: square;"><li><code>deposit</code></li> <li><code>purchase</code></li> <li><code>withdrawal</code></li> <li><code>refund</code></li> <li><code>bonus</code></li> <li><code>adjustment</code></li></ul>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>page</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="page"                data-endpoint="GETapi-v1-wallet"
+               value="16"
+               data-component="body">
+    <br>
+<p>فیلد value نباید کوچکتر از 1 باشد. Example: <code>16</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>per_page</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="per_page"                data-endpoint="GETapi-v1-wallet"
+               value="22"
+               data-component="body">
+    <br>
+<p>فیلد value نباید کوچکتر از 5 باشد. فیلد value نباید بزرگتر از 50 باشد. Example: <code>22</code></p>
+        </div>
+        </form>
 
                     <h2 id="prdakhtha-POSTapi-v1-wallet-charge">شارژ کیف پول</h2>
 

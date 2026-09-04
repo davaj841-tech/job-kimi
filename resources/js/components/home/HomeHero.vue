@@ -79,7 +79,7 @@
             />
           </div>
         </div>
-        <div v-if="heroBanners.length" class="mt-4 lg:hidden">
+        <div v-if="heroBanners.length" class="mt-4 hidden lg:block">
           <BannerSlider
             position="home_hero"
             :banners="heroBanners"
@@ -273,6 +273,31 @@
         </div>
       </div>
     </template>
+
+    <div
+      v-if="hasSocialLinks"
+      class="relative z-10 border-t px-4 py-3 sm:px-6"
+      :class="
+        hero === 'navy' || hero === 'dark'
+          ? 'border-white/10'
+          : 'border-surface-line'
+      "
+    >
+      <p
+        class="mb-2 text-xs font-bold"
+        :class="
+          hero === 'navy' || hero === 'dark'
+            ? 'text-white/70'
+            : 'text-desk-muted'
+        "
+      >
+        ما را در شبکه‌های اجتماعی دنبال کنید
+      </p>
+      <SocialLinks
+        social-only
+        :tone="hero === 'navy' || hero === 'dark' ? 'dark' : 'light'"
+      />
+    </div>
   </section>
 </template>
 
@@ -281,7 +306,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
 import BannerSlider from '../BannerSlider.vue'
+import SocialLinks from '../SocialLinks.vue'
 import api from '../../api/client'
+import { useSiteTheme } from '../../composables/useSiteTheme'
 import { themePreset, type SiteThemeId } from '../../theme/presets'
 import { unwrapList } from '../../utils/format'
 
@@ -292,10 +319,30 @@ const props = withDefaults(defineProps<{ variant?: SiteThemeId }>(), {
 const router = useRouter()
 const q = ref('')
 const heroBanners = ref<any[]>([])
+const {
+  instagramUrl,
+  telegramUrl,
+  whatsappUrl,
+  rubikaUrl,
+  baleUrl,
+  ensureLoaded,
+} = useSiteTheme()
 const preset = computed(() => themePreset(props.variant))
 const hero = computed(() => preset.value.hero)
 
+const hasSocialLinks = computed(
+  () =>
+    !!(
+      instagramUrl.value ||
+      telegramUrl.value ||
+      whatsappUrl.value ||
+      rubikaUrl.value ||
+      baleUrl.value
+    )
+)
+
 onMounted(async () => {
+  void ensureLoaded()
   try {
     const { data } = await api.get('/banners', {
       params: { position: 'home_hero' },

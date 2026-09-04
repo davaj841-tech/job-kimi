@@ -112,13 +112,13 @@
           </button>
         </div>
 
-        <!-- لیست سال (مثل لیست ماه) -->
-        <div v-if="yearOpen" class="pdp-list">
+        <!-- لیست سال (جدولی) -->
+        <div v-if="yearOpen" class="pdp-grid-table">
           <button
             v-for="y in yearOptions"
             :key="y"
             type="button"
-            class="pdp-list-opt"
+            class="pdp-grid-opt"
             :class="{ 'is-active': y === view.jy }"
             @click="pickYear(y)"
           >
@@ -126,13 +126,16 @@
           </button>
         </div>
 
-        <!-- لیست ماه (همان استایل لیست سال) -->
-        <div v-else-if="monthOpen || mode === 'month'" class="pdp-list">
+        <!-- لیست ماه (جدولی) -->
+        <div
+          v-else-if="monthOpen || mode === 'month'"
+          class="pdp-grid-table pdp-grid-table--months"
+        >
           <button
             v-for="(m, i) in months"
             :key="m"
             type="button"
-            class="pdp-list-opt"
+            class="pdp-grid-opt"
             :class="{
               'is-active':
                 (selected &&
@@ -449,7 +452,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .pdp-trigger {
-  @apply flex h-10 w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition hover:border-orange-300 focus:border-orange-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800;
+  @apply flex h-11 w-full items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm text-ink outline-none transition hover:border-orange-300 focus:border-orange-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-500 dark:bg-slate-800 dark:text-slate-100;
 }
 .pdp-pop {
   position: absolute;
@@ -472,10 +475,40 @@ onBeforeUnmount(() => {
   @apply flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-white shadow-sm transition hover:bg-orange-600;
 }
 .pdp-meta-btn {
-  @apply inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-slate-800 hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-700;
+  @apply inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-slate-800 hover:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200;
 }
 .pdp-meta-btn.is-open {
-  @apply bg-orange-50 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300;
+  @apply bg-orange-50 text-orange-700 dark:bg-orange-100 dark:text-orange-800;
+}
+:global(.dark) .pdp-head {
+  background: #ffffff;
+}
+:global(.dark) .pdp-head .pdp-meta-btn {
+  color: #0f172a !important;
+}
+:global(.dark) .pdp-head .pdp-meta-btn.is-open {
+  color: #c2410c !important;
+  background: #ffedd5 !important;
+}
+:global(.dark) .pdp-grid-table,
+:global(.dark) .pdp-list {
+  background: #ffffff !important;
+  color-scheme: light;
+}
+:global(.dark) .pdp-grid-table .pdp-grid-opt,
+:global(.dark) .pdp-list .pdp-list-opt {
+  color: #0f172a !important;
+  background: transparent;
+}
+:global(.dark) .pdp-grid-table .pdp-grid-opt:not(.is-active):hover,
+:global(.dark) .pdp-list .pdp-list-opt:not(.is-active):hover {
+  background: #ffedd5 !important;
+  color: #0f172a !important;
+}
+:global(.dark) .pdp-grid-table .pdp-grid-opt.is-active,
+:global(.dark) .pdp-list .pdp-list-opt.is-active {
+  background: #f97316 !important;
+  color: #ffffff !important;
 }
 .pdp-weekdays {
   display: grid;
@@ -485,6 +518,10 @@ onBeforeUnmount(() => {
   font-size: 12px;
   font-weight: 700;
   text-align: center;
+}
+:global(.dark) .pdp-weekdays {
+  background: #1e293b;
+  color: #f8fafc;
 }
 .pdp-weekdays span {
   padding: 6px 0;
@@ -504,6 +541,19 @@ onBeforeUnmount(() => {
   transition:
     background 0.15s,
     color 0.15s;
+}
+:global(.dark) .pdp-day {
+  color: #e2e8f0;
+}
+:global(.dark) .pdp-day:not(.is-empty):hover {
+  background: rgba(249, 115, 22, 0.18);
+}
+:global(.dark) .pdp-day.is-friday {
+  background: rgba(236, 72, 153, 0.18);
+  color: #86efac;
+}
+:global(.dark) .pdp-day.is-friday:hover {
+  background: rgba(236, 72, 153, 0.28);
 }
 .pdp-day:not(.is-empty):hover {
   background: #fff7ed;
@@ -526,15 +576,46 @@ onBeforeUnmount(() => {
   box-shadow: inset 0 0 0 1.5px #f97316;
 }
 .pdp-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
   max-height: 240px;
   overflow: auto;
   padding: 8px;
 }
+.pdp-grid-table {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  max-height: 260px;
+  overflow: auto;
+  padding: 8px;
+  background: #ffffff;
+  color-scheme: light;
+}
+.pdp-grid-table--months {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.pdp-grid-opt {
+  @apply rounded-lg px-2 py-2 text-center text-xs font-semibold sm:text-sm;
+  color: #0f172a;
+  background: transparent;
+}
+.pdp-grid-opt:not(.is-active):hover {
+  background: #ffedd5;
+  color: #0f172a;
+}
+.pdp-grid-opt.is-active {
+  @apply bg-orange-500 font-bold text-white hover:bg-orange-500;
+}
 .pdp-list-opt {
-  @apply w-full rounded-lg px-3 py-2 text-center text-sm font-medium text-slate-700 hover:bg-orange-50 dark:text-slate-200 dark:hover:bg-slate-700;
+  @apply w-full rounded-lg px-2 py-2 text-center text-xs font-medium sm:text-sm;
+  color: #0f172a;
+  background: transparent;
+}
+.pdp-list-opt:not(.is-active):hover {
+  background: #ffedd5;
+  color: #0f172a;
 }
 .pdp-list-opt.is-active {
   @apply bg-orange-500 font-bold text-white hover:bg-orange-500;
@@ -543,6 +624,6 @@ onBeforeUnmount(() => {
   @apply flex items-center justify-between border-t border-slate-100 px-3 py-2 dark:border-slate-700;
 }
 .pdp-link {
-  @apply text-xs font-medium text-orange-600 hover:underline;
+  @apply text-xs font-medium text-orange-600 hover:underline dark:text-orange-400;
 }
 </style>

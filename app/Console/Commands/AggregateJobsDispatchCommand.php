@@ -13,6 +13,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Dispatch crawl jobs for enabled + approved sources.
@@ -23,7 +24,8 @@ class AggregateJobsDispatchCommand extends Command
     protected $signature = 'jobs:aggregate-dispatch
                             {--dry-run : List due sources without queueing crawl jobs}
                             {--sync : Run crawls inline instead of queueing}
-                            {--force : Ignore schedule window (still respects whitelist + frequency)}';
+                            {--force : Ignore schedule window (still respects whitelist + frequency)}
+                            {--all : Crawl every dispatchable source (ignore frequency interval)}';
 
     protected $description = 'Dispatch aggregation crawl jobs for administrator-whitelisted job sources';
 
@@ -37,8 +39,15 @@ class AggregateJobsDispatchCommand extends Command
 
         $config = $schedule->get();
         $force = (bool) $this->option('force');
+        $all = (bool) $this->option('all');
         $dryRun = (bool) $this->option('dry-run');
         $sync = (bool) $this->option('sync');
+
+        if ($all && ! $force) {
+            $this->warn('--all requires --force.');
+
+            return self::FAILURE;
+        }
 
         if (! $force && ! $config['enabled']) {
             $this->warn('Aggregation schedule is disabled. Use --force to dispatch manually.');
@@ -65,12 +74,22 @@ class AggregateJobsDispatchCommand extends Command
             }
         }
 
-        $candidates = $force
-            ? $sources->dispatchableSourcesDueByFrequency()
-            : $sources->dispatchableSourcesForSlot($slot);
+        $candidates = $all
+            ? $sources->dispatchableSources()
+            : ($force
+                ? $sources->dispatchableSourcesDueByFrequency()
+                : $sources->dispatchableSourcesForSlot($slot));
 
         if ($candidates->isEmpty()) {
-            $this->warn('No due enabled+approved sources for this tick.');
+            $total = JobSource::query()->count();
+            $dispatchable = JobSource::query()->dispatchable()->count();
+            if ($total === 0) {
+                $this->warn('No job sources found. Run: php artisan jobs:bootstrap-aggregation');
+            } elseif ($dispatchable === 0) {
+                $this->warn('No dispatchable sources (enable+approve+active/limited quality). Check admin → Job Sources.');
+            } else {
+                $this->warn('No due enabled+approved sources for this tick (schedule slot or crawl frequency).');
+            }
 
             return self::SUCCESS;
         }
@@ -117,7 +136,7 @@ class AggregateJobsDispatchCommand extends Command
                 continue;
             }
 
-            if (! $sync) {
+            if (! $sync && ! $all) {
                 $inflight = $this->inflightCrawlerJobsCount($queue);
                 if ($inflight + $dispatched >= $maxConcurrent) {
                     $this->warn("Concurrency limit ({$maxConcurrent}) reached. Remaining sources skipped this tick.");

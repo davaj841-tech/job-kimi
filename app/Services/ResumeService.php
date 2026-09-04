@@ -90,8 +90,8 @@ class ResumeService
         if ($n < 1) {
             $n = 1;
         }
-        if ($n > 10) {
-            $n = (($n - 1) % 10) + 1;
+        if ($n > 15) {
+            $n = (($n - 1) % 15) + 1;
         }
 
         return $n;

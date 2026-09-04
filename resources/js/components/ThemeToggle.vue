@@ -1,7 +1,7 @@
 <template>
   <button
     type="button"
-    class="inline-flex h-9 w-9 items-center justify-center rounded-xl transition"
+    class="inline-flex h-9 w-9 items-center justify-center rounded-xl transition-colors duration-300"
     :class="btnClass"
     :aria-label="isDark ? 'حالت روشن' : 'حالت تاریک'"
     :title="isDark ? 'حالت روشن' : 'حالت تاریک'"

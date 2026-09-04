@@ -11,8 +11,16 @@ class SettingSeeder extends Seeder
     {
         // تمام تنظیمات درگاه و SMS از اینجا قابل پیکربندی‌اند — بدون هاردکد
         $settings = [
-            ['key' => 'sms_gateway', 'value' => 'kavenegar', 'group' => 'sms'],
+            ['key' => 'sms_gateway', 'value' => 'melipayamak', 'group' => 'sms'],
+            ['key' => 'sms_enabled', 'value' => 'true', 'group' => 'sms'],
+            ['key' => 'sms_otp_enabled', 'value' => 'true', 'group' => 'sms'],
+            ['key' => 'sms_transactional_enabled', 'value' => 'true', 'group' => 'sms'],
+            ['key' => 'sms_marketing_enabled', 'value' => 'false', 'group' => 'sms'],
             ['key' => 'sms_api_key', 'value' => '', 'group' => 'sms'],
+            ['key' => 'sms_username', 'value' => '', 'group' => 'sms'],
+            ['key' => 'sms_from', 'value' => '', 'group' => 'sms'],
+            ['key' => 'sms_otp_template', 'value' => 'کد تایید جاب‌آزمون: {code}', 'group' => 'sms'],
+            ['key' => 'sms_pattern_text', 'value' => '{code}', 'group' => 'sms'],
             ['key' => 'payment_gateway', 'value' => 'zarinpal', 'group' => 'payment'],
             ['key' => 'zarinpal_merchant_id', 'value' => '', 'group' => 'payment'],
             ['key' => 'zarinpal_sandbox', 'value' => filter_var(env('ZARINPAL_SANDBOX', false), FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false', 'group' => 'payment'],
@@ -42,6 +50,11 @@ class SettingSeeder extends Seeder
             ['key' => 'smtp_password', 'value' => '', 'group' => 'mail'],
             ['key' => 'smtp_from_address', 'value' => 'noreply@jobazmoon.ir', 'group' => 'mail'],
             ['key' => 'smtp_from_name', 'value' => 'جاب‌آزمون', 'group' => 'mail'],
+            ['key' => 'enamad_enabled', 'value' => 'false', 'group' => 'trust'],
+            ['key' => 'enamad_id', 'value' => '', 'group' => 'trust'],
+            ['key' => 'enamad_code', 'value' => '', 'group' => 'trust'],
+            ['key' => 'enamad_url', 'value' => '', 'group' => 'trust'],
+            ['key' => 'samandehi_url', 'value' => '', 'group' => 'trust'],
         ];
 
         foreach ($settings as $setting) {

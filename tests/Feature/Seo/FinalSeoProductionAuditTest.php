@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Seo;
 
 use App\Jobs\Seo\AnalyzeSeoJob;
+use App\Jobs\Seo\AutoOptimizeSeoJob;
 use App\Models\BlogPost;
 use App\Models\CmsPage;
 use App\Models\Exam;
@@ -30,6 +31,12 @@ use Tests\TestCase;
 final class FinalSeoProductionAuditTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Queue::fake();
+    }
 
     public function test_robots_txt_blocks_admin_api_filament_and_lists_sitemap(): void
     {
@@ -190,7 +197,7 @@ final class FinalSeoProductionAuditTest extends TestCase
         $this->assertSame(url('/blog/canon-blog'), $canonical->getCanonical($blog));
         $this->assertSame(url('/articles/canon-article'), $canonical->getCanonical($article));
         $this->assertSame(url('/about'), $canonical->getCanonical($about));
-        $this->assertSame(url('/pdf-products/'.$pdf->getKey()), $canonical->getCanonical($pdf));
+        $this->assertSame(url('/pdfs/'.$pdf->getKey()), $canonical->getCanonical($pdf));
     }
 
     public function test_seo_meta_priority_over_model_and_config(): void
@@ -292,7 +299,7 @@ final class FinalSeoProductionAuditTest extends TestCase
         Queue::fake();
 
         $exam = Exam::factory()->create(['title' => 'Observer Test']);
-        Queue::assertPushed(AnalyzeSeoJob::class, 1);
+        Queue::assertPushed(AutoOptimizeSeoJob::class, 1);
 
         Queue::fake();
         $exam->seoMeta()->create(['title' => 'Only SEO meta change']);

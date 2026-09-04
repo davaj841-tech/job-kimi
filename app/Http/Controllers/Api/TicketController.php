@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Mail\ContactFormMail;
+use App\Mail\TicketReplyMail;
 use App\Models\Ticket;
 use App\Models\TicketReply;
 use App\Models\User;
@@ -114,13 +114,14 @@ class TicketController extends BaseController
                 ));
                 if ($ticketUser->email) {
                     try {
-                        $this->mail->queueTo($ticketUser->email, new ContactFormMail(
-                            'پشتیبانی جاب‌آزمون',
-                            config('mail.from.address'),
-                            'support',
-                            'پاسخ جدید به تیکت شما: '.$data['message']
+                        $this->mail->queueTo($ticketUser->email, new TicketReplyMail(
+                            ticketSubject: (string) $ticket->subject,
+                            replyMessage: (string) $data['message'],
+                            ticketUrl: rtrim(config('app.url'), '/').'/support/'.$ticket->id,
+                            name: $ticketUser->name,
                         ));
-                    } catch (\Throwable) {
+                    } catch (\Throwable $e) {
+                        report($e);
                     }
                 }
             }

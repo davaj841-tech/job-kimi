@@ -19,4 +19,13 @@ interface PaymentGatewayInterface
     public function getName(): string;
 
     public function getDisplayName(): string;
+
+    public function isConfigured(): bool;
+
+    /**
+     * Local credentials / connectivity check — must not create a real charge.
+     *
+     * @return array{ok: bool, message: string}
+     */
+    public function testConnection(): array;
 }

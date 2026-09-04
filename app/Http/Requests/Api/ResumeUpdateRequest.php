@@ -17,7 +17,7 @@ class ResumeUpdateRequest extends FormRequest
     {
         return [
             'title' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'template_id' => ['sometimes', 'integer', 'between:1,10'],
+            'template_id' => ['sometimes', 'integer', 'between:1,15'],
             'data' => ['sometimes', 'array', new ResumeDataRule],
             'is_active' => ['sometimes', 'boolean'],
         ];

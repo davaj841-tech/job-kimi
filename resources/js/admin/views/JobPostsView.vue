@@ -30,12 +30,10 @@
           </option>
         </select>
         <input v-model="store.filters.city" class="field" placeholder="شهر" />
-        <select v-model="store.filters.job_classification_id" class="field">
-          <option value="">همه طبقه‌بندی‌ها</option>
-          <option v-for="c in store.classifications" :key="c.id" :value="c.id">
-            {{ c.name }}
-          </option>
-        </select>
+        <ClassificationSelect
+          v-model="store.filters.job_classification_ids"
+          :items="store.classifications"
+        />
         <JalaliDatepicker
           v-model="store.filters.deadline_from"
           label="مهلت از"
@@ -160,6 +158,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
 import DataTable from '../components/ui/DataTable.vue'
 import JalaliDatepicker from '../components/ui/JalaliDatepicker.vue'
+import ClassificationSelect from '../components/ui/ClassificationSelect.vue'
 import ClassificationManagerModal from '../components/jobs/ClassificationManagerModal.vue'
 import JobImportModal from '../components/jobs/JobImportModal.vue'
 import JobPostModal from '../components/jobs/JobPostModal.vue'
@@ -335,9 +334,26 @@ async function onImport(file) {
   try {
     const result = await store.importFromExcel(file)
     importRef.value?.setResult(result)
-    toast.success('ورود اکسل انجام شد.')
+    const created = result?.created ?? 0
+    const duplicates = result?.duplicates ?? 0
+    const skipped = result?.skipped ?? 0
+    if (created > 0) {
+      toast.success(
+        `${created} آگهی وارد شد${skipped ? ` (${skipped} رد شد${duplicates ? `، ${duplicates} تکراری` : ''})` : ''}. آگهی‌ها در سایت نمایش داده می‌شوند.`
+      )
+    } else if (duplicates > 0) {
+      const msg =
+        result?.errors?.[0] || `${duplicates} آگهی تکراری بود و وارد نشد.`
+      toast.error(msg)
+      importRef.value?.setError(msg)
+    } else {
+      const msg = result?.errors?.[0] || 'هیچ آگهی‌ای وارد نشد.'
+      toast.error(msg)
+      importRef.value?.setError(msg)
+    }
   } catch (e) {
     importRef.value?.setError(e.response?.data?.message || 'ورود ناموفق بود.')
+    toast.error(e.response?.data?.message || 'ورود ناموفق بود.')
   }
 }
 

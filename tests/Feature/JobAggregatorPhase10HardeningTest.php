@@ -121,6 +121,21 @@ class JobAggregatorPhase10HardeningTest extends TestCase
         }
     }
 
+    public function test_fetcher_allows_rfc1918_for_whitelisted_host_dns(): void
+    {
+        $fetcher = app(SafeHttpFetcher::class);
+
+        $this->assertFalse($fetcher->isBlockedIp('10.56.4.11', allowPrivateOrgRanges: true));
+        $this->assertFalse($fetcher->isBlockedIp('172.16.5.5', allowPrivateOrgRanges: true));
+        $this->assertFalse($fetcher->isBlockedIp('192.168.1.10', allowPrivateOrgRanges: true));
+
+        // Loopback / metadata still blocked even for whitelisted CDN DNS.
+        $this->assertTrue($fetcher->isBlockedIp('127.0.0.1', allowPrivateOrgRanges: true));
+        $this->assertTrue($fetcher->isBlockedIp('169.254.169.254', allowPrivateOrgRanges: true));
+        $this->assertTrue($fetcher->isBlockedIp('::ffff:10.0.0.1', allowPrivateOrgRanges: false));
+        $this->assertFalse($fetcher->isBlockedIp('::ffff:10.0.0.1', allowPrivateOrgRanges: true));
+    }
+
     public function test_fetcher_rejects_private_ipv6_and_mapped_loopback(): void
     {
         $fetcher = app(SafeHttpFetcher::class);

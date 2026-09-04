@@ -84,4 +84,43 @@ class DateNormalizer
             return null;
         }
     }
+
+    /**
+     * Extract Jalali/Gregorian dates embedded in Persian announcement text.
+     *
+     * @return array{registration_deadline: ?string, registration_starts_at: ?string, exam_date: ?string}
+     */
+    public function extractFromText(?string $text): array
+    {
+        $result = [
+            'registration_deadline' => null,
+            'registration_starts_at' => null,
+            'exam_date' => null,
+        ];
+
+        if ($text === null || trim($text) === '') {
+            return $result;
+        }
+
+        $text = PersianText::toEnglishDigits(PersianText::normalize($text) ?? '') ?? '';
+        $datePattern = '((?:13|14)\d{2}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2})';
+
+        if (preg_match('/(?:مهلت(?:\s*ثبت(?:\s*نام)?)?|آخرین\s*مهلت|تا\s*تاریخ|مهلت\s*ارسال)[^\d]{0,40}'.$datePattern.'/u', $text, $m)) {
+            $result['registration_deadline'] = $this->normalize($m[1]);
+        }
+
+        if (preg_match('/(?:تاریخ\s*آزمون|برگزاری\s*آزمون|زمان\s*آزمون|آزمون\s*کتبی)[^\d]{0,40}'.$datePattern.'/u', $text, $m)) {
+            $result['exam_date'] = $this->normalize($m[1]);
+        }
+
+        if (preg_match('/(?:شروع\s*ثبت(?:\s*نام)?|آغاز\s*ثبت(?:\s*نام)?)[^\d]{0,40}'.$datePattern.'/u', $text, $m)) {
+            $result['registration_starts_at'] = $this->normalize($m[1]);
+        }
+
+        if ($result['registration_deadline'] === null && preg_match('/مهلت/u', $text) && preg_match('/'.$datePattern.'/u', $text, $m)) {
+            $result['registration_deadline'] = $this->normalize($m[1]);
+        }
+
+        return $result;
+    }
 }

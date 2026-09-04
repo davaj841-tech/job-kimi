@@ -219,6 +219,9 @@ class JobAggregatorPhase4Test extends TestCase
 
     public function test_updating_existing_aggregated_job_preserves_pending_and_source(): void
     {
+        // Isolate upsert behavior from detail-page enrichment HTTP calls.
+        config(['aggregation.detail_fetch.enabled' => false]);
+
         Http::fake([
             'jobs.example.gov.ir/*' => Http::sequence()
                 ->push([[
@@ -255,7 +258,7 @@ class JobAggregatorPhase4Test extends TestCase
 
         $post = JobPost::query()->where('external_id', 'UPD-1')->first();
         $this->assertSame('عنوان به‌روز', $post->title);
-        $this->assertSame('نسخه دو', $post->description);
+        $this->assertStringContainsString('نسخه دو', strip_tags((string) $post->description));
         $this->assertSame('کارشناسی', $post->education);
         $this->assertSame('pending', $post->status);
         $this->assertSame($source->id, $post->job_source_id);

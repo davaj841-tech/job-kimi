@@ -1,5 +1,5 @@
 <template>
-  <PageShell>
+  <PageShell class="pb-24 lg:pb-0">
     <LoadingSpinner v-if="loading" />
     <template v-else-if="exam">
       <div class="mb-2 flex items-start gap-3">
@@ -135,6 +135,22 @@
         :url="shareUrl"
         @close="shareOpen = false"
       />
+
+      <div
+        v-if="!exam.active_attempt"
+        class="fixed inset-x-0 bottom-0 z-40 border-t border-surface-line bg-surface/95 p-3 backdrop-blur-md dark:border-slate-700 dark:bg-slate-900/95 lg:hidden"
+        style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom))"
+      >
+        <button
+          class="btn-primary touch-target"
+          :disabled="
+            auth.isAuthenticated && !(exam.is_eligible || exam.is_free)
+          "
+          @click="goStart()"
+        >
+          شروع آزمون کامل
+        </button>
+      </div>
     </template>
   </PageShell>
 </template>

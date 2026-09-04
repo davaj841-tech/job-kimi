@@ -4,7 +4,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
   >
     <div
-      class="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+      class="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:text-slate-100"
     >
       <div class="mb-4 flex items-center justify-between">
         <h3 class="text-lg font-bold">
@@ -29,7 +29,7 @@
           class="field h-auto"
           placeholder="خلاصه (حداکثر ۵۰۰)"
         />
-        <RichEditor v-model="form.content" />
+        <RichEditor v-model="form.content" size="page" />
         <FileUploader
           v-model="form.featured_image_file"
           accept="image/*"
@@ -38,22 +38,16 @@
           :existing-url="post?.featured_image_url || ''"
           :max-size-mb="2"
         />
-        <input
-          v-model="form.category"
-          required
-          class="field"
-          placeholder="طبقه‌بندی متنی *"
-        />
         <div>
           <label class="mb-1 block text-xs text-slate-500"
-            >رسته شغلی (برای آزمون و PDF)</label
+            >رسته شغلی (اختیاری — برای آزمون و PDF)</label
           >
-          <select v-model="form.job_classification_id" class="field">
-            <option value="">بدون رسته</option>
-            <option v-for="c in classifications" :key="c.id" :value="c.id">
-              {{ c.name }}
-            </option>
-          </select>
+          <ClassificationSelect
+            v-model="form.job_classification_id"
+            :items="classifications"
+            :multiple="false"
+            :show-all="true"
+          />
         </div>
         <CatalogAttachFields
           v-model:auto-catalog="form.auto_catalog"
@@ -72,8 +66,8 @@
           placeholder="meta_description"
         />
         <select v-model="form.status" class="field">
-          <option value="draft">پیش‌نویس</option>
-          <option value="published">منتشر شده</option>
+          <option value="published">منتشر شده (نمایش در صفحه اصلی)</option>
+          <option value="draft">پیش‌نویس (مخفی)</option>
         </select>
         <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
         <div class="flex justify-end gap-2">
@@ -92,11 +86,13 @@
 <script setup>
 import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import CatalogAttachFields from '../catalog/CatalogAttachFields.vue'
+import ClassificationSelect from '../ui/ClassificationSelect.vue'
 import FileUploader from '../ui/FileUploader.vue'
 import RichEditor from '../ui/RichEditor.vue'
 import adminApi from '../../api/client'
 
-const DRAFT_KEY = 'admin_blog_draft'
+const DRAFT_KEY = 'admin_blog_draft_v2'
+const LEGACY_DRAFT_KEY = 'admin_blog_draft'
 
 const props = defineProps({
   open: Boolean,
@@ -126,8 +122,13 @@ watch(
     if (!props.open) return
     if (props.post?.id) Object.assign(form, map(props.post))
     else {
+      localStorage.removeItem(LEGACY_DRAFT_KEY)
+      localStorage.removeItem('admin_blog_draft')
       const draft = localStorage.getItem(DRAFT_KEY)
-      Object.assign(form, draft ? JSON.parse(draft) : empty())
+      const parsed = draft ? JSON.parse(draft) : empty()
+      delete parsed.category
+      parsed.status = 'published'
+      Object.assign(form, parsed)
       form.featured_image_file = null
     }
     error.value = ''
@@ -141,7 +142,7 @@ watch(
     if (!props.open || props.post?.id) return
     clearTimeout(timer)
     timer = setTimeout(() => {
-      const { featured_image_file: _file, ...rest } = form
+      const { featured_image_file: _file, category: _cat, ...rest } = form
       localStorage.setItem(DRAFT_KEY, JSON.stringify(rest))
     }, 30000)
   },
@@ -156,14 +157,13 @@ function empty() {
     slug: '',
     excerpt: '',
     content: '',
-    category: '',
     job_classification_id: '',
     auto_catalog: true,
     exam_ids: [],
     pdf_ids: [],
     meta_title: '',
     meta_description: '',
-    status: 'draft',
+    status: 'published',
     featured_image_file: null,
   }
 }
@@ -174,14 +174,13 @@ function map(p) {
     slug: p.slug || '',
     excerpt: p.excerpt || '',
     content: p.content || '',
-    category: p.category || '',
     job_classification_id: p.job_classification_id || '',
     auto_catalog: p.auto_catalog !== false,
     exam_ids: Array.isArray(p.exam_ids) ? p.exam_ids.map(Number) : [],
     pdf_ids: Array.isArray(p.pdf_ids) ? p.pdf_ids.map(Number) : [],
     meta_title: p.meta_title || '',
     meta_description: p.meta_description || '',
-    status: p.status || 'draft',
+    status: p.status || 'published',
     featured_image_file: null,
   }
 }
@@ -202,6 +201,7 @@ function submit() {
   error.value = ''
   try {
     const payload = { ...form }
+    delete payload.category
     if (!payload.slug) delete payload.slug
     emit('saved', { id: props.post?.id || null, payload })
     if (!props.post?.id) localStorage.removeItem(DRAFT_KEY)
@@ -213,7 +213,7 @@ function submit() {
 
 <style scoped>
 .field {
-  @apply h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-orange-400;
+  @apply h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-orange-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100;
 }
 .btn-muted {
   @apply rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-bold;

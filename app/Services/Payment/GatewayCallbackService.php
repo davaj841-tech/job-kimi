@@ -156,8 +156,20 @@ class GatewayCallbackService
                 return new GatewayCallbackResult(false, 400, 'پرداخت لغو شده است.', $locked);
             }
 
+            // Late OK after TTL: still verify with gateway (config comment + real-world bank delays).
             if ($locked->status === Transaction::STATUS_EXPIRED) {
-                return new GatewayCallbackResult(false, 400, 'مهلت پرداخت به پایان رسیده است.', $locked);
+                $gateway = $locked->gateway ?: 'zarinpal';
+                $outcome = $this->payments->callbackOutcome($request, $gateway);
+                if ($outcome !== 'ok') {
+                    return new GatewayCallbackResult(false, 400, 'مهلت پرداخت به پایان رسیده است.', $locked);
+                }
+
+                Log::info('Payment callback after expiry — attempting gateway verify', [
+                    'transaction_id' => $locked->id,
+                    'gateway' => $gateway,
+                ]);
+
+                return null;
             }
 
             $gateway = $locked->gateway ?: 'zarinpal';
@@ -193,7 +205,7 @@ class GatewayCallbackService
 
     protected function saleReferenceId(Request $request): string
     {
-        foreach (['SaleReferenceId', 'sale_reference_id', 'RefNum', 'ref_num'] as $key) {
+        foreach (['SaleReferenceId', 'sale_reference_id', 'RefNum', 'ref_num', 'PayGateTranID', 'payingGateTranID', 'RRN', 'rrn'] as $key) {
             $value = $request->input($key) ?? $request->query($key);
             if (is_string($value) && $value !== '') {
                 return $value;

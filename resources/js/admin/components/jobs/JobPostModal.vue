@@ -39,16 +39,14 @@
         </div>
 
         <div>
-          <label class="label">طبقه‌بندی آگهی *</label>
-          <select v-model="form.job_classification_id" required class="field">
-            <option disabled value="">انتخاب طبقه‌بندی</option>
-            <option v-for="c in classifications" :key="c.id" :value="c.id">
-              {{ c.name }}
-            </option>
-          </select>
-          <p class="mt-1 text-[11px] text-slate-400">
-            مدیریت مادر/فرزند از دکمه «طبقه‌بندی‌ها» کنار آگهی جدید
-          </p>
+          <ClassificationSelect
+            v-model="form.job_classification_id"
+            :items="classifications"
+            :multiple="false"
+            :show-all="false"
+            label="طبقه‌بندی آگهی *"
+            hint="مدیریت مادر/فرزند از دکمه «طبقه‌بندی‌ها» کنار آگهی جدید"
+          />
         </div>
 
         <CatalogAttachFields
@@ -220,6 +218,7 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
 import CatalogAttachFields from '../catalog/CatalogAttachFields.vue'
+import ClassificationSelect from '../ui/ClassificationSelect.vue'
 import JalaliDatepicker from '../ui/JalaliDatepicker.vue'
 import RichEditor from '../ui/RichEditor.vue'
 import StatusToggle from '../ui/StatusToggle.vue'

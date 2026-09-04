@@ -9,7 +9,7 @@
     </div>
 
     <div class="rounded-xl bg-white p-4 shadow-sm">
-      <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
         <input
           v-model="store.filters.search"
           class="field"
@@ -21,11 +21,6 @@
           <option value="draft">پیش‌نویس</option>
           <option value="published">منتشر شده</option>
         </select>
-        <input
-          v-model="store.filters.category"
-          class="field"
-          placeholder="طبقه‌بندی"
-        />
       </div>
       <div class="mt-3 flex gap-2">
         <button class="btn-orange" @click="apply">اعمال فیلتر</button>
@@ -131,7 +126,6 @@ const columns = [
   { key: 'index', label: '#' },
   { key: 'title', label: 'عنوان' },
   { key: 'author_name', label: 'نویسنده' },
-  { key: 'category', label: 'طبقه‌بندی' },
   { key: 'status', label: 'وضعیت' },
   { key: 'created_at', label: 'تاریخ' },
 ]
@@ -199,7 +193,13 @@ async function onSaved({ id, payload }) {
     if (id) await store.updateBlogPost(id, payload)
     else await store.createBlogPost(payload)
     modalOpen.value = false
-    toast.success('مقاله ذخیره شد.')
+    if (payload.status === 'draft') {
+      toast.success(
+        'مقاله ذخیره شد. تا زمان انتشار، در صفحه اصلی نمایش داده نمی‌شود.'
+      )
+    } else {
+      toast.success('مقاله منتشر شد و در صفحه اصلی نمایش داده می‌شود.')
+    }
   } catch (e) {
     toast.error(e.response?.data?.message || 'ذخیره ناموفق بود.')
   }

@@ -17,7 +17,7 @@ class ResumeStoreRequest extends FormRequest
     {
         return [
             'title' => ['nullable', 'string', 'max:255'],
-            'template_id' => ['nullable', 'integer', 'between:1,10'],
+            'template_id' => ['nullable', 'integer', 'between:1,15'],
             'data' => ['required', 'array', new ResumeDataRule],
         ];
     }

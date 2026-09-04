@@ -34,7 +34,10 @@ class JobSourceStoreRequest extends FormRequest
             'domain' => ['nullable', 'string', 'max:190'],
             'source_type' => ['required', Rule::enum(JobSourceType::class)],
             'reliability_level' => ['required', Rule::enum(JobSourceReliability::class)],
-            'priority' => ['nullable', 'integer', 'min:0', 'max:1000'],
+            // Matches production unsignedTinyInteger (0–255). After optional
+            // widen migration, admin may still use up to 255 safely everywhere;
+            // values above require SMALLINT (see 2026_08_30_103000_widen_...).
+            'priority' => ['nullable', 'integer', 'min:0', 'max:255'],
             'is_enabled' => ['sometimes', 'boolean'],
             'is_approved' => ['sometimes', 'boolean'],
             'quality_status' => ['nullable', Rule::enum(JobSourceQualityStatus::class)],

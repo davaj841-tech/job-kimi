@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\IdempotencyException;
 use App\Exceptions\InsufficientBalanceException;
+use App\Exceptions\WalletFrozenException;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletLedger;
@@ -37,7 +38,7 @@ class WalletService
                 $user->notify(new GenericDatabaseNotification(
                     'wallet_charged',
                     'شارژ کیف پول',
-                    'مبلغ '.number_format((int) $transaction->amount).' تومان به کیف پول شما اضافه شد.',
+                    'مبلغ '.number_format((int) $transaction->amount).' ریال به کیف پول شما اضافه شد.',
                     '/wallet'
                 ));
             });
@@ -111,7 +112,6 @@ class WalletService
         ];
     }
 
-    /** شارژ دستی توسط ادمین */
     public function adminDeposit(User $user, int $amount, string $description): Transaction
     {
         return $this->credit($user, $amount, [
@@ -119,6 +119,7 @@ class WalletService
             'tx_type' => 'deposit',
             'description' => $description,
             'gateway' => 'wallet',
+            'bypass_wallet_freeze' => true,
         ])->transaction;
     }
 
@@ -131,6 +132,7 @@ class WalletService
                 'tx_type' => 'withdrawal',
                 'description' => $reason,
                 'gateway' => 'wallet',
+                'bypass_wallet_freeze' => true,
             ])->transaction;
         } catch (InsufficientBalanceException) {
             return null;
@@ -200,6 +202,7 @@ class WalletService
                 'tx_type' => 'refund',
                 'description' => $refundTx->description,
                 'gateway' => $locked->gateway,
+                'bypass_wallet_freeze' => true,
             ]);
 
             $locked->update([
@@ -274,6 +277,7 @@ class WalletService
 
         $run = function () use ($user, $amount, $direction, $meta): WalletMutation {
             $locked = User::query()->whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $this->assertWalletMutable($locked, $meta);
             $this->ensureOpeningLedger($locked);
 
             $sourceKey = $this->resolveSourceKey($meta);
@@ -400,6 +404,20 @@ class WalletService
             $user->wallet_balance = $balance;
         } finally {
             self::$mutatingBalance--;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     */
+    private function assertWalletMutable(User $user, array $meta): void
+    {
+        if (! empty($meta['bypass_wallet_freeze'])) {
+            return;
+        }
+
+        if ($user->isWalletFrozen()) {
+            throw new WalletFrozenException($user);
         }
     }
 

@@ -20,6 +20,7 @@ class CrawlOrchestrator
         protected DuplicateDetector $duplicates,
         protected JobPublisher $publisher,
         protected SourceHealthService $health,
+        protected JobFormEnricher $formEnricher,
     ) {}
 
     /**
@@ -75,6 +76,9 @@ class CrawlOrchestrator
                         $normalized['organization_key'] = PersianText::normalizeKey($source->name);
                         $normalized = $this->normalizer->withRecomputedHash($normalized);
                     }
+
+                    $normalized = $this->formEnricher->enrich($normalized, $source);
+                    $normalized = $this->normalizer->withRecomputedHash($normalized);
 
                     $validation = $this->validator->validate($normalized);
                     if (! $validation['valid']) {

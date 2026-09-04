@@ -3,7 +3,7 @@ import adminApi from '../api/client'
 
 interface ExamsFilters {
   search: string
-  job_classification_id: string
+  job_classification_ids: (number | string)[]
   status: string
   is_free: string
   sort: string
@@ -31,7 +31,7 @@ export const useExamsStore = defineStore('adminExams', {
     classifications: [],
     filters: {
       search: '',
-      job_classification_id: '',
+      job_classification_ids: [],
       status: '',
       is_free: '',
       sort: 'desc',
@@ -53,9 +53,18 @@ export const useExamsStore = defineStore('adminExams', {
     async fetchExams(page = 1) {
       this.loading = true
       try {
-        const { data } = await adminApi.get('/admin/exams', {
-          params: { ...this.filters, page, per_page: 20 },
-        })
+        const params: Record<string, unknown> = {
+          ...this.filters,
+          page,
+          per_page: 20,
+        }
+        if (this.filters.job_classification_ids.length) {
+          params.job_classification_ids =
+            this.filters.job_classification_ids.join(',')
+        } else {
+          delete params.job_classification_ids
+        }
+        const { data } = await adminApi.get('/admin/exams', { params })
         this.exams = data.data || []
         this.meta = data.meta || {}
       } finally {
@@ -116,7 +125,7 @@ export const useExamsStore = defineStore('adminExams', {
     resetFilters() {
       this.filters = {
         search: '',
-        job_classification_id: '',
+        job_classification_ids: [],
         status: '',
         is_free: '',
         sort: 'desc',

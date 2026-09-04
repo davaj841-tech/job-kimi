@@ -2,10 +2,11 @@
 
 namespace App\Services\Payment;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class IdPayGateway implements PaymentGatewayInterface
+class IdPayGateway extends AbstractPaymentGateway
 {
     public function getName(): string
     {
@@ -17,13 +18,28 @@ class IdPayGateway implements PaymentGatewayInterface
         return 'آیدی‌پی';
     }
 
+    public function requiredCredentialKeys(): array
+    {
+        return ['api_key'];
+    }
+
     protected function apiKey(): string
     {
-        return (string) config('services.idpay.api_key', '');
+        return $this->credential('api_key');
     }
 
     protected function sandbox(): bool
     {
+        $fromSetting = Setting::getFilled('idpay_sandbox', null);
+        if ($fromSetting !== null && $fromSetting !== '') {
+            return filter_var($fromSetting, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $fromCred = $this->credential('sandbox');
+        if ($fromCred !== '') {
+            return filter_var($fromCred, FILTER_VALIDATE_BOOLEAN);
+        }
+
         return (bool) config('services.idpay.sandbox', false);
     }
 
@@ -31,7 +47,7 @@ class IdPayGateway implements PaymentGatewayInterface
     {
         $apiKey = $this->apiKey();
         if (blank($apiKey)) {
-            return ['authority' => null, 'payment_url' => null, 'error' => 'کلید API آیدی‌پی تنظیم نشده است.'];
+            return ['authority' => null, 'payment_url' => null, 'error' => 'اطلاعات اتصال این درگاه کامل نشده است.'];
         }
 
         $orderId = (string) ($meta['order_id'] ?? uniqid('idp_', true));
@@ -81,7 +97,7 @@ class IdPayGateway implements PaymentGatewayInterface
     {
         $apiKey = $this->apiKey();
         if (blank($apiKey)) {
-            return ['success' => false, 'ref_id' => null, 'error' => 'کلید API آیدی‌پی تنظیم نشده است.'];
+            return ['success' => false, 'ref_id' => null, 'error' => 'اطلاعات اتصال این درگاه کامل نشده است.'];
         }
 
         $orderId = (string) ($meta['order_id'] ?? '');

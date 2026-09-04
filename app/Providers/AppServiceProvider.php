@@ -38,6 +38,7 @@ use App\Services\Aggregation\Parsers\OfficialAnnouncementHtmlParser;
 use App\Services\Aggregation\Parsers\SourceParserRegistry;
 use App\Services\Aggregation\SafeHttpFetcher;
 use App\Support\IranMobile;
+use App\Support\ProcOpen;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -55,6 +56,11 @@ class AppServiceProvider extends ServiceProvider
             $this->app['config']->set('cache.default', 'file');
             $this->app['config']->set('queue.default', 'sync');
         }
+
+        $this->app->singleton(\App\Services\Sms\SmsLogger::class);
+        $this->app->singleton(\App\Services\Sms\SmsManager::class);
+        $this->app->singleton(\App\Services\Sms\SmsServiceInterface::class, \App\Services\Sms\SmsManager::class);
+        $this->app->singleton(\App\Services\Sms\SmsService::class, fn ($app) => new \App\Services\Sms\SmsService($app->make(\App\Services\Sms\SmsManager::class)));
 
         $this->app->singleton(IpHelper::class);
 
@@ -76,9 +82,12 @@ class AppServiceProvider extends ServiceProvider
 
             return new SafeHttpFetcher(
                 $app->make(JobSourceManager::class),
-                (int) ($http['timeout_seconds'] ?? 30),
+                (int) ($http['timeout_seconds'] ?? 45),
                 (int) ($http['max_bytes'] ?? 2_000_000),
-                (int) ($http['max_redirects'] ?? 3),
+                (int) ($http['max_redirects'] ?? 5),
+                (int) ($http['connect_timeout_seconds'] ?? 20),
+                (int) ($http['retries'] ?? 2),
+                (int) ($http['retry_sleep_ms'] ?? 1500),
             );
         });
 
@@ -95,8 +104,27 @@ class AppServiceProvider extends ServiceProvider
         // Ensure API validation / auth messages stay Persian
         app()->setLocale(config('app.locale', 'fa'));
 
+        // Production --no-dev: Collision's `test` command is absent; register a stub so
+        // `php artisan test` does not raise "There are no commands defined in the test namespace."
+        if ($this->app->runningInConsole()
+            && ! class_exists(\NunoMaduro\Collision\Adapters\Laravel\Commands\TestCommand::class)) {
+            $this->commands([\App\Console\Production\ArtisanTestStubCommand::class]);
+        }
+
+        // Shared hosting: Pulse Servers / some tooling needs shell helpers; avoid noise.
+        if (! ProcOpen::available()) {
+            config(['pulse.enabled' => false]);
+        }
+
         if ($this->app->environment('production') && config('app.debug')) {
             report(new \RuntimeException('APP_DEBUG is enabled in production — disable it immediately.'));
+        }
+
+        // Legacy MAIL_SCHEME=tls|ssl must never reach Symfony (only smtp|smtps).
+        try {
+            app(\App\Services\MailConfigService::class)->normalizeConfiguredSmtpScheme();
+        } catch (\Throwable) {
+            // Installer / early boot may lack Settings; ignore.
         }
 
         Feature::observe(FeatureObserver::class);

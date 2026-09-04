@@ -4,6 +4,8 @@ import { unwrapList, unwrapMeta } from '../../utils/format'
 
 interface WalletsStats {
   total_balance: number
+  ledger_total: number
+  reconciled: boolean
   charges_today: number
   charge_amount_today: number
 }
@@ -14,6 +16,9 @@ interface WalletsState {
   history: Record<string, unknown>[]
   historyMeta: Record<string, unknown>
   historyUser: Record<string, unknown> | null
+  ledger: Record<string, unknown>[]
+  ledgerMeta: Record<string, unknown>
+  ledgerUser: Record<string, unknown> | null
   stats: WalletsStats
   filters: { search: string }
   historyType: string
@@ -27,8 +32,13 @@ export const useWalletsStore = defineStore('adminWallets', {
     history: [],
     historyMeta: {},
     historyUser: null,
+    ledger: [],
+    ledgerMeta: {},
+    ledgerUser: null,
     stats: {
       total_balance: 0,
+      ledger_total: 0,
+      reconciled: true,
       charges_today: 0,
       charge_amount_today: 0,
     },
@@ -73,6 +83,20 @@ export const useWalletsStore = defineStore('adminWallets', {
       }
     },
 
+    async fetchLedger(userId: number | string, page = 1) {
+      this.loading = true
+      try {
+        const { data } = await adminApi.get(`/admin/wallets/${userId}/ledger`, {
+          params: { page, per_page: 30 },
+        })
+        this.ledgerUser = data.data?.user || null
+        this.ledger = unwrapList(data) as Record<string, unknown>[]
+        this.ledgerMeta = unwrapMeta(data) || {}
+      } finally {
+        this.loading = false
+      }
+    },
+
     async charge(userId: number | string, amount: number, description: string) {
       const { data } = await adminApi.post(`/admin/wallets/${userId}/charge`, {
         amount,
@@ -90,6 +114,25 @@ export const useWalletsStore = defineStore('adminWallets', {
       })
       await this.fetchWallets((this.meta.current_page as number) || 1)
       await this.fetchStats()
+      return data.data
+    },
+
+    async freeze(userId: number | string, reason: string) {
+      const { data } = await adminApi.post(`/admin/wallets/${userId}/freeze`, {
+        reason,
+      })
+      await this.fetchWallets((this.meta.current_page as number) || 1)
+      return data.data
+    },
+
+    async unfreeze(userId: number | string, reason: string) {
+      const { data } = await adminApi.post(
+        `/admin/wallets/${userId}/unfreeze`,
+        {
+          reason,
+        }
+      )
+      await this.fetchWallets((this.meta.current_page as number) || 1)
       return data.data
     },
   },

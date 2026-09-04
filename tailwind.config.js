@@ -28,6 +28,8 @@ export default {
                     700: '#d32f41',
                     800: '#b91c1c',
                     900: '#991b1b',
+                    DEFAULT: '#ef394e',
+                    dark: '#d63045',
                 },
                 brand: {
                     DEFAULT: 'rgb(var(--c-brand) / <alpha-value>)',
@@ -52,6 +54,11 @@ export default {
                     DEFAULT: 'rgb(var(--c-surface) / <alpha-value>)',
                     page: 'rgb(var(--c-page) / <alpha-value>)',
                     line: 'rgb(var(--c-line) / <alpha-value>)',
+                },
+                dark: {
+                    bg: '#0f172a',
+                    card: '#1e293b',
+                    border: '#334155',
                 },
             },
             boxShadow: {

@@ -82,16 +82,8 @@
 import { computed, ref, watch } from 'vue'
 import DesktopIcon from '../DesktopIcon.vue'
 import JobClassificationFilter from '../JobClassificationFilter.vue'
+import { jobMatchesClassifications } from '../composables/useClassificationMultiSelect'
 
-const props = defineProps({
-  jobs: { type: Array, default: () => [] },
-  classifications: { type: Array, default: () => [] },
-  loading: { type: Boolean, default: false },
-})
-
-const emit = defineEmits(['filter'])
-
-const selectedClassification = ref(null)
 const tints = [
   'bg-desk-blue',
   'bg-desk-orange',
@@ -101,19 +93,27 @@ const tints = [
   'bg-[#0369a1]',
 ]
 
-watch(selectedClassification, (id) => emit('filter', id))
+const props = defineProps({
+  jobs: { type: Array, default: () => [] },
+  classifications: { type: Array, default: () => [] },
+  loading: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['filter'])
+
+const selectedClassification = ref([])
+
+watch(selectedClassification, (ids) => emit('filter', ids), { deep: true })
 
 const filtered = computed(() => {
   const list = props.jobs || []
-  if (!selectedClassification.value) return list
-  const parent = (props.classifications || []).find(
-    (c) => Number(c.id) === Number(selectedClassification.value)
+  return list.filter((j) =>
+    jobMatchesClassifications(
+      j,
+      selectedClassification.value,
+      props.classifications || []
+    )
   )
-  const ids = new Set([
-    Number(selectedClassification.value),
-    ...(parent?.child_ids || []).map(Number),
-  ])
-  return list.filter((j) => ids.has(Number(j.job_classification_id)))
 })
 
 const displayJobs = computed(() =>

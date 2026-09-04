@@ -6,6 +6,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class AdminUserSeeder extends Seeder
 {
@@ -19,24 +20,23 @@ class AdminUserSeeder extends Seeder
             $password = Str::password(16);
             if ($this->command) {
                 $this->command->warn(
-                    'ADMIN_SEED_PASSWORD not set — generated a one-time password. Set ADMIN_SEED_PASSWORD before seeding production.'
+                    'ADMIN_SEED_PASSWORD not set or shorter than 8 chars — generated a one-time password. Set ADMIN_SEED_PASSWORD before seeding production.'
                 );
                 $this->command->warn('Generated admin password (save now): '.$password);
             }
         }
 
-        $mobile = (string) env('ADMIN_SEED_MOBILE', '');
-        $username = (string) env('ADMIN_SEED_USERNAME', '');
-        $email = (string) env('ADMIN_SEED_EMAIL', '');
+        $mobile = trim((string) env('ADMIN_SEED_MOBILE', ''));
+        $username = trim((string) env('ADMIN_SEED_USERNAME', ''));
+        $email = trim((string) env('ADMIN_SEED_EMAIL', ''));
 
         if ($mobile === '' || $username === '' || $email === '') {
+            $message = 'AdminUserSeeder requires ADMIN_SEED_MOBILE, ADMIN_SEED_USERNAME, and ADMIN_SEED_EMAIL in .env (ADMIN_SEED_PASSWORD optional, min 8).';
             if ($this->command) {
-                $this->command->error(
-                    'ADMIN_SEED_MOBILE / ADMIN_SEED_USERNAME / ADMIN_SEED_EMAIL must be set in .env'
-                );
+                $this->command->error($message);
             }
 
-            return;
+            throw new RuntimeException($message);
         }
 
         User::query()->updateOrCreate(

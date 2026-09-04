@@ -1,11 +1,15 @@
 <template>
-  <div class="overflow-hidden rounded-xl border border-slate-200">
-    <div class="flex flex-wrap gap-1 border-b border-slate-200 bg-slate-50 p-2">
+  <div
+    class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-600"
+  >
+    <div
+      class="flex flex-wrap gap-1 border-b border-slate-200 bg-slate-50 p-2 dark:border-slate-600 dark:bg-slate-800"
+    >
       <button
         v-for="btn in buttons"
         :key="btn.label"
         type="button"
-        class="rounded-lg px-2 py-1 text-xs font-bold text-slate-700 hover:bg-white"
+        class="rounded-lg px-2 py-1 text-xs font-bold text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-slate-700"
         :title="btn.title"
         @mousedown.prevent="run(btn)"
       >
@@ -13,7 +17,7 @@
       </button>
       <button
         type="button"
-        class="mr-auto rounded-lg px-2 py-1 text-xs font-bold text-orange-600 hover:bg-white"
+        class="mr-auto rounded-lg px-2 py-1 text-xs font-bold text-orange-600 hover:bg-white dark:text-orange-400 dark:hover:bg-slate-700"
         @mousedown.prevent="htmlMode = !htmlMode"
       >
         {{ htmlMode ? 'نمایش دیداری' : 'HTML' }}
@@ -21,7 +25,7 @@
     </div>
     <textarea
       v-if="htmlMode"
-      class="w-full p-3 text-sm outline-none"
+      class="w-full bg-white p-3 text-sm text-slate-800 outline-none dark:bg-slate-900 dark:text-slate-100"
       :class="sizeClass"
       dir="ltr"
       :value="modelValue"
@@ -30,7 +34,7 @@
     <div
       v-else
       ref="editor"
-      class="prose prose-sm max-w-none px-3 py-2 text-sm leading-7 outline-none [&_.math]:font-mono [&_.math]:text-orange-700 [&_a]:text-orange-600 [&_h2]:text-lg [&_h2]:font-black [&_h3]:text-base [&_h3]:font-bold [&_img]:max-w-full [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:p-2"
+      class="prose prose-sm max-w-none bg-white px-3 py-2 text-sm leading-7 text-slate-800 outline-none dark:bg-slate-900 dark:text-slate-100 [&_.math]:font-mono [&_.math]:text-orange-700 dark:[&_.math]:text-orange-400 [&_a]:text-orange-600 [&_h2]:text-lg [&_h2]:font-black [&_h3]:text-base [&_h3]:font-bold [&_img]:max-w-full [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-300 [&_td]:p-2 dark:[&_td]:border-slate-600 [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-50 [&_th]:p-2 dark:[&_th]:border-slate-600 dark:[&_th]:bg-slate-800"
       :class="sizeClass"
       contenteditable="true"
       @input="onInput"
@@ -43,7 +47,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
-  /** default | page | exam */
+  /** default | page | exam | compact */
   size: { type: String, default: 'default' },
 })
 const emit = defineEmits(['update:modelValue'])
@@ -55,6 +59,7 @@ let syncing = false
 const sizeClass = computed(() => {
   if (props.size === 'page') return 'min-h-[min(62vh,640px)]'
   if (props.size === 'exam') return 'min-h-[min(42vh,420px)]'
+  if (props.size === 'compact') return 'min-h-28'
   return 'min-h-48'
 })
 

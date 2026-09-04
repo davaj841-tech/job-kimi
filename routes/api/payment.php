@@ -33,6 +33,9 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'throttl
     Route::get('/pdf-products/{id}/download', [PDFProductController::class, 'download'])
         ->middleware('feature:pdf-store')
         ->whereNumber('id');
+    Route::get('/pdf-products/{id}/attachments/{index}/download', [PDFProductController::class, 'downloadAttachment'])
+        ->middleware('feature:pdf-store')
+        ->whereNumber(['id', 'index']);
     Route::get('/my-purchases', [PDFProductController::class, 'myPurchases'])
         ->middleware('feature:pdf-store');
 

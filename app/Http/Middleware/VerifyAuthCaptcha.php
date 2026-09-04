@@ -2,52 +2,40 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Setting;
+use App\Services\Security\TurnstileService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Auth captcha: Cloudflare Turnstile when keys exist, otherwise math challenge.
+ * Auth / public captcha: Turnstile when admin-enabled + configured, else math challenge.
+ * Never runs Turnstile and math together. Does not replace rate limiting.
  */
 class VerifyAuthCaptcha
 {
-    public function handle(Request $request, Closure $next): Response
-    {
-        $secret = (string) Setting::getFilled('turnstile_secret_key', config('services.turnstile.secret', ''));
-        $siteKey = (string) Setting::getFilled('turnstile_site_key', config('services.turnstile.site_key', ''));
+    public function __construct(
+        protected TurnstileService $turnstile
+    ) {}
 
-        if ($secret !== '' && $siteKey !== '') {
-            return $this->verifyTurnstile($request, $next, $secret);
+    public function handle(Request $request, Closure $next, ?string $action = null): Response
+    {
+        if ($this->turnstile->isEnabled()) {
+            return $this->verifyTurnstile($request, $next, $action);
         }
 
+        // Compatibility: captcha_enabled=false does not disable verification on these routes.
         return $this->verifyMath($request, $next);
     }
 
-    private function verifyTurnstile(Request $request, Closure $next, string $secret): Response
+    private function verifyTurnstile(Request $request, Closure $next, ?string $action): Response
     {
-        $token = $request->input('turnstile_token') ?: $request->header('X-Turnstile-Token');
+        $result = $this->turnstile->verify($request, $action);
 
-        if (! $token) {
+        if (! $result['ok']) {
             return response()->json([
                 'success' => false,
-                'message' => 'تایید امنیتی (کپچا) الزامی است.',
-                'errors' => null,
-            ], 422);
-        }
-
-        $response = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-            'secret' => $secret,
-            'response' => $token,
-            'remoteip' => $request->ip(),
-        ]);
-
-        if (! ($response->json('success') ?? false)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'تایید امنیتی ناموفق بود. دوباره تلاش کنید.',
+                'message' => $result['message'],
                 'errors' => null,
             ], 422);
         }
@@ -57,6 +45,7 @@ class VerifyAuthCaptcha
 
     private function verifyMath(Request $request, Closure $next): Response
     {
+        // Ignore Turnstile fields when in math mode (no dual verification).
         $id = (string) $request->input('captcha_id', '');
         $answer = trim((string) $request->input('captcha_answer', ''));
 

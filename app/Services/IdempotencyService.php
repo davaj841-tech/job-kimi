@@ -160,11 +160,16 @@ final class IdempotencyService
                 ];
             }
 
-            if (in_array($locked->status, [Transaction::STATUS_CANCELLED, Transaction::STATUS_EXPIRED], true)) {
-                throw new IdempotencyException('Transaction was cancelled or expired.');
+            if ($locked->status === Transaction::STATUS_CANCELLED) {
+                throw new IdempotencyException('Transaction was cancelled.');
             }
 
-            if (! in_array($locked->status, [Transaction::STATUS_PENDING, Transaction::STATUS_FAILED], true)) {
+            // Expired is allowed only after a successful gateway verify (late payment recovery).
+            if (! in_array($locked->status, [
+                Transaction::STATUS_PENDING,
+                Transaction::STATUS_FAILED,
+                Transaction::STATUS_EXPIRED,
+            ], true)) {
                 throw new IdempotencyException('Transaction is not eligible for processing.');
             }
 

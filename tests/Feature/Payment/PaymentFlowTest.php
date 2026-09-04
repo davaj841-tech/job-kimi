@@ -192,6 +192,48 @@ final class PaymentFlowTest extends TestCase
         $this->assertSame(Transaction::STATUS_EXPIRED, $tx->fresh()->status);
     }
 
+    public function test_late_ok_callback_after_expiry_still_credits_wallet(): void
+    {
+        $user = User::factory()->create(['wallet_balance' => 0, 'status' => 'active']);
+        Sanctum::actingAs($user);
+
+        $create = $this->postJson('/api/v1/wallet/charge', [
+            'amount' => 25000,
+            'gateway' => 'zarinpal',
+        ])->assertOk();
+
+        $tx = Transaction::query()->findOrFail($create->json('data.transaction_id'));
+        $this->assertSame(25000, FakePaymentGateway::storedAmount($tx->reference_id));
+        $tx->update(['status' => Transaction::STATUS_EXPIRED]);
+
+        $this->postJson('/api/v1/wallet/verify', [
+            'Authority' => $tx->reference_id,
+            'Status' => 'OK',
+            'ik' => $tx->idempotency_key,
+        ])->assertOk();
+
+        $this->assertSame(25000, (int) $user->fresh()->wallet_balance);
+        $this->assertSame(Transaction::STATUS_COMPLETED, $tx->fresh()->status);
+    }
+
+    public function test_cancelled_transaction_cannot_recover_with_ok(): void
+    {
+        $user = User::factory()->create(['wallet_balance' => 0, 'status' => 'active']);
+        Sanctum::actingAs($user);
+
+        $create = $this->postJson('/api/v1/wallet/charge', ['amount' => 12000, 'gateway' => 'zarinpal'])->assertOk();
+        $tx = Transaction::query()->findOrFail($create->json('data.transaction_id'));
+        $tx->update(['status' => Transaction::STATUS_CANCELLED]);
+
+        $this->postJson('/api/v1/wallet/verify', [
+            'Authority' => $tx->reference_id,
+            'Status' => 'OK',
+            'ik' => $tx->idempotency_key,
+        ])->assertStatus(400);
+
+        $this->assertSame(0, (int) $user->fresh()->wallet_balance);
+    }
+
     public function test_gateway_logs_do_not_include_merchant_secret(): void
     {
         config([

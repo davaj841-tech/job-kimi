@@ -19,7 +19,7 @@ class AuthenticationTest extends TestCase
 
         $res->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.expires_in', 120);
+            ->assertJsonPath('data.expires_in', 180);
 
         $user = User::query()->where('mobile', '09120000001')->first();
         $this->assertNotNull($user);

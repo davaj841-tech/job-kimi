@@ -25,6 +25,7 @@ use Illuminate\Support\Str;
  * @property JobSourceReliability|null $reliability_level
  * @property JobSourceQualityStatus|null $quality_status
  * @property JobCrawlerType|null $crawler_type
+ * @property int $priority Crawl dispatch sort (lower runs earlier); unsignedTinyInteger 0–255 on production unless widen migration applied
  * @property bool $is_enabled
  * @property bool $is_approved
  * @property Carbon|null $last_crawled_at

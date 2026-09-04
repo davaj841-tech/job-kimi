@@ -86,6 +86,7 @@ import api from '../../api/client'
 import LoadingSpinner from '../../components/LoadingSpinner.vue'
 import PageShell from '../../components/layout/PageShell.vue'
 import { unwrapList } from '../../utils/format'
+import { setListPageMeta } from '../../services/meta'
 
 const loading = ref(true)
 const tab = ref('all')
@@ -104,6 +105,12 @@ const filtered = computed(() => {
 })
 
 onMounted(async () => {
+  setListPageMeta({
+    title: 'مقالات استخدامی | جاب‌آزمون',
+    description:
+      'راهنمای جامع آزمون‌های استخدامی، منابع مطالعه و استراتژی قبولی',
+    path: '/articles',
+  })
   try {
     const [artRes, blogRes] = await Promise.all([
       api.get('/articles', { params: { per_page: 30 } }).catch(() => null),

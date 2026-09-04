@@ -3,6 +3,7 @@
     <input
       :value="modelValue"
       :type="visible ? 'text' : 'password'"
+      :name="name"
       :class="inputClass"
       :placeholder="placeholder"
       :required="required"
@@ -32,6 +33,7 @@ import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 
 defineProps({
   modelValue: { type: String, default: '' },
+  name: { type: String, default: 'password' },
   placeholder: { type: String, default: '' },
   required: { type: Boolean, default: false },
   autocomplete: { type: String, default: 'current-password' },

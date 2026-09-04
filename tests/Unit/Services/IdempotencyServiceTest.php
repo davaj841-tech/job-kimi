@@ -129,7 +129,8 @@ final class IdempotencyServiceTest extends TestCase
         return [
             'pending قابل پردازش' => [Transaction::STATUS_PENDING, true],
             'cancelled غیرمجاز' => [Transaction::STATUS_CANCELLED, false],
-            'expired غیرمجاز' => [Transaction::STATUS_EXPIRED, false],
+            'expired قابل بازیابی پس از verify' => [Transaction::STATUS_EXPIRED, true],
+            'failed قابل پردازش' => [Transaction::STATUS_FAILED, true],
         ];
     }
 
