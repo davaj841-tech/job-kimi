@@ -27,6 +27,7 @@ class SiteAutoHealService
             'site_errors_resolved' => 0,
             'site_errors_deleted' => 0,
             'failed_jobs_deleted' => 0,
+            'aggregation_flag_healed' => 0,
         ];
 
         try {
@@ -35,11 +36,36 @@ class SiteAutoHealService
             $stats['site_errors_resolved'] = $this->autoResolveTransientSiteErrors();
             $stats['site_errors_deleted'] = $this->pruneOldResolvedSiteErrors();
             $stats['failed_jobs_deleted'] = $this->pruneFailedJobs($aggressive);
+            $stats['aggregation_flag_healed'] = $this->healJobCrawlerFlag();
         } catch (Throwable $e) {
             Log::warning('SiteAutoHealService failed', ['error' => $e->getMessage()]);
         }
 
         return $stats;
+    }
+
+    /**
+     * If whitelist sources exist but job-crawler was accidentally disabled, re-enable it.
+     */
+    public function healJobCrawlerFlag(): int
+    {
+        if (! Schema::hasTable('job_sources') || ! Schema::hasTable('features')) {
+            return 0;
+        }
+
+        $hasSources = DB::table('job_sources')->exists();
+        if (! $hasSources) {
+            return 0;
+        }
+
+        $features = app(FeatureFlagService::class);
+        if ($features->isEnabled('job-crawler', true)) {
+            return 0;
+        }
+
+        $features->enable('job-crawler');
+
+        return 1;
     }
 
     public function pruneFailedCrawlerRuns(bool $aggressive = false): int
@@ -96,6 +122,11 @@ class SiteAutoHealService
             'Process class relies',
             'NamespaceNotFoundException',
             'There are no commands defined in the "user" namespace',
+            'There are no commands defined in the "test" namespace',
+            'missing: "queues"',
+            'missing: queues',
+            'missing: "mobile"',
+            'missing: mobile',
         ];
 
         $count = 0;

@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 class SmsTestCommand extends Command
 {
     protected $signature = 'sms:test
-                            {mobile : Destination Iranian mobile (09xxxxxxxxx)}
+                            {mobile? : Destination Iranian mobile (09xxxxxxxxx); omit to run health-only}
                             {--message= : Plain message body (ignored for OTP/pattern)}
                             {--pattern : Force Melipayamak BaseServiceNumber / OTP path}
                             {--code=12345 : OTP/code variable for pattern or default message}
@@ -37,6 +37,20 @@ class SmsTestCommand extends Command
             ['API reachable', $health['api_reachable'] === null ? 'n/a' : ($health['api_reachable'] ? 'yes' : 'no')],
         ]);
 
+        $rawMobile = $this->argument('mobile');
+        if ($rawMobile === null || trim((string) $rawMobile) === '') {
+            $this->warn('No mobile provided — health check only (no SMS sent).');
+            $this->line('Usage: php artisan sms:test 09xxxxxxxxx [--otp]');
+
+            if (! $health['enabled'] || ! $health['configured']) {
+                return self::FAILURE;
+            }
+
+            $this->info('SMS Health: PASS (provide a mobile to send a real test SMS).');
+
+            return self::SUCCESS;
+        }
+
         if (! $health['enabled']) {
             $this->error('SMS is disabled (SMS_ENABLED=false or admin setting).');
 
@@ -49,7 +63,7 @@ class SmsTestCommand extends Command
             return self::FAILURE;
         }
 
-        $mobile = IranMobile::normalize((string) $this->argument('mobile'));
+        $mobile = IranMobile::normalize((string) $rawMobile);
         if ($mobile === null) {
             $this->error('شماره موبایل نامعتبر است. قالب: 09xxxxxxxxx');
 
