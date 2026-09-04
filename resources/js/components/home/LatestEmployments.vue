@@ -69,10 +69,10 @@
             }}</span>
           </div>
           <p class="line-clamp-2 flex-1 text-sm font-bold text-desk-text">
-            {{ job.classification_name || job.company_name || job.title }}
+            {{ job.title }}
           </p>
           <p class="mt-1 line-clamp-1 text-[11px] text-desk-muted">
-            {{ job.title }}
+            {{ job.classification_name || job.company_name || '—' }}
           </p>
         </button>
       </HomeRail>
