@@ -167,6 +167,9 @@ HTML;
 
     public function test_duplicate_updates_instead_of_second_create(): void
     {
+        // Isolate duplicate/upsert behavior from detail-page enrichment HTTP calls.
+        config(['aggregation.detail_fetch.enabled' => false]);
+
         Http::fake([
             'jobs.example.gov.ir/*' => Http::sequence()
                 ->push([
@@ -190,7 +193,8 @@ HTML;
         $this->assertSame(0, $second['summary']['created']);
         $this->assertSame(1, $second['summary']['updated']);
         $this->assertDatabaseCount('job_posts', 1);
-        $this->assertSame('version-two-updated', JobPost::query()->where('external_id', 'DUP-1')->value('description'));
+        $description = (string) JobPost::query()->where('external_id', 'DUP-1')->value('description');
+        $this->assertStringContainsString('version-two-updated', strip_tags($description));
         $this->assertSame('pending', JobPost::query()->where('external_id', 'DUP-1')->value('status'));
     }
 

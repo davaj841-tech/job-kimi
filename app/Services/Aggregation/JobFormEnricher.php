@@ -211,6 +211,12 @@ class JobFormEnricher
             '<p>'.e($company).'</p>',
         ];
 
+        $plainBody = trim(strip_tags($existing));
+        if ($plainBody !== '' && $plainBody !== $title) {
+            $blocks[] = '<h3>شرح آگهی</h3>';
+            $blocks[] = '<p>'.e($plainBody).'</p>';
+        }
+
         if (! empty($normalized['job_category'])) {
             $blocks[] = '<h3>دسته</h3>';
             $blocks[] = '<p>'.e((string) $normalized['job_category']).'</p>';

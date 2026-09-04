@@ -3,12 +3,16 @@
 namespace App\Services;
 
 use App\Enums\Aggregation\CrawlerRunStatus;
+use App\Enums\Aggregation\JobSourceQualityStatus;
 use App\Models\CrawlerError;
 use App\Models\CrawlerRun;
+use App\Models\JobSource;
 use App\Models\SiteError;
+use App\Services\Aggregation\AggregationScheduleService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -28,6 +32,8 @@ class SiteAutoHealService
             'site_errors_deleted' => 0,
             'failed_jobs_deleted' => 0,
             'aggregation_flag_healed' => 0,
+            'aggregation_sources_healed' => 0,
+            'aggregation_schedule_healed' => 0,
         ];
 
         try {
@@ -37,6 +43,8 @@ class SiteAutoHealService
             $stats['site_errors_deleted'] = $this->pruneOldResolvedSiteErrors();
             $stats['failed_jobs_deleted'] = $this->pruneFailedJobs($aggressive);
             $stats['aggregation_flag_healed'] = $this->healJobCrawlerFlag();
+            $stats['aggregation_sources_healed'] = $this->healAggregationSourceBackoff();
+            $stats['aggregation_schedule_healed'] = $this->healAggregationSchedule();
         } catch (Throwable $e) {
             Log::warning('SiteAutoHealService failed', ['error' => $e->getMessage()]);
         }
@@ -64,6 +72,117 @@ class SiteAutoHealService
         }
 
         $features->enable('job-crawler');
+
+        return 1;
+    }
+
+    /**
+     * Clear backoff / false demotions caused by transient SSRF false-positives (private CDN IPs)
+     * or expired backoffs so whitelist sources can crawl again.
+     */
+    public function healAggregationSourceBackoff(): int
+    {
+        if (! Schema::hasTable('job_sources')) {
+            return 0;
+        }
+
+        $permanentSlugs = collect(config('aggregation.official_sources', config('aggregation.pilot_sources', [])))
+            ->filter(fn ($row) => is_array($row) && ($row['quality_status'] ?? '') === JobSourceQualityStatus::TemporarilyUnavailable->value)
+            ->map(fn ($row) => (string) ($row['slug'] ?? ''))
+            ->filter()
+            ->values()
+            ->all();
+
+        $healed = 0;
+
+        JobSource::query()
+            ->where('is_enabled', true)
+            ->where('is_approved', true)
+            ->when($permanentSlugs !== [], fn ($q) => $q->whereNotIn('slug', $permanentSlugs))
+            ->where(function ($q) {
+                $q->whereNotNull('health_backoff_until')
+                    ->orWhere('consecutive_failures', '>', 0)
+                    ->orWhere('quality_status', JobSourceQualityStatus::TemporarilyUnavailable->value)
+                    ->orWhere('last_crawl_outcome', 'http_failure');
+            })
+            ->orderBy('id')
+            ->chunkById(50, function ($rows) use (&$healed) {
+                foreach ($rows as $source) {
+                    /** @var JobSource $source */
+                    $notes = (string) ($source->quality_notes ?? '');
+                    $blockedIp = str_contains($notes, 'blocked IP')
+                        || str_contains($notes, 'Blocked IP')
+                        || str_contains($notes, 'resolved to blocked');
+
+                    $backoffExpired = $source->health_backoff_until === null
+                        || $source->health_backoff_until->isPast();
+
+                    $demoted = $source->quality_status === JobSourceQualityStatus::TemporarilyUnavailable;
+
+                    // Only auto-promote demotions that look like false SSRF / expired backoff, not known WAF deaths.
+                    if ($demoted && ! $blockedIp && ! $backoffExpired) {
+                        continue;
+                    }
+
+                    $updates = [
+                        'consecutive_failures' => 0,
+                        'health_backoff_until' => null,
+                    ];
+
+                    if ($demoted) {
+                        $updates['quality_status'] = JobSourceQualityStatus::Limited;
+                        $updates['quality_notes'] = trim($notes."\n[auto-heal] بازنشانی پس از رفع بلاک IP خصوصی CDN / بک‌آف منقضی.");
+                    }
+
+                    $source->fill($updates);
+                    if ($source->isDirty()) {
+                        $source->save();
+                        $healed++;
+                    }
+                }
+            });
+
+        return $healed;
+    }
+
+    /**
+     * If whitelist sources exist but schedule was never enabled, turn on default daily slots.
+     */
+    public function healAggregationSchedule(): int
+    {
+        if (! Schema::hasTable('job_sources') || ! Schema::hasTable('settings')) {
+            return 0;
+        }
+
+        if (! JobSource::query()->where('is_enabled', true)->where('is_approved', true)->exists()) {
+            return 0;
+        }
+
+        $schedule = app(AggregationScheduleService::class);
+        $config = $schedule->get();
+        $hasEnabledTimes = collect($config['times'] ?? [])->contains(fn ($t) => ($t['enabled'] ?? false) && filled($t['time'] ?? null));
+
+        if (($config['enabled'] ?? false) && $hasEnabledTimes) {
+            return 0;
+        }
+
+        $times = $config['times'] ?? [];
+        if (! $hasEnabledTimes) {
+            foreach (['06:30', '12:30', '18:30'] as $time) {
+                $times[] = [
+                    'id' => (string) Str::uuid(),
+                    'time' => $time,
+                    'enabled' => true,
+                    'label' => 'خزش خودکار',
+                ];
+            }
+        }
+
+        $schedule->update([
+            'enabled' => true,
+            'timezone' => $config['timezone'] ?: 'Asia/Tehran',
+            'times' => $times,
+        ]);
 
         return 1;
     }

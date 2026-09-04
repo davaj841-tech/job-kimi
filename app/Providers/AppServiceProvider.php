@@ -84,7 +84,7 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(JobSourceManager::class),
                 (int) ($http['timeout_seconds'] ?? 45),
                 (int) ($http['max_bytes'] ?? 2_000_000),
-                (int) ($http['max_redirects'] ?? 3),
+                (int) ($http['max_redirects'] ?? 5),
                 (int) ($http['connect_timeout_seconds'] ?? 20),
                 (int) ($http['retries'] ?? 2),
                 (int) ($http['retry_sleep_ms'] ?? 1500),

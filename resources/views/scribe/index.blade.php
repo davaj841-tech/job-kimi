@@ -173,6 +173,9 @@
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-GETapi-v1-pdf-products--id--download">
                                 <a href="#endpoints-GETapi-v1-pdf-products--id--download">GET api/v1/pdf-products/{id}/download</a>
                             </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-GETapi-v1-pdf-products--id--attachments--index--download">
+                                <a href="#endpoints-GETapi-v1-pdf-products--id--attachments--index--download">GET api/v1/pdf-products/{id}/attachments/{index}/download</a>
+                            </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-GETapi-v1-my-purchases">
                                 <a href="#endpoints-GETapi-v1-my-purchases">GET api/v1/my-purchases</a>
                             </li>
@@ -1039,7 +1042,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --data "{
     \"code\": \"b\",
     \"amount\": 39,
-    \"type\": \"pdf\"
+    \"type\": \"subscription\"
 }"
 </code></pre></div>
 
@@ -1057,7 +1060,7 @@ const headers = {
 let body = {
     "code": "b",
     "amount": 39,
-    "type": "pdf"
+    "type": "subscription"
 };
 
 fetch(url, {
@@ -1173,10 +1176,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="type"                data-endpoint="POSTapi-v1-coupons-validate"
-               value="pdf"
+               value="subscription"
                data-component="body">
     <br>
-<p>Example: <code>pdf</code></p>
+<p>Example: <code>subscription</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>subscription</code></li> <li><code>pdf</code></li></ul>
         </div>
@@ -4348,9 +4351,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"plan_id\": 16,
-    \"payment_method\": \"wallet\",
+    \"payment_method\": \"nextpay\",
     \"coupon_code\": \"n\",
-    \"gateway\": \"nextpay\"
+    \"gateway\": \"architecto\"
 }"
 </code></pre></div>
 
@@ -4367,9 +4370,9 @@ const headers = {
 
 let body = {
     "plan_id": 16,
-    "payment_method": "wallet",
+    "payment_method": "nextpay",
     "coupon_code": "n",
-    "gateway": "nextpay"
+    "gateway": "architecto"
 };
 
 fetch(url, {
@@ -4473,10 +4476,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="payment_method"                data-endpoint="POSTapi-v1-subscription-upgrade"
-               value="wallet"
+               value="nextpay"
                data-component="body">
     <br>
-<p>Example: <code>wallet</code></p>
+<p>Example: <code>nextpay</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>wallet</code></li> <li><code>zarinpal</code></li> <li><code>nextpay</code></li> <li><code>idpay</code></li></ul>
         </div>
@@ -4499,12 +4502,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="gateway"                data-endpoint="POSTapi-v1-subscription-upgrade"
-               value="nextpay"
+               value="architecto"
                data-component="body">
     <br>
-<p>Example: <code>nextpay</code></p>
-Must be one of:
-<ul style="list-style-type: square;"><li><code>zarinpal</code></li> <li><code>nextpay</code></li> <li><code>idpay</code></li> <li><code>mellat</code></li> <li><code>shaparak</code></li></ul>
+<p>Example: <code>architecto</code></p>
         </div>
         </form>
 
@@ -4527,7 +4528,7 @@ Must be one of:
     --data "{
     \"payment_method\": \"zarinpal\",
     \"coupon_code\": \"b\",
-    \"gateway\": \"idpay\"
+    \"gateway\": \"architecto\"
 }"
 </code></pre></div>
 
@@ -4545,7 +4546,7 @@ const headers = {
 let body = {
     "payment_method": "zarinpal",
     "coupon_code": "b",
-    "gateway": "idpay"
+    "gateway": "architecto"
 };
 
 fetch(url, {
@@ -4676,12 +4677,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="gateway"                data-endpoint="POSTapi-v1-pdf-products--id--purchase"
-               value="idpay"
+               value="architecto"
                data-component="body">
     <br>
-<p>Example: <code>idpay</code></p>
-Must be one of:
-<ul style="list-style-type: square;"><li><code>zarinpal</code></li> <li><code>nextpay</code></li> <li><code>idpay</code></li> <li><code>mellat</code></li> <li><code>shaparak</code></li></ul>
+<p>Example: <code>architecto</code></p>
         </div>
         </form>
 
@@ -4806,6 +4805,142 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="url">
     <br>
 <p>The ID of the pdf product. Example: <code>564</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="endpoints-GETapi-v1-pdf-products--id--attachments--index--download">GET api/v1/pdf-products/{id}/attachments/{index}/download</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-GETapi-v1-pdf-products--id--attachments--index--download">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost/api/v1/pdf-products/564/attachments/564/download" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost/api/v1/pdf-products/564/attachments/564/download"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-pdf-products--id--attachments--index--download">
+    </span>
+<span id="execution-results-GETapi-v1-pdf-products--id--attachments--index--download" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-pdf-products--id--attachments--index--download"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-pdf-products--id--attachments--index--download"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-pdf-products--id--attachments--index--download" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-pdf-products--id--attachments--index--download">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-pdf-products--id--attachments--index--download" data-method="GET"
+      data-path="api/v1/pdf-products/{id}/attachments/{index}/download"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-pdf-products--id--attachments--index--download', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-v1-pdf-products--id--attachments--index--download"
+                    onclick="tryItOut('GETapi-v1-pdf-products--id--attachments--index--download');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-v1-pdf-products--id--attachments--index--download"
+                    onclick="cancelTryOut('GETapi-v1-pdf-products--id--attachments--index--download');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-v1-pdf-products--id--attachments--index--download"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/pdf-products/{id}/attachments/{index}/download</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-pdf-products--id--attachments--index--download"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-pdf-products--id--attachments--index--download"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="id"                data-endpoint="GETapi-v1-pdf-products--id--attachments--index--download"
+               value="564"
+               data-component="url">
+    <br>
+<p>The ID of the pdf product. Example: <code>564</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>index</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="index"                data-endpoint="GETapi-v1-pdf-products--id--attachments--index--download"
+               value="564"
+               data-component="url">
+    <br>
+<p>Example: <code>564</code></p>
             </div>
                     </form>
 
@@ -6249,20 +6384,20 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --form "description=Et animi quos velit et fugiat."\
     --form "provinces[]=d"\
     --form "city=l"\
-    --form "registration_deadline=2052-09-24"\
-    --form "exam_date=2052-09-24"\
+    --form "registration_deadline=2052-09-27"\
+    --form "exam_date=2052-09-27"\
     --form "registration_link=n"\
     --form "source_url=http://crooks.biz/et-fugiat-sunt-nihil-accusantium"\
     --form "attachment_titles[]=n"\
     --form "attachment_descriptions[]=i"\
     --form "remove_attachment_ids[]=16"\
-    --form "is_featured="\
-    --form "status=expired"\
+    --form "is_featured=1"\
+    --form "status=draft"\
     --form "auto_catalog="\
     --form "exam_ids[]=16"\
     --form "pdf_ids[]=16"\
-    --form "attachment=@C:\Users\Kardansoft\AppData\Local\Temp\phpED41.tmp" \
-    --form "attachments[]=@C:\Users\Kardansoft\AppData\Local\Temp\phpEFC2.tmp" </code></pre></div>
+    --form "attachment=@C:\Users\Kardansoft\AppData\Local\Temp\php9D23.tmp" \
+    --form "attachments[]=@C:\Users\Kardansoft\AppData\Local\Temp\php9D43.tmp" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -6282,15 +6417,15 @@ body.append('job_classification_id', '16');
 body.append('description', 'Et animi quos velit et fugiat.');
 body.append('provinces[]', 'd');
 body.append('city', 'l');
-body.append('registration_deadline', '2052-09-24');
-body.append('exam_date', '2052-09-24');
+body.append('registration_deadline', '2052-09-27');
+body.append('exam_date', '2052-09-27');
 body.append('registration_link', 'n');
 body.append('source_url', 'http://crooks.biz/et-fugiat-sunt-nihil-accusantium');
 body.append('attachment_titles[]', 'n');
 body.append('attachment_descriptions[]', 'i');
 body.append('remove_attachment_ids[]', '16');
-body.append('is_featured', '');
-body.append('status', 'expired');
+body.append('is_featured', '1');
+body.append('status', 'draft');
 body.append('auto_catalog', '');
 body.append('exam_ids[]', '16');
 body.append('pdf_ids[]', '16');
@@ -6460,10 +6595,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="registration_deadline"                data-endpoint="POSTapi-v1-job-posts-submit"
-               value="2052-09-24"
+               value="2052-09-27"
                data-component="body">
     <br>
-<p>فیلد value باید یک تاریخ معتبر باشد. فیلد value باید تاریخی بعد یا برابر با <code>today</code> باشد. Example: <code>2052-09-24</code></p>
+<p>فیلد value باید یک تاریخ معتبر باشد. فیلد value باید تاریخی بعد یا برابر با <code>today</code> باشد. Example: <code>2052-09-27</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>exam_date</code></b>&nbsp;&nbsp;
@@ -6472,10 +6607,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="exam_date"                data-endpoint="POSTapi-v1-job-posts-submit"
-               value="2052-09-24"
+               value="2052-09-27"
                data-component="body">
     <br>
-<p>فیلد value باید یک تاریخ معتبر باشد. فیلد value باید تاریخی بعد یا برابر با <code>registration_deadline</code> باشد. Example: <code>2052-09-24</code></p>
+<p>فیلد value باید یک تاریخ معتبر باشد. فیلد value باید تاریخی بعد یا برابر با <code>registration_deadline</code> باشد. Example: <code>2052-09-27</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>registration_link</code></b>&nbsp;&nbsp;
@@ -6511,7 +6646,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Must be a file. فیلد value نباید بزرگتر از 20480 کیلوبایت باشد. Example: <code>C:\Users\Kardansoft\AppData\Local\Temp\phpED41.tmp</code></p>
+<p>Must be a file. فیلد value نباید بزرگتر از 20480 کیلوبایت باشد. Example: <code>C:\Users\Kardansoft\AppData\Local\Temp\php9D23.tmp</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>attachments</code></b>&nbsp;&nbsp;
@@ -6589,7 +6724,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>status</code></b>&nbsp;&nbsp;
@@ -6598,10 +6733,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="POSTapi-v1-job-posts-submit"
-               value="expired"
+               value="draft"
                data-component="body">
     <br>
-<p>Example: <code>expired</code></p>
+<p>Example: <code>draft</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>pending</code></li> <li><code>approved</code></li> <li><code>rejected</code></li> <li><code>draft</code></li> <li><code>expired</code></li></ul>
         </div>
@@ -7245,7 +7380,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"subject\": \"b\",
     \"message\": \"n\",
     \"category\": \"bug\",
-    \"priority\": \"high\"
+    \"priority\": \"low\"
 }"
 </code></pre></div>
 
@@ -7264,7 +7399,7 @@ let body = {
     "subject": "b",
     "message": "n",
     "category": "bug",
-    "priority": "high"
+    "priority": "low"
 };
 
 fetch(url, {
@@ -7394,10 +7529,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="priority"                data-endpoint="POSTapi-v1-tickets"
-               value="high"
+               value="low"
                data-component="body">
     <br>
-<p>Example: <code>high</code></p>
+<p>Example: <code>low</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>low</code></li> <li><code>medium</code></li> <li><code>high</code></li></ul>
         </div>
@@ -9650,7 +9785,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --data "{
     \"title\": \"b\",
     \"template_id\": 2,
-    \"is_active\": false
+    \"is_active\": true
 }"
 </code></pre></div>
 
@@ -9668,7 +9803,7 @@ const headers = {
 let body = {
     "title": "b",
     "template_id": 2,
-    "is_active": false
+    "is_active": true
 };
 
 fetch(url, {
@@ -9826,7 +9961,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
         </form>
 
@@ -10241,7 +10376,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"answers\": [
-        \"d\"
+        \"b\"
     ]
 }"
 </code></pre></div>
@@ -10259,7 +10394,7 @@ const headers = {
 
 let body = {
     "answers": [
-        "d"
+        "b"
     ]
 };
 
@@ -10973,7 +11108,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"answers\": [
-        \"d\"
+        \"c\"
     ]
 }"
 </code></pre></div>
@@ -10991,7 +11126,7 @@ const headers = {
 
 let body = {
     "answers": [
-        "d"
+        "c"
     ]
 };
 
@@ -11545,7 +11680,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: multipart/form-data" \
     --header "Accept: application/json" \
     --form "exam_id=16"\
-    --form "file=@C:\Users\Kardansoft\AppData\Local\Temp\phpF801.tmp" </code></pre></div>
+    --form "file=@C:\Users\Kardansoft\AppData\Local\Temp\phpA023.tmp" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -11654,7 +11789,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Must be a file. فیلد value نباید بزرگتر از 20480 کیلوبایت باشد. Example: <code>C:\Users\Kardansoft\AppData\Local\Temp\phpF801.tmp</code></p>
+<p>Must be a file. فیلد value نباید بزرگتر از 20480 کیلوبایت باشد. Example: <code>C:\Users\Kardansoft\AppData\Local\Temp\phpA023.tmp</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>exam_id</code></b>&nbsp;&nbsp;
@@ -12312,14 +12447,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"question_text\": \"b\",
-    \"question_type\": \"formula\",
+    \"question_type\": \"multiple_choice\",
     \"option_a\": \"n\",
     \"option_b\": \"g\",
     \"option_c\": \"z\",
     \"option_d\": \"m\",
-    \"correct_answer\": \"a\",
+    \"correct_answer\": \"b\",
     \"explanation\": \"i\",
-    \"difficulty\": \"hard\",
+    \"difficulty\": \"medium\",
     \"subject\": \"architecto\"
 }"
 </code></pre></div>
@@ -12337,14 +12472,14 @@ const headers = {
 
 let body = {
     "question_text": "b",
-    "question_type": "formula",
+    "question_type": "multiple_choice",
     "option_a": "n",
     "option_b": "g",
     "option_c": "z",
     "option_d": "m",
-    "correct_answer": "a",
+    "correct_answer": "b",
     "explanation": "i",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "subject": "architecto"
 };
 
@@ -12478,10 +12613,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="question_type"                data-endpoint="PUTapi-v1-questions--id-"
-               value="formula"
+               value="multiple_choice"
                data-component="body">
     <br>
-<p>Example: <code>formula</code></p>
+<p>Example: <code>multiple_choice</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>multiple_choice</code></li> <li><code>formula</code></li></ul>
         </div>
@@ -12540,10 +12675,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="correct_answer"                data-endpoint="PUTapi-v1-questions--id-"
-               value="a"
+               value="b"
                data-component="body">
     <br>
-<p>Example: <code>a</code></p>
+<p>Example: <code>b</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>a</code></li> <li><code>b</code></li> <li><code>c</code></li> <li><code>d</code></li></ul>
         </div>
@@ -12566,10 +12701,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="difficulty"                data-endpoint="PUTapi-v1-questions--id-"
-               value="hard"
+               value="medium"
                data-component="body">
     <br>
-<p>Example: <code>hard</code></p>
+<p>Example: <code>medium</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>easy</code></li> <li><code>medium</code></li> <li><code>hard</code></li></ul>
         </div>
@@ -13109,17 +13244,20 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"duration_minutes\": 1,
     \"passing_score\": 42,
     \"total_marks\": 40,
-    \"has_negative_marking\": true,
+    \"has_negative_marking\": false,
     \"negative_mark_ratio\": 1,
-    \"is_free\": true,
+    \"is_free\": false,
     \"price\": 52,
     \"subscription_required\": \"free\",
-    \"status\": \"archived\",
-    \"is_random\": true,
+    \"status\": \"published\",
+    \"is_random\": false,
     \"random_config\": {
-        \"prefer_frequent\": false,
+        \"prefer_frequent\": true,
         \"subjects\": [
             5
+        ],
+        \"duplicate_fingerprints\": [
+            \"k\"
         ]
     }
 }"
@@ -13146,17 +13284,20 @@ let body = {
     "duration_minutes": 1,
     "passing_score": 42,
     "total_marks": 40,
-    "has_negative_marking": true,
+    "has_negative_marking": false,
     "negative_mark_ratio": 1,
-    "is_free": true,
+    "is_free": false,
     "price": 52,
     "subscription_required": "free",
-    "status": "archived",
-    "is_random": true,
+    "status": "published",
+    "is_random": false,
     "random_config": {
-        "prefer_frequent": false,
+        "prefer_frequent": true,
         "subjects": [
             5
+        ],
+        "duplicate_fingerprints": [
+            "k"
         ]
     }
 };
@@ -13416,7 +13557,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>true</code></p>
+<p>Example: <code>false</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>negative_mark_ratio</code></b>&nbsp;&nbsp;
@@ -13450,7 +13591,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>true</code></p>
+<p>Example: <code>false</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>price</code></b>&nbsp;&nbsp;
@@ -13485,10 +13626,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="POSTapi-v1-exams"
-               value="archived"
+               value="published"
                data-component="body">
     <br>
-<p>Example: <code>archived</code></p>
+<p>Example: <code>published</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>draft</code></li> <li><code>published</code></li> <li><code>archived</code></li></ul>
         </div>
@@ -13512,7 +13653,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>true</code></p>
+<p>Example: <code>false</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
         <details>
@@ -13544,7 +13685,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>subjects</code></b>&nbsp;&nbsp;
@@ -13559,6 +13700,20 @@ Must be one of:
                data-component="body">
     <br>
 <p>فیلد value نباید کوچکتر از 0 باشد. فیلد value نباید بزرگتر از 200 باشد.</p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>duplicate_fingerprints</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="random_config.duplicate_fingerprints[0]"                data-endpoint="POSTapi-v1-exams"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="random_config.duplicate_fingerprints[1]"                data-endpoint="POSTapi-v1-exams"
+               data-component="body">
+    <br>
+<p>فیلد value نباید بیشتر از 128 کاراکتر باشد.</p>
                     </div>
                                     </details>
         </div>
@@ -13591,17 +13746,20 @@ Must be one of:
     \"duration_minutes\": 1,
     \"passing_score\": 42,
     \"total_marks\": 40,
-    \"has_negative_marking\": false,
+    \"has_negative_marking\": true,
     \"negative_mark_ratio\": 1,
     \"is_free\": true,
     \"price\": 52,
     \"subscription_required\": \"free\",
-    \"status\": \"draft\",
-    \"is_random\": true,
+    \"status\": \"published\",
+    \"is_random\": false,
     \"random_config\": {
         \"prefer_frequent\": true,
         \"subjects\": [
             5
+        ],
+        \"duplicate_fingerprints\": [
+            \"k\"
         ]
     }
 }"
@@ -13628,17 +13786,20 @@ let body = {
     "duration_minutes": 1,
     "passing_score": 42,
     "total_marks": 40,
-    "has_negative_marking": false,
+    "has_negative_marking": true,
     "negative_mark_ratio": 1,
     "is_free": true,
     "price": 52,
     "subscription_required": "free",
-    "status": "draft",
-    "is_random": true,
+    "status": "published",
+    "is_random": false,
     "random_config": {
         "prefer_frequent": true,
         "subjects": [
             5
+        ],
+        "duplicate_fingerprints": [
+            "k"
         ]
     }
 };
@@ -13911,7 +14072,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>negative_mark_ratio</code></b>&nbsp;&nbsp;
@@ -13980,10 +14141,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="status"                data-endpoint="PUTapi-v1-exams--id-"
-               value="draft"
+               value="published"
                data-component="body">
     <br>
-<p>Example: <code>draft</code></p>
+<p>Example: <code>published</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>draft</code></li> <li><code>published</code></li> <li><code>archived</code></li></ul>
         </div>
@@ -14007,7 +14168,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>true</code></p>
+<p>Example: <code>false</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
         <details>
@@ -14054,6 +14215,20 @@ Must be one of:
                data-component="body">
     <br>
 <p>فیلد value نباید کوچکتر از 0 باشد. فیلد value نباید بزرگتر از 200 باشد.</p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>duplicate_fingerprints</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="random_config.duplicate_fingerprints[0]"                data-endpoint="PUTapi-v1-exams--id-"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="random_config.duplicate_fingerprints[1]"                data-endpoint="PUTapi-v1-exams--id-"
+               data-component="body">
+    <br>
+<p>فیلد value نباید بیشتر از 128 کاراکتر باشد.</p>
                     </div>
                                     </details>
         </div>
@@ -16422,7 +16597,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Accept: application/json" \
     --data "{
     \"type\": \"bonus\",
-    \"category\": \"withdrawal\",
+    \"category\": \"deposit\",
     \"page\": 16,
     \"per_page\": 22
 }"
@@ -16442,7 +16617,7 @@ const headers = {
 
 let body = {
     "type": "bonus",
-    "category": "withdrawal",
+    "category": "deposit",
     "page": 16,
     "per_page": 22
 };
@@ -16575,10 +16750,10 @@ Must be one of:
  &nbsp;
                 <input type="text" style="display: none"
                               name="category"                data-endpoint="GETapi-v1-wallet"
-               value="withdrawal"
+               value="deposit"
                data-component="body">
     <br>
-<p>Example: <code>withdrawal</code></p>
+<p>Example: <code>deposit</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>deposit</code></li> <li><code>purchase</code></li> <li><code>withdrawal</code></li> <li><code>refund</code></li> <li><code>bonus</code></li> <li><code>adjustment</code></li></ul>
         </div>

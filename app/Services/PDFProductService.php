@@ -18,6 +18,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class PDFProductService
 {
@@ -71,7 +72,11 @@ class PDFProductService
             return $this->purchaseWithWallet($user, $pdf, $amount, $original, $discount, $coupon);
         }
 
-        $gateway = $this->paymentService->resolveGatewayName($gateway ?: $method);
+        try {
+            $gateway = $this->paymentService->resolveGatewayName($gateway ?: $method);
+        } catch (RuntimeException $e) {
+            return ['success' => false, 'message' => $e->getMessage(), 'error' => 'gateway_unavailable'];
+        }
 
         return $this->purchaseWithGateway($user, $pdf, $amount, $original, $discount, $coupon, $gateway);
     }
@@ -198,19 +203,9 @@ class PDFProductService
             ['order_id' => (string) $transaction->id, 'idempotency_key' => $idempotencyKey]
         );
 
-        // Retry once with the same idempotency key if the gateway call fails.
+        // No automatic retry (avoids duplicate bank authorities after uncertain timeouts).
         if ($result['error'] || ! $result['authority']) {
-            $result = $this->paymentService->initiate(
-                $gateway,
-                $amount,
-                'خرید PDF '.$pdf->title.' — JobAzmoon',
-                $callback,
-                ['order_id' => (string) $transaction->id, 'idempotency_key' => $idempotencyKey]
-            );
-        }
-
-        if ($result['error'] || ! $result['authority']) {
-            $transaction->update(['status' => Transaction::STATUS_FAILED]);
+            $this->paymentService->markInitiateFailure($transaction, $result['error'] ?? null);
 
             return [
                 'success' => false,

@@ -382,15 +382,31 @@ final class ExamFullImportService
                 ->value('id');
         }
 
-        $found = JobClassification::query()
-            ->whereNull('parent_id')
-            ->where(function ($q) use ($name) {
-                $q->where('name', $name)
-                    ->orWhere('slug', Str::slug($name));
-            })
-            ->first();
+        // job_classifications has no `slug` column — match by display name only.
+        $normalized = preg_replace('/\s+/u', ' ', trim($name)) ?? trim($name);
+        $normalizedLower = mb_strtolower($normalized);
 
-        return $found?->id;
+        $rows = JobClassification::query()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get(['id', 'name', 'parent_id']);
+
+        $exact = $rows->first(function ($row) use ($normalized): bool {
+            $rowName = preg_replace('/\s+/u', ' ', trim((string) $row->name)) ?? trim((string) $row->name);
+
+            return $rowName === $normalized;
+        });
+        if ($exact) {
+            return (int) $exact->id;
+        }
+
+        $ci = $rows->first(function ($row) use ($normalizedLower): bool {
+            $rowName = preg_replace('/\s+/u', ' ', trim((string) $row->name)) ?? trim((string) $row->name);
+
+            return mb_strtolower($rowName) === $normalizedLower;
+        });
+
+        return $ci ? (int) $ci->id : null;
     }
 
     protected function parseBool(mixed $value, bool $default): bool

@@ -91,6 +91,16 @@ const fieldMap = {
     { key: 'support_email', label: 'ایمیل پشتیبانی', type: 'email', ltr: true },
     { key: 'support_phone', label: 'شماره تماس', type: 'text', ltr: true },
     { key: 'onboarding_enabled', label: 'نمایش تور آشنایی', type: 'toggle' },
+    {
+      key: 'blog_comments_require_approval',
+      label: 'تایید نظرات وبلاگ قبل از نمایش',
+      type: 'toggle',
+    },
+    {
+      key: 'job_comments_require_approval',
+      label: 'تایید نظرات آگهی شغلی قبل از نمایش',
+      type: 'toggle',
+    },
   ],
   mail: [
     { key: 'smtp_host', label: 'SMTP Host', type: 'text', ltr: true },

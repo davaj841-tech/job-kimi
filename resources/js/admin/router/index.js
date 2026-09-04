@@ -52,6 +52,12 @@ const children = [
     meta: { title: 'آگهی‌ها', auth: true, permission: 'job_posts' },
   },
   {
+    path: 'job-post-comments',
+    name: 'admin-job-post-comments',
+    component: () => import('../views/JobPostCommentsView.vue'),
+    meta: { title: 'نظرات آگهی‌ها', auth: true, permission: 'job_posts' },
+  },
+  {
     path: 'job-sources',
     name: 'admin-job-sources',
     component: () => import('../views/JobSourcesView.vue'),
@@ -116,6 +122,12 @@ const children = [
     name: 'admin-wallets',
     component: () => import('../views/WalletsView.vue'),
     meta: { title: 'کیف پول‌ها', auth: true, permission: 'wallets' },
+  },
+  {
+    path: 'payment-gateways',
+    name: 'admin-payment-gateways',
+    component: () => import('../views/PaymentGatewaysView.vue'),
+    meta: { title: 'درگاه‌های پرداخت', auth: true, adminOnly: true },
   },
   {
     path: 'ai',

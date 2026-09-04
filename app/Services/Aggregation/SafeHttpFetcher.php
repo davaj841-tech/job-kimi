@@ -3,6 +3,7 @@
 namespace App\Services\Aggregation;
 
 use App\Models\JobSource;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -16,32 +17,72 @@ class SafeHttpFetcher
 {
     public function __construct(
         protected JobSourceManager $sources,
-        protected int $timeoutSeconds = 30,
+        protected int $timeoutSeconds = 45,
         protected int $maxBytes = 2_000_000,
         protected int $maxRedirects = 3,
+        protected int $connectTimeoutSeconds = 20,
+        protected int $retries = 2,
+        protected int $retrySleepMs = 1500,
     ) {}
 
     public function get(string $url, ?JobSource $source = null): Response
     {
         $current = $url;
         $response = null;
+        $attempts = max(1, $this->retries + 1);
+        $lastException = null;
+
+        for ($attempt = 1; $attempt <= $attempts; $attempt++) {
+            try {
+                $response = $this->getOnce($current, $source);
+
+                return $response;
+            } catch (ConnectionException $e) {
+                $lastException = $e;
+                if ($attempt >= $attempts) {
+                    break;
+                }
+                usleep(max(0, $this->retrySleepMs) * 1000);
+            } catch (RuntimeException $e) {
+                // Only retry soft network-ish runtime failures that wrap timeouts.
+                if (! $this->isTimeoutMessage($e->getMessage()) || $attempt >= $attempts) {
+                    throw $e;
+                }
+                $lastException = $e;
+                usleep(max(0, $this->retrySleepMs) * 1000);
+            }
+        }
+
+        $detail = $lastException?->getMessage() ?? 'unknown';
+        throw new RuntimeException($this->humanizeTimeout($url, $detail), 0, $lastException);
+    }
+
+    protected function getOnce(string $url, ?JobSource $source = null): Response
+    {
+        $current = $url;
+        $response = null;
+        $connectTimeout = max(3, min($this->connectTimeoutSeconds, $this->timeoutSeconds));
 
         for ($hop = 0; $hop <= $this->maxRedirects; $hop++) {
             $this->assertUrlAllowed($current, $source);
-            $this->assertResolvedIpSafe($current);
+            $this->assertResolvedIpSafe($current, $source);
 
-            $response = Http::timeout($this->timeoutSeconds)
-                ->connectTimeout(min(15, $this->timeoutSeconds))
-                ->withOptions([
-                    'allow_redirects' => false,
-                    'verify' => true,
-                ])
-                ->withHeaders([
-                    'User-Agent' => 'Mozilla/5.0 (compatible; JobAzmoonAggregator/1.0; +https://jobazmoon.local)',
-                    'Accept' => 'application/json, application/rss+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.9,*/*;q=0.8',
-                    'Accept-Language' => 'fa-IR,fa;q=0.9,en;q=0.8',
-                ])
-                ->get($current);
+            try {
+                $response = Http::timeout($this->timeoutSeconds)
+                    ->connectTimeout($connectTimeout)
+                    ->withOptions([
+                        'allow_redirects' => false,
+                        'verify' => true,
+                    ])
+                    ->withHeaders([
+                        'User-Agent' => 'Mozilla/5.0 (compatible; JobAzmoonAggregator/1.0; +https://jobazmoon.ir)',
+                        'Accept' => 'application/json, application/rss+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.9,*/*;q=0.8',
+                        'Accept-Language' => 'fa-IR,fa;q=0.9,en;q=0.8',
+                    ])
+                    ->get($current);
+            } catch (ConnectionException $e) {
+                throw new RuntimeException($this->humanizeTimeout($current, $e->getMessage()), 0, $e);
+            }
 
             $contentLength = $response->header('Content-Length');
             if (is_numeric($contentLength) && (int) $contentLength > $this->maxBytes) {
@@ -74,6 +115,22 @@ class SafeHttpFetcher
         }
 
         return $response;
+    }
+
+    protected function isTimeoutMessage(string $message): bool
+    {
+        return (bool) preg_match('/timed?\s*out|cURL error 28|Connection timed out|Operation timed out/i', $message);
+    }
+
+    protected function humanizeTimeout(string $url, string $detail): string
+    {
+        if (! $this->isTimeoutMessage($detail)) {
+            return $detail;
+        }
+
+        return 'اتصال به منبع در مهلت مقرر برقرار نشد (timeout). '
+            .'سایت مبدأ ممکن است از شبکهٔ سرور در دسترس نباشد یا بسیار کند باشد. '
+            .'URL: '.$url;
     }
 
     public function assertUrlAllowed(string $url, ?JobSource $source = null): void
@@ -110,17 +167,24 @@ class SafeHttpFetcher
     }
 
     /**
-     * Resolve hostname and reject private/reserved destination IPs.
+     * Resolve hostname and reject unsafe destination IPs.
+     *
+     * For administrator-whitelisted JobSource hostnames, RFC1918 (10/8, 172.16/12,
+     * 192.168/16) is allowed: many Iranian gov/CDN hosts resolve to private ranges
+     * via split-horizon DNS and are reachable from Iranian hosting. Loopback,
+     * link-local, and cloud metadata remain blocked always.
      */
-    public function assertResolvedIpSafe(string $url): void
+    public function assertResolvedIpSafe(string $url, ?JobSource $source = null): void
     {
         $host = Str::lower((string) (parse_url($url, PHP_URL_HOST) ?? ''));
         if ($host === '') {
             throw new RuntimeException('URL host is required.');
         }
 
+        $allowPrivateOrgRanges = $source !== null && ! filter_var($host, FILTER_VALIDATE_IP);
+
         if (filter_var($host, FILTER_VALIDATE_IP)) {
-            if ($this->isBlockedIp($host)) {
+            if ($this->isBlockedIp($host, allowPrivateOrgRanges: false)) {
                 throw new RuntimeException("Blocked IP: {$host}");
             }
 
@@ -146,7 +210,7 @@ class SafeHttpFetcher
         }
 
         foreach (array_unique($ips) as $ip) {
-            if ($this->isBlockedIp((string) $ip)) {
+            if ($this->isBlockedIp((string) $ip, allowPrivateOrgRanges: $allowPrivateOrgRanges)) {
                 throw new RuntimeException("Host [{$host}] resolved to blocked IP [{$ip}].");
             }
         }
@@ -178,7 +242,10 @@ class SafeHttpFetcher
             || Str::endsWith($host, '.metadata.google.internal');
     }
 
-    public function isBlockedIp(string $ip): bool
+    /**
+     * @param  bool  $allowPrivateOrgRanges  When true, RFC1918 IPv4 is permitted (whitelisted host DNS).
+     */
+    public function isBlockedIp(string $ip, bool $allowPrivateOrgRanges = false): bool
     {
         $ip = trim($ip, '[]');
 
@@ -196,7 +263,7 @@ class SafeHttpFetcher
 
             // IPv4-mapped / IPv4-compatible forms (e.g. ::ffff:127.0.0.1).
             if (preg_match('/(?:^::ffff:|^::)(\d{1,3}(?:\.\d{1,3}){3})$/i', $normalized, $m)) {
-                return $this->isBlockedIp($m[1]);
+                return $this->isBlockedIp($m[1], allowPrivateOrgRanges: $allowPrivateOrgRanges);
             }
 
             // ::1, unique-local (fc00::/7), link-local (fe80::/10).
@@ -208,7 +275,52 @@ class SafeHttpFetcher
             }
         }
 
+        // Loopback always blocked (even when RFC1918 is permitted for org CDNs).
+        if ($this->isLoopbackIp($ip)) {
+            return true;
+        }
+
+        if ($allowPrivateOrgRanges && $this->isRfc1918Ip($ip)) {
+            return false;
+        }
+
         return ! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+    }
+
+    protected function isLoopbackIp(string $ip): bool
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return str_starts_with($ip, '127.');
+        }
+
+        return Str::lower($ip) === '::1';
+    }
+
+    protected function isRfc1918Ip(string $ip): bool
+    {
+        if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return false;
+        }
+
+        $long = ip2long($ip);
+        if ($long === false) {
+            return false;
+        }
+
+        // 10.0.0.0/8
+        if (($long & 0xFF000000) === 0x0A000000) {
+            return true;
+        }
+        // 172.16.0.0/12
+        if (($long & 0xFFF00000) === 0xAC100000) {
+            return true;
+        }
+        // 192.168.0.0/16
+        if (($long & 0xFFFF0000) === 0xC0A80000) {
+            return true;
+        }
+
+        return false;
     }
 
     protected function absolutizeUrl(string $location, string $base): string

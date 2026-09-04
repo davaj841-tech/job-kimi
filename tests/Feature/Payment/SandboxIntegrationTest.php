@@ -208,12 +208,12 @@ final class SandboxIntegrationTest extends TestCase
             ->assertJsonPath('data.already_processed', true);
     }
 
-    public function test_gateway_retry_does_not_create_duplicate_transaction(): void
+    public function test_uncertain_gateway_failure_does_not_auto_retry(): void
     {
         Http::fake([
             'sandbox.zarinpal.com/pg/v4/payment/request.json' => Http::sequence()
                 ->push(['errors' => ['message' => 'timeout']], 500)
-                ->push(['data' => ['code' => 100, 'authority' => 'RETRY-AUTH']], 200),
+                ->push(['data' => ['code' => 100, 'authority' => 'SHOULD-NOT-BE-USED']], 200),
         ]);
 
         $user = User::factory()->create(['status' => 'active']);
@@ -224,9 +224,13 @@ final class SandboxIntegrationTest extends TestCase
             'gateway' => 'zarinpal',
         ]);
 
-        $response->assertOk();
+        $response->assertStatus(400);
         $this->assertSame(1, Transaction::query()->where('user_id', $user->id)->count());
-        $this->assertSame('RETRY-AUTH', Transaction::query()->where('user_id', $user->id)->value('reference_id'));
+        $tx = Transaction::query()->where('user_id', $user->id)->first();
+        $this->assertNull($tx?->reference_id);
+        // Uncertain network/timeout → remain pending for TTL/reconciliation (no second request).
+        $this->assertSame(Transaction::STATUS_PENDING, $tx?->status);
+        Http::assertSentCount(1);
     }
 
     public function test_invalid_amounts_rejected(): void

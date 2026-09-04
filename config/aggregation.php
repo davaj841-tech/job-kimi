@@ -33,9 +33,12 @@ return [
     |--------------------------------------------------------------------------
     */
     'http' => [
-        'timeout_seconds' => (int) env('AGGREGATION_HTTP_TIMEOUT', 30),
+        'timeout_seconds' => (int) env('AGGREGATION_HTTP_TIMEOUT', 45),
+        'connect_timeout_seconds' => (int) env('AGGREGATION_HTTP_CONNECT_TIMEOUT', 20),
+        'retries' => (int) env('AGGREGATION_HTTP_RETRIES', 2),
+        'retry_sleep_ms' => (int) env('AGGREGATION_HTTP_RETRY_SLEEP_MS', 1500),
         'max_bytes' => (int) env('AGGREGATION_HTTP_MAX_BYTES', 2_000_000),
-        'max_redirects' => (int) env('AGGREGATION_HTTP_MAX_REDIRECTS', 3),
+        'max_redirects' => (int) env('AGGREGATION_HTTP_MAX_REDIRECTS', 5),
         'endpoint_delay_ms' => (int) env('AGGREGATION_HTTP_ENDPOINT_DELAY_MS', 1000),
     ],
 
@@ -195,7 +198,7 @@ return [
             'crawl_frequency' => 'daily',
             'schedule_mode' => 'global',
             'notes' => 'Official administrative & employment organization.',
-            'quality_notes' => 'Phase 8 (2026-08-08): connection timeout from aggregator environment.',
+            'quality_notes' => 'سایت aro.gov.ir از بسیاری شبکه‌ها (از جمله محیط توسعه) با Connection timeout پاسخ نمی‌دهد. کیفیت: temporarily_unavailable. روی هاست ایران با curl -I -m 30 تست کنید؛ در صورت شکست، ورود دستی آگهی یا غیرفعال کردن کرال خودکار.',
             'endpoints' => [
                 [
                     'url' => 'https://www.aro.gov.ir/',

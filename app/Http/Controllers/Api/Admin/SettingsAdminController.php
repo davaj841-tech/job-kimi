@@ -31,6 +31,7 @@ class SettingsAdminController extends BaseController
             'onboarding_enabled',
             'popular_searches',
             'blog_comments_require_approval',
+            'job_comments_require_approval',
         ],
         'mail' => [
             'smtp_host',

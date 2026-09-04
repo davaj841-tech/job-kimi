@@ -90,6 +90,33 @@ return [
         'password' => env('SHAPARAK_PASSWORD'),
     ],
 
+    'parsian' => [
+        'pin' => env('PARSIAN_PIN'),
+        'login_account' => env('PARSIAN_LOGIN_ACCOUNT'),
+    ],
+
+    'saman' => [
+        'terminal_id' => env('SAMAN_TERMINAL_ID'),
+    ],
+
+    'pasargad' => [
+        'merchant_code' => env('PASARGAD_MERCHANT_CODE'),
+        'terminal_code' => env('PASARGAD_TERMINAL_CODE'),
+        'private_key' => env('PASARGAD_PRIVATE_KEY'),
+    ],
+
+    'sadad' => [
+        'merchant_id' => env('SADAD_MERCHANT_ID'),
+        'terminal_id' => env('SADAD_TERMINAL_ID'),
+        'terminal_key' => env('SADAD_TERMINAL_KEY'),
+    ],
+
+    'ap' => [
+        'username' => env('AP_USERNAME'),
+        'password' => env('AP_PASSWORD'),
+        'merchant_config_id' => env('AP_MERCHANT_CONFIG_ID'),
+    ],
+
     'turnstile' => [
         // Public site key — overridable via Admin Settings (turnstile_site_key).
         'site_key' => env('TURNSTILE_SITE_KEY', '0x4AAAAAAEiAUvpbmcvevZFU'),

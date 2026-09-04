@@ -5,7 +5,7 @@ namespace App\Services\Payment;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class NextPayGateway implements PaymentGatewayInterface
+class NextPayGateway extends AbstractPaymentGateway
 {
     public function getName(): string
     {
@@ -17,9 +17,14 @@ class NextPayGateway implements PaymentGatewayInterface
         return 'نکست‌پی';
     }
 
+    public function requiredCredentialKeys(): array
+    {
+        return ['api_key'];
+    }
+
     protected function apiKey(): string
     {
-        return (string) config('services.nextpay.api_key', '');
+        return $this->credential('api_key');
     }
 
     /** NextPay expects amount in Tomans */
@@ -32,7 +37,7 @@ class NextPayGateway implements PaymentGatewayInterface
     {
         $apiKey = $this->apiKey();
         if (blank($apiKey)) {
-            return ['authority' => null, 'payment_url' => null, 'error' => 'کلید API نکست‌پی تنظیم نشده است.'];
+            return ['authority' => null, 'payment_url' => null, 'error' => 'اطلاعات اتصال این درگاه کامل نشده است.'];
         }
 
         $orderId = (string) ($meta['order_id'] ?? uniqid('np_', true));
@@ -75,7 +80,7 @@ class NextPayGateway implements PaymentGatewayInterface
     {
         $apiKey = $this->apiKey();
         if (blank($apiKey)) {
-            return ['success' => false, 'ref_id' => null, 'error' => 'کلید API نکست‌پی تنظیم نشده است.'];
+            return ['success' => false, 'ref_id' => null, 'error' => 'اطلاعات اتصال این درگاه کامل نشده است.'];
         }
 
         try {

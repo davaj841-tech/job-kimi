@@ -30,13 +30,10 @@
           </option>
         </select>
         <input v-model="store.filters.city" class="field" placeholder="شهر" />
-        <div class="lg:col-span-2">
-          <ClassificationSelect
-            v-model="store.filters.job_classification_ids"
-            :items="store.classifications"
-            label="طبقه‌بندی‌ها"
-          />
-        </div>
+        <ClassificationSelect
+          v-model="store.filters.job_classification_ids"
+          :items="store.classifications"
+        />
         <JalaliDatepicker
           v-model="store.filters.deadline_from"
           label="مهلت از"

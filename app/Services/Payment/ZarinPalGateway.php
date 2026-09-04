@@ -2,14 +2,13 @@
 
 namespace App\Services\Payment;
 
-use App\Models\PaymentGateway;
 use App\Models\Setting;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class ZarinPalGateway implements PaymentGatewayInterface
+class ZarinPalGateway extends AbstractPaymentGateway
 {
     public function getName(): string
     {
@@ -21,11 +20,21 @@ class ZarinPalGateway implements PaymentGatewayInterface
         return 'زرین‌پال';
     }
 
+    public function requiredCredentialKeys(): array
+    {
+        return ['merchant_id'];
+    }
+
     protected function sandbox(): bool
     {
         $fromSetting = Setting::getFilled('zarinpal_sandbox', null);
         if ($fromSetting !== null && $fromSetting !== '') {
             return filter_var($fromSetting, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $fromRow = $this->credential('sandbox');
+        if ($fromRow !== '') {
+            return filter_var($fromRow, FILTER_VALIDATE_BOOLEAN);
         }
 
         return (bool) config('services.zarinpal.sandbox', false);
@@ -45,23 +54,9 @@ class ZarinPalGateway implements PaymentGatewayInterface
         return 'https://payment.zarinpal.com';
     }
 
-    protected function startPayBase(): string
-    {
-        return $this->apiBase();
-    }
-
     protected function merchantId(): string
     {
-        $fromSetting = Setting::getFilled('zarinpal_merchant_id', config('services.zarinpal.merchant_id'));
-        if (filled($fromSetting)) {
-            return (string) $fromSetting;
-        }
-
-        $fromRow = PaymentGateway::query()
-            ->where('name', 'zarinpal')
-            ->value('merchant_id');
-
-        return filled($fromRow) ? (string) $fromRow : '';
+        return $this->credential('merchant_id');
     }
 
     protected function timeout(): int
@@ -103,7 +98,7 @@ class ZarinPalGateway implements PaymentGatewayInterface
         $merchantId = $this->merchantId();
 
         if (blank($merchantId)) {
-            return ['authority' => null, 'payment_url' => null, 'error' => 'merchant_id زرین‌پال تنظیم نشده است.'];
+            return ['authority' => null, 'payment_url' => null, 'error' => 'اطلاعات اتصال این درگاه کامل نشده است.'];
         }
 
         $payload = [
@@ -148,7 +143,7 @@ class ZarinPalGateway implements PaymentGatewayInterface
 
             return [
                 'authority' => $authority,
-                'payment_url' => $this->startPayBase().'/pg/StartPay/'.$authority,
+                'payment_url' => $this->apiBase().'/pg/StartPay/'.$authority,
                 'error' => null,
             ];
         } catch (ConnectionException $e) {
@@ -177,7 +172,7 @@ class ZarinPalGateway implements PaymentGatewayInterface
         $merchantId = $this->merchantId();
 
         if (blank($merchantId)) {
-            return ['success' => false, 'ref_id' => null, 'error' => 'merchant_id زرین‌پال تنظیم نشده است.'];
+            return ['success' => false, 'ref_id' => null, 'error' => 'اطلاعات اتصال این درگاه کامل نشده است.'];
         }
 
         $started = microtime(true);

@@ -12,10 +12,13 @@ use App\Repositories\TransactionRepository;
 use App\Services\AuditLogService;
 use App\Services\IdempotencyService;
 use App\Services\Payment\GatewayCallbackService;
+use App\Services\Payment\PaymentGatewayManager;
 use App\Services\PaymentService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use RuntimeException;
 
 class WalletController extends BaseController
 {
@@ -99,14 +102,18 @@ class WalletController extends BaseController
 
         $data = $request->validate([
             'amount' => ['required', 'integer', 'min:'.$minCharge, 'max:'.$maxCharge],
-            'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay,mellat,shaparak'],
+            'gateway' => ['nullable', 'string', Rule::in(app(PaymentGatewayManager::class)->registeredCodes())],
         ], [
             'amount.min' => 'مبلغ شارژ کمتر از حد مجاز است.',
             'amount.max' => 'مبلغ شارژ بیشتر از حد مجاز است.',
         ]);
 
         $amount = (int) $data['amount'];
-        $gateway = $this->paymentService->resolveGatewayName($data['gateway'] ?? null);
+        try {
+            $gateway = $this->paymentService->resolveGatewayName($data['gateway'] ?? null);
+        } catch (RuntimeException $e) {
+            return $this->errorResponse($e->getMessage(), 422);
+        }
         $user = $request->user();
 
         if ($user->isWalletFrozen()) {
@@ -137,19 +144,10 @@ class WalletController extends BaseController
             ['order_id' => (string) $transaction->id, 'idempotency_key' => $idempotencyKey]
         );
 
-        // Retry once with the same idempotency key if the gateway call fails.
+        // No automatic retry: a second request can create a duplicate bank payment
+        // when the first attempt timed out after the gateway already issued an authority.
         if ($result['error'] || ! $result['authority']) {
-            $result = $this->initiatePayment->handle(
-                $gateway,
-                $amount,
-                'شارژ کیف پول JobAzmoon',
-                $callback,
-                ['order_id' => (string) $transaction->id, 'idempotency_key' => $idempotencyKey]
-            );
-        }
-
-        if ($result['error'] || ! $result['authority']) {
-            $transaction->update(['status' => Transaction::STATUS_FAILED]);
+            $this->paymentService->markInitiateFailure($transaction, $result['error'] ?? null);
 
             return $this->errorResponse($result['error'] ?? 'خطا در اتصال به درگاه پرداخت.', 400);
         }

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ExamController;
 use App\Http\Controllers\Api\FeatureController;
 use App\Http\Controllers\Api\GeneratedContentPublicController;
 use App\Http\Controllers\Api\HomeFeedController;
+use App\Http\Controllers\Api\JobPostCommentController;
 use App\Http\Controllers\Api\JobPostController;
 use App\Http\Controllers\Api\LeaderboardController;
 use App\Http\Controllers\Api\NewsletterController;
@@ -56,6 +57,7 @@ Route::get('/exam-subjects', function () {
 Route::get('/job-posts', [JobPostController::class, 'index'])->middleware('cache.response:120');
 Route::get('/job-posts/filters', [JobPostController::class, 'filters']);
 Route::get('/job-posts/{id}', [JobPostController::class, 'show'])->whereNumber('id');
+Route::get('/job-posts/{id}/comments', [JobPostCommentController::class, 'index'])->whereNumber('id');
 
 Route::get('/blog-posts', [BlogPostController::class, 'index']);
 Route::get('/blog-posts/{slug}', [BlogPostController::class, 'show']);

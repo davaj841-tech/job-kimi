@@ -8,12 +8,14 @@ use App\Models\PdfPurchase;
 use App\Models\Transaction;
 use App\Repositories\PDFProductRepository;
 use App\Services\Payment\GatewayCallbackService;
+use App\Services\Payment\PaymentGatewayManager;
 use App\Services\PaymentService;
 use App\Services\PDFProductService;
 use App\Services\Seo\SeoManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PDFProductController extends BaseController
@@ -96,7 +98,7 @@ class PDFProductController extends BaseController
         $data = $request->validate([
             'payment_method' => ['required', 'in:wallet,zarinpal,nextpay,idpay'],
             'coupon_code' => ['nullable', 'string', 'max:50'],
-            'gateway' => ['nullable', 'string', 'in:zarinpal,nextpay,idpay,mellat,shaparak'],
+            'gateway' => ['nullable', 'string', Rule::in(app(PaymentGatewayManager::class)->registeredCodes())],
         ]);
 
         $pdf = $this->pdfProductRepository->findActive($id);

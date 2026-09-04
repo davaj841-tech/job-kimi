@@ -252,6 +252,33 @@ final class InstallEngineAuditTest extends TestCase
         }
     }
 
+    public function test_validate_laravel_package_rejects_empty_manifest_json(): void
+    {
+        $root = $this->minimalLaravelTree(withManifest: true);
+        file_put_contents(
+            $root.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'build'.DIRECTORY_SEPARATOR.'manifest.json',
+            '{}'
+        );
+
+        $method = new ReflectionMethod(InstallEngine::class, 'validateLaravelPackage');
+        $method->setAccessible(true);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessageMatches('/manifest\.json/u');
+        $method->invoke($this->engine(), $root);
+    }
+
+    public function test_assert_valid_frontend_manifest_accepts_vite_shape(): void
+    {
+        $path = $this->tmpRoot.DIRECTORY_SEPARATOR.'manifest.json';
+        file_put_contents($path, json_encode([
+            'resources/js/app.ts' => ['file' => 'assets/app-abc.js', 'isEntry' => true],
+        ]));
+
+        $this->engine()->assertValidFrontendManifest($path);
+        $this->assertTrue(true);
+    }
+
     public function test_validate_database_input_invalid(): void
     {
         $engine = $this->engine();
@@ -730,6 +757,8 @@ final class InstallEngineAuditTest extends TestCase
             mkdir($root.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $dir), 0755, true);
         }
         file_put_contents($root.DIRECTORY_SEPARATOR.'artisan', "#!/usr/bin/env php\n");
+        file_put_contents($root.DIRECTORY_SEPARATOR.'composer.json', "{}\n");
+        file_put_contents($root.DIRECTORY_SEPARATOR.'composer.lock', "{}\n");
         file_put_contents($root.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php', "<?php\nreturn null;\n");
         file_put_contents($root.DIRECTORY_SEPARATOR.'routes'.DIRECTORY_SEPARATOR.'web.php', "<?php\n");
         file_put_contents($root.DIRECTORY_SEPARATOR.'routes'.DIRECTORY_SEPARATOR.'install.php', "<?php\n");
@@ -739,7 +768,12 @@ final class InstallEngineAuditTest extends TestCase
         if ($withManifest) {
             file_put_contents(
                 $root.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'build'.DIRECTORY_SEPARATOR.'manifest.json',
-                '{}'
+                json_encode([
+                    'resources/js/app.ts' => [
+                        'file' => 'assets/app.js',
+                        'isEntry' => true,
+                    ],
+                ], JSON_UNESCAPED_SLASHES)
             );
         }
 

@@ -18,9 +18,11 @@ use App\Http\Controllers\Api\Admin\ExamSubjectAdminController;
 use App\Http\Controllers\Api\Admin\GeneratedContentAdminController;
 use App\Http\Controllers\Api\Admin\JobClassificationAdminController;
 use App\Http\Controllers\Api\Admin\JobPostAdminController;
+use App\Http\Controllers\Api\Admin\JobPostCommentAdminController;
 use App\Http\Controllers\Api\Admin\JobSourceAdminController;
 use App\Http\Controllers\Api\Admin\PageAdminController;
 use App\Http\Controllers\Api\Admin\PDFProductAdminController;
+use App\Http\Controllers\Api\Admin\PaymentGatewayAdminController;
 use App\Http\Controllers\Api\Admin\PerformanceAdminController;
 use App\Http\Controllers\Api\Admin\SettingsAdminController;
 use App\Http\Controllers\Api\Admin\SiteErrorAdminController;
@@ -88,6 +90,11 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'role:su
     Route::post('/job-posts/{id}/approve', [JobPostAdminController::class, 'approve'])->whereNumber('id');
     Route::post('/job-posts/{id}/reject', [JobPostAdminController::class, 'reject'])->whereNumber('id');
     Route::apiResource('/job-posts', JobPostAdminController::class)->parameters(['job-posts' => 'id']);
+
+    Route::get('/job-post-comments', [JobPostCommentAdminController::class, 'index']);
+    Route::post('/job-post-comments/{id}/approve', [JobPostCommentAdminController::class, 'approve'])->whereNumber('id');
+    Route::post('/job-post-comments/{id}/reject', [JobPostCommentAdminController::class, 'reject'])->whereNumber('id');
+    Route::delete('/job-post-comments/{id}', [JobPostCommentAdminController::class, 'destroy'])->whereNumber('id');
 
     Route::get('/job-sources/options', [JobSourceAdminController::class, 'options']);
     Route::get('/job-sources/crawl-overview', [JobSourceAdminController::class, 'crawlOverview']);
@@ -181,6 +188,11 @@ Route::middleware(['auth:sanctum', 'user.active', 'subscription.check', 'role:su
     Route::post('/wallets/{id}/freeze', [WalletAdminController::class, 'freeze'])->whereNumber('id');
     Route::post('/wallets/{id}/unfreeze', [WalletAdminController::class, 'unfreeze'])->whereNumber('id');
     Route::get('/wallets/{id}/ledger', [WalletAdminController::class, 'ledger'])->whereNumber('id');
+
+    Route::get('/payment-gateways', [PaymentGatewayAdminController::class, 'index']);
+    Route::put('/payment-gateways/{name}', [PaymentGatewayAdminController::class, 'update'])->where('name', '[a-z0-9_]+');
+    Route::post('/payment-gateways/default', [PaymentGatewayAdminController::class, 'setDefault']);
+    Route::post('/payment-gateways/{name}/test', [PaymentGatewayAdminController::class, 'test'])->where('name', '[a-z0-9_]+');
 
     Route::get('/settings', [SettingsAdminController::class, 'index']);
     Route::put('/settings', [SettingsAdminController::class, 'update']);

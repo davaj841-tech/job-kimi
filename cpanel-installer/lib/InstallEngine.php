@@ -20,7 +20,7 @@ final class InstallEngine
 
     public const PACKAGE_FILE = 'jobazmoon-core.zip';
 
-    public const INSTALLER_VERSION = '2.2.2';
+    public const INSTALLER_VERSION = '2.3.0';
 
     /** Absolute minimum free disk when package size is unknown. */
     public const MIN_DISK_BYTES = 400 * 1024 * 1024;
@@ -56,12 +56,19 @@ final class InstallEngine
     ) {}
 
     /**
-     * Locked only when both .env and storage/installed exist.
+     * Locked when .env exists and an install marker is present
+     * (storage/installed and/or storage/app/installed.lock).
      */
     public function isLocked(): bool
     {
         return is_file($this->jobDir.DIRECTORY_SEPARATOR.'.env')
-            && is_file($this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed');
+            && $this->hasInstalledMarker();
+    }
+
+    public function hasInstalledMarker(): bool
+    {
+        return is_file($this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed')
+            || is_file($this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'installed.lock');
     }
 
     /**
@@ -70,7 +77,7 @@ final class InstallEngine
     public function installationStatus(): string
     {
         $envExists = is_file($this->jobDir.DIRECTORY_SEPARATOR.'.env');
-        $markerExists = is_file($this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed');
+        $markerExists = $this->hasInstalledMarker();
         $artisanExists = is_file($this->jobDir.DIRECTORY_SEPARATOR.'artisan');
         $autoloadExists = is_file($this->jobDir.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php');
         $bootstrapExists = is_file($this->jobDir.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php');
@@ -752,17 +759,13 @@ final class InstallEngine
             }
 
             $appVersion = $this->detectApplicationVersion();
-            $installedPath = $this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed';
-            $installedDir = dirname($installedPath);
-            if (! is_dir($installedDir)) {
-                @mkdir($installedDir, 0775, true);
-            }
-            file_put_contents($installedPath, json_encode([
+            $payload = json_encode([
                 'installed_at' => date('c'),
                 'installer_version' => self::INSTALLER_VERSION,
                 'application_version' => $appVersion,
                 'installer' => 'cpanel',
-            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            $this->writeInstalledMarkers($payload !== false ? $payload : '{}');
             $this->writeEnvFile($envPath, ['APP_INSTALLED' => 'true']);
             $push('نشانگر نصب ذخیره شد.');
 
@@ -1155,9 +1158,8 @@ final class InstallEngine
             $add('لینک storage', false, 'لینک storage وجود ندارد — هدف: '.$linkTarget, 'fail');
         }
 
-        $markerPath = $this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed';
-        $markerOk = is_file($markerPath);
-        $add('نشانگر نصب (storage/installed)', $markerOk);
+        $markerOk = $this->hasInstalledMarker();
+        $add('نشانگر نصب (storage/installed + storage/app/installed.lock)', $markerOk);
 
         $canBoot = is_file($this->jobDir.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php')
             && is_file($this->jobDir.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php')
@@ -1468,6 +1470,8 @@ final class InstallEngine
             // bootstrap/app.php loads this whenever storage/installed is missing (cPanel migrate/seed boot).
             'routes'.DIRECTORY_SEPARATOR.'install.php' => 'فایل routes/install.php',
             'vendor'.DIRECTORY_SEPARATOR.'autoload.php' => 'فایل vendor/autoload.php',
+            'composer.json' => 'فایل composer.json',
+            'composer.lock' => 'فایل composer.lock',
             'public' => 'پوشه public/',
             'storage' => 'پوشه storage/',
         ];
@@ -1497,11 +1501,54 @@ final class InstallEngine
             }
         }
 
-        $manifest = $root.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'build'.DIRECTORY_SEPARATOR.'manifest.json';
-        if (! is_file($manifest)) {
+        $this->assertValidFrontendManifest(
+            $root.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'build'.DIRECTORY_SEPARATOR.'manifest.json'
+        );
+    }
+
+    /**
+     * Require a non-empty Vite manifest JSON (presence alone is not enough).
+     *
+     * @throws RuntimeException
+     */
+    public function assertValidFrontendManifest(string $manifestPath): void
+    {
+        if (! is_file($manifestPath)) {
             throw new RuntimeException(
                 'فایل public/build/manifest.json یافت نشد. قبل از بسته‌بندی روی سیستم خودتان npm run build اجرا کنید.'
             );
+        }
+
+        $raw = (string) file_get_contents($manifestPath);
+        if (trim($raw) === '') {
+            throw new RuntimeException('فایل public/build/manifest.json خالی است. npm run build را دوباره اجرا کنید.');
+        }
+
+        $data = json_decode($raw, true);
+        if (! is_array($data) || $data === []) {
+            throw new RuntimeException(
+                'فایل public/build/manifest.json نامعتبر یا خالی است. قبل از بسته‌بندی npm run build را اجرا کنید.'
+            );
+        }
+    }
+
+    /**
+     * Persist both legacy and preferred install lock markers.
+     */
+    private function writeInstalledMarkers(string $payload): void
+    {
+        $legacy = $this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'installed';
+        $preferred = $this->jobDir.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'installed.lock';
+
+        foreach ([$legacy, $preferred] as $path) {
+            $dir = dirname($path);
+            if (! is_dir($dir) && ! @mkdir($dir, 0775, true) && ! is_dir($dir)) {
+                throw new RuntimeException('ایجاد پوشه نشانگر نصب ممکن نشد: '.$dir);
+            }
+            if (file_put_contents($path, $payload) === false) {
+                throw new RuntimeException('نوشتن نشانگر نصب ممکن نشد: '.$path);
+            }
+            @chmod($path, 0644);
         }
     }
 
@@ -1825,34 +1872,46 @@ final class InstallEngine
             throw new RuntimeException('فایل bootstrap/app.php یافت نشد؛ نوشتن index.php ممکن نیست.');
         }
 
-        $code = <<<'PHP'
+        $jobLeaf = basename(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, rtrim($this->jobDir, "/\\")));
+        if ($jobLeaf === '' || $jobLeaf === '.' || $jobLeaf === '..' || ! preg_match('/^[A-Za-z0-9._-]+$/', $jobLeaf)) {
+            $jobLeaf = 'job';
+        }
+
+        $code = <<<PHP
 <?php
 
-use Illuminate\Http\Request;
+use Illuminate\\Http\\Request;
 
 define('LARAVEL_START', microtime(true));
 
-$job = dirname(__DIR__).DIRECTORY_SEPARATOR.'job';
+// Sibling of public_html — resolved at install time (default: ../job)
+\$job = dirname(__DIR__).DIRECTORY_SEPARATOR.'{$jobLeaf}';
 
-$phpTimeLimit = (int) ini_get('max_execution_time');
-if ($phpTimeLimit > 0 && $phpTimeLimit < 60) {
+\$phpTimeLimit = (int) ini_get('max_execution_time');
+if (\$phpTimeLimit > 0 && \$phpTimeLimit < 60) {
     @set_time_limit(120);
 }
 
-if (file_exists($maintenance = $job.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'maintenance.php')) {
-    require $maintenance;
+if (file_exists(\$maintenance = \$job.DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'framework'.DIRECTORY_SEPARATOR.'maintenance.php')) {
+    require \$maintenance;
 }
 
-require $job.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php';
+\$autoload = \$job.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'autoload.php';
+if (! is_file(\$autoload)) {
+    http_response_code(500);
+    echo 'Application vendor missing.';
+    exit(1);
+}
+require \$autoload;
 
-$appBootstrap = $job.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php';
-if (! is_file($appBootstrap)) {
+\$appBootstrap = \$job.DIRECTORY_SEPARATOR.'bootstrap'.DIRECTORY_SEPARATOR.'app.php';
+if (! is_file(\$appBootstrap)) {
     http_response_code(500);
     echo 'Application bootstrap missing.';
     exit(1);
 }
 
-(require_once $appBootstrap)
+(require_once \$appBootstrap)
     ->handleRequest(Request::capture());
 PHP;
         file_put_contents($publicHtml.DIRECTORY_SEPARATOR.'index.php', $code);

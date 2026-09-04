@@ -205,7 +205,7 @@ class GatewayCallbackService
 
     protected function saleReferenceId(Request $request): string
     {
-        foreach (['SaleReferenceId', 'sale_reference_id', 'RefNum', 'ref_num'] as $key) {
+        foreach (['SaleReferenceId', 'sale_reference_id', 'RefNum', 'ref_num', 'PayGateTranID', 'payingGateTranID', 'RRN', 'rrn'] as $key) {
             $value = $request->input($key) ?? $request->query($key);
             if (is_string($value) && $value !== '') {
                 return $value;

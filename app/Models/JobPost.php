@@ -168,6 +168,14 @@ class JobPost extends Model
     }
 
     /**
+     * @return HasMany<JobPostComment, $this>
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(JobPostComment::class);
+    }
+
+    /**
      * @return BelongsTo<JobSource, $this>
      */
     public function source(): BelongsTo

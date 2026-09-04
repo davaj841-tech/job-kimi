@@ -12,6 +12,7 @@ class PaymentGateway extends Model
         'display_name',
         'merchant_id',
         'api_key',
+        'settings',
         'is_active',
         'is_default',
         'sort_order',
@@ -23,6 +24,9 @@ class PaymentGateway extends Model
             'is_active' => 'boolean',
             'is_default' => 'boolean',
             'sort_order' => 'integer',
+            'settings' => 'array',
+            // Credential column only — merchant_id stays plaintext (identifiers / terminals).
+            'api_key' => \App\Casts\CompatibleEncryptedString::class,
         ];
     }
 

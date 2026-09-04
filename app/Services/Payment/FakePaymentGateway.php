@@ -46,6 +46,16 @@ class FakePaymentGateway implements PaymentGatewayInterface
         return 'درگاه آزمایشی';
     }
 
+    public function isConfigured(): bool
+    {
+        return true;
+    }
+
+    public function testConnection(): array
+    {
+        return ['ok' => true, 'message' => 'درگاه آزمایشی آماده است.'];
+    }
+
     /**
      * @param  array<string, mixed>  $meta
      * @return array{authority: ?string, payment_url: ?string, error: ?string}

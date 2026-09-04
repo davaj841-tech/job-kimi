@@ -13,6 +13,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletLedger;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class SubscriptionService
 {
@@ -55,7 +56,11 @@ class SubscriptionService
             return $this->subscribeWithWallet($user, $plan, $amount, $original, $discount, $coupon);
         }
 
-        $gateway = $this->paymentService->resolveGatewayName($gateway ?: ($method !== 'wallet' ? $method : null));
+        try {
+            $gateway = $this->paymentService->resolveGatewayName($gateway ?: ($method !== 'wallet' ? $method : null));
+        } catch (RuntimeException $e) {
+            return ['success' => false, 'message' => $e->getMessage(), 'error' => 'gateway_unavailable'];
+        }
 
         return $this->subscribeWithGateway($user, $plan, $amount, $original, $discount, $coupon, $gateway);
     }
@@ -174,18 +179,9 @@ class SubscriptionService
             $meta
         );
 
+        // No automatic retry (avoids duplicate bank authorities after uncertain timeouts).
         if ($result['error'] || ! $result['authority']) {
-            $result = $this->paymentService->initiate(
-                $gateway,
-                $amount,
-                'خرید اشتراک '.$plan->name.' — JobAzmoon',
-                $callback,
-                $meta
-            );
-        }
-
-        if ($result['error'] || ! $result['authority']) {
-            $transaction->update(['status' => Transaction::STATUS_FAILED]);
+            $this->paymentService->markInitiateFailure($transaction, $result['error'] ?? null);
 
             return [
                 'success' => false,

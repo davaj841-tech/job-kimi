@@ -6,7 +6,10 @@ use Illuminate\Support\Facades\Log;
 use SoapClient;
 use Throwable;
 
-class ShaparakGateway implements PaymentGatewayInterface
+/**
+ * Alias driver for Behpardakht/Shaparak BPM channel (same protocol as Mellat).
+ */
+class ShaparakGateway extends AbstractPaymentGateway
 {
     public function getName(): string
     {
@@ -15,22 +18,42 @@ class ShaparakGateway implements PaymentGatewayInterface
 
     public function getDisplayName(): string
     {
-        return 'شاپرک';
+        return 'شاپرک (به‌پرداخت)';
+    }
+
+    public function requiredCredentialKeys(): array
+    {
+        return ['terminal_id', 'username', 'password'];
     }
 
     protected function terminalId(): string
     {
-        return (string) (config('services.shaparak.terminal_id') ?: config('services.mellat.terminal_id', ''));
+        $value = $this->credential('terminal_id');
+        if ($value !== '') {
+            return $value;
+        }
+
+        return $this->credentials->get('mellat', ['mellat_terminal_id'], ['terminal_id'], 'merchant_id');
     }
 
     protected function username(): string
     {
-        return (string) (config('services.shaparak.username') ?: config('services.mellat.username', ''));
+        $value = $this->credential('username');
+        if ($value !== '') {
+            return $value;
+        }
+
+        return $this->credentials->get('mellat', ['mellat_username'], ['username'], 'api_key');
     }
 
     protected function password(): string
     {
-        return (string) (config('services.shaparak.password') ?: config('services.mellat.password', ''));
+        $value = $this->credential('password');
+        if ($value !== '') {
+            return $value;
+        }
+
+        return $this->credentials->get('mellat', ['mellat_password'], ['password']);
     }
 
     /**
@@ -48,7 +71,7 @@ class ShaparakGateway implements PaymentGatewayInterface
         $password = $this->password();
 
         if (blank($terminalId) || blank($username) || blank($password)) {
-            return ['authority' => null, 'payment_url' => null, 'error' => 'اطلاعات درگاه شاپرک تنظیم نشده است.'];
+            return ['authority' => null, 'payment_url' => null, 'error' => 'اطلاعات اتصال این درگاه کامل نشده است.'];
         }
 
         $orderId = (int) ($meta['order_id'] ?? (time().random_int(100, 999)));
@@ -79,7 +102,7 @@ class ShaparakGateway implements PaymentGatewayInterface
             $refId = $parts[1] ?? '';
 
             if ($code !== '0' || blank($refId)) {
-                Log::warning('Shaparak request failed', ['raw' => $raw]);
+                Log::warning('Shaparak request failed', ['code' => $code]);
 
                 return ['authority' => null, 'payment_url' => null, 'error' => 'خطا در ایجاد درخواست شاپرک.'];
             }

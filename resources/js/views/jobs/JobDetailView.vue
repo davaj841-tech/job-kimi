@@ -71,6 +71,51 @@
 
       <RelatedCatalog :exams="catalogExams" :pdfs="catalogPdfs" />
 
+      <section class="mt-6 border-t border-surface-line pt-4">
+        <h2 class="mb-3 text-sm font-bold">نظرات کاربران</h2>
+        <form
+          v-if="auth.isAuthenticated"
+          class="mb-4 space-y-2"
+          @submit.prevent="sendComment"
+        >
+          <textarea
+            v-model="comment"
+            required
+            rows="3"
+            maxlength="2000"
+            class="input-field min-h-[80px]"
+            placeholder="نظر خود را درباره این آگهی بنویسید..."
+          />
+          <button class="btn-primary max-w-xs text-sm" :disabled="sending">
+            {{ sending ? '...' : 'ارسال نظر' }}
+          </button>
+          <p
+            v-if="commentMsg"
+            class="text-xs"
+            :class="commentError ? 'text-red-600' : 'text-emerald-700'"
+          >
+            {{ commentMsg }}
+          </p>
+        </form>
+        <p v-else class="mb-3 text-xs text-desk-muted">
+          برای ثبت نظر
+          <RouterLink to="/login" class="text-brand underline"
+            >وارد شوید</RouterLink
+          >.
+        </p>
+        <div class="space-y-2">
+          <div v-for="c in comments" :key="c.id" class="card-soft p-3 text-sm">
+            <p class="font-bold">{{ c.user?.name || 'کاربر' }}</p>
+            <p class="mt-1 whitespace-pre-wrap text-desk-muted">
+              {{ c.content }}
+            </p>
+          </div>
+          <p v-if="!comments.length" class="text-xs text-desk-muted">
+            هنوز نظری ثبت نشده است.
+          </p>
+        </div>
+      </section>
+
       <ShareModal
         :open="shareOpen"
         :title="job.title"
@@ -91,12 +136,19 @@ import PageShell from '../../components/layout/PageShell.vue'
 import RelatedCatalog from '../../components/RelatedCatalog.vue'
 import ShareModal from '../../components/ShareModal.vue'
 import { setJobPostMeta } from '../../services/meta'
-import { formatDate } from '../../utils/format'
+import { useAuthStore } from '../../stores/auth'
+import { formatDate, unwrapList } from '../../utils/format'
 
 const route = useRoute()
+const auth = useAuthStore()
 const job = ref(null)
 const loading = ref(true)
 const shareOpen = ref(false)
+const comments = ref([])
+const comment = ref('')
+const sending = ref(false)
+const commentMsg = ref('')
+const commentError = ref(false)
 const shareUrl = computed(
   () => `${window.location.origin}/jobs/${job.value?.id || ''}`
 )
@@ -126,13 +178,43 @@ const catalogPdfs = computed(() => {
   return Array.isArray(list) ? list : []
 })
 
+async function loadComments(jobId) {
+  const { data } = await api.get(`/job-posts/${jobId}/comments`)
+  comments.value = unwrapList(data)
+}
+
 onMounted(async () => {
   try {
     const { data } = await api.get(`/job-posts/${route.params.id}`)
     job.value = data.data
     setJobPostMeta(job.value)
+    if (job.value?.id) {
+      await loadComments(job.value.id)
+    }
   } finally {
     loading.value = false
   }
 })
+
+async function sendComment() {
+  if (!job.value?.id) return
+  sending.value = true
+  commentMsg.value = ''
+  commentError.value = false
+  try {
+    const { data } = await api.post(`/job-posts/${job.value.id}/comments`, {
+      content: comment.value,
+    })
+    comment.value = ''
+    commentMsg.value = data.message || 'ثبت شد'
+    if (data.data?.status === 'approved') {
+      comments.value.unshift(data.data)
+    }
+  } catch (e) {
+    commentError.value = true
+    commentMsg.value = e.response?.data?.message || 'خطا در ثبت نظر'
+  } finally {
+    sending.value = false
+  }
+}
 </script>

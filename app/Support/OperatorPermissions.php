@@ -89,6 +89,7 @@ final class OperatorPermissions
 
         $superAdminOnly = [
             'settings',
+            'payment-gateways',
             'backups',
             'system-updates',
             'audit-logs',
@@ -124,6 +125,7 @@ final class OperatorPermissions
             'team-members' => 'pages',
             'ai' => 'ai',
             'job-posts' => 'job_posts',
+            'job-post-comments' => 'job_posts',
             'job-classifications' => 'job_posts',
             'job-sources' => 'aggregation',
             'crawler-runs' => 'aggregation',

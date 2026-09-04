@@ -18,6 +18,7 @@ $root = dirname(__DIR__);
 $args = array_slice($argv, 1);
 $skipDeps = in_array('--skip-deps', $args, true);
 $noRestore = in_array('--no-restore', $args, true);
+$skipPreDeploy = in_array('--skip-pre-deploy', $args, true);
 $output = $root.DIRECTORY_SEPARATOR.'dist'.DIRECTORY_SEPARATOR.'jobazmoon-core.zip';
 
 foreach ($args as $arg) {
@@ -41,6 +42,23 @@ function fail(string $msg, int $code = 1): never
 {
     fwrite(STDERR, 'ERROR: '.$msg.PHP_EOL);
     exit($code);
+}
+
+if (! $skipPreDeploy) {
+    $preDeploy = $root.DIRECTORY_SEPARATOR.'scripts'.DIRECTORY_SEPARATOR.'pre-deploy-check.sh';
+    if (is_file($preDeploy)) {
+        out('Running pre-deploy check...');
+        // Prefer bash; fall back to php-less PowerShell helper when bash is unavailable.
+        $bash = trim((string) shell_exec('command -v bash 2>/dev/null'));
+        if ($bash !== '') {
+            passthru(escapeshellarg($bash).' '.escapeshellarg($preDeploy), $preCode);
+            if ($preCode !== 0) {
+                fail('pre-deploy-check failed. Fix issues or pass --skip-pre-deploy.');
+            }
+        } else {
+            out('WARNING: bash not found; skipping scripts/pre-deploy-check.sh (run scripts/pre-deploy-check.ps1 manually).');
+        }
+    }
 }
 
 /** @param list<string> $files */
@@ -117,6 +135,14 @@ foreach ($required as $rel) {
         fail('Missing required file before packaging: '.$rel);
     }
 }
+
+$manifestPath = $root.DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR.'build'.DIRECTORY_SEPARATOR.'manifest.json';
+$manifestRaw = (string) file_get_contents($manifestPath);
+$manifestData = json_decode($manifestRaw, true);
+if (! is_array($manifestData) || $manifestData === []) {
+    fail('public/build/manifest.json is missing, empty, or invalid JSON. Run npm run build.');
+}
+out('Frontend manifest: OK ('.count($manifestData).' entries)');
 
 $includeRoots = [
     'app',
@@ -593,9 +619,30 @@ $bundleVerify->close();
 out('Installer folder: '.$bundleDir);
 out('Installer ZIP: '.$bundleZip.' ('.round(((int) filesize($bundleZip)) / (1024 * 1024), 2).' MB)');
 
-out('');
-out('Running installer regression tests...');
-run('php '.escapeshellarg($root.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.'phpunit').' --filter=Install', $root);
+// Always restore require-dev before PHPUnit when we ran composer --no-dev for packaging.
+if (! $skipDeps && ! $noRestore) {
+    out('');
+    out('Restoring development Composer dependencies (needed for PHPUnit)...');
+    run(
+        'composer install --no-interaction --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-posix',
+        $root
+    );
+}
+
+$phpunit = $root.DIRECTORY_SEPARATOR.'vendor'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.'phpunit';
+$phpunitOk = is_file($phpunit) || is_file($phpunit.'.bat') || is_file($phpunit.'.phar');
+
+if (! $phpunitOk && $noRestore) {
+    out('WARNING: --no-restore left PHPUnit unavailable; skipping Install regression tests.');
+    out('Run: composer install && php vendor/bin/phpunit --filter=Install');
+} else {
+    if (! $phpunitOk) {
+        fail('PHPUnit missing after packaging. Run composer install (with require-dev) then rebuild.');
+    }
+    out('');
+    out('Running installer regression tests...');
+    run('php '.escapeshellarg($phpunit).' --filter=Install', $root);
+}
 
 out('');
 out('Running installer smoke tests...');
@@ -604,15 +651,6 @@ run('php '.escapeshellarg($root.DIRECTORY_SEPARATOR.'cpanel-installer'.DIRECTORY
 
 if (is_file($root.DIRECTORY_SEPARATOR.'scripts'.DIRECTORY_SEPARATOR.'verify-package-contents.php')) {
     run('php '.escapeshellarg($root.DIRECTORY_SEPARATOR.'scripts'.DIRECTORY_SEPARATOR.'verify-package-contents.php').' '.escapeshellarg($output), $root);
-}
-
-if (! $skipDeps && ! $noRestore) {
-    out('');
-    out('Restoring development Composer dependencies...');
-    run(
-        'composer install --no-interaction --ignore-platform-req=ext-pcntl --ignore-platform-req=ext-posix',
-        $root
-    );
 }
 
 out('Done.');
